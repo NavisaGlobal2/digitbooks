@@ -15,21 +15,21 @@ const Index = () => {
         <section className="relative overflow-hidden px-6 lg:px-8 py-24 sm:py-32">
           <div className="mx-auto max-w-7xl text-center">
             <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-primary mb-6">
-              Revolutionize Your Business
+              Smart Bookkeeping,
               <br />
               <span className="bg-gradient-to-r from-[#9EE755] to-[#CFDD3C] bg-clip-text text-transparent">
-                Finances with AI-Powered Simplicity
+                Powered by AI
               </span>
             </h1>
             <p className="mx-auto max-w-2xl text-lg text-secondary mb-8">
-              Digibooks leverages cutting-edge AI to automate bookkeeping, optimize compliance, and provide actionable insights tailored for SMEs, freelancers, and NGOs.
+              Save 10+ hours every week with automated bookkeeping. Perfect for small businesses, freelancers, and startups.
             </p>
             <div className="flex justify-center gap-4">
               <button className="px-6 py-3 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors">
-                Start Free with AI-Powered Tools
+                Try Free for 14 Days
               </button>
               <button className="px-6 py-3 glass rounded-full hover:bg-white/20 transition-colors flex items-center gap-2">
-                See How It Works <ArrowRight className="w-4 h-4" />
+                Watch Demo <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -39,7 +39,7 @@ const Index = () => {
             <div className="flex justify-center">
               <img
                 src="https://antimetal.com/images/hero/preview.png"
-                alt="Hero"
+                alt="Digibooks Dashboard Preview"
                 className="rounded-3xl shadow-2xl max-w-[90%] w-auto h-auto"
               />
             </div>
@@ -48,22 +48,22 @@ const Index = () => {
 
         <section className="py-24 bg-surface px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
-            <h2 className="text-3xl font-bold text-center mb-16">What Can Digibooks AI Do for You?</h2>
+            <h2 className="text-3xl font-bold text-center mb-16">How Digibooks Makes Your Life Easier</h2>
             <div className="grid md:grid-cols-3 gap-8">
               {[
                 {
-                  title: "Automated Bookkeeping",
-                  description: "Let AI categorize and reconcile your transactions, saving hours of manual work",
+                  title: "Auto-Categorize Expenses",
+                  description: "Our AI learns your spending patterns and categorizes transactions with 99% accuracy",
                   icon: "⚡",
                 },
                 {
-                  title: "Smart Compliance Tracking",
-                  description: "Stay on top of tax filings and regulatory deadlines with AI-powered reminders",
+                  title: "Never Miss a Deadline",
+                  description: "Smart alerts for tax deadlines and compliance requirements, tailored to your business",
                   icon: "🔒",
                 },
                 {
-                  title: "Actionable Insights",
-                  description: "AI analyzes your financial data to detect anomalies and forecast cash flow",
+                  title: "Real-time Insights",
+                  description: "Know exactly how your business is performing with instant financial reports and forecasts",
                   icon: "💡",
                 },
               ].map((feature, index) => (
@@ -83,20 +83,20 @@ const Index = () => {
         {/* FAQ Section */}
         <section className="py-24 px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
-            <h2 className="text-3xl font-bold text-center mb-16">Common Questions About Our AI Solution</h2>
+            <h2 className="text-3xl font-bold text-center mb-16">Common Questions</h2>
             <div className="space-y-4">
               {[
                 {
-                  question: "How does the AI automate bookkeeping?",
-                  answer: "Our AI automatically categorizes transactions, reconciles accounts, and learns from your corrections to improve accuracy over time.",
+                  question: "How accurate is the AI categorization?",
+                  answer: "Our AI achieves 99% accuracy after learning from just one month of your transactions. You can always adjust any miscategorized items with one click.",
                 },
                 {
-                  question: "Is my financial data secure?",
-                  answer: "We use bank-level encryption and advanced AI security protocols to protect your sensitive information.",
+                  question: "Is my data secure?",
+                  answer: "We use bank-level encryption and never store your credentials. Your data is protected by the same security measures used by leading financial institutions.",
                 },
                 {
-                  question: "What kind of insights does the AI provide?",
-                  answer: "Our AI analyzes spending patterns, predicts cash flow, and provides actionable recommendations for business growth.",
+                  question: "Can I export my data?",
+                  answer: "Yes! Export your data anytime in multiple formats including Excel, CSV, and PDF. Perfect for sharing with your accountant or team.",
                 },
               ].map((faq, index) => (
                 <div
@@ -128,9 +128,9 @@ const Index = () => {
         {/* CTA Section */}
         <section className="py-24 bg-primary text-white px-6 lg:px-8">
           <div className="mx-auto max-w-7xl text-center">
-            <h2 className="text-3xl sm:text-5xl font-bold mb-8">Ready to transform your business finances?</h2>
+            <h2 className="text-3xl sm:text-5xl font-bold mb-8">Start saving time today</h2>
             <p className="text-white/80 mb-8 max-w-2xl mx-auto">
-              Join thousands of businesses already using Digibooks AI to streamline their financial operations.
+              Join thousands of businesses saving 10+ hours every week with automated bookkeeping.
             </p>
             <button className="px-8 py-4 bg-accent text-primary rounded-full font-semibold hover:bg-accent/90 transition-colors">
               Start Your Free Trial
