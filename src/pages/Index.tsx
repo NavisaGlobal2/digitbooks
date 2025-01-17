@@ -10,27 +10,26 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      {/* Main content with top padding for navigation */}
       <main className="pt-16">
         {/* Hero Section */}
         <section className="relative overflow-hidden px-6 lg:px-8 py-24 sm:py-32">
           <div className="mx-auto max-w-7xl text-center">
             <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-primary mb-6">
-              Change the bank account
+              Revolutionize Your Business
               <br />
               <span className="bg-gradient-to-r from-[#9EE755] to-[#CFDD3C] bg-clip-text text-transparent">
-                you use
+                Finances with AI-Powered Simplicity
               </span>
             </h1>
             <p className="mx-auto max-w-2xl text-lg text-secondary mb-8">
-              Experience banking reimagined. Simple, secure, and designed for the modern world.
+              Digibooks leverages cutting-edge AI to automate bookkeeping, optimize compliance, and provide actionable insights tailored for SMEs, freelancers, and NGOs.
             </p>
             <div className="flex justify-center gap-4">
               <button className="px-6 py-3 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors">
-                Get Started
+                Start Free with AI-Powered Tools
               </button>
               <button className="px-6 py-3 glass rounded-full hover:bg-white/20 transition-colors flex items-center gap-2">
-                Learn More <ArrowRight className="w-4 h-4" />
+                See How It Works <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -49,22 +48,22 @@ const Index = () => {
 
         <section className="py-24 bg-surface px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
-            <h2 className="text-3xl font-bold text-center mb-16">Features designed for you</h2>
+            <h2 className="text-3xl font-bold text-center mb-16">What Can Digibooks AI Do for You?</h2>
             <div className="grid md:grid-cols-3 gap-8">
               {[
                 {
-                  title: "Secure Transactions",
-                  description: "Bank-grade encryption for all your transactions",
-                  icon: "🔒",
-                },
-                {
-                  title: "Real-time Updates",
-                  description: "Get instant notifications for all account activities",
+                  title: "Automated Bookkeeping",
+                  description: "Let AI categorize and reconcile your transactions, saving hours of manual work",
                   icon: "⚡",
                 },
                 {
-                  title: "Smart Savings",
-                  description: "AI-powered insights to help you save more",
+                  title: "Smart Compliance Tracking",
+                  description: "Stay on top of tax filings and regulatory deadlines with AI-powered reminders",
+                  icon: "🔒",
+                },
+                {
+                  title: "Actionable Insights",
+                  description: "AI analyzes your financial data to detect anomalies and forecast cash flow",
                   icon: "💡",
                 },
               ].map((feature, index) => (
@@ -84,20 +83,20 @@ const Index = () => {
         {/* FAQ Section */}
         <section className="py-24 px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
-            <h2 className="text-3xl font-bold text-center mb-16">Frequently Asked Questions</h2>
+            <h2 className="text-3xl font-bold text-center mb-16">Common Questions About Our AI Solution</h2>
             <div className="space-y-4">
               {[
                 {
-                  question: "How secure is my data?",
-                  answer: "We use bank-level encryption to protect all your data and transactions.",
+                  question: "How does the AI automate bookkeeping?",
+                  answer: "Our AI automatically categorizes transactions, reconciles accounts, and learns from your corrections to improve accuracy over time.",
                 },
                 {
-                  question: "What are the fees?",
-                  answer: "We believe in transparent pricing with no hidden fees.",
+                  question: "Is my financial data secure?",
+                  answer: "We use bank-level encryption and advanced AI security protocols to protect your sensitive information.",
                 },
                 {
-                  question: "How do I get started?",
-                  answer: "Download our app and follow the simple registration process.",
+                  question: "What kind of insights does the AI provide?",
+                  answer: "Our AI analyzes spending patterns, predicts cash flow, and provides actionable recommendations for business growth.",
                 },
               ].map((faq, index) => (
                 <div
@@ -129,12 +128,12 @@ const Index = () => {
         {/* CTA Section */}
         <section className="py-24 bg-primary text-white px-6 lg:px-8">
           <div className="mx-auto max-w-7xl text-center">
-            <h2 className="text-3xl sm:text-5xl font-bold mb-8">Ready to get started?</h2>
+            <h2 className="text-3xl sm:text-5xl font-bold mb-8">Ready to transform your business finances?</h2>
             <p className="text-white/80 mb-8 max-w-2xl mx-auto">
-              Join thousands of satisfied customers who have already made the switch.
+              Join thousands of businesses already using Digibooks AI to streamline their financial operations.
             </p>
             <button className="px-8 py-4 bg-accent text-primary rounded-full font-semibold hover:bg-accent/90 transition-colors">
-              Create Account
+              Start Your Free Trial
             </button>
           </div>
         </section>
