@@ -45,24 +45,30 @@ const Pricing = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background via-white to-background">
       <Navigation />
       
       <main className="pt-24 pb-16">
         <div className="max-w-7xl mx-auto px-6">
-          <h1 className="text-4xl font-bold text-center mb-4">
-            Simple, Transparent Pricing
-          </h1>
-          <p className="text-secondary text-center max-w-2xl mx-auto mb-16">
-            Choose the plan that best fits your business needs
-          </p>
+          <div className="space-y-4 text-center animate-fade-in">
+            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-[#8B5CF6] bg-clip-text text-transparent">
+              Simple, Transparent Pricing
+            </h1>
+            <p className="text-secondary text-lg max-w-2xl mx-auto mb-16">
+              Choose the plan that best fits your business needs
+            </p>
+          </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {plans.map((plan, index) => (
-              <div key={index} className="p-6 rounded-2xl border border-border hover:border-accent transition-colors">
+              <div 
+                key={index}
+                className="group p-8 rounded-2xl border border-border hover:border-accent transition-all duration-300 hover:shadow-lg bg-white/50 backdrop-blur-sm animate-fade-in hover:-translate-y-1"
+                style={{ animationDelay: `${index * 200}ms` }}
+              >
                 <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
                 <div className="mb-4">
-                  <span className="text-3xl font-bold">{plan.price}</span>
+                  <span className="text-4xl font-bold">{plan.price}</span>
                   {plan.price !== "Custom" && <span className="text-secondary">/month</span>}
                 </div>
                 <p className="text-secondary mb-6">{plan.description}</p>
@@ -70,11 +76,16 @@ const Pricing = () => {
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-center gap-2">
                       <Check className="w-5 h-5 text-accent" />
-                      <span>{feature}</span>
+                      <span className="text-secondary">{feature}</span>
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full">Get Started</Button>
+                <Button 
+                  className="w-full group-hover:bg-accent group-hover:text-primary transition-colors"
+                  variant="outline"
+                >
+                  Get Started
+                </Button>
               </div>
             ))}
           </div>

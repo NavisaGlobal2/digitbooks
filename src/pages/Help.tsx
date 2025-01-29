@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 const Help = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-white">
+    <div className="min-h-screen bg-gradient-to-b from-background via-white to-background">
       <Navigation />
       
       <main className="pt-24 pb-16">
