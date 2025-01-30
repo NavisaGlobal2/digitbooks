@@ -25,10 +25,13 @@ const Index = () => {
               Save 10+ hours every week with automated bookkeeping. Perfect for small businesses, freelancers, and startups.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in [animation-delay:400ms]">
-              <button className="group px-8 py-4 bg-primary text-white rounded-full hover:bg-primary/90 transition-all duration-300 transform hover:-translate-y-1">
+              <a 
+                href="https://digitbookwise.lovable.app/auth"
+                className="group px-8 py-4 bg-primary text-white rounded-full hover:bg-primary/90 transition-all duration-300 transform hover:-translate-y-1"
+              >
                 Try Free for 14 Days
                 <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </a>
               <button className="group px-8 py-4 glass rounded-full hover:bg-white/20 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2">
                 Join Waitlist
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -47,6 +50,7 @@ const Index = () => {
               />
             </div>
           </div>
+
         </section>
 
         {/* Features Section */}
@@ -146,10 +150,13 @@ const Index = () => {
             <p className="text-white/80 mb-10 sm:mb-12 max-w-2xl mx-auto text-lg sm:text-xl animate-fade-in [animation-delay:200ms]">
               Join thousands of businesses saving 10+ hours every week with automated bookkeeping.
             </p>
-            <button className="group px-8 py-4 bg-accent text-primary rounded-full font-semibold hover:bg-accent/90 transition-all duration-300 transform hover:-translate-y-1 animate-fade-in [animation-delay:400ms]">
+            <a 
+              href="https://digitbookwise.lovable.app/auth"
+              className="inline-block group px-8 py-4 bg-accent text-primary rounded-full font-semibold hover:bg-accent/90 transition-all duration-300 transform hover:-translate-y-1 animate-fade-in [animation-delay:400ms]"
+            >
               Start Your Free Trial
               <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
+            </a>
           </div>
         </section>
       </main>

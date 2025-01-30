@@ -35,9 +35,11 @@ const Navigation = () => {
             <User className="w-4 h-4" />
             Sign In
           </Button>
-          <Button className="text-white">
-            Get Started
-          </Button>
+          <a href="https://digitbookwise.lovable.app/auth">
+            <Button className="text-white">
+              Get Started
+            </Button>
+          </a>
         </div>
       </div>
     </nav>
