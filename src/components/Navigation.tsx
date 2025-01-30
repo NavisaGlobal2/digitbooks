@@ -1,6 +1,6 @@
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
-import { Home, DollarSign, Info, Settings, HelpCircle, User } from "lucide-react";
+import { Home, DollarSign, Info, Settings, HelpCircle } from "lucide-react";
 
 const Navigation = () => {
   return (
@@ -30,11 +30,7 @@ const Navigation = () => {
           </Link>
         </div>
 
-        <div className="flex items-center space-x-4">
-          <Button variant="ghost" className="hidden md:inline-flex items-center gap-2">
-            <User className="w-4 h-4" />
-            Sign In
-          </Button>
+        <div className="flex items-center">
           <a href="https://digitbookwise.lovable.app/auth">
             <Button className="text-white">
               Get Started
