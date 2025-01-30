@@ -1,5 +1,39 @@
 # DigiBooks - Smart AI-Powered Bookkeeping
 
+## Product Scope
+
+DigiBooks is an intelligent bookkeeping solution that leverages AI technology to streamline financial management for businesses. The application's scope includes:
+
+### Core Features
+- Automated transaction categorization and reconciliation
+- Real-time financial insights and reporting
+- Smart receipt scanning and processing
+- Expense tracking and management
+- Tax compliance assistance
+- Custom financial dashboards
+
+### Target Users
+- Small and medium-sized businesses
+- Freelancers and independent contractors
+- Financial professionals and accountants
+- Business owners and managers
+
+### Key Benefits
+- Reduced manual bookkeeping effort
+- Improved accuracy in financial records
+- Real-time financial visibility
+- Simplified tax preparation
+- Enhanced compliance management
+- Time and cost savings
+
+### Technical Capabilities
+- AI-powered transaction analysis
+- Cloud-based data storage
+- Secure multi-user access
+- Integration with major banking systems
+- Automated report generation
+- Mobile-responsive design
+
 ## Project info
 
 Welcome to DigiBooks, your intelligent bookkeeping solution powered by AI.
