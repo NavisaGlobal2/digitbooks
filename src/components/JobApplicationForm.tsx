@@ -67,24 +67,33 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
     setIsSubmitting(true);
     
     try {
+      console.log("Starting application submission process...");
+      
       // Upload the resume file to Supabase Storage
       const file = values.resumeFile;
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${values.fullName.replace(/\s+/g, '-').toLowerCase()}.${fileExt}`;
+      
+      console.log("Uploading resume file...", fileName);
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('resumes')
         .upload(`${fileName}`, file);
       
       if (uploadError) {
+        console.error("Resume upload error:", uploadError);
         throw new Error(`Resume upload failed: ${uploadError.message}`);
       }
+      
+      console.log("Resume uploaded successfully:", uploadData);
       
       // Generate a URL for the uploaded file
       const resumeUrl = `${fileName}`;
       
+      console.log("Storing application data in database...");
+      
       // Store the application data in the database
-      const { error: insertError } = await supabase
+      const { data: insertData, error: insertError } = await supabase
         .from('job_applications')
         .insert({
           job_title: jobTitle,
@@ -97,14 +106,15 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
           availability: values.availability,
           cover_letter: values.coverLetter || null,
           resume_url: resumeUrl
-        });
+        })
+        .select();
       
       if (insertError) {
+        console.error("Database insert error:", insertError);
         throw new Error(`Application submission failed: ${insertError.message}`);
       }
       
-      // Log for development purposes
-      console.log("Application submitted and stored successfully");
+      console.log("Application submitted and stored successfully:", insertData);
       
       toast({
         title: "Application Submitted!",

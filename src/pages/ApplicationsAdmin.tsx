@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Download, AlertCircle } from "lucide-react";
+import { Download, AlertCircle, RefreshCw } from "lucide-react";
 
 interface JobApplication {
   id: string;
@@ -35,42 +35,51 @@ const ApplicationsAdmin = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchApplications = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('job_applications')
-          .select('*')
-          .order('created_at', { ascending: false });
+  const fetchApplications = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      console.log("Fetching applications...");
+      const { data, error } = await supabase
+        .from('job_applications')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        if (error) {
-          throw new Error(error.message);
-        }
-
-        setApplications(data as JobApplication[]);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load applications');
-        toast({
-          title: "Error loading applications",
-          description: err instanceof Error ? err.message : 'An unexpected error occurred',
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
+      if (error) {
+        console.error("Fetch error:", error);
+        throw new Error(error.message);
       }
-    };
 
+      console.log("Applications fetched:", data);
+      setApplications(data as JobApplication[]);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load applications';
+      console.error("Error in fetch applications:", errorMessage);
+      setError(errorMessage);
+      toast({
+        title: "Error loading applications",
+        description: err instanceof Error ? err.message : 'An unexpected error occurred',
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchApplications();
-  }, [toast]);
+  }, []);
 
   const handleDownloadResume = async (resumeUrl: string, applicantName: string) => {
     try {
+      console.log("Downloading resume:", resumeUrl);
       const { data, error } = await supabase.storage
         .from('resumes')
         .download(resumeUrl);
       
       if (error) {
+        console.error("Download error:", error);
         throw error;
       }
       
@@ -83,7 +92,13 @@ const ApplicationsAdmin = () => {
       a.click();
       URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      toast({
+        title: "Resume Downloaded",
+        description: `${applicantName}'s resume has been downloaded successfully.`,
+      });
     } catch (err) {
+      console.error("Resume download error:", err);
       toast({
         title: "Error downloading resume",
         description: err instanceof Error ? err.message : 'An unexpected error occurred',
@@ -97,7 +112,18 @@ const ApplicationsAdmin = () => {
       <Navigation />
       
       <main className="container mx-auto px-4 py-16">
-        <h1 className="text-3xl font-bold mb-8">Job Applications</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Job Applications</h1>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={fetchApplications}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
         
         {error && (
           <Alert variant="destructive" className="mb-6">
