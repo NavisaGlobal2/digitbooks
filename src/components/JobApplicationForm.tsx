@@ -17,12 +17,22 @@ import {
 } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { UploadCloud } from "lucide-react";
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_FILE_TYPES = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   phone: z.string().min(10, "Please enter a valid phone number"),
-  resume: z.string().min(1, "Please provide a link to your resume"),
+  resumeFile: z
+    .instanceof(File)
+    .refine((file) => file.size <= MAX_FILE_SIZE, `File size should be less than 5MB`)
+    .refine(
+      (file) => ACCEPTED_FILE_TYPES.includes(file.type),
+      "Only PDF, DOC, and DOCX files are accepted"
+    ),
   experience: z.string().min(1, "Please describe your relevant experience"),
   portfolioLink: z.string().optional(),
   availability: z.enum(["immediately", "2weeks", "1month", "other"]),
@@ -37,6 +47,7 @@ type JobApplicationFormProps = {
 
 export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }: JobApplicationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,7 +55,6 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
       fullName: "",
       email: "",
       phone: "",
-      resume: "",
       experience: "",
       portfolioLink: "",
       availability: "2weeks",
@@ -57,7 +67,14 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
     
     try {
       // In a real application, you would send this data to a server
-      console.log("Application submitted:", values);
+      console.log("Application submitted:", {
+        ...values,
+        resumeFile: values.resumeFile ? {
+          name: values.resumeFile.name,
+          type: values.resumeFile.type,
+          size: values.resumeFile.size,
+        } : null,
+      });
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -78,6 +95,14 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
       setIsSubmitting(false);
     }
   }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, onChange: (file: File) => void) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      onChange(file);
+      setSelectedFileName(file.name);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -134,18 +159,39 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
           
           <FormField
             control={form.control}
-            name="resume"
-            render={({ field }) => (
+            name="resumeFile"
+            render={({ field: { onChange, value, ...rest } }) => (
               <FormItem>
-                <FormLabel>Resume/CV Link</FormLabel>
+                <FormLabel>Resume/CV</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="https://drive.google.com/your-resume" 
-                    {...field} 
-                  />
+                  <div className="flex flex-col items-center justify-center w-full">
+                    <label 
+                      htmlFor="resumeUpload" 
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 border-gray-300"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <UploadCloud className="w-8 h-8 mb-2 text-gray-500" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500">PDF, DOC, or DOCX (MAX. 5MB)</p>
+                        {selectedFileName && (
+                          <p className="mt-2 text-sm font-medium text-primary">{selectedFileName}</p>
+                        )}
+                      </div>
+                      <input
+                        id="resumeUpload"
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => handleFileChange(e, onChange)}
+                        {...rest}
+                      />
+                    </label>
+                  </div>
                 </FormControl>
                 <FormDescription>
-                  Provide a link to your resume (Google Drive, Dropbox, etc.)
+                  Upload your resume (PDF, DOC, or DOCX format, max 5MB)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
