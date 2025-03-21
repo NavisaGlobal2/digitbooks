@@ -7,39 +7,84 @@ import { ArrowRight } from "lucide-react";
 const Careers = () => {
   const availableJobs = [
     {
+      title: "Frontend Developer",
+      department: "Engineering",
+      location: "Akure, Nigeria",
+      type: "Full-time",
+      description: "Proficient in ReactJS, JavaScript/TypeScript, Tailwind CSS. Develop responsive, interactive dashboards and implement user-friendly UI/UX designs.",
+      experience: "3-5 years"
+    },
+    {
+      title: "Backend Developer",
+      department: "Engineering",
+      location: "Akure, Nigeria",
+      type: "Full-time",
+      description: "Experienced in Node.js, Express.js, REST API Development. Secure integration with banking and payment gateways and ensure robust data encryption.",
+      experience: "4-6 years (Fintech)"
+    },
+    {
+      title: "Full Stack Developer",
+      department: "Engineering",
+      location: "Akure, Nigeria",
+      type: "Full-time",
+      description: "Competent in both ReactJS and Node.js. Integration of front-end elements with server-side logic and cross-layer troubleshooting.",
+      experience: "3+ years"
+    },
+    {
+      title: "AI Specialist",
+      department: "AI Research",
+      location: "Akure, Nigeria",
+      type: "Full-time",
+      description: "Expertise in machine learning and GPT API integration. Develop AI models for financial forecasting and anomaly detection.",
+      experience: "2+ years"
+    },
+    {
+      title: "QA Tester",
+      department: "Quality Assurance",
+      location: "Akure, Nigeria",
+      type: "Full-time",
+      description: "Conduct user testing and quality assurance. Write and execute test cases, identify and document bugs, ensuring fixes.",
+      experience: "2+ years"
+    },
+    {
       title: "Senior Full-Stack Developer",
       department: "Engineering",
       location: "Remote (US/EU)",
       type: "Full-time",
-      description: "Join our engineering team to build and scale our AI-powered bookkeeping platform."
+      description: "Join our engineering team to build and scale our AI-powered bookkeeping platform.",
+      experience: "5+ years"
     },
     {
       title: "AI/ML Engineer",
       department: "AI Research",
       location: "San Francisco, CA",
       type: "Full-time",
-      description: "Help improve our transaction categorization algorithms and develop new AI features."
+      description: "Help improve our transaction categorization algorithms and develop new AI features.",
+      experience: "3+ years"
     },
     {
       title: "Product Designer",
       department: "Design",
       location: "Remote",
       type: "Full-time",
-      description: "Create intuitive and delightful experiences for our financial management platform."
+      description: "Create intuitive and delightful experiences for our financial management platform.",
+      experience: "3+ years"
     },
     {
       title: "Customer Success Manager",
       department: "Customer Experience",
       location: "New York, NY",
       type: "Full-time",
-      description: "Help our customers get the most out of DigiBooks and ensure their success."
+      description: "Help our customers get the most out of DigiBooks and ensure their success.",
+      experience: "2+ years"
     },
     {
       title: "Marketing Specialist",
       department: "Marketing",
       location: "Remote",
       type: "Contract",
-      description: "Drive growth and awareness for our AI-powered bookkeeping solution."
+      description: "Drive growth and awareness for our AI-powered bookkeeping solution.",
+      experience: "2+ years"
     }
   ];
 
@@ -57,6 +102,61 @@ const Careers = () => {
             <p className="mx-auto max-w-2xl text-lg sm:text-xl text-secondary mb-8 sm:mb-10 animate-fade-in [animation-delay:200ms]">
               Help us revolutionize bookkeeping with AI and make financial management effortless for businesses everywhere.
             </p>
+          </div>
+        </section>
+
+        {/* Technology Stack Section */}
+        <section className="py-12 px-4 sm:px-6 lg:px-8 bg-surface/30 backdrop-blur-sm">
+          <div className="mx-auto max-w-7xl">
+            <h2 className="text-3xl font-bold mb-8 text-center bg-gradient-to-r from-primary to-[#8B5CF6] bg-clip-text text-transparent">
+              Our Technology Stack
+            </h2>
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                {
+                  category: "Frontend",
+                  technologies: "ReactJS, Tailwind CSS"
+                },
+                {
+                  category: "Backend",
+                  technologies: "Node.js, Express.js"
+                },
+                {
+                  category: "Databases",
+                  technologies: "PostgreSQL, MongoDB (Optional)"
+                },
+                {
+                  category: "AI Integration",
+                  technologies: "OpenAI GPT API"
+                },
+                {
+                  category: "Cloud & Infrastructure",
+                  technologies: "AWS/DigitalOcean, Cloudflare"
+                },
+                {
+                  category: "Payment Gateways",
+                  technologies: "Flutterwave/Paystack"
+                },
+                {
+                  category: "Bank Integration",
+                  technologies: "Mono/Okra"
+                },
+                {
+                  category: "Security",
+                  technologies: "AES-256 Encryption, MFA"
+                }
+              ].map((stack, index) => (
+                <div 
+                  key={index} 
+                  className="p-4 rounded-xl bg-white/70 backdrop-blur-sm border border-border hover:border-accent transition-all duration-300 animate-fade-in"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <h3 className="text-lg font-semibold mb-2">{stack.category}</h3>
+                  <p className="text-secondary">{stack.technologies}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -86,6 +186,9 @@ const Careers = () => {
                         </span>
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
                           {job.type}
+                        </span>
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {job.experience}
                         </span>
                       </div>
                       <p className="mt-3 text-secondary">{job.description}</p>
