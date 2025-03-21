@@ -27,6 +27,10 @@ interface JobApplication {
   phone: string;
   created_at: string;
   resume_url: string;
+  experience: string;
+  portfolio_link: string | null;
+  availability: string;
+  cover_letter: string | null;
 }
 
 const ApplicationsAdmin = () => {
@@ -162,13 +166,17 @@ const ApplicationsAdmin = () => {
                     <TableCell>{app.phone}</TableCell>
                     <TableCell>{new Date(app.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleDownloadResume(app.resume_url, app.full_name)}
-                      >
-                        <Download className="h-4 w-4 mr-2" /> Download
-                      </Button>
+                      {app.resume_url ? (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDownloadResume(app.resume_url, app.full_name)}
+                        >
+                          <Download className="h-4 w-4 mr-2" /> Download
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No resume</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
