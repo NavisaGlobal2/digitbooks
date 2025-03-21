@@ -18,6 +18,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { UploadCloud } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
@@ -66,18 +67,44 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
     setIsSubmitting(true);
     
     try {
-      // In a real application, you would send this data to a server
-      console.log("Application submitted:", {
-        ...values,
-        resumeFile: values.resumeFile ? {
-          name: values.resumeFile.name,
-          type: values.resumeFile.type,
-          size: values.resumeFile.size,
-        } : null,
-      });
+      // Upload the resume file to Supabase Storage
+      const file = values.resumeFile;
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${values.fullName.replace(/\s+/g, '-').toLowerCase()}.${fileExt}`;
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('resumes')
+        .upload(`${fileName}`, file);
+      
+      if (uploadError) {
+        throw new Error(`Resume upload failed: ${uploadError.message}`);
+      }
+      
+      // Generate a URL for the uploaded file
+      const resumeUrl = `${fileName}`;
+      
+      // Store the application data in the database
+      const { error: insertError } = await supabase
+        .from('job_applications')
+        .insert({
+          job_title: jobTitle,
+          job_department: jobDepartment,
+          full_name: values.fullName,
+          email: values.email,
+          phone: values.phone,
+          experience: values.experience,
+          portfolio_link: values.portfolioLink || null,
+          availability: values.availability,
+          cover_letter: values.coverLetter || null,
+          resume_url: resumeUrl
+        });
+      
+      if (insertError) {
+        throw new Error(`Application submission failed: ${insertError.message}`);
+      }
+      
+      // Log for development purposes
+      console.log("Application submitted and stored successfully");
       
       toast({
         title: "Application Submitted!",
@@ -86,9 +113,10 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
       
       onSubmitSuccess();
     } catch (error) {
+      console.error("Error submitting application:", error);
       toast({
         title: "Submission Failed",
-        description: "Please try again later.",
+        description: error instanceof Error ? error.message : "Please try again later.",
         variant: "destructive",
       });
     } finally {
