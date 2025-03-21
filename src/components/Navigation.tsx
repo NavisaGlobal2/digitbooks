@@ -1,6 +1,7 @@
+
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
-import { Home, DollarSign, Info, Settings, HelpCircle } from "lucide-react";
+import { Home, DollarSign, Info, Settings, HelpCircle, Briefcase } from "lucide-react";
 
 const Navigation = () => {
   return (
@@ -23,6 +24,10 @@ const Navigation = () => {
           <Link to="/about" className="text-secondary hover:text-primary transition-colors flex items-center gap-2">
             <Info className="w-4 h-4" />
             About
+          </Link>
+          <Link to="/careers" className="text-secondary hover:text-primary transition-colors flex items-center gap-2">
+            <Briefcase className="w-4 h-4" />
+            Careers
           </Link>
           <Link to="/help" className="text-secondary hover:text-primary transition-colors flex items-center gap-2">
             <HelpCircle className="w-4 h-4" />
