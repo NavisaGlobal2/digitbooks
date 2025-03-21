@@ -19,6 +19,7 @@ import { toast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { UploadCloud } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
@@ -49,6 +50,7 @@ type JobApplicationFormProps = {
 export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }: JobApplicationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -65,6 +67,7 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
+    setFormError(null);
     
     try {
       console.log("Starting application submission process...");
@@ -78,7 +81,7 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('resumes')
-        .upload(`${fileName}`, file);
+        .upload(fileName, file);
       
       if (uploadError) {
         console.error("Resume upload error:", uploadError);
@@ -87,12 +90,9 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
       
       console.log("Resume uploaded successfully:", uploadData);
       
-      // Generate a URL for the uploaded file
-      const resumeUrl = `${fileName}`;
-      
+      // Store the application data in the database
       console.log("Storing application data in database...");
       
-      // Store the application data in the database
       const { data: insertData, error: insertError } = await supabase
         .from('job_applications')
         .insert({
@@ -105,7 +105,7 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
           portfolio_link: values.portfolioLink || null,
           availability: values.availability,
           cover_letter: values.coverLetter || null,
-          resume_url: resumeUrl
+          resume_url: fileName
         })
         .select();
       
@@ -124,9 +124,11 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
       onSubmitSuccess();
     } catch (error) {
       console.error("Error submitting application:", error);
+      const errorMessage = error instanceof Error ? error.message : "Please try again later.";
+      setFormError(errorMessage);
       toast({
         title: "Submission Failed",
-        description: error instanceof Error ? error.message : "Please try again later.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -148,6 +150,12 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
         <h3 className="text-lg font-medium">Application for {jobTitle}</h3>
         <p className="text-sm text-muted-foreground">Department: {jobDepartment}</p>
       </div>
+      
+      {formError && (
+        <Alert variant="destructive">
+          <AlertDescription>{formError}</AlertDescription>
+        </Alert>
+      )}
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

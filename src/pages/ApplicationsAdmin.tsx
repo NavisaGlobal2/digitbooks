@@ -16,7 +16,15 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Download, AlertCircle, RefreshCw } from "lucide-react";
+import { Download, AlertCircle, RefreshCw, Eye } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface JobApplication {
   id: string;
@@ -26,7 +34,7 @@ interface JobApplication {
   email: string;
   phone: string;
   created_at: string;
-  resume_url: string;
+  resume_url: string | null;
   experience: string;
   portfolio_link: string | null;
   availability: string;
@@ -37,6 +45,7 @@ const ApplicationsAdmin = () => {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null);
   const { toast } = useToast();
 
   const fetchApplications = async () => {
@@ -75,7 +84,16 @@ const ApplicationsAdmin = () => {
     fetchApplications();
   }, []);
 
-  const handleDownloadResume = async (resumeUrl: string, applicantName: string) => {
+  const handleDownloadResume = async (resumeUrl: string | null, applicantName: string) => {
+    if (!resumeUrl) {
+      toast({
+        title: "No Resume Available",
+        description: "This application does not have a resume attached.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       console.log("Downloading resume:", resumeUrl);
       const { data, error } = await supabase.storage
@@ -91,7 +109,8 @@ const ApplicationsAdmin = () => {
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${applicantName.replace(/\s+/g, '_')}_resume${resumeUrl.substring(resumeUrl.lastIndexOf('.'))}`;
+      const fileExt = resumeUrl.includes('.') ? resumeUrl.substring(resumeUrl.lastIndexOf('.')) : '.pdf';
+      a.download = `${applicantName.replace(/\s+/g, '_')}_resume${fileExt}`;
       document.body.appendChild(a);
       a.click();
       URL.revokeObjectURL(url);
@@ -108,6 +127,16 @@ const ApplicationsAdmin = () => {
         description: err instanceof Error ? err.message : 'An unexpected error occurred',
         variant: "destructive",
       });
+    }
+  };
+
+  const formatAvailability = (availability: string) => {
+    switch(availability) {
+      case 'immediately': return 'Immediately';
+      case '2weeks': return 'In 2 weeks';
+      case '1month': return 'In 1 month';
+      case 'other': return 'Other (see cover letter)';
+      default: return availability;
     }
   };
 
@@ -154,6 +183,7 @@ const ApplicationsAdmin = () => {
                   <TableHead>Phone</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Resume</TableHead>
+                  <TableHead>Details</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -177,6 +207,88 @@ const ApplicationsAdmin = () => {
                       ) : (
                         <span className="text-xs text-muted-foreground">No resume</span>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setSelectedApplication(app)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" /> View
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Application Details</DialogTitle>
+                            <DialogDescription>
+                              Submitted on {new Date(app.created_at).toLocaleString()}
+                            </DialogDescription>
+                          </DialogHeader>
+                          
+                          <div className="space-y-4 mt-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <h3 className="text-sm font-medium">Full Name</h3>
+                                <p>{app.full_name}</p>
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-medium">Position</h3>
+                                <p>{app.job_title} ({app.job_department})</p>
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-medium">Email</h3>
+                                <p>{app.email}</p>
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-medium">Phone</h3>
+                                <p>{app.phone}</p>
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-medium">Availability</h3>
+                                <p>{formatAvailability(app.availability)}</p>
+                              </div>
+                              {app.portfolio_link && (
+                                <div>
+                                  <h3 className="text-sm font-medium">Portfolio Link</h3>
+                                  <a 
+                                    href={app.portfolio_link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    {app.portfolio_link}
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div>
+                              <h3 className="text-sm font-medium">Experience</h3>
+                              <p className="whitespace-pre-wrap">{app.experience}</p>
+                            </div>
+                            
+                            {app.cover_letter && (
+                              <div>
+                                <h3 className="text-sm font-medium">Cover Letter</h3>
+                                <p className="whitespace-pre-wrap">{app.cover_letter}</p>
+                              </div>
+                            )}
+                            
+                            <div className="flex justify-end">
+                              {app.resume_url && (
+                                <Button 
+                                  onClick={() => handleDownloadResume(app.resume_url, app.full_name)}
+                                  className="ml-2"
+                                >
+                                  <Download className="h-4 w-4 mr-2" /> Download Resume
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </TableCell>
                   </TableRow>
                 ))}
