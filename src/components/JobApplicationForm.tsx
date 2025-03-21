@@ -306,7 +306,11 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
             <Button variant="outline" type="button" onClick={onSubmitSuccess}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="bg-[#F2FCE2] text-primary hover:bg-[#E5F7C7] border border-[#D0E6B1]"
+            >
               {isSubmitting ? "Submitting..." : "Submit Application"}
             </Button>
           </div>
