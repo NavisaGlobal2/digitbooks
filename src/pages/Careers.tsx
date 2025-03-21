@@ -194,7 +194,7 @@ const Careers = () => {
                       <p className="mt-3 text-secondary">{job.description}</p>
                     </div>
                     <div className="flex-shrink-0">
-                      <Button className="group">
+                      <Button variant="outline" className="group bg-[#F2FCE2] text-primary hover:bg-[#E5F7C7] border-[#D0E6B1]">
                         Apply Now
                         <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                       </Button>
