@@ -28,8 +28,7 @@ const ExpensesPage = () => {
 
   const handleStatementProcessed = () => {
     // This function would be called after successful statement processing
-    // Here you could refresh data or perform other actions
-    toast.info("Statement processed. You can now see your transactions in the expenses list.");
+    toast.success("Bank statement processed successfully! Transactions have been added to your expenses.");
   };
   
   return (
@@ -70,6 +69,7 @@ const ExpensesPage = () => {
             getTotalExpenses={getTotalExpenses}
             getExpensesByCategory={getExpensesByCategory}
             onConnectBank={handleConnectBank}
+            onAddExpense={handleAddExpense}
           />
         </main>
       </div>

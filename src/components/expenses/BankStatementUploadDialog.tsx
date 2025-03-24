@@ -37,7 +37,6 @@ const BankStatementUploadDialog = ({
     // Simulate processing bank statement
     setTimeout(() => {
       setUploading(false);
-      toast.success("Bank statement processed successfully");
       onStatementProcessed();
       onOpenChange(false);
       setFile(null);

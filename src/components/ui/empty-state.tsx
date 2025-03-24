@@ -8,10 +8,12 @@ interface EmptyStateProps {
   primaryAction?: {
     label: string;
     onClick: () => void;
+    icon?: ReactNode;
   };
   secondaryAction?: {
     label: string;
     onClick: () => void;
+    icon?: ReactNode;
   };
 }
 
@@ -34,8 +36,9 @@ export function EmptyState({
         {primaryAction && (
           <button
             onClick={primaryAction.onClick}
-            className="bg-green-500 hover:bg-green-600 text-white px-6 py-2.5 rounded-md transition-colors"
+            className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white px-6 py-2.5 rounded-md transition-colors"
           >
+            {primaryAction.icon}
             {primaryAction.label}
           </button>
         )}
@@ -43,8 +46,9 @@ export function EmptyState({
         {secondaryAction && (
           <button
             onClick={secondaryAction.onClick}
-            className="border border-gray-300 hover:bg-gray-50 px-6 py-2.5 rounded-md transition-colors"
+            className="flex items-center justify-center border border-gray-300 hover:bg-gray-50 px-6 py-2.5 rounded-md transition-colors"
           >
+            {secondaryAction.icon}
             {secondaryAction.label}
           </button>
         )}

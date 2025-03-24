@@ -14,6 +14,7 @@ interface ExpensesContentProps {
   getTotalExpenses: () => number;
   getExpensesByCategory: () => Record<string, number>;
   onConnectBank: () => void;
+  onAddExpense: () => void;
 }
 
 const ExpensesContent = ({ 
@@ -21,15 +22,12 @@ const ExpensesContent = ({
   deleteExpense,
   getTotalExpenses,
   getExpensesByCategory,
-  onConnectBank
+  onConnectBank,
+  onAddExpense
 }: ExpensesContentProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
-  
-  const handleAddExpense = () => {
-    setShowExpenseDialog(true);
-  };
   
   const filteredExpenses = expenses.filter(expense => 
     expense.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -66,7 +64,7 @@ const ExpensesContent = ({
         <>
           {expenses.length === 0 ? (
             <ExpenseEmptyState 
-              onAddExpense={handleAddExpense} 
+              onAddExpense={onAddExpense} 
               onConnectBank={onConnectBank} 
             />
           ) : (
@@ -83,7 +81,7 @@ const ExpensesContent = ({
                 <ExpenseSearch
                   searchQuery={searchQuery}
                   setSearchQuery={setSearchQuery}
-                  onAddExpense={handleAddExpense}
+                  onAddExpense={onAddExpense}
                 />
                 
                 <ExpensesTable 
