@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef, ChangeEvent } from "react";
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -14,7 +14,9 @@ import {
   ChevronLeft,
   ChevronDown,
   Upload,
-  Copy
+  Copy,
+  Download,
+  Share2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -29,16 +31,27 @@ import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 import Sidebar from "@/components/dashboard/Sidebar";
 
 const InvoiceForm = () => {
-  const [invoiceItems, setInvoiceItems] = useState([{ description: '', quantity: 1, price: 0, tax: 0 }]);
+  const [invoiceItems, setInvoiceItems] = useState([{ description: 'Website design service', quantity: 1, price: 3000, tax: 2 }]);
   const [selectedTemplate, setSelectedTemplate] = useState("default");
   const [invoiceDate, setInvoiceDate] = useState<Date | undefined>(new Date());
   const [dueDate, setDueDate] = useState<Date | undefined>(
     new Date(new Date().setDate(new Date().getDate() + 14))
   );
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [additionalInfo, setAdditionalInfo] = useState("End of month");
+  
+  // Bank details
+  const [accountName, setAccountName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [bankAddress, setBankAddress] = useState("");
+  const [swiftCode, setSwiftCode] = useState("");
   
   const addInvoiceItem = () => {
     setInvoiceItems([...invoiceItems, { description: '', quantity: 1, price: 0, tax: 0 }]);
@@ -54,6 +67,60 @@ const InvoiceForm = () => {
   
   const calculateTotal = () => {
     return calculateSubtotal() + calculateTax();
+  };
+
+  const handleLogoUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        if (e.target && typeof e.target.result === 'string') {
+          setLogoPreview(e.target.result);
+          toast.success("Logo uploaded successfully");
+        }
+      };
+      
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleBrowseFiles = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        if (e.target && typeof e.target.result === 'string') {
+          setLogoPreview(e.target.result);
+          toast.success("Logo uploaded successfully");
+        }
+      };
+      
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleGenerateInvoice = () => {
+    toast.success("Invoice generated successfully");
+  };
+
+  const handleShareInvoice = () => {
+    toast.success("Invoice sharing link copied to clipboard");
   };
 
   return (
@@ -105,13 +172,49 @@ const InvoiceForm = () => {
         {/* Logo Upload */}
         <div className="bg-white p-6 rounded-lg border border-border">
           <h3 className="text-lg font-medium mb-4">Upload logo</h3>
-          <div className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center bg-gray-50">
-            <Upload className="h-10 w-10 text-gray-400 mb-2" />
-            <p className="text-sm text-gray-500 mb-1">Drag & drop file here</p>
-            <p className="text-sm text-gray-500 mb-3">or</p>
-            <Button variant="outline" className="text-green-500 border-green-500 hover:bg-green-50">
-              Browse files
-            </Button>
+          <div 
+            className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center bg-gray-50"
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+            {logoPreview ? (
+              <div className="flex flex-col items-center">
+                <div className="h-24 w-24 mb-3">
+                  <img 
+                    src={logoPreview} 
+                    alt="Uploaded logo" 
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+                <Button 
+                  variant="outline" 
+                  className="text-green-500 border-green-500 hover:bg-green-50"
+                  onClick={handleBrowseFiles}
+                >
+                  Change logo
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Upload className="h-10 w-10 text-gray-400 mb-2" />
+                <p className="text-sm text-gray-500 mb-1">Drag & drop file here</p>
+                <p className="text-sm text-gray-500 mb-3">or</p>
+                <Button 
+                  variant="outline" 
+                  className="text-green-500 border-green-500 hover:bg-green-50"
+                  onClick={handleBrowseFiles}
+                >
+                  Browse files
+                </Button>
+              </>
+            )}
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*"
+              onChange={handleLogoUpload}
+            />
           </div>
         </div>
 
@@ -121,7 +224,7 @@ const InvoiceForm = () => {
           <div>
             <h3 className="text-lg font-medium mb-2">Invoice number</h3>
             <div className="relative">
-              <Input placeholder="INV-001" />
+              <Input placeholder="INV-001" defaultValue="AB2324-01" />
               <Button 
                 variant="ghost" 
                 size="icon"
@@ -136,7 +239,7 @@ const InvoiceForm = () => {
           <div className="pt-2">
             <h3 className="text-lg font-medium mb-2">Select client</h3>
             <div className="relative mb-2">
-              <Select>
+              <Select defaultValue="client1">
                 <SelectTrigger>
                   <SelectValue placeholder="Select a client" />
                 </SelectTrigger>
@@ -232,7 +335,7 @@ const InvoiceForm = () => {
             <div key={index} className="mb-4 border border-gray-200 rounded-md p-4">
               <div className="mb-4">
                 <Label htmlFor={`description-${index}`}>Description</Label>
-                <Input id={`description-${index}`} placeholder="Web design services" />
+                <Input id={`description-${index}`} defaultValue={item.description} placeholder="Web design services" />
               </div>
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>
@@ -241,7 +344,7 @@ const InvoiceForm = () => {
                     id={`quantity-${index}`} 
                     type="number" 
                     min="1" 
-                    defaultValue="1" 
+                    defaultValue={item.quantity.toString()} 
                   />
                 </div>
                 <div>
@@ -251,6 +354,7 @@ const InvoiceForm = () => {
                     type="number" 
                     min="0" 
                     step="0.01" 
+                    defaultValue={item.price.toString()}
                     placeholder="0.00" 
                   />
                 </div>
@@ -262,6 +366,7 @@ const InvoiceForm = () => {
                     min="0" 
                     max="100" 
                     step="0.1" 
+                    defaultValue={item.tax.toString()}
                     placeholder="0" 
                   />
                 </div>
@@ -271,7 +376,7 @@ const InvoiceForm = () => {
                 <Input 
                   id={`total-${index}`} 
                   readOnly 
-                  value="$0.00"
+                  value={`$${(item.quantity * item.price).toFixed(2)}`}
                 />
               </div>
             </div>
@@ -293,7 +398,87 @@ const InvoiceForm = () => {
             id="additional-info" 
             placeholder="Enter notes or additional information for your client"
             className="min-h-[100px]"
+            value={additionalInfo}
+            onChange={(e) => setAdditionalInfo(e.target.value)}
           />
+        </div>
+
+        {/* Bank Details - New Section */}
+        <div className="bg-white p-6 rounded-lg border border-border">
+          <h3 className="text-lg font-medium mb-4">Issuer bank details</h3>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="account-name">Your account name</Label>
+              <Input 
+                id="account-name" 
+                placeholder="Input details" 
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="account-number">Account number</Label>
+                <Input 
+                  id="account-number" 
+                  placeholder="Input details" 
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="bank-name">Bank name</Label>
+                <Input 
+                  id="bank-name" 
+                  placeholder="Input details" 
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="bank-address">Bank address</Label>
+                <Input 
+                  id="bank-address" 
+                  placeholder="Input details" 
+                  value={bankAddress}
+                  onChange={(e) => setBankAddress(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="swift-code">Swift code</Label>
+                <Input 
+                  id="swift-code" 
+                  placeholder="Input details" 
+                  value={swiftCode}
+                  onChange={(e) => setSwiftCode(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <Button 
+            className="bg-green-500 hover:bg-green-600 text-white flex items-center justify-center gap-2"
+            onClick={handleGenerateInvoice}
+          >
+            <Download className="h-5 w-5" />
+            <span>Download</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            className="border-green-500 text-green-500 hover:bg-green-50 flex items-center justify-center gap-2"
+            onClick={handleShareInvoice}
+          >
+            <Share2 className="h-5 w-5" />
+            <span>Share Invoice</span>
+          </Button>
         </div>
       </div>
 
@@ -304,16 +489,20 @@ const InvoiceForm = () => {
           <div className="border rounded-lg p-8 bg-white">
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-4xl font-bold">INVOICE</h1>
-              <div className="h-20 w-20 bg-gray-100 rounded-full flex items-center justify-center">
-                <span className="text-gray-400">Logo</span>
+              <div className="h-20 w-20 rounded-full flex items-center justify-center overflow-hidden">
+                {logoPreview ? (
+                  <img src={logoPreview} alt="Company logo" className="h-full w-full object-contain" />
+                ) : (
+                  <span className="text-gray-400">Logo</span>
+                )}
               </div>
             </div>
             
             <div className="flex justify-between mb-10">
               <div>
                 <h4 className="font-medium mb-2 text-lg">Billed to</h4>
-                <p>Client name</p>
-                <p>Client email</p>
+                <p className="font-medium">Amarachhhlii LTD</p>
+                <p>Amarachhhli@gmail.com</p>
                 <p>Company address</p>
                 <p>City, Country - 00000</p>
               </div>
@@ -335,13 +524,15 @@ const InvoiceForm = () => {
                 <div className="text-right">Total</div>
               </div>
               
-              <div className="grid grid-cols-5 py-4 border-b text-sm">
-                <div>INV-001</div>
-                <div>Web design service</div>
-                <div className="text-center">1</div>
-                <div className="text-right">$3,000.00</div>
-                <div className="text-right">$3,000.00</div>
-              </div>
+              {invoiceItems.map((item, index) => (
+                <div key={index} className="grid grid-cols-5 py-4 border-b text-sm">
+                  <div>{index === 0 ? "AB2324-01" : ""}</div>
+                  <div>{item.description || "Item description"}</div>
+                  <div className="text-center">{item.quantity}</div>
+                  <div className="text-right">${item.price.toFixed(2)}</div>
+                  <div className="text-right">${(item.quantity * item.price).toFixed(2)}</div>
+                </div>
+              ))}
             </div>
 
             <div className="flex justify-between mb-8">
@@ -356,15 +547,15 @@ const InvoiceForm = () => {
               <div className="text-right w-1/3">
                 <div className="flex justify-between mb-2">
                   <span>Subtotal</span>
-                  <span>$3,000.00</span>
+                  <span>${calculateSubtotal().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between mb-2">
-                  <span>Tax (0%)</span>
-                  <span>$0.00</span>
+                  <span>Tax ({(calculateTax() / calculateSubtotal() * 100).toFixed(1)}%)</span>
+                  <span>${calculateTax().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold pt-2 border-t mt-3 text-lg">
                   <span>Total due</span>
-                  <span>$3,000.00</span>
+                  <span>${calculateTotal().toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -373,7 +564,7 @@ const InvoiceForm = () => {
               <p className="font-medium mb-2">Payment terms</p>
               <p>100% upon project completion</p>
               <div className="flex items-start mt-3">
-                <input type="checkbox" className="mt-1 mr-2" />
+                <input type="checkbox" className="mt-1 mr-2" defaultChecked />
                 <p className="text-sm">Please pay within 15 days of receiving this invoice.</p>
               </div>
             </div>
@@ -387,12 +578,19 @@ const InvoiceForm = () => {
                   <p>Swift code</p>
                 </div>
                 <div>
-                  <p>ABCD BANK</p>
-                  <p>3747489 2300011</p>
-                  <p>ABCDUSBBXXX</p>
+                  <p>{bankName || "ABCD BANK"}</p>
+                  <p>{accountNumber || "3747489 2300011"}</p>
+                  <p>{swiftCode || "ABCDUSBBXXX"}</p>
                 </div>
               </div>
             </div>
+
+            {additionalInfo && (
+              <div className="border-t mt-6 pt-5">
+                <p className="font-medium mb-2">Additional information</p>
+                <p className="text-sm">{additionalInfo}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
