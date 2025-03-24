@@ -44,6 +44,7 @@ const InvoiceForm = () => {
     return calculateSubtotal() + calculateTax();
   };
 
+  // We'll remove these functions as they're now handled in the ActionButtons component
   const handleGenerateInvoice = () => {
     toast.success("Invoice generated successfully");
   };
@@ -105,11 +106,20 @@ const InvoiceForm = () => {
           setIsVerified={setIsAccountVerified}
         />
 
-        {/* Action Buttons */}
+        {/* Action Buttons - Pass all required props */}
         <ActionButtons 
           handleGenerateInvoice={handleGenerateInvoice}
           handleShareInvoice={handleShareInvoice}
           isAccountVerified={isAccountVerified}
+          logoPreview={logoPreview}
+          invoiceItems={invoiceItems}
+          invoiceDate={invoiceDate}
+          dueDate={dueDate}
+          additionalInfo={additionalInfo}
+          bankName={bankName}
+          accountNumber={accountNumber}
+          swiftCode={swiftCode}
+          accountName={accountName}
         />
       </div>
 
