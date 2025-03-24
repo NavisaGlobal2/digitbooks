@@ -13,6 +13,9 @@ import {
   Search,
   Filter,
   MoreVertical,
+  Download,
+  ExternalLink,
+  CheckCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,19 +28,14 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import { Invoice, InvoiceStatus } from "@/types/invoice";
+import { formatNaira } from "@/utils/invoice";
+import { downloadInvoice, shareInvoice } from "@/utils/invoice";
 
 interface InvoiceDashboardProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   setIsCreatingInvoice: (value: boolean) => void;
 }
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN'
-  }).format(amount);
-};
 
 const StatusBadge = ({ status }: { status: InvoiceStatus }) => {
   const statusStyles = {
@@ -60,7 +58,7 @@ const StatusBadge = ({ status }: { status: InvoiceStatus }) => {
 };
 
 const InvoiceDashboard = ({ activeTab, setActiveTab, setIsCreatingInvoice }: InvoiceDashboardProps) => {
-  const { invoices } = useInvoices();
+  const { invoices, updateInvoiceStatus } = useInvoices();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   
@@ -114,6 +112,43 @@ const InvoiceDashboard = ({ activeTab, setActiveTab, setIsCreatingInvoice }: Inv
   const paidTotal = calculateStatusTotal(paidInvoices);
   const expectedTotal = calculateStatusTotal(expectedThisMonth);
   
+  // Handle invoice actions
+  const handleDownloadInvoice = async (invoice: Invoice) => {
+    await downloadInvoice({
+      logoPreview: invoice.logoUrl || null,
+      invoiceItems: invoice.items,
+      invoiceDate: invoice.issuedDate,
+      dueDate: invoice.dueDate,
+      additionalInfo: invoice.additionalInfo || "",
+      bankName: invoice.bankDetails.bankName,
+      accountNumber: invoice.bankDetails.accountNumber,
+      swiftCode: invoice.bankDetails.swiftCode,
+      accountName: invoice.bankDetails.accountName,
+      clientName: invoice.clientName,
+      invoiceNumber: invoice.invoiceNumber
+    });
+  };
+  
+  const handleShareInvoice = async (invoice: Invoice) => {
+    await shareInvoice({
+      logoPreview: invoice.logoUrl || null,
+      invoiceItems: invoice.items,
+      invoiceDate: invoice.issuedDate,
+      dueDate: invoice.dueDate,
+      additionalInfo: invoice.additionalInfo || "",
+      bankName: invoice.bankDetails.bankName,
+      accountNumber: invoice.bankDetails.accountNumber,
+      swiftCode: invoice.bankDetails.swiftCode,
+      accountName: invoice.bankDetails.accountName,
+      clientName: invoice.clientName,
+      invoiceNumber: invoice.invoiceNumber
+    });
+  };
+  
+  const handleMarkAsPaid = (invoiceId: string) => {
+    updateInvoiceStatus(invoiceId, 'paid');
+  };
+  
   return (
     <>
       {/* Tabs */}
@@ -148,7 +183,7 @@ const InvoiceDashboard = ({ activeTab, setActiveTab, setIsCreatingInvoice }: Inv
                   <Clock className="h-4 w-4" />
                   <span className="text-sm font-medium">Overdue invoices</span>
                 </div>
-                <h3 className="text-3xl font-bold">{formatCurrency(overdueTotal)}</h3>
+                <h3 className="text-3xl font-bold">{formatNaira(overdueTotal)}</h3>
                 <p className="text-sm text-gray-500 mt-1">{overdueInvoices.length} invoice(s)</p>
               </CardContent>
             </Card>
@@ -159,7 +194,7 @@ const InvoiceDashboard = ({ activeTab, setActiveTab, setIsCreatingInvoice }: Inv
                   <ArrowRight className="h-4 w-4" />
                   <span className="text-sm font-medium">Outstanding invoices</span>
                 </div>
-                <h3 className="text-3xl font-bold">{formatCurrency(pendingTotal)}</h3>
+                <h3 className="text-3xl font-bold">{formatNaira(pendingTotal)}</h3>
                 <p className="text-sm text-gray-500 mt-1">{pendingInvoices.length} invoice(s)</p>
               </CardContent>
             </Card>
@@ -170,7 +205,7 @@ const InvoiceDashboard = ({ activeTab, setActiveTab, setIsCreatingInvoice }: Inv
                   <ArrowDown className="h-4 w-4" />
                   <span className="text-sm font-medium">Paid invoices</span>
                 </div>
-                <h3 className="text-3xl font-bold">{formatCurrency(paidTotal)}</h3>
+                <h3 className="text-3xl font-bold">{formatNaira(paidTotal)}</h3>
                 <p className="text-sm text-gray-500 mt-1">{paidInvoices.length} invoice(s)</p>
               </CardContent>
             </Card>
@@ -181,7 +216,7 @@ const InvoiceDashboard = ({ activeTab, setActiveTab, setIsCreatingInvoice }: Inv
                   <CalendarRange className="h-4 w-4" />
                   <span className="text-sm font-medium">Expected this month</span>
                 </div>
-                <h3 className="text-3xl font-bold">{formatCurrency(expectedTotal)}</h3>
+                <h3 className="text-3xl font-bold">{formatNaira(expectedTotal)}</h3>
                 <p className="text-sm text-gray-500 mt-1">{expectedThisMonth.length} invoice(s)</p>
               </CardContent>
             </Card>
@@ -251,9 +286,9 @@ const InvoiceDashboard = ({ activeTab, setActiveTab, setIsCreatingInvoice }: Inv
                       <TableRow key={invoice.id}>
                         <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
                         <TableCell>{invoice.clientName}</TableCell>
-                        <TableCell>{format(invoice.issuedDate, "dd/MM/yyyy")}</TableCell>
-                        <TableCell>{format(invoice.dueDate, "dd/MM/yyyy")}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(invoice.amount)}</TableCell>
+                        <TableCell>{format(new Date(invoice.issuedDate), "dd/MM/yyyy")}</TableCell>
+                        <TableCell>{format(new Date(invoice.dueDate), "dd/MM/yyyy")}</TableCell>
+                        <TableCell className="text-right">{formatNaira(invoice.amount)}</TableCell>
                         <TableCell>
                           <StatusBadge status={invoice.status} />
                         </TableCell>
@@ -265,9 +300,20 @@ const InvoiceDashboard = ({ activeTab, setActiveTab, setIsCreatingInvoice }: Inv
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem>View</DropdownMenuItem>
-                              <DropdownMenuItem>Download</DropdownMenuItem>
-                              <DropdownMenuItem>Mark as Paid</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDownloadInvoice(invoice)} className="cursor-pointer">
+                                <Download className="h-4 w-4 mr-2" />
+                                Download
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleShareInvoice(invoice)} className="cursor-pointer">
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Share
+                              </DropdownMenuItem>
+                              {invoice.status !== 'paid' && (
+                                <DropdownMenuItem onClick={() => handleMarkAsPaid(invoice.id)} className="cursor-pointer">
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Mark as Paid
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

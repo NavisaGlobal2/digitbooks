@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { useInvoices } from "@/contexts/InvoiceContext";
@@ -11,6 +10,7 @@ import BankDetails from "./BankDetails";
 import ActionButtons from "./ActionButtons";
 import InvoicePreview from "./InvoicePreview";
 import { InvoiceStatus } from "@/types/invoice";
+import { calculateSubtotal, calculateTax, calculateTotal } from "@/utils/invoice";
 
 const InvoiceForm = () => {
   const { addInvoice } = useInvoices();
@@ -34,18 +34,6 @@ const InvoiceForm = () => {
   
   const addInvoiceItem = () => {
     setInvoiceItems([...invoiceItems, { description: '', quantity: 1, price: 0, tax: 7.5 }]);
-  };
-  
-  const calculateSubtotal = () => {
-    return invoiceItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-  };
-  
-  const calculateTax = () => {
-    return invoiceItems.reduce((sum, item) => sum + (item.quantity * item.price * item.tax / 100), 0);
-  };
-  
-  const calculateTotal = () => {
-    return calculateSubtotal() + calculateTax();
   };
 
   const handleSaveInvoice = () => {
@@ -75,7 +63,7 @@ const InvoiceForm = () => {
       clientName,
       issuedDate: invoiceDate,
       dueDate: dueDate,
-      amount: calculateTotal(),
+      amount: calculateTotal(invoiceItems),
       status: determineInvoiceStatus(dueDate),
       items: [...invoiceItems],
       logoUrl: logoPreview,
@@ -90,7 +78,7 @@ const InvoiceForm = () => {
 
     toast.success("Invoice created successfully!");
     
-    // Reset form or navigate back to invoice list
+    // Dispatch event to notify that an invoice was created
     window.dispatchEvent(new CustomEvent('invoiceCreated'));
   };
 

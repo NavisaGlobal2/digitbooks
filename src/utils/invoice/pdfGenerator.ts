@@ -1,31 +1,26 @@
 
-import { jsPDF } from "jspdf";
+import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { format } from "date-fns";
-import { InvoiceItem } from "@/types/invoice";
-import { formatNaira } from "./formatters";
 import { calculateSubtotal, calculateTax, calculateTotal } from "./calculations";
+import { formatNaira } from "./formatters";
 
 export interface InvoiceDetails {
   logoPreview: string | null;
-  invoiceItems: InvoiceItem[];
-  invoiceDate: Date | undefined;
-  dueDate: Date | undefined;
+  invoiceItems: { description: string; quantity: number; price: number; tax: number }[];
+  invoiceDate?: Date;
+  dueDate?: Date;
   additionalInfo: string;
   bankName: string;
   accountNumber: string;
   swiftCode: string;
   accountName: string;
-  businessName?: string;
-  businessEmail?: string;
-  businessAddress?: string;
   clientName?: string;
-  clientEmail?: string;
-  clientAddress?: string;
+  invoiceNumber?: string;
 }
 
 /**
- * Generate PDF invoice
+ * Generate a PDF invoice
  */
 export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<Blob> => {
   const {
@@ -38,133 +33,184 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
     accountNumber,
     swiftCode,
     accountName,
-    businessName = "Your Business Name",
-    businessEmail = "business@example.com",
-    businessAddress = "Business Address, Nigeria",
-    clientName = "Amarachhhlii LTD",
-    clientEmail = "Amarachhhli@gmail.com",
-    clientAddress = "Company address, City, Nigeria - 00000"
+    clientName = "Client",
+    invoiceNumber = format(new Date(), "yyyyMMdd")
   } = invoiceDetails;
 
   // Create a new PDF document
-  const doc = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "a4"
-  });
-
-  // Add logo if provided
+  const doc = new jsPDF();
+  
+  // Set up some variables for positioning
+  let yPos = 20;
+  const leftMargin = 15;
+  const rightMargin = doc.internal.pageSize.width - 15;
+  const pageWidth = doc.internal.pageSize.width;
+  
+  // Add logo if available
   if (logoPreview) {
     try {
-      const img = new Image();
-      img.src = logoPreview;
-      await new Promise((resolve) => {
-        img.onload = resolve;
-      });
-      doc.addImage(img, 'JPEG', 160, 15, 30, 30);
+      doc.addImage(logoPreview, 'PNG', leftMargin, yPos, 40, 20);
+      yPos += 25;
     } catch (error) {
       console.error("Error adding logo to PDF:", error);
     }
+  } else {
+    // Add company name if no logo
+    doc.setFontSize(20);
+    doc.setTextColor(44, 62, 80);
+    doc.text("Your Company", leftMargin, yPos);
+    yPos += 10;
   }
-
-  // Set font styles
-  doc.setFont("helvetica", "bold");
+  
+  // Add invoice title and number
   doc.setFontSize(24);
-  doc.text("INVOICE", 20, 30);
-
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-
-  // Add invoice number and date
-  const invoiceNumber = "AB2324-01";
-  doc.text(`Invoice #: ${invoiceNumber}`, 20, 40);
-  doc.text(`Date: ${invoiceDate ? format(invoiceDate, "dd MMM, yyyy") : "01 Jan, 2023"}`, 20, 45);
-  doc.text(`Due Date: ${dueDate ? format(dueDate, "dd MMM, yyyy") : "15 Jan, 2023"}`, 20, 50);
-
-  // Add business details
-  doc.setFont("helvetica", "bold");
-  doc.text("From:", 20, 60);
-  doc.setFont("helvetica", "normal");
-  doc.text(businessName, 20, 65);
-  doc.text(businessEmail, 20, 70);
-  doc.text(businessAddress, 20, 75);
-
-  // Add client details
-  doc.setFont("helvetica", "bold");
-  doc.text("To:", 120, 60);
-  doc.setFont("helvetica", "normal");
-  doc.text(clientName, 120, 65);
-  doc.text(clientEmail, 120, 70);
-  doc.text(clientAddress, 120, 75);
-
-  // Add invoice items table
-  const tableColumn = ["Description", "Qty", "Price (₦)", "Tax (%)", "Total (₦)"];
-  const tableRows = invoiceItems.map(item => [
-    item.description,
-    item.quantity.toString(),
-    item.price.toFixed(2),
-    item.tax.toString(),
-    (item.quantity * item.price).toFixed(2)
-  ]);
-
+  doc.setTextColor(44, 62, 80);
+  doc.text("INVOICE", pageWidth / 2, yPos, { align: "center" });
+  yPos += 10;
+  
+  doc.setFontSize(12);
+  doc.text(`Invoice #: ${invoiceNumber}`, rightMargin, yPos, { align: "right" });
+  yPos += 8;
+  
+  // Add dates
+  const issuedDateStr = invoiceDate ? format(invoiceDate, "MMMM dd, yyyy") : format(new Date(), "MMMM dd, yyyy");
+  const dueDateStr = dueDate ? format(dueDate, "MMMM dd, yyyy") : "N/A";
+  
+  doc.text(`Issued: ${issuedDateStr}`, rightMargin, yPos, { align: "right" });
+  yPos += 7;
+  doc.text(`Due: ${dueDateStr}`, rightMargin, yPos, { align: "right" });
+  yPos += 15;
+  
+  // Add client information
+  doc.setFontSize(12);
+  doc.setTextColor(44, 62, 80);
+  doc.text("Bill To:", leftMargin, yPos);
+  yPos += 7;
+  doc.setFontSize(14);
+  doc.text(clientName, leftMargin, yPos);
+  yPos += 15;
+  
+  // Add invoice items
+  doc.setFontSize(12);
+  
+  // Transform the invoice items into a format that jspdf-autotable can use
+  const tableHeaders = [
+    { header: "Description", dataKey: "desc" },
+    { header: "Quantity", dataKey: "qty" },
+    { header: "Unit Price", dataKey: "price" },
+    { header: "Tax (%)", dataKey: "tax" },
+    { header: "Amount", dataKey: "amount" }
+  ];
+  
+  const tableData = invoiceItems.map(item => ({
+    desc: item.description,
+    qty: item.quantity.toString(),
+    price: formatNaira(item.price),
+    tax: `${item.tax}%`,
+    amount: formatNaira(item.quantity * item.price)
+  }));
+  
+  // Add the table
   (doc as any).autoTable({
-    head: [tableColumn],
-    body: tableRows,
-    startY: 85,
+    startY: yPos,
+    head: [tableHeaders.map(h => h.header)],
+    body: tableData.map(row => [
+      row.desc,
+      row.qty,
+      row.price,
+      row.tax,
+      row.amount
+    ]),
     theme: 'grid',
-    styles: { fontSize: 9 },
-    headStyles: { fillColor: [22, 160, 133] }
+    headStyles: {
+      fillColor: [44, 62, 80],
+      textColor: [255, 255, 255],
+      fontSize: 12,
+      halign: 'center'
+    },
+    columnStyles: {
+      0: { cellWidth: 70 },
+      1: { halign: 'center' },
+      2: { halign: 'right' },
+      3: { halign: 'center' },
+      4: { halign: 'right' }
+    },
+    margin: { left: leftMargin, right: 15 }
   });
-
-  // Calculate and add totals
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
+  
+  // Get the Y position after the table
+  yPos = (doc as any).lastAutoTable.finalY + 10;
+  
+  // Add subtotal, tax and total
   const subtotal = calculateSubtotal(invoiceItems);
   const tax = calculateTax(invoiceItems);
   const total = calculateTotal(invoiceItems);
-
-  doc.text("Subtotal:", 130, finalY);
-  doc.text(formatNaira(subtotal).replace("NGN", "₦"), 170, finalY, { align: "right" });
-
-  doc.text(`Tax (${(tax / subtotal * 100).toFixed(1)}%):`, 130, finalY + 5);
-  doc.text(formatNaira(tax).replace("NGN", "₦"), 170, finalY + 5, { align: "right" });
-
-  doc.setFont("helvetica", "bold");
-  doc.text("Total:", 130, finalY + 10);
-  doc.text(formatNaira(total).replace("NGN", "₦"), 170, finalY + 10, { align: "right" });
-  doc.setFont("helvetica", "normal");
-
-  // Add payment details
-  doc.setFont("helvetica", "bold");
-  doc.text("Payment Details:", 20, finalY + 20);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Account Name: ${accountName || "Company Name Ltd"}`, 20, finalY + 25);
-  doc.text(`Account Number: ${accountNumber || "0123456789"}`, 20, finalY + 30);
-  doc.text(`Bank Name: ${bankName || "Nigerian Bank"}`, 20, finalY + 35);
+  
+  const rightColumnX = rightMargin - 50;
+  
+  doc.text("Subtotal:", rightColumnX, yPos, { align: "right" });
+  doc.text(formatNaira(subtotal), rightMargin, yPos, { align: "right" });
+  yPos += 7;
+  
+  doc.text("Tax:", rightColumnX, yPos, { align: "right" });
+  doc.text(formatNaira(tax), rightMargin, yPos, { align: "right" });
+  yPos += 7;
+  
+  doc.setFontSize(14);
+  doc.setFont(undefined, 'bold');
+  doc.text("Total:", rightColumnX, yPos, { align: "right" });
+  doc.text(formatNaira(total), rightMargin, yPos, { align: "right" });
+  yPos += 15;
+  
+  // Reset font
+  doc.setFont(undefined, 'normal');
+  doc.setFontSize(12);
+  
+  // Add payment information
+  doc.setDrawColor(200, 200, 200);
+  doc.line(leftMargin, yPos, rightMargin, yPos);
+  yPos += 10;
+  
+  doc.setFontSize(14);
+  doc.text("Payment Information", leftMargin, yPos);
+  yPos += 8;
+  
+  doc.setFontSize(12);
+  doc.text(`Bank: ${bankName}`, leftMargin, yPos);
+  yPos += 7;
+  doc.text(`Account Name: ${accountName}`, leftMargin, yPos);
+  yPos += 7;
+  doc.text(`Account Number: ${accountNumber}`, leftMargin, yPos);
+  yPos += 7;
   if (swiftCode) {
-    doc.text(`Sort Code: ${swiftCode}`, 20, finalY + 40);
+    doc.text(`Swift Code: ${swiftCode}`, leftMargin, yPos);
+    yPos += 7;
   }
-
-  // Add additional information
+  
+  // Add additional information if provided
   if (additionalInfo) {
-    doc.setFont("helvetica", "bold");
-    doc.text("Additional Information:", 20, finalY + 50);
-    doc.setFont("helvetica", "normal");
+    yPos += 5;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(leftMargin, yPos, rightMargin, yPos);
+    yPos += 10;
     
-    // Wrap text for better formatting
-    const splitText = doc.splitTextToSize(additionalInfo, 170);
-    doc.text(splitText, 20, finalY + 55);
+    doc.setFontSize(14);
+    doc.text("Additional Information", leftMargin, yPos);
+    yPos += 8;
+    
+    doc.setFontSize(12);
+    // Split long text into multiple lines
+    const textLines = doc.splitTextToSize(additionalInfo, rightMargin - leftMargin);
+    doc.text(textLines, leftMargin, yPos);
   }
-
-  // Add footer
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.text(`Page ${i} of ${pageCount}`, 100, 287, { align: "center" });
-    doc.text("Generated with Paytraka", 100, 292, { align: "center" });
-  }
-
-  // Generate PDF blob
-  return doc.output('blob');
+  
+  // Add footer with thank you message
+  const pageHeight = doc.internal.pageSize.height;
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.text("Thank you for your business!", pageWidth / 2, pageHeight - 10, { align: "center" });
+  
+  // Convert the PDF to a Blob
+  const pdfBlob = doc.output('blob');
+  return pdfBlob;
 };
-

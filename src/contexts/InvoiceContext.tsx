@@ -1,11 +1,12 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Invoice, InvoiceItem } from '@/types/invoice';
+import { Invoice, InvoiceItem, InvoiceStatus } from '@/types/invoice';
 
 interface InvoiceContextType {
   invoices: Invoice[];
   addInvoice: (invoice: Omit<Invoice, 'id' | 'invoiceNumber'>) => void;
   getNextInvoiceNumber: () => string;
+  updateInvoiceStatus: (invoiceId: string, status: InvoiceStatus) => void;
 }
 
 const InvoiceContext = createContext<InvoiceContextType | undefined>(undefined);
@@ -74,8 +75,23 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setInvoices(prev => [newInvoice, ...prev]);
   };
 
+  const updateInvoiceStatus = (invoiceId: string, status: InvoiceStatus) => {
+    setInvoices(prev => 
+      prev.map(invoice => 
+        invoice.id === invoiceId 
+          ? { ...invoice, status } 
+          : invoice
+      )
+    );
+  };
+
   return (
-    <InvoiceContext.Provider value={{ invoices, addInvoice, getNextInvoiceNumber }}>
+    <InvoiceContext.Provider value={{ 
+      invoices, 
+      addInvoice, 
+      getNextInvoiceNumber,
+      updateInvoiceStatus 
+    }}>
       {children}
     </InvoiceContext.Provider>
   );
