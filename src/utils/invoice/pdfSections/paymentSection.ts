@@ -7,7 +7,9 @@ import jsPDF from "jspdf";
 import { 
   setupNormalTextStyle,
   setupSubheaderStyle,
-  setupFooterStyle
+  setupFooterStyle,
+  setupBoldStyle,
+  resetFontStyle
 } from "../pdfStyles";
 
 /**
@@ -23,23 +25,38 @@ export const addPaymentInfo = (doc: jsPDF, bankName: string, accountName: string
   yPos += 10;
   
   setupSubheaderStyle(doc);
-  doc.text("Payment Information", leftMargin, yPos);
+  setupBoldStyle(doc);
+  doc.text("Bank Details", leftMargin, yPos);
+  resetFontStyle(doc);
   yPos += 8;
   
   setupNormalTextStyle(doc);
-  doc.text(`Bank: ${bankName}`, leftMargin, yPos);
-  yPos += 7;
-  doc.text(`Account Name: ${accountName}`, leftMargin, yPos);
-  yPos += 7;
-  doc.text(`Account Number: ${accountNumber}`, leftMargin, yPos);
-  yPos += 7;
   
-  if (swiftCode) {
-    doc.text(`Swift Code: ${swiftCode}`, leftMargin, yPos);
+  if (bankName) {
+    doc.text("Bank Name:", leftMargin, yPos);
+    doc.text(bankName, leftMargin + 80, yPos);
     yPos += 7;
   }
   
-  return yPos;
+  if (accountName) {
+    doc.text("Account Name:", leftMargin, yPos);
+    doc.text(accountName, leftMargin + 80, yPos);
+    yPos += 7;
+  }
+  
+  if (accountNumber) {
+    doc.text("Account Number:", leftMargin, yPos);
+    doc.text(accountNumber, leftMargin + 80, yPos);
+    yPos += 7;
+  }
+  
+  if (swiftCode) {
+    doc.text("Swift Code:", leftMargin, yPos);
+    doc.text(swiftCode, leftMargin + 80, yPos);
+    yPos += 7;
+  }
+  
+  return yPos + 5;
 };
 
 /**
@@ -52,13 +69,14 @@ export const addAdditionalInfo = (doc: jsPDF, additionalInfo: string, yPos: numb
   const leftMargin = 15;
   const rightMargin = doc.internal.pageSize.width - 15;
   
-  yPos += 5;
   doc.setDrawColor(200, 200, 200);
   doc.line(leftMargin, yPos, rightMargin, yPos);
   yPos += 10;
   
   setupSubheaderStyle(doc);
+  setupBoldStyle(doc);
   doc.text("Additional Information", leftMargin, yPos);
+  resetFontStyle(doc);
   yPos += 8;
   
   setupNormalTextStyle(doc);
@@ -66,7 +84,7 @@ export const addAdditionalInfo = (doc: jsPDF, additionalInfo: string, yPos: numb
   const textLines = doc.splitTextToSize(additionalInfo, rightMargin - leftMargin);
   doc.text(textLines, leftMargin, yPos);
   
-  return yPos + textLines.length * 7;
+  return yPos + (textLines.length * 7);
 };
 
 /**

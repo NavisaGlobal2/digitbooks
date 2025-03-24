@@ -38,8 +38,12 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
     invoiceNumber = format(new Date(), "yyyyMMdd")
   } = invoiceDetails;
 
-  // Create a new PDF document
-  const doc = new jsPDF();
+  // Create a new PDF document with A4 size
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
   
   // Start position for content
   let yPos = 20;

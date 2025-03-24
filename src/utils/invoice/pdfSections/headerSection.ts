@@ -18,27 +18,27 @@ import {
 export const addLogo = (doc: jsPDF, logoPreview: string | null, yPos: number): number => {
   const leftMargin = 15;
   
-  if (logoPreview) {
+  if (logoPreview && logoPreview.startsWith('data:image')) {
     try {
-      doc.addImage(logoPreview, 'PNG', leftMargin, yPos, 40, 20);
+      // Try to add the logo image
+      doc.addImage(logoPreview, 'JPEG', leftMargin, yPos, 40, 20);
       return yPos + 25;
     } catch (error) {
       console.error("Error adding logo to PDF:", error);
       // Fall back to default logo if there's an error with the custom logo
-      addDefaultLogo(doc, leftMargin, yPos);
-      return yPos + 25;
+      return addDefaultLogo(doc, leftMargin, yPos);
     }
   } else {
     // Add default logo if no custom logo
-    addDefaultLogo(doc, leftMargin, yPos);
-    return yPos + 25;
+    return addDefaultLogo(doc, leftMargin, yPos);
   }
 };
 
 /**
  * Add default DigitBooks logo
+ * Returns the updated Y position
  */
-const addDefaultLogo = (doc: jsPDF, x: number, y: number) => {
+const addDefaultLogo = (doc: jsPDF, x: number, y: number): number => {
   // Draw the book outline
   doc.setDrawColor(0, 200, 83); // Green color #00C853
   doc.setLineWidth(0.5);
@@ -51,6 +51,8 @@ const addDefaultLogo = (doc: jsPDF, x: number, y: number) => {
   setupHeaderStyle(doc);
   doc.setTextColor(51, 51, 51); // Dark gray
   doc.text("DigitBooks", x + 15, y + 7);
+  
+  return y + 25;
 };
 
 /**

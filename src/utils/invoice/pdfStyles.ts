@@ -9,8 +9,9 @@ import jsPDF from "jspdf";
  * Set up document styling for headers
  */
 export const setupHeaderStyle = (doc: jsPDF) => {
-  doc.setFontSize(24);
+  doc.setFontSize(20);
   doc.setTextColor(44, 62, 80);
+  doc.setFont(undefined, 'bold');
 };
 
 /**
@@ -19,14 +20,16 @@ export const setupHeaderStyle = (doc: jsPDF) => {
 export const setupSubheaderStyle = (doc: jsPDF) => {
   doc.setFontSize(14);
   doc.setTextColor(44, 62, 80);
+  doc.setFont(undefined, 'normal');
 };
 
 /**
  * Set up document styling for normal text
  */
 export const setupNormalTextStyle = (doc: jsPDF) => {
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   doc.setTextColor(44, 62, 80);
+  doc.setFont(undefined, 'normal');
 };
 
 /**
@@ -35,6 +38,7 @@ export const setupNormalTextStyle = (doc: jsPDF) => {
 export const setupFooterStyle = (doc: jsPDF) => {
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 100);
+  doc.setFont(undefined, 'italic');
 };
 
 /**
@@ -56,11 +60,11 @@ export const resetFontStyle = (doc: jsPDF) => {
  */
 export const getTableColumnStyles = () => {
   return {
-    0: { cellWidth: 70 },
-    1: { halign: 'center' },
-    2: { halign: 'right' },
-    3: { halign: 'center' },
-    4: { halign: 'right' }
+    0: { cellWidth: 70 }, // Description
+    1: { halign: 'center' }, // Quantity
+    2: { halign: 'right' }, // Unit Price
+    3: { halign: 'center' }, // Tax
+    4: { halign: 'right' } // Amount
   };
 };
 
@@ -71,7 +75,8 @@ export const getTableHeaderStyles = () => {
   return {
     fillColor: [44, 62, 80],
     textColor: [255, 255, 255],
-    fontSize: 12,
+    fontSize: 11,
+    fontStyle: 'bold',
     halign: 'center'
   };
 };

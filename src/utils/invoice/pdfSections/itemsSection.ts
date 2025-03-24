@@ -24,37 +24,29 @@ export const addInvoiceItems = (doc: jsPDF, invoiceItems: InvoiceItem[], yPos: n
   setupNormalTextStyle(doc);
   
   // Transform the invoice items into a format that jspdf-autotable can use
-  const tableHeaders = [
-    { header: "Description", dataKey: "desc" },
-    { header: "Quantity", dataKey: "qty" },
-    { header: "Unit Price", dataKey: "price" },
-    { header: "Tax (%)", dataKey: "tax" },
-    { header: "Amount", dataKey: "amount" }
-  ];
+  const tableHeaders = ["Description", "Qty", "Unit Price", "Tax (%)", "Amount"];
   
-  const tableData = invoiceItems.map(item => ({
-    desc: item.description,
-    qty: item.quantity.toString(),
-    price: formatNaira(item.price),
-    tax: `${item.tax}%`,
-    amount: formatNaira(item.quantity * item.price)
-  }));
+  const tableData = invoiceItems.map(item => [
+    item.description,
+    item.quantity.toString(),
+    formatNaira(item.price),
+    `${item.tax}%`,
+    formatNaira(item.quantity * item.price)
+  ]);
   
   // Add the table
   (doc as any).autoTable({
     startY: yPos,
-    head: [tableHeaders.map(h => h.header)],
-    body: tableData.map(row => [
-      row.desc,
-      row.qty,
-      row.price,
-      row.tax,
-      row.amount
-    ]),
+    head: [tableHeaders],
+    body: tableData,
     theme: 'grid',
     headStyles: getTableHeaderStyles(),
     columnStyles: getTableColumnStyles(),
-    margin: { left: leftMargin, right: 15 }
+    margin: { left: leftMargin, right: 15 },
+    styles: {
+      fontSize: 10,
+      cellPadding: 5
+    }
   });
   
   // Get the Y position after the table
