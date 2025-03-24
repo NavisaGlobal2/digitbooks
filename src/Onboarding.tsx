@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -423,7 +422,6 @@ const Onboarding = () => {
             ))}
           </div>
           <div className="text-center mb-8">
-            <h2 className="text-xl font-semibold mb-1">{steps[currentStep].title}</h2>
             <p className="text-muted-foreground">{steps[currentStep].description}</p>
           </div>
         </div>
@@ -434,7 +432,6 @@ const Onboarding = () => {
   );
 };
 
-// Helper function to get feature descriptions
 const getFeatureDescription = (feature: string): string => {
   const descriptions: Record<string, string> = {
     invoicing: "Create and manage professional invoices",
