@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for adding content to PDF invoices
  */
@@ -7,7 +6,16 @@ import jsPDF from "jspdf";
 import { format } from "date-fns";
 import { InvoiceItem } from "@/types/invoice";
 import { formatNaira } from "./formatters";
-import { setupHeaderStyle, setupSubheaderStyle, setupNormalTextStyle, setupBoldStyle, resetFontStyle, getTableHeaderStyles, getTableColumnStyles } from "./pdfStyles";
+import { 
+  setupHeaderStyle, 
+  setupSubheaderStyle, 
+  setupNormalTextStyle, 
+  setupBoldStyle, 
+  resetFontStyle, 
+  getTableHeaderStyles, 
+  getTableColumnStyles,
+  setupFooterStyle
+} from "./pdfStyles";
 
 interface InvoiceDetails {
   logoPreview: string | null;
