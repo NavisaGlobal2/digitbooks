@@ -23,11 +23,12 @@ export const fetchBanks = async (): Promise<Array<{ name: string; code: string }
     
     // First, check if the edge function is available by doing a simple ping
     try {
-      const pingResponse = await fetch(`${supabase.functions.url}/list-banks`, {
+      // Use fetch with the URL directly from Supabase's project reference
+      const pingResponse = await fetch(`${process.env.SUPABASE_URL || 'https://naxmgtoskeijvdofqyik.supabase.co'}/functions/v1/list-banks`, {
         method: 'OPTIONS',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.auth.getSession()}`
+          'Authorization': `Bearer ${process.env.SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5heG1ndG9za2VpanZkb2ZxeWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxNDI0NDMsImV4cCI6MjA1MjcxODQ0M30.HhErJymz_YynLmN9lAMcxr7JoXBR8XyH9ex1gqWVv5c'}`
         }
       });
       
@@ -95,11 +96,11 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
     
     // First, check if the edge function is available
     try {
-      const pingResponse = await fetch(`${supabase.functions.url}/verify-account`, {
+      const pingResponse = await fetch(`${process.env.SUPABASE_URL || 'https://naxmgtoskeijvdofqyik.supabase.co'}/functions/v1/verify-account`, {
         method: 'OPTIONS',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.auth.getSession()}`
+          'Authorization': `Bearer ${process.env.SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5heG1ndG9za2VpanZkb2ZxeWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxNDI0NDMsImV4cCI6MjA1MjcxODQ0M30.HhErJymz_YynLmN9lAMcxr7JoXBR8XyH9ex1gqWVv5c'}`
         }
       });
       
