@@ -1,7 +1,9 @@
+
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import WaitlistForm from "@/components/WaitlistForm";
 
 const Index = () => {
   const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
@@ -32,10 +34,9 @@ const Index = () => {
                 Try Free for 14 Days
                 <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </a>
-              <button className="group px-8 py-4 glass rounded-full hover:bg-white/20 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2">
-                Join Waitlist
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+              <div className="flex justify-center">
+                <WaitlistForm />
+              </div>
             </div>
           </div>
 
@@ -45,7 +46,7 @@ const Index = () => {
             <div className="flex justify-center px-4">
               <img
                 src="https://antimetal.com/images/hero/preview.png"
-                alt="Digibooks Dashboard Preview"
+                alt="Digitbooks Dashboard Preview"
                 className="rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-[90%] h-auto hover:shadow-accent/20 transition-shadow duration-300"
               />
             </div>
@@ -57,7 +58,7 @@ const Index = () => {
         <section className="py-24 sm:py-32 bg-surface/50 backdrop-blur-sm px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <h2 className="text-3xl sm:text-4xl font-bold text-center mb-16 sm:mb-20 bg-gradient-to-r from-primary to-[#8B5CF6] bg-clip-text text-transparent">
-              How Digibooks Makes Your Life Easier
+              How Digitbooks Makes Your Life Easier
             </h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
               {[
