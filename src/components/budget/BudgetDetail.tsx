@@ -67,6 +67,13 @@ const BudgetDetail = ({ budgetId, onBack }: BudgetDetailProps) => {
     toast.success("Category updated successfully");
   };
 
+  // Helper function to get progress bar class based on percentage
+  const getProgressColorClass = (percentage: number) => {
+    if (percentage > 90) return "bg-red-500";
+    if (percentage > 75) return "bg-yellow-500";
+    return "bg-green-500";
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -117,12 +124,7 @@ const BudgetDetail = ({ budgetId, onBack }: BudgetDetailProps) => {
               </div>
               <Progress 
                 value={percentUsed} 
-                className="h-2" 
-                indicatorColor={
-                  percentUsed > 90 ? "bg-red-500" :
-                  percentUsed > 75 ? "bg-yellow-500" :
-                  "bg-green-500"
-                }
+                className={`h-2 ${getProgressColorClass(percentUsed)}`}
               />
             </div>
             
@@ -204,12 +206,7 @@ const BudgetDetail = ({ budgetId, onBack }: BudgetDetailProps) => {
                     </div>
                     <Progress 
                       value={percentCategoryUsed} 
-                      className="h-2"
-                      indicatorColor={
-                        percentCategoryUsed > 90 ? "bg-red-500" :
-                        percentCategoryUsed > 75 ? "bg-yellow-500" :
-                        "bg-green-500"
-                      }
+                      className={`h-2 ${getProgressColorClass(percentCategoryUsed)}`}
                     />
                   </CardContent>
                 </Card>

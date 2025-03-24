@@ -2,36 +2,30 @@
 import { 
   LayoutDashboard, 
   FileText, 
-  Receipt, 
-  BarChart, 
-  CreditCard, 
   Settings,
   ChevronRight,
   LogOut,
-  Banknote,
+  Receipt,
+  Wallet,
   Calculator,
-  BookOpen,
-  PieChart
+  BookOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation, Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Logo } from "../Logo";
 
 const Sidebar = () => {
   const location = useLocation();
   const path = location.pathname;
+  const { logout, user } = useAuth();
 
   return (
     <div className="w-[240px] h-screen border-r border-border py-4 flex flex-col bg-white shadow-sm">
       <div className="px-4 mb-6">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 flex items-center justify-center">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 4H20V28H4V4Z" stroke="#00C853" strokeWidth="2.5" fill="none"/>
-              <path d="M12 4V28" stroke="#00C853" strokeWidth="2.5"/>
-              <path d="M4 4H20V28H4V4Z" fill="#00C853" fillOpacity="0.2"/>
-            </svg>
-          </div>
-          <span className="font-semibold text-lg text-gray-800">DigitBooks</span>
+          <Logo className="h-8 w-8" />
+          <span className="font-semibold text-lg text-gray-800">DigiBooks</span>
         </div>
       </div>
       
@@ -77,23 +71,27 @@ const Sidebar = () => {
                 ? 'text-primary font-medium bg-accent/10 border-r-4 border-primary' 
                 : 'text-secondary'}`}
             >
-              <Banknote className="h-5 w-5" />
+              <Wallet className="h-5 w-5" />
               Revenue tracking
             </Button>
           </Link>
           <Link to="/reports">
             <Button 
               variant="ghost" 
-              className="w-full justify-start gap-3 text-secondary"
+              className={`w-full justify-start gap-3 ${path === '/reports' 
+                ? 'text-primary font-medium bg-accent/10 border-r-4 border-primary' 
+                : 'text-secondary'}`}
             >
-              <BarChart className="h-5 w-5" />
+              <LayoutDashboard className="h-5 w-5" />
               Financial Reports
             </Button>
           </Link>
-          <Link to="/budgeting">
+          <Link to="/budget">
             <Button 
               variant="ghost" 
-              className="w-full justify-start gap-3 text-secondary"
+              className={`w-full justify-start gap-3 ${path === '/budget' || path === '/budgeting' 
+                ? 'text-primary font-medium bg-accent/10 border-r-4 border-primary' 
+                : 'text-secondary'}`}
             >
               <Calculator className="h-5 w-5" />
               Budgeting tools
@@ -102,19 +100,25 @@ const Sidebar = () => {
           <Link to="/ledger">
             <Button 
               variant="ghost" 
-              className="w-full justify-start gap-3 text-secondary"
+              className={`w-full justify-start gap-3 ${path === '/ledger' 
+                ? 'text-primary font-medium bg-accent/10 border-r-4 border-primary' 
+                : 'text-secondary'}`}
             >
               <BookOpen className="h-5 w-5" />
               General ledger
             </Button>
           </Link>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start gap-3 text-secondary"
-          >
-            <Settings className="h-5 w-5" />
-            Settings
-          </Button>
+          <Link to="/settings">
+            <Button 
+              variant="ghost" 
+              className={`w-full justify-start gap-3 ${path === '/settings' 
+                ? 'text-primary font-medium bg-accent/10 border-r-4 border-primary' 
+                : 'text-secondary'}`}
+            >
+              <Settings className="h-5 w-5" />
+              Settings
+            </Button>
+          </Link>
         </nav>
       </div>
 
@@ -122,11 +126,21 @@ const Sidebar = () => {
         <div className="bg-gray-50 rounded-lg p-3 mb-4">
           <div className="flex items-center gap-2 mb-2">
             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-              <span className="text-blue-600 font-bold text-sm">P</span>
+              {user?.avatar ? (
+                <img 
+                  src={user.avatar} 
+                  alt={user.name} 
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                <span className="text-blue-600 font-bold text-sm">
+                  {user?.name?.charAt(0) || 'U'}
+                </span>
+              )}
             </div>
             <div>
-              <p className="font-medium text-sm">Premium Plan</p>
-              <p className="text-xs text-muted-foreground">Upgrade features</p>
+              <p className="font-medium text-sm">{user?.name || 'User'}</p>
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
             <ChevronRight className="h-4 w-4 text-secondary ml-auto" />
           </div>
@@ -135,22 +149,14 @@ const Sidebar = () => {
           </div>
         </div>
         
-        <div className="flex items-center gap-3 p-2">
-          <div className="h-9 w-9 rounded-full bg-gray-100 overflow-hidden">
-            <img 
-              src="https://i.pravatar.cc/36" 
-              alt="User avatar" 
-              className="h-full w-full object-cover"
-            />
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-sm">Amarachi</p>
-            <p className="text-xs text-muted-foreground">admin@digibooks.com</p>
-          </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <LogOut className="h-4 w-4 text-secondary" />
-          </Button>
-        </div>
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start gap-2 text-red-500 hover:text-red-600 hover:bg-red-50"
+          onClick={logout}
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
+        </Button>
       </div>
     </div>
   );

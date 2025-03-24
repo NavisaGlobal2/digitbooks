@@ -1,20 +1,20 @@
 
 import { createContext, useContext, useState, ReactNode } from "react";
 
-interface Budget {
+export interface BudgetCategory {
+  id: string;
+  name: string;
+  amount: number;
+  spent: number;
+}
+
+export interface Budget {
   id: string;
   name: string;
   startDate: Date;
   endDate: Date;
   totalBudget: number;
   categories: BudgetCategory[];
-}
-
-interface BudgetCategory {
-  id: string;
-  name: string;
-  amount: number;
-  spent: number;
 }
 
 interface BudgetContextValue {

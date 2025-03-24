@@ -4,9 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useBudget } from "@/contexts/BudgetContext";
+import { useBudget, Budget, BudgetCategory } from "@/contexts/BudgetContext";
 import { toast } from "sonner";
-import { Budget, BudgetCategory } from "@/contexts/BudgetContext";
 
 interface AddCategoryDialogProps {
   open: boolean;
