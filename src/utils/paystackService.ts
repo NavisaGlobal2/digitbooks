@@ -2,21 +2,19 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-// Interface for the bank list response
-interface BankListResponse {
-  status: boolean;
-  message: string;
-  data: Array<{
-    id: number;
-    name: string;
-    slug: string;
-    code: string;
-    longcode: string;
-    gateway: string;
-    active: boolean;
-    country: string;
-  }>;
-}
+// Mock data for fallback (only used when edge function fails)
+const FALLBACK_BANKS = [
+  { name: "Access Bank", code: "044" },
+  { name: "Zenith Bank", code: "057" },
+  { name: "First Bank of Nigeria", code: "011" },
+  { name: "Guaranty Trust Bank", code: "058" },
+  { name: "United Bank for Africa", code: "033" },
+  { name: "Fidelity Bank", code: "070" },
+  { name: "Union Bank", code: "032" },
+  { name: "Sterling Bank", code: "232" },
+  { name: "Wema Bank", code: "035" },
+  { name: "Ecobank", code: "050" }
+];
 
 // Function to fetch banks from Paystack API via Supabase Edge Function
 export const fetchBanks = async (): Promise<Array<{ name: string; code: string }>> => {
@@ -26,20 +24,21 @@ export const fetchBanks = async (): Promise<Array<{ name: string; code: string }
     
     if (error) {
       console.error("Error from supabase function:", error);
-      toast.error("Could not load banks list. Please try again later.");
-      throw new Error(error.message);
+      toast.error("Using cached bank list as we couldn't connect to the server.");
+      console.log("Falling back to predefined bank list");
+      return FALLBACK_BANKS;
     }
     
     if (!data || !data.status) {
       console.error("Error response from Paystack:", data);
-      toast.error(data?.message || "Failed to fetch banks list");
-      return [];
+      toast.error("Using cached bank list due to API error.");
+      return FALLBACK_BANKS;
     }
     
     if (!Array.isArray(data.data)) {
       console.error("Unexpected data format:", data);
-      toast.error("Received invalid data format from server");
-      return [];
+      toast.error("Received invalid data format from server, using cached banks.");
+      return FALLBACK_BANKS;
     }
     
     console.log(`Successfully fetched ${data.data.length} banks`);
@@ -50,8 +49,8 @@ export const fetchBanks = async (): Promise<Array<{ name: string; code: string }
     }));
   } catch (error) {
     console.error("Error fetching banks:", error);
-    toast.error("Could not load banks list. Please try again later.");
-    return [];
+    toast.error("Using cached bank list due to connection issues.");
+    return FALLBACK_BANKS;
   }
 };
 

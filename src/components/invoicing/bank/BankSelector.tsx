@@ -28,11 +28,16 @@ const BankSelector = ({
 }: BankSelectorProps) => {
   
   useEffect(() => {
+    // When bank name changes, find the corresponding code
     const bank = banks.find(b => b.name === bankName);
     if (bank) {
       setSelectedBankCode(bank.code);
+    } else if (banks.length > 0 && !bankName) {
+      // Auto-select the first bank if none is selected
+      setBankName(banks[0].name);
+      setSelectedBankCode(banks[0].code);
     }
-  }, [bankName, banks, setSelectedBankCode]);
+  }, [bankName, banks, setBankName, setSelectedBankCode]);
 
   const handleBankSelection = (value: string) => {
     setBankName(value);
@@ -41,7 +46,7 @@ const BankSelector = ({
   return (
     <div>
       <Label htmlFor="bank-name">Bank name</Label>
-      <Select onValueChange={handleBankSelection} value={bankName} disabled={isLoading}>
+      <Select onValueChange={handleBankSelection} value={bankName} disabled={isLoading || isVerified}>
         <SelectTrigger 
           id="bank-name" 
           className={isVerified ? "border-green-500" : ""}
@@ -55,7 +60,7 @@ const BankSelector = ({
             <SelectValue placeholder="Select a bank" />
           )}
         </SelectTrigger>
-        <SelectContent className="bg-gray-100 border border-gray-200 max-h-[300px]">
+        <SelectContent className="max-h-[300px]">
           {banks.length === 0 && !isLoading ? (
             <div className="p-2 text-center text-gray-500">No banks available</div>
           ) : (

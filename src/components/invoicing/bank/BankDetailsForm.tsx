@@ -6,6 +6,8 @@ import AccountNameInput from "./AccountNameInput";
 import BankSelector from "./BankSelector";
 import AccountVerifier from "./AccountVerifier";
 import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface BankDetailsFormProps {
   accountName: string;
@@ -121,29 +123,21 @@ const BankDetailsForm = ({
       {/* Additional bank details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="w-full">
-          <label htmlFor="bank-address" className="block text-sm font-medium text-gray-700 mb-1">
-            Bank Address
-          </label>
-          <input
-            type="text"
+          <Label htmlFor="bank-address">Bank Address</Label>
+          <Input
             id="bank-address"
             value={bankAddress}
             onChange={(e) => setBankAddress(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter bank address"
           />
         </div>
 
         <div className="w-full">
-          <label htmlFor="swift-code" className="block text-sm font-medium text-gray-700 mb-1">
-            SWIFT/BIC Code
-          </label>
-          <input
-            type="text"
+          <Label htmlFor="swift-code">SWIFT/BIC Code</Label>
+          <Input
             id="swift-code"
             value={swiftCode}
             onChange={(e) => setSwiftCode(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter SWIFT/BIC code"
           />
         </div>
