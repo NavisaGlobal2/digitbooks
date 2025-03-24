@@ -1,6 +1,5 @@
 
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { ArrowDown, ArrowUp, TrendingUp } from "lucide-react";
 
 interface FinancialData {
   totalRevenue: number;
@@ -15,45 +14,42 @@ interface FinancialOverviewProps {
 
 const FinancialOverview = ({ data }: FinancialOverviewProps) => {
   return (
-    <div className="grid grid-cols-3 gap-5 mb-8">
-      <Card className="overflow-hidden border-none shadow-sm">
-        <CardContent className="p-0">
-          <div className="bg-gradient-to-r from-[#f0f9ff] to-[#e6f7ff] p-5">
-            <div className="flex items-center justify-between mb-4">
-              <p className="font-medium text-secondary">Total Revenue</p>
-              <Badge variant="info" className="bg-blue-100 text-blue-600 hover:bg-blue-100">+14.5%</Badge>
-            </div>
-            <h3 className="text-2xl font-bold mb-1">${data.totalRevenue.toLocaleString()}</h3>
-            <p className="text-muted-foreground text-sm">Compared to $21,490 last month</p>
+    <div className="mb-8">
+      <h2 className="text-xl font-semibold mb-4">Financial overview</h2>
+      <div className="grid grid-cols-3 gap-5">
+        <div className="bg-white rounded-lg border border-border p-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-secondary text-sm font-medium">Total Revenue</span>
+            <ArrowDown className="text-primary h-5 w-5" />
           </div>
-        </CardContent>
-      </Card>
+          <div className="text-3xl font-bold mb-2">{data.totalRevenue.toLocaleString()}</div>
+          <div className="flex items-center text-sm">
+            <span className="text-muted-foreground">Cash inflow</span>
+          </div>
+        </div>
 
-      <Card className="overflow-hidden border-none shadow-sm">
-        <CardContent className="p-0">
-          <div className="bg-gradient-to-r from-[#fff7f5] to-[#fff0eb] p-5">
-            <div className="flex items-center justify-between mb-4">
-              <p className="font-medium text-secondary">Total Expenses</p>
-              <Badge className="bg-red-100 text-red-600 hover:bg-red-100" variant="destructive">-3.2%</Badge>
-            </div>
-            <h3 className="text-2xl font-bold mb-1">${data.totalExpenses.toLocaleString()}</h3>
-            <p className="text-muted-foreground text-sm">Compared to $14,900 last month</p>
+        <div className="bg-white rounded-lg border border-border p-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-secondary text-sm font-medium">Total expenses</span>
+            <ArrowUp className="text-primary h-5 w-5" />
           </div>
-        </CardContent>
-      </Card>
+          <div className="text-3xl font-bold mb-2">{data.totalExpenses.toLocaleString()}</div>
+          <div className="flex items-center text-sm">
+            <span className="text-muted-foreground">Cash outflow</span>
+          </div>
+        </div>
 
-      <Card className="overflow-hidden border-none shadow-sm">
-        <CardContent className="p-0">
-          <div className="bg-gradient-to-r from-[#f6f9ff] to-[#edf2ff] p-5">
-            <div className="flex items-center justify-between mb-4">
-              <p className="font-medium text-secondary">Net Cashflow</p>
-              <Badge variant="success" className="bg-green-100 text-green-600 hover:bg-green-100">+7.8%</Badge>
-            </div>
-            <h3 className="text-2xl font-bold mb-1">${data.netCashflow.toLocaleString()}</h3>
-            <p className="text-muted-foreground text-sm">Compared to $9,580 last month</p>
+        <div className="bg-white rounded-lg border border-border p-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-secondary text-sm font-medium">Net cashflow</span>
+            <TrendingUp className="text-primary h-5 w-5" />
           </div>
-        </CardContent>
-      </Card>
+          <div className="text-3xl font-bold text-success mb-2">{data.netCashflow.toLocaleString()}</div>
+          <div className="flex items-center text-sm">
+            <span className="text-success">Positive cashflow</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

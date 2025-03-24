@@ -1,5 +1,5 @@
 
-import { BarChart2, CreditCard, FileText, PlusSquare, Wallet } from "lucide-react";
+import { FileText, CreditCard, Wallet, LayoutGrid } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -30,7 +30,7 @@ const QuickActions = () => {
         
         <Card className="p-0 border shadow-sm hover:shadow-md transition-shadow">
           <Button variant="ghost" className="w-full h-full flex flex-col items-center justify-center py-6 px-4 space-y-2">
-            <BarChart2 className="h-6 w-6 text-primary" />
+            <LayoutGrid className="h-6 w-6 text-primary" />
             <span className="text-sm font-medium">General ledger</span>
           </Button>
         </Card>

@@ -11,7 +11,7 @@ const CashflowSection = () => {
   return (
     <div className="mb-8">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Cashflow Analysis</h2>
+        <h2 className="text-xl font-semibold">Cashflow analysis</h2>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="text-sm">
             {filterPeriod}

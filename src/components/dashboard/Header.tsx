@@ -1,16 +1,27 @@
 
-import { Bell, User } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Header = () => {
   return (
-    <header className="h-16 border-b border-border px-6 flex items-center justify-end">      
+    <header className="h-16 border-b border-border px-6 flex items-center justify-between">
+      <h1 className="text-2xl font-bold">Hi Amarachi, let's get organized</h1>
+      
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="rounded-full">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <input 
+            type="text" 
+            placeholder="Search transactions, invoices, reports..."
+            className="pl-10 pr-4 py-2 rounded-full border border-input bg-background w-64 focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+        <Button variant="ghost" size="icon" className="rounded-full relative">
           <Bell className="h-5 w-5 text-secondary" />
+          <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full border-2 border-white"></span>
         </Button>
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <User className="h-5 w-5 text-secondary" />
+        <Button className="bg-success hover:bg-success/90 text-white px-6">
+          Generate report
         </Button>
       </div>
     </header>
