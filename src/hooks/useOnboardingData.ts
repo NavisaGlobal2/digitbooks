@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -131,7 +130,8 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
       completeOnboarding();
       
       toast.success("Setup completed! Welcome to DigiBooks");
-      navigate("/dashboard");
+      
+      navigate("/dashboard", { replace: true });
       return true;
     } catch (error: any) {
       console.error('Error saving profile:', error);

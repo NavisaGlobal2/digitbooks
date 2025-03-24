@@ -34,7 +34,11 @@ const OnboardingContainer = () => {
 
   const handleNext = async () => {
     if (currentStep === ONBOARDING_STEPS.length - 1) {
-      await saveProfile();
+      // If we're on the last step, save the profile and redirect to dashboard
+      const success = await saveProfile();
+      if (success) {
+        navigate('/dashboard', { replace: true });
+      }
     } else {
       setCurrentStep(currentStep + 1);
     }
@@ -46,9 +50,13 @@ const OnboardingContainer = () => {
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     try {
-      navigate("/dashboard");
+      // Save profile data and redirect to dashboard
+      const success = await saveProfile();
+      if (success) {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
       toast.error(error.message || "Failed to complete onboarding");

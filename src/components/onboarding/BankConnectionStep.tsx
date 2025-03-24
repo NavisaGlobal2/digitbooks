@@ -26,21 +26,21 @@ const BankConnectionStep: React.FC<BankConnectionStepProps> = ({
       </div>
 
       <div className="grid gap-4">
-        <Button variant="outline" className="h-20 text-left justify-start">
+        <Button variant="outline" className="h-20 text-left justify-start" onClick={onNext}>
           <div>
             <div className="font-medium">Access Bank</div>
             <div className="text-sm text-muted-foreground">Connect with Mono</div>
           </div>
         </Button>
 
-        <Button variant="outline" className="h-20 text-left justify-start">
+        <Button variant="outline" className="h-20 text-left justify-start" onClick={onNext}>
           <div>
             <div className="font-medium">Zenith Bank</div>
             <div className="text-sm text-muted-foreground">Connect with Mono</div>
           </div>
         </Button>
 
-        <Button variant="outline" className="h-20 text-left justify-start">
+        <Button variant="outline" className="h-20 text-left justify-start" onClick={onNext}>
           <div>
             <div className="font-medium">GTBank</div>
             <div className="text-sm text-muted-foreground">Connect with Mono</div>
