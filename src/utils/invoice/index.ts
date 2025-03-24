@@ -6,3 +6,4 @@ export * from "./pdfGenerator";
 export * from "./documentActions";
 export * from "./pdfContent";
 export * from "./pdfStyles";
+export * from "./pdfSections";
