@@ -1,4 +1,6 @@
 
+import { useEffect, useState } from "react";
+import { useInvoices, useExpenses, useRevenues } from "@/lib/db";
 import DashboardContainer from "@/components/dashboard/layout/DashboardContainer";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import QuickActions from "@/components/dashboard/QuickActions";
@@ -9,85 +11,111 @@ import TransactionsSection from "@/components/dashboard/TransactionsSection";
 import BillsSection from "@/components/dashboard/BillsSection";
 import AIInsights from "@/components/dashboard/AIInsights";
 import MainContentSection from "@/components/dashboard/sections/MainContentSection";
-import { useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
-  // Sample data for our dashboard
-  const financialData = {
-    totalRevenue: 24828,
-    totalExpenses: 24828,
-    netCashflow: 24828,
-    positive: true
-  };
+  const { fetchInvoices } = useInvoices();
+  const { fetchExpenses } = useExpenses();
+  const { fetchRevenues } = useRevenues();
 
-  // Force re-render on initial load to ensure latest view
+  const [isLoading, setIsLoading] = useState(true);
+  const [financialData, setFinancialData] = useState({
+    totalRevenue: 0,
+    totalExpenses: 0,
+    netCashflow: 0,
+    positive: true
+  });
+
   useEffect(() => {
-    // Clear any stale cache data
-    const clearCache = () => {
-      if ('caches' in window) {
-        caches.keys().then((names) => {
-          names.forEach(name => {
-            caches.delete(name);
-          });
+    const loadData = async () => {
+      try {
+        const [invoices, expenses, revenues] = await Promise.all([
+          fetchInvoices(),
+          fetchExpenses(),
+          fetchRevenues()
+        ]);
+
+        // Calculate totals
+        const totalRevenue = revenues?.reduce((sum, rev) => sum + rev.amount, 0) || 0;
+        const totalExpenses = expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
+        const netCashflow = totalRevenue - totalExpenses;
+
+        setFinancialData({
+          totalRevenue,
+          totalExpenses,
+          netCashflow,
+          positive: netCashflow >= 0
         });
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    clearCache();
-    
-    // Add favicon if it doesn't exist
-    if (!document.querySelector("link[rel='icon']")) {
-      const favicon = document.createElement('link');
-      favicon.rel = 'icon';
-      favicon.href = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M4 4H20V28H4V4Z" stroke="%2300C853" stroke-width="2.5" fill="none"/><path d="M12 4V28" stroke="%2300C853" stroke-width="2.5"/><path d="M4 4H20V28H4V4Z" fill="%2300C853" fill-opacity="0.2"/></svg>';
-      document.head.appendChild(favicon);
-    }
-    
-    // Force refresh any stale data
-    const forceUpdate = () => {
-      const timestamp = new Date().getTime();
-      document.body.dataset.refresh = timestamp.toString();
-    };
-    
-    forceUpdate();
+    loadData();
   }, []);
 
   return (
     <DashboardContainer>
-      {/* Dashboard Header */}
       <DashboardHeader />
       
-      {/* Quick Action Buttons - Now placed before Financial Overview */}
       <div className="mb-6">
         <QuickActions />
       </div>
       
-      {/* Financial Overview Cards */}
       <div className="mb-6">
-        <FinancialOverview data={financialData} />
+        {isLoading ? (
+          <div className="grid grid-cols-3 gap-5">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-32 rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          <FinancialOverview data={financialData} />
+        )}
       </div>
 
-      {/* Main Content Sections */}
       <div className="mb-6">
         <MainContentSection 
           leftContent={
             <>
-              <CashflowSection />
-              <FinancialChartsSection />
+              {isLoading ? (
+                <div className="space-y-6">
+                  <Skeleton className="h-[400px] rounded-lg" />
+                  <Skeleton className="h-[400px] rounded-lg" />
+                </div>
+              ) : (
+                <>
+                  <CashflowSection />
+                  <FinancialChartsSection />
+                </>
+              )}
             </>
           }
           rightContent={
-            <TransactionsSection />
+            isLoading ? (
+              <Skeleton className="h-[400px] rounded-lg" />
+            ) : (
+              <TransactionsSection />
+            )
           }
           bottomContent={
-            <AIInsights />
+            isLoading ? (
+              <Skeleton className="h-[200px] rounded-lg" />
+            ) : (
+              <AIInsights />
+            )
           }
         />
       </div>
       
-      {/* Bills Section */}
       <div className="mb-6">
-        <BillsSection />
+        {isLoading ? (
+          <Skeleton className="h-[200px] rounded-lg" />
+        ) : (
+          <BillsSection />
+        )}
       </div>
     </DashboardContainer>
   );
