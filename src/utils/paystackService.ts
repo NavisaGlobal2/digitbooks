@@ -16,6 +16,10 @@ const FALLBACK_BANKS = [
   { name: "Ecobank", code: "050" }
 ];
 
+// Define Supabase URL and key as constants
+const SUPABASE_URL = "https://naxmgtoskeijvdofqyik.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5heG1ndG9za2VpanZkb2ZxeWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxNDI0NDMsImV4cCI6MjA1MjcxODQ0M30.HhErJymz_YynLmN9lAMcxr7JoXBR8XyH9ex1gqWVv5c";
+
 // Function to fetch banks from Paystack API via Supabase Edge Function
 export const fetchBanks = async (): Promise<Array<{ name: string; code: string }>> => {
   try {
@@ -23,12 +27,12 @@ export const fetchBanks = async (): Promise<Array<{ name: string; code: string }
     
     // First, check if the edge function is available by doing a simple ping
     try {
-      // Use fetch with the URL directly from Supabase's project reference
-      const pingResponse = await fetch(`${process.env.SUPABASE_URL || 'https://naxmgtoskeijvdofqyik.supabase.co'}/functions/v1/list-banks`, {
+      // Use direct URL instead of accessing protected property
+      const pingResponse = await fetch(`${SUPABASE_URL}/functions/v1/list-banks`, {
         method: 'OPTIONS',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5heG1ndG9za2VpanZkb2ZxeWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxNDI0NDMsImV4cCI6MjA1MjcxODQ0M30.HhErJymz_YynLmN9lAMcxr7JoXBR8XyH9ex1gqWVv5c'}`
+          'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
         }
       });
       
@@ -96,11 +100,12 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
     
     // First, check if the edge function is available
     try {
-      const pingResponse = await fetch(`${process.env.SUPABASE_URL || 'https://naxmgtoskeijvdofqyik.supabase.co'}/functions/v1/verify-account`, {
+      // Use direct URL instead of accessing protected property
+      const pingResponse = await fetch(`${SUPABASE_URL}/functions/v1/verify-account`, {
         method: 'OPTIONS',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5heG1ndG9za2VpanZkb2ZxeWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxNDI0NDMsImV4cCI6MjA1MjcxODQ0M30.HhErJymz_YynLmN9lAMcxr7JoXBR8XyH9ex1gqWVv5c'}`
+          'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
         }
       });
       
