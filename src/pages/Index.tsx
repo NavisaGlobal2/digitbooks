@@ -1,10 +1,13 @@
+
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { WaitlistForm } from "@/components/WaitlistForm";
 
 const Index = () => {
   const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
+  const [showWaitlistForm, setShowWaitlistForm] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-white to-background">
@@ -32,11 +35,28 @@ const Index = () => {
                 Try Free for 14 Days
                 <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </a>
-              <button className="group px-8 py-4 glass rounded-full hover:bg-white/20 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2">
-                Join Waitlist
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+              {!showWaitlistForm ? (
+                <button 
+                  onClick={() => setShowWaitlistForm(true)}
+                  className="group px-8 py-4 glass rounded-full hover:bg-white/20 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                >
+                  Join Waitlist
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              ) : null}
             </div>
+            
+            {showWaitlistForm && (
+              <div className="mt-8 animate-fade-in">
+                <WaitlistForm />
+                <button 
+                  onClick={() => setShowWaitlistForm(false)}
+                  className="mt-4 text-secondary hover:text-primary transition-colors"
+                >
+                  Hide form
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Hero Image with Animation */}
