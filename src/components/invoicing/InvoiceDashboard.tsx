@@ -17,6 +17,7 @@ import {
   ExternalLink,
   CheckCircle
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -27,9 +28,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useInvoices } from "@/contexts/InvoiceContext";
+import { useClients } from "@/contexts/ClientContext";
 import { Invoice, InvoiceStatus } from "@/types/invoice";
 import { formatNaira } from "@/utils/invoice";
 import { downloadInvoice, shareInvoice } from "@/utils/invoice";
+import ClientForm from "@/components/clients/ClientForm";
 
 interface InvoiceDashboardProps {
   activeTab: string;
@@ -58,9 +61,12 @@ const StatusBadge = ({ status }: { status: InvoiceStatus }) => {
 };
 
 const InvoiceDashboard = ({ activeTab, setActiveTab, setIsCreatingInvoice }: InvoiceDashboardProps) => {
+  const navigate = useNavigate();
   const { invoices, updateInvoiceStatus } = useInvoices();
+  const { clients } = useClients();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
+  const [isAddingClient, setIsAddingClient] = useState(false);
   
   useEffect(() => {
     const handleInvoiceCreated = () => {
@@ -327,27 +333,177 @@ const InvoiceDashboard = ({ activeTab, setActiveTab, setIsCreatingInvoice }: Inv
         </TabsContent>
         
         <TabsContent value="clients" className="mt-6">
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <h2 className="text-xl font-semibold mb-2">No clients added yet</h2>
-            <p className="text-muted-foreground mb-8 max-w-md">Add your first client to start creating invoices for them.</p>
-            
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="bg-green-500 hover:bg-green-600 text-white">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add New Client
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogTitle>Add New Client</DialogTitle>
-                <div className="py-6">
-                  <p>Client creation form will be implemented here.</p>
+          {clients.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="bg-gray-100 p-6 rounded-full mb-6 flex items-center justify-center">
+                <Users className="w-20 h-20 text-blue-500" strokeWidth={1.5} />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">No clients added yet</h2>
+              <p className="text-muted-foreground mb-8 max-w-md">Add your first client to start creating invoices for them.</p>
+              
+              <Button 
+                className="bg-green-500 hover:bg-green-600 text-white"
+                onClick={() => setIsAddingClient(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Client
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Client Statistics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="bg-white">
+                  <CardContent className="p-6">
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">New clients</p>
+                      <h3 className="text-3xl font-bold">
+                        {clients.filter(client => {
+                          const thirtyDaysAgo = new Date();
+                          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                          return new Date(client.createdAt) >= thirtyDaysAgo;
+                        }).length}
+                      </h3>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardContent className="p-6">
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Active clients</p>
+                      <h3 className="text-3xl font-bold">
+                        {clients.filter(client => client.status === 'active').length}
+                      </h3>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardContent className="p-6">
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Total clients</p>
+                      <h3 className="text-3xl font-bold">{clients.length}</h3>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Search and Actions */}
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="relative w-full md:w-auto flex-1">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search clients..."
+                    className="pl-9"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+                
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    <span>Filters</span>
+                  </Button>
+                  
+                  <Button
+                    onClick={() => navigate("/clients")} 
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    View All Clients
+                  </Button>
+                  
+                  <Button 
+                    className="bg-green-500 hover:bg-green-600 text-white"
+                    onClick={() => setIsAddingClient(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Client
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Client Table */}
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Client name</TableHead>
+                      <TableHead>Email address</TableHead>
+                      <TableHead>Total invoices</TableHead>
+                      <TableHead>Total amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-[80px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {clients
+                      .filter(client => 
+                        client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        client.email.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                      .slice(0, 5) // Show only first 5 clients for preview
+                      .map((client) => (
+                        <TableRow key={client.id}>
+                          <TableCell className="font-medium">{client.name}</TableCell>
+                          <TableCell>{client.email}</TableCell>
+                          <TableCell>{client.invoiceCount}</TableCell>
+                          <TableCell>{formatNaira(client.totalAmount)}</TableCell>
+                          <TableCell>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              client.status === 'active' 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {client.status === 'active' ? 'Active' : 'Inactive'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>View client</DropdownMenuItem>
+                                <DropdownMenuItem>Edit details</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  setIsCreatingInvoice(true);
+                                  setActiveTab("invoices");
+                                }}>
+                                  Create invoice
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-red-600">Delete client</DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {clients.length > 5 && (
+                <div className="flex justify-center mt-4">
+                  <Button 
+                    variant="outline" 
+                    className="text-primary"
+                    onClick={() => navigate("/clients")}
+                  >
+                    View all clients
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
+      
+      {/* Client Form Dialog */}
+      <ClientForm open={isAddingClient} onOpenChange={setIsAddingClient} />
     </>
   );
 };
