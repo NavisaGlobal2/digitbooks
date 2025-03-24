@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useOnboardingData } from "@/hooks/useOnboardingData";
@@ -32,21 +32,9 @@ const OnboardingContainer = () => {
     saveProfile
   } = useOnboardingData();
 
-  useEffect(() => {
-    // If loading is finished and the user is already onboarded, redirect to dashboard
-    if (!isLoading && businessInfo.name && legalInfo.rcNumber) {
-      // This indicates user might have completed onboarding previously
-      console.log("User appears to have previous onboarding data");
-    }
-  }, [isLoading, businessInfo, legalInfo, navigate]);
-
   const handleNext = async () => {
     if (currentStep === ONBOARDING_STEPS.length - 1) {
-      // If we're on the last step, save the profile and redirect to dashboard
-      const success = await saveProfile();
-      if (success) {
-        navigate('/dashboard', { replace: true });
-      }
+      await saveProfile();
     } else {
       setCurrentStep(currentStep + 1);
     }
@@ -58,13 +46,9 @@ const OnboardingContainer = () => {
     }
   };
 
-  const handleSkip = async () => {
+  const handleSkip = () => {
     try {
-      // Save profile data and redirect to dashboard
-      const success = await saveProfile();
-      if (success) {
-        navigate('/dashboard', { replace: true });
-      }
+      navigate("/dashboard");
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
       toast.error(error.message || "Failed to complete onboarding");
