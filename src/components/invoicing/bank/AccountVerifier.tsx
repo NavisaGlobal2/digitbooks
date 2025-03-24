@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Loader2, AlertCircle, ShieldAlert } from "lucide-react";
@@ -38,14 +37,12 @@ const AccountVerifier = ({
       return;
     }
 
-    // Reset states
     setIsError(false);
     setIsApiKeyIssue(false);
     setVerificationMessage("");
     setIsVerifying(true);
 
     try {
-      // Validate inputs
       if (!accountNumber || accountNumber.length !== 10) {
         throw new Error("Please enter a valid 10-digit NUBAN account number");
       }
@@ -56,18 +53,15 @@ const AccountVerifier = ({
 
       console.log(`Starting verification for account: ${accountNumber}, bank code: ${selectedBankCode}`);
       
-      // Call API to verify account
       const result = await verifyBankAccount(accountNumber, selectedBankCode);
       console.log("Verification result:", result);
       
-      // Check for API key issues specifically
       if (result.message?.includes("API key validation failed")) {
         setIsApiKeyIssue(true);
         setIsError(true);
         toast.error("API key validation issue. Using demo mode instead.");
         setVerificationMessage(result.message);
         
-        // In demo mode, we'll simulate a successful verification after the error
         if (setIsVerified && setAccountName) {
           setIsVerified(true);
           setAccountName("Demo Account" + Math.floor(Math.random() * 1000));
@@ -101,7 +95,6 @@ const AccountVerifier = ({
     }
   };
 
-  // Use external isVerifying state if provided
   const showVerifying = externalIsVerifying || isVerifying;
 
   return (
@@ -129,7 +122,7 @@ const AccountVerifier = ({
       
       {verificationMessage && (
         <Alert 
-          variant={isError && !isApiKeyIssue ? "destructive" : isApiKeyIssue ? "warning" : "default"} 
+          variant={isError && !isApiKeyIssue ? "destructive" : "default"} 
           className={`py-2 ${isVerified ? 'bg-green-50 border-green-200' : isApiKeyIssue ? 'bg-amber-50 border-amber-200' : ''}`}
         >
           <div className="flex items-start">
