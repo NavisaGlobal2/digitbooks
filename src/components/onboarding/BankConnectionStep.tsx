@@ -1,15 +1,18 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface BankConnectionStepProps {
   onSkip: () => void;
   onNext: () => void;
+  isSaving?: boolean;
 }
 
 const BankConnectionStep: React.FC<BankConnectionStepProps> = ({
   onSkip,
   onNext,
+  isSaving = false,
 }) => {
   return (
     <div className="space-y-6">
@@ -48,14 +51,23 @@ const BankConnectionStep: React.FC<BankConnectionStepProps> = ({
           variant="outline" 
           className="flex-1"
           onClick={onSkip}
+          disabled={isSaving}
         >
           Skip for now
         </Button>
         <Button 
           className="flex-1 bg-green-500 hover:bg-green-600 text-white"
           onClick={onNext}
+          disabled={isSaving}
         >
-          Connect Bank
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Connect Bank"
+          )}
         </Button>
       </div>
     </div>

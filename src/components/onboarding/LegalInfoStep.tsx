@@ -1,8 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { validateLegalInfo } from "@/utils/validationUtils";
+import { toast } from "sonner";
 
 interface LegalInfo {
   rcNumber: string;
@@ -22,17 +24,41 @@ const LegalInfoStep: React.FC<LegalInfoStepProps> = ({
   onLegalInfoChange,
   onNext,
 }) => {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  const handleNext = () => {
+    const validation = validateLegalInfo(legalInfo);
+    
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      toast.error("Please provide your RC Number");
+      return;
+    }
+    
+    setErrors({});
+    onNext();
+  };
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="rc-number">RC Number *</Label>
+        <Label htmlFor="rc-number" className={errors.rcNumber ? "text-destructive" : ""}>
+          RC Number *
+        </Label>
         <Input
           id="rc-number"
           value={legalInfo.rcNumber}
-          onChange={(e) => onLegalInfoChange({ ...legalInfo, rcNumber: e.target.value })}
+          onChange={(e) => {
+            onLegalInfoChange({ ...legalInfo, rcNumber: e.target.value });
+            if (errors.rcNumber) setErrors({ ...errors, rcNumber: "" });
+          }}
           placeholder="Enter RC Number"
+          className={errors.rcNumber ? "border-destructive" : ""}
           required
         />
+        {errors.rcNumber && (
+          <p className="text-sm text-destructive">{errors.rcNumber}</p>
+        )}
         <p className="text-sm text-muted-foreground">
           Your Corporate Affairs Commission (CAC) registration number
         </p>
@@ -79,7 +105,7 @@ const LegalInfoStep: React.FC<LegalInfoStepProps> = ({
 
       <Button 
         className="w-full bg-green-500 hover:bg-green-600 text-white"
-        onClick={onNext}
+        onClick={handleNext}
       >
         Continue
       </Button>

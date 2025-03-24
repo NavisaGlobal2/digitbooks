@@ -1,9 +1,11 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { validateBusinessInfo } from "@/utils/validationUtils";
+import { toast } from "sonner";
 
 interface BusinessInfo {
   name: string;
@@ -33,26 +35,55 @@ const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
   businessTypes,
   industries,
 }) => {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  const handleNext = () => {
+    const validation = validateBusinessInfo(businessInfo);
+    
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
+    setErrors({});
+    onNext();
+  };
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="business-name">Business name *</Label>
+        <Label htmlFor="business-name" className={errors.name ? "text-destructive" : ""}>
+          Business name *
+        </Label>
         <Input
           id="business-name"
           value={businessInfo.name}
-          onChange={(e) => onBusinessInfoChange({ ...businessInfo, name: e.target.value })}
+          onChange={(e) => {
+            onBusinessInfoChange({ ...businessInfo, name: e.target.value });
+            if (errors.name) setErrors({ ...errors, name: "" });
+          }}
           placeholder="Enter your business name"
+          className={errors.name ? "border-destructive" : ""}
           required
         />
+        {errors.name && (
+          <p className="text-sm text-destructive">{errors.name}</p>
+        )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="business-type">Business type *</Label>
+        <Label htmlFor="business-type" className={errors.type ? "text-destructive" : ""}>
+          Business type *
+        </Label>
         <Select 
           value={businessInfo.type}
-          onValueChange={(value) => onBusinessInfoChange({ ...businessInfo, type: value })}
+          onValueChange={(value) => {
+            onBusinessInfoChange({ ...businessInfo, type: value });
+            if (errors.type) setErrors({ ...errors, type: "" });
+          }}
         >
-          <SelectTrigger>
+          <SelectTrigger className={errors.type ? "border-destructive" : ""}>
             <SelectValue placeholder="Select business type" />
           </SelectTrigger>
           <SelectContent>
@@ -63,15 +94,23 @@ const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
             ))}
           </SelectContent>
         </Select>
+        {errors.type && (
+          <p className="text-sm text-destructive">{errors.type}</p>
+        )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="industry">Industry *</Label>
+        <Label htmlFor="industry" className={errors.industry ? "text-destructive" : ""}>
+          Industry *
+        </Label>
         <Select 
           value={businessInfo.industry}
-          onValueChange={(value) => onBusinessInfoChange({ ...businessInfo, industry: value })}
+          onValueChange={(value) => {
+            onBusinessInfoChange({ ...businessInfo, industry: value });
+            if (errors.industry) setErrors({ ...errors, industry: "" });
+          }}
         >
-          <SelectTrigger>
+          <SelectTrigger className={errors.industry ? "border-destructive" : ""}>
             <SelectValue placeholder="Select your industry" />
           </SelectTrigger>
           <SelectContent>
@@ -82,6 +121,9 @@ const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
             ))}
           </SelectContent>
         </Select>
+        {errors.industry && (
+          <p className="text-sm text-destructive">{errors.industry}</p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -120,7 +162,7 @@ const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
 
       <Button 
         className="w-full bg-green-500 hover:bg-green-600 text-white"
-        onClick={onNext}
+        onClick={handleNext}
       >
         Continue
       </Button>

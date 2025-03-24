@@ -21,6 +21,7 @@ const Onboarding = () => {
   const { user, completeOnboarding } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   
   const [businessInfo, setBusinessInfo] = useState({
     name: "",
@@ -109,25 +110,10 @@ const Onboarding = () => {
   }, [user, navigate]);
 
   const handleNext = async () => {
-    // Validate current step
-    if (currentStep === 1) {
-      if (!businessInfo.name || !businessInfo.type || !businessInfo.industry) {
-        toast.error("Please fill in all required fields");
-        return;
-      }
-    }
-
-    if (currentStep === 2) {
-      // Only RC Number is required
-      if (!legalInfo.rcNumber) {
-        toast.error("Please provide your RC Number");
-        return;
-      }
-    }
-
     // If this is the final step
     if (currentStep === ONBOARDING_STEPS.length - 1) {
       try {
+        setIsSaving(true);
         // Save business profile to Supabase
         const { error } = await supabase
           .from('profiles')
@@ -152,9 +138,11 @@ const Onboarding = () => {
         
         toast.success("Setup completed! Welcome to DigiBooks");
         navigate("/dashboard");
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error saving profile:', error);
-        toast.error("Failed to save business profile");
+        toast.error(error.message || "Failed to save business profile");
+      } finally {
+        setIsSaving(false);
       }
     } else {
       setCurrentStep(currentStep + 1);
@@ -163,8 +151,13 @@ const Onboarding = () => {
 
   const handleSkip = () => {
     // When skipping, still mark onboarding as completed
-    completeOnboarding();
-    navigate("/dashboard");
+    try {
+      completeOnboarding();
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error('Error completing onboarding:', error);
+      toast.error(error.message || "Failed to complete onboarding");
+    }
   };
 
   const renderStepContent = () => {
@@ -206,6 +199,7 @@ const Onboarding = () => {
           <BankConnectionStep 
             onSkip={handleSkip}
             onNext={handleNext}
+            isSaving={isSaving}
           />
         );
 
