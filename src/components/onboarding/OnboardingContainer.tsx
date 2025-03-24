@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useOnboardingData } from "@/hooks/useOnboardingData";
+import { ChevronLeft } from "lucide-react";
 
 // Components
 import OnboardingStepIndicator from "@/components/onboarding/OnboardingStepIndicator";
@@ -39,6 +40,12 @@ const OnboardingContainer = () => {
     }
   };
 
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const handleSkip = () => {
     try {
       navigate("/dashboard");
@@ -59,6 +66,7 @@ const OnboardingContainer = () => {
             businessInfo={businessInfo}
             onBusinessInfoChange={setBusinessInfo}
             onNext={handleNext}
+            onBack={handleBack}
             businessTypes={BUSINESS_TYPES}
             industries={INDUSTRIES}
           />
@@ -70,6 +78,7 @@ const OnboardingContainer = () => {
             legalInfo={legalInfo}
             onLegalInfoChange={setLegalInfo}
             onNext={handleNext}
+            onBack={handleBack}
           />
         );
 
@@ -79,6 +88,7 @@ const OnboardingContainer = () => {
             features={selectedFeatures}
             onFeaturesChange={setSelectedFeatures}
             onNext={handleNext}
+            onBack={handleBack}
           />
         );
 
@@ -87,6 +97,7 @@ const OnboardingContainer = () => {
           <BankConnectionStep 
             onSkip={handleSkip}
             onNext={handleNext}
+            onBack={handleBack}
             isSaving={isSaving}
           />
         );
@@ -104,6 +115,16 @@ const OnboardingContainer = () => {
         </div>
       ) : (
         <div className="w-full max-w-md">
+          {currentStep > 0 && (
+            <button 
+              onClick={handleBack}
+              className="flex items-center text-muted-foreground mb-4 hover:text-primary transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Back
+            </button>
+          )}
+
           <OnboardingStepIndicator 
             steps={ONBOARDING_STEPS}
             currentStep={currentStep}

@@ -11,12 +11,14 @@ interface LegalInfoStepProps {
   legalInfo: LegalInfo;
   onLegalInfoChange: (info: LegalInfo) => void;
   onNext: () => void;
+  onBack?: () => void;
 }
 
 const LegalInfoStep: React.FC<LegalInfoStepProps> = ({
   legalInfo,
   onLegalInfoChange,
   onNext,
+  onBack,
 }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   

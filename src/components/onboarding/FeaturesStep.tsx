@@ -8,12 +8,14 @@ interface FeaturesStepProps {
   features: FeatureState;
   onFeaturesChange: (features: FeatureState) => void;
   onNext: () => void;
+  onBack?: () => void;
 }
 
 const FeaturesStep: React.FC<FeaturesStepProps> = ({
   features,
   onFeaturesChange,
   onNext,
+  onBack,
 }) => {
   const getFeatureDescription = (feature: string): string => {
     const descriptions: Record<string, string> = {

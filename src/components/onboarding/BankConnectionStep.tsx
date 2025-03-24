@@ -6,12 +6,14 @@ import { Loader2 } from "lucide-react";
 interface BankConnectionStepProps {
   onSkip: () => void;
   onNext: () => void;
+  onBack?: () => void;
   isSaving?: boolean;
 }
 
 const BankConnectionStep: React.FC<BankConnectionStepProps> = ({
   onSkip,
   onNext,
+  onBack,
   isSaving = false,
 }) => {
   return (

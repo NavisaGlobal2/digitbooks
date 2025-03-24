@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ interface BusinessInfoStepProps {
   businessInfo: BusinessInfo;
   onBusinessInfoChange: (info: BusinessInfo) => void;
   onNext: () => void;
+  onBack?: () => void;
   businessTypes: BusinessType[];
   industries: Industry[];
 }
@@ -19,6 +21,7 @@ const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
   businessInfo,
   onBusinessInfoChange,
   onNext,
+  onBack,
   businessTypes,
   industries,
 }) => {
