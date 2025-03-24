@@ -8,7 +8,9 @@ import {
   ArrowRight, 
   ArrowDown, 
   CalendarRange, 
-  Plus 
+  Plus,
+  Receipt,
+  ReceiptText
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -108,12 +110,8 @@ const Invoicing = () => {
               
               {/* Empty State */}
               <div className="flex flex-col items-center justify-center py-16">
-                <div className="bg-gray-100 p-4 rounded-lg mb-6">
-                  <img 
-                    src="/lovable-uploads/ddacd61e-ef31-463b-998e-39e422756c26.png" 
-                    alt="Invoice illustration" 
-                    className="w-32 h-32 object-contain"
-                  />
+                <div className="bg-gray-100 p-6 rounded-full mb-6 flex items-center justify-center">
+                  <ReceiptText className="w-20 h-20 text-blue-500" strokeWidth={1.5} />
                 </div>
                 <h2 className="text-xl font-semibold mb-2">No invoices created</h2>
                 <p className="text-muted-foreground mb-8">Click on the 'Create Invoice' button to create your first invoice.</p>
