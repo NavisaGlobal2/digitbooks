@@ -44,10 +44,10 @@ const Dashboard = () => {
             </>
           }
           rightContent={
-            <>
-              <AIInsights />
-              <TransactionsSection />
-            </>
+            <TransactionsSection />
+          }
+          bottomContent={
+            <AIInsights />
           }
         />
       </div>

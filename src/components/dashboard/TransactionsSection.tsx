@@ -12,14 +12,14 @@ const TransactionsSection = () => {
   ];
 
   return (
-    <Card className="border-none shadow-sm">
+    <Card className="border-none shadow-sm h-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 md:pt-6 px-4 md:px-6">
         <CardTitle className="text-lg font-semibold">Recent Transactions</CardTitle>
       </CardHeader>
       <CardContent className="px-4 md:px-6 pb-4">
-        <div className="space-y-4">
+        <div className="space-y-3">
           {transactions.map((transaction, index) => (
-            <div key={index} className="flex items-center justify-between border-b border-border pb-3 last:border-0">
+            <div key={index} className="flex items-center justify-between border-b border-border pb-3 last:border-0 last:pb-0">
               <div className="flex items-center gap-3">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center ${transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>
                   {transaction.type === 'income' ? 
