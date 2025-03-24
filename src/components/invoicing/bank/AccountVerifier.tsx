@@ -6,11 +6,14 @@ import { verifyBankAccount } from "@/utils/paystackService";
 import { toast } from "sonner";
 
 interface AccountVerifierProps {
-  accountNumber: string;
-  selectedBankCode: string;
-  setAccountName: (value: string) => void;
-  setIsVerified: (value: boolean) => void;
-  isVerified: boolean;
+  accountNumber?: string;
+  selectedBankCode?: string;
+  setAccountName?: (value: string) => void;
+  setIsVerified?: (value: boolean) => void;
+  isVerified?: boolean;
+  disabled?: boolean;
+  isVerifying?: boolean;
+  onVerify?: () => Promise<void>;
 }
 
 const AccountVerifier = ({
@@ -18,12 +21,19 @@ const AccountVerifier = ({
   selectedBankCode,
   setAccountName,
   setIsVerified,
-  isVerified
+  isVerified = false,
+  disabled = false,
+  isVerifying = false,
+  onVerify
 }: AccountVerifierProps) => {
-  const [isVerifying, setIsVerifying] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState("");
 
   const handleVerify = async () => {
+    if (onVerify) {
+      await onVerify();
+      return;
+    }
+
     if (!accountNumber || accountNumber.length !== 10) {
       toast.error("Please enter a valid 10-digit NUBAN account number");
       return;
@@ -34,27 +44,24 @@ const AccountVerifier = ({
       return;
     }
 
-    setIsVerifying(true);
     setVerificationMessage("");
 
     try {
       const result = await verifyBankAccount(accountNumber, selectedBankCode);
       
-      if (result.verified && result.accountName) {
+      if (result.verified && result.accountName && setAccountName && setIsVerified) {
         setAccountName(result.accountName);
         setIsVerified(true);
         toast.success(result.message || "Account verified successfully");
       } else {
-        setIsVerified(false);
+        if (setIsVerified) setIsVerified(false);
         toast.error(result.message || "Verification failed");
       }
       
       setVerificationMessage(result.message || "");
     } catch (error) {
-      setIsVerified(false);
+      if (setIsVerified) setIsVerified(false);
       toast.error("An error occurred during verification");
-    } finally {
-      setIsVerifying(false);
     }
   };
 
@@ -62,7 +69,7 @@ const AccountVerifier = ({
     <div>
       <Button 
         onClick={handleVerify} 
-        disabled={isVerifying || !accountNumber || !selectedBankCode || accountNumber.length !== 10}
+        disabled={isVerifying || disabled}
         className="bg-green-600 hover:bg-green-700 text-white"
       >
         {isVerifying ? (

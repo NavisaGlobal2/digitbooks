@@ -1,8 +1,8 @@
 
 project_id = "naxmgtoskeijvdofqyik"
 
-[verify-account]
+[functions.verify-account]
 node_version = 18
 
-[list-banks]
+[functions.list-banks]
 node_version = 18

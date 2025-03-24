@@ -106,6 +106,7 @@ const BankDetailsForm = ({
           accountName={accountName}
           setAccountName={setAccountName}
           isVerified={isVerified}
+          setIsVerified={setIsVerified}
           isVerifying={isVerifying}
         />
 

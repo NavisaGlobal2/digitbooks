@@ -7,14 +7,16 @@ interface AccountNameInputProps {
   accountName: string;
   setAccountName: (value: string) => void;
   isVerified: boolean;
-  setIsVerified: (value: boolean) => void;
+  setIsVerified?: (value: boolean) => void;
+  isVerifying?: boolean;
 }
 
 const AccountNameInput = ({ 
   accountName, 
   setAccountName, 
   isVerified, 
-  setIsVerified 
+  setIsVerified = () => {}, 
+  isVerifying = false
 }: AccountNameInputProps) => {
   return (
     <div>
@@ -30,6 +32,7 @@ const AccountNameInput = ({
           }}
           className={isVerified ? "border-green-500" : ""}
           readOnly={isVerified}
+          disabled={isVerifying}
         />
         {isVerified && <Check className="text-green-500 h-5 w-5" />}
       </div>
