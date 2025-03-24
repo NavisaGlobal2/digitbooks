@@ -97,7 +97,11 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
   // Ensure text is rendered at high quality
   doc.setFontSize(10);
   
-  // Convert the PDF to a high-quality Blob
-  const pdfBlob = doc.output('blob', {quality: 1.0});
+  // Convert the PDF to a Blob - fixed to use the correct output format
+  // The error was caused by using 'blob' which is not a valid output type
+  // Instead, we get the arrayBuffer and create a Blob from it
+  const arrayBuffer = doc.output('arraybuffer');
+  const pdfBlob = new Blob([arrayBuffer], { type: 'application/pdf' });
+  
   return pdfBlob;
 };
