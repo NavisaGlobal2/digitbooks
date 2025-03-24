@@ -41,7 +41,7 @@ export const addLogo = (doc: jsPDF, logoPreview: string | null, yPos: number): n
 const addDefaultLogo = (doc: jsPDF, x: number, y: number): number => {
   try {
     // Use the new logo
-    const logoUrl = "/lovable-uploads/164ead0a-df60-46aa-bfad-9e3dd948bc33.png";
+    const logoUrl = "/lovable-uploads/149e5423-3356-4c4d-9769-ce16d23c9792.png";
     doc.addImage(logoUrl, 'PNG', x, y, 10, 10);
     
     // Add company name
@@ -54,13 +54,19 @@ const addDefaultLogo = (doc: jsPDF, x: number, y: number): number => {
     console.error("Error adding default logo to PDF:", error);
     
     // Fallback to drawing a simple logo if the image fails to load
-    // Draw the book outline
-    doc.setDrawColor(0, 200, 83); // Green color #00C853
+    // Draw a green book-like shape
+    doc.setDrawColor(0, 200, 83); // Green color similar to the new logo
+    doc.setFillColor(0, 200, 83);
     doc.setLineWidth(0.5);
-    doc.rect(x, y, 10, 15);
+    
+    // Draw the book outline
+    doc.rect(x, y, 10, 10, 'FD');
     
     // Draw the page divider
-    doc.line(x + 5, y, x + 5, y + 15);
+    doc.setDrawColor(255, 255, 255);
+    doc.setFillColor(255, 255, 255);
+    doc.rect(x + 2, y + 2, 2, 6, 'FD');
+    doc.rect(x + 6, y + 2, 2, 6, 'FD');
     
     // Add company name
     setupHeaderStyle(doc);
