@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Expense } from "@/types/expense";
 import { formatNaira } from "@/utils/invoice";
 import { getCategoryLabel } from "@/utils/expenseCategories";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ExpensesTableProps {
   expenses: Expense[];
@@ -35,7 +36,16 @@ const ExpensesTable = ({ expenses, onDeleteExpense }: ExpensesTableProps) => {
               <TableCell className="font-medium">
                 <div className="flex items-center gap-2">
                   {expense.fromStatement && (
-                    <FileText className="h-4 w-4 text-green-500" title="From bank statement" />
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <FileText className="h-4 w-4 text-green-500" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>From bank statement</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                   {expense.description}
                 </div>
