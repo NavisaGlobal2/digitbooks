@@ -3,6 +3,7 @@ import { useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Header from "@/components/dashboard/Header";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import QuickActions from "@/components/dashboard/QuickActions";
 import FinancialOverview from "@/components/dashboard/FinancialOverview";
 import CashflowSection from "@/components/dashboard/CashflowSection";
 import TransactionsSection from "@/components/dashboard/TransactionsSection";
@@ -12,8 +13,8 @@ const Dashboard = () => {
   // Sample data for our dashboard
   const financialData = {
     totalRevenue: 24828,
-    totalExpenses: 14418,
-    netCashflow: 10410,
+    totalExpenses: 24828,
+    netCashflow: 24828,
     positive: true
   };
 
@@ -32,6 +33,9 @@ const Dashboard = () => {
           <div className="max-w-7xl mx-auto">
             {/* Dashboard Header */}
             <DashboardHeader />
+            
+            {/* Quick Action Buttons */}
+            <QuickActions />
 
             {/* Financial Overview Cards */}
             <FinancialOverview data={financialData} />
