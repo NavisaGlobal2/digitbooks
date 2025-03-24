@@ -2,7 +2,7 @@
 import { Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { downloadInvoice, shareInvoice } from "@/utils/invoiceGenerator";
+import { downloadInvoice, shareInvoice } from "@/utils/invoice/documentActions";
 
 interface InvoiceItem {
   description: string;
@@ -105,3 +105,4 @@ const ActionButtons = ({
 };
 
 export default ActionButtons;
+

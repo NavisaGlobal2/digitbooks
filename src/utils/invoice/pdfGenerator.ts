@@ -2,18 +2,11 @@
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { format } from "date-fns";
-import { saveAs } from "file-saver";
-import { toast } from "sonner";
+import { InvoiceItem } from "@/types/invoice";
+import { formatNaira } from "./formatters";
+import { calculateSubtotal, calculateTax, calculateTotal } from "./calculations";
 
-// Define types for invoice data
-interface InvoiceItem {
-  description: string;
-  quantity: number;
-  price: number;
-  tax: number;
-}
-
-interface InvoiceDetails {
+export interface InvoiceDetails {
   logoPreview: string | null;
   invoiceItems: InvoiceItem[];
   invoiceDate: Date | undefined;
@@ -31,29 +24,9 @@ interface InvoiceDetails {
   clientAddress?: string;
 }
 
-// Function to format currency
-const formatNaira = (amount: number) => {
-  return new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    minimumFractionDigits: 2
-  }).format(amount);
-};
-
-// Calculate totals
-const calculateSubtotal = (invoiceItems: InvoiceItem[]) => {
-  return invoiceItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-};
-
-const calculateTax = (invoiceItems: InvoiceItem[]) => {
-  return invoiceItems.reduce((sum, item) => sum + (item.quantity * item.price * item.tax / 100), 0);
-};
-
-const calculateTotal = (invoiceItems: InvoiceItem[]) => {
-  return calculateSubtotal(invoiceItems) + calculateTax(invoiceItems);
-};
-
-// Generate PDF invoice
+/**
+ * Generate PDF invoice
+ */
 export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<Blob> => {
   const {
     logoPreview,
@@ -195,68 +168,3 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
   return doc.output('blob');
 };
 
-// Function to download the invoice
-export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
-  try {
-    const pdfBlob = await generateInvoice(invoiceDetails);
-    
-    // Generate a filename
-    const dateStr = format(new Date(), "yyyyMMdd");
-    const fileName = `Invoice-${dateStr}.pdf`;
-    
-    // Download the file
-    saveAs(pdfBlob, fileName);
-    
-    toast.success("Invoice downloaded successfully!");
-    return true;
-  } catch (error) {
-    console.error("Error downloading invoice:", error);
-    toast.error("Failed to download invoice. Please try again.");
-    return false;
-  }
-};
-
-// Function to share the invoice
-export const shareInvoice = async (invoiceDetails: InvoiceDetails) => {
-  try {
-    // First generate the PDF
-    const pdfBlob = await generateInvoice(invoiceDetails);
-    
-    // Check if the Web Share API is available
-    if (navigator.share && navigator.canShare) {
-      const file = new File([pdfBlob], "invoice.pdf", { type: "application/pdf" });
-      
-      if (navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: 'Invoice',
-          text: 'Please find attached invoice.',
-        });
-        toast.success("Share dialog opened successfully!");
-        return true;
-      }
-    }
-    
-    // Fallback for browsers that don't support file sharing
-    // Create a temporary URL and copy to clipboard
-    const dataUrl = URL.createObjectURL(pdfBlob);
-    
-    try {
-      // Create a temporary link to download
-      const tempLink = document.createElement('a');
-      tempLink.href = dataUrl;
-      tempLink.setAttribute('download', 'invoice.pdf');
-      tempLink.click();
-      
-      toast.success("Invoice ready to share!");
-      return true;
-    } finally {
-      // Clean up
-      URL.revokeObjectURL(dataUrl);
-    }
-  } catch (error) {
-    console.error("Error sharing invoice:", error);
-    toast.error("Failed to share invoice. Please try again.");
-    return false;
-  }
-};
