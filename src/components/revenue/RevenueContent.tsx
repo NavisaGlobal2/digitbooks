@@ -4,7 +4,7 @@ import { useRevenue } from "@/contexts/RevenueContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowUpDown, Search, PieChart, Coins, BarChart3, TrendingUp } from "lucide-react";
-import RevenueTable from "./RevenueTable";
+import { RevenueTable } from "./RevenueTable";
 import RevenueEmptyState from "./RevenueEmptyState";
 import RevenueStatsCards from "./RevenueStatsCards";
 import RevenueChart from "./RevenueChart";
