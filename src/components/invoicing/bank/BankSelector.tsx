@@ -60,12 +60,16 @@ const BankSelector = ({
             <SelectValue placeholder="Select a bank" />
           )}
         </SelectTrigger>
-        <SelectContent className="max-h-[300px]">
+        <SelectContent className="max-h-[300px] bg-gray-800 text-white border-gray-700">
           {banks.length === 0 && !isLoading ? (
-            <div className="p-2 text-center text-gray-500">No banks available</div>
+            <div className="p-2 text-center text-gray-300">No banks available</div>
           ) : (
             banks.map((bank) => (
-              <SelectItem key={bank.code} value={bank.name}>
+              <SelectItem 
+                key={bank.code} 
+                value={bank.name}
+                className="focus:bg-gray-700 focus:text-white hover:bg-gray-700 hover:text-white"
+              >
                 {bank.name}
               </SelectItem>
             ))
