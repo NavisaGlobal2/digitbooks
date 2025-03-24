@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { fetchBanks } from "@/utils/paystackService";
+import { toast } from "sonner";
 import AccountNameInput from "./AccountNameInput";
 import AccountNumberInput from "./AccountNumberInput";
 import BankSelector from "./BankSelector";
@@ -38,11 +39,32 @@ const BankDetailsForm = ({
 }: BankDetailsFormProps) => {
   const [banks, setBanks] = useState<Bank[]>([]);
   const [selectedBankCode, setSelectedBankCode] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   
   useEffect(() => {
     const loadBanks = async () => {
-      const banksList = await fetchBanks();
-      setBanks(banksList);
+      setIsLoading(true);
+      setLoadError(null);
+      
+      try {
+        console.log("Loading banks...");
+        const banksList = await fetchBanks();
+        
+        if (banksList.length === 0) {
+          setLoadError("Failed to load banks. Please try again later.");
+          toast.error("Failed to load banks. Please try again later.");
+        } else {
+          console.log(`Loaded ${banksList.length} banks successfully`);
+          setBanks(banksList);
+        }
+      } catch (error) {
+        console.error("Error loading banks:", error);
+        setLoadError("Failed to load banks. Please try again later.");
+        toast.error("Failed to load banks. Please try again later.");
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     loadBanks();
@@ -68,7 +90,8 @@ const BankDetailsForm = ({
           bankName={bankName} 
           setBankName={setBankName} 
           setSelectedBankCode={setSelectedBankCode}
-          isVerified={isVerified} 
+          isVerified={isVerified}
+          isLoading={isLoading}
         />
       </div>
       
@@ -92,6 +115,10 @@ const BankDetailsForm = ({
           />
         </div>
       </div>
+
+      {loadError && (
+        <div className="text-red-500 text-sm">{loadError}</div>
+      )}
 
       <AccountVerifier 
         accountNumber={accountNumber}

@@ -17,6 +17,8 @@ serve(async (req) => {
   try {
     // Get request data
     const { accountNumber, bankCode } = await req.json();
+    
+    console.log(`Verifying account number: ${accountNumber} for bank code: ${bankCode}`);
 
     if (!accountNumber || !bankCode) {
       return new Response(
@@ -27,6 +29,7 @@ serve(async (req) => {
 
     // Check if PAYSTACK_SECRET_KEY is set
     if (!PAYSTACK_SECRET_KEY) {
+      console.error("Paystack API key is not configured");
       return new Response(
         JSON.stringify({ error: 'Paystack API key is not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -48,6 +51,8 @@ serve(async (req) => {
     // Get response data
     const data = await response.json();
     
+    console.log("Paystack verification response:", JSON.stringify(data));
+    
     // Return response
     return new Response(
       JSON.stringify(data),
@@ -61,7 +66,7 @@ serve(async (req) => {
     console.error('Error verifying account:', error);
     
     return new Response(
-      JSON.stringify({ error: 'An error occurred during verification' }),
+      JSON.stringify({ error: 'An error occurred during verification', details: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

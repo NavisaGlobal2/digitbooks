@@ -38,15 +38,20 @@ interface BankListResponse {
 // Function to fetch banks from Paystack API via Supabase Edge Function
 export const fetchBanks = async (): Promise<Array<{ name: string; code: string }>> => {
   try {
+    console.log("Fetching banks from edge function...");
     const { data, error } = await supabase.functions.invoke("list-banks");
     
     if (error) {
+      console.error("Error from supabase function:", error);
       throw new Error(error.message);
     }
     
     if (!data.status) {
+      console.error("Error response from Paystack:", data);
       throw new Error(data.message || "Failed to fetch banks");
     }
+    
+    console.log(`Successfully fetched ${data.data.length} banks`);
     
     return data.data.map((bank: any) => ({
       name: bank.name,
@@ -54,7 +59,7 @@ export const fetchBanks = async (): Promise<Array<{ name: string; code: string }
     }));
   } catch (error) {
     console.error("Error fetching banks:", error);
-    toast.error("Could not load banks list");
+    toast.error("Could not load banks list. Please try again later.");
     return [];
   }
 };
@@ -66,11 +71,16 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
   message?: string;
 }> => {
   try {
+    console.log(`Verifying account: ${accountNumber} with bank code: ${bankCode}`);
+    
     const { data, error } = await supabase.functions.invoke("verify-account", {
       body: { accountNumber, bankCode }
     });
     
+    console.log("Verification response:", data);
+    
     if (error) {
+      console.error("Error from supabase function:", error);
       return { 
         verified: false, 
         message: error.message || "Verification failed" 
@@ -78,6 +88,7 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
     }
     
     if (!data.status || !data.data) {
+      console.error("Error response from Paystack:", data);
       return { 
         verified: false, 
         message: data.message || "Verification failed"
