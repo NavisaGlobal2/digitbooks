@@ -144,7 +144,7 @@ const BankDetails = ({
               <SelectTrigger id="bank-name" className={isVerified ? "border-green-500" : ""}>
                 <SelectValue placeholder="Select a bank" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-100 border border-gray-200">
                 {banks.map((bank) => (
                   <SelectItem key={bank.code} value={bank.name}>
                     {bank.name}
