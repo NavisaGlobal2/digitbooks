@@ -24,15 +24,33 @@ export const addLogo = (doc: jsPDF, logoPreview: string | null, yPos: number): n
       return yPos + 25;
     } catch (error) {
       console.error("Error adding logo to PDF:", error);
+      // Fall back to default logo if there's an error with the custom logo
+      addDefaultLogo(doc, leftMargin, yPos);
+      return yPos + 25;
     }
   } else {
-    // Add company name if no logo
-    setupHeaderStyle(doc);
-    doc.text("Your Company", leftMargin, yPos);
-    return yPos + 10;
+    // Add default logo if no custom logo
+    addDefaultLogo(doc, leftMargin, yPos);
+    return yPos + 25;
   }
+};
+
+/**
+ * Add default DigitBooks logo
+ */
+const addDefaultLogo = (doc: jsPDF, x: number, y: number) => {
+  // Draw the book outline
+  doc.setDrawColor(0, 200, 83); // Green color #00C853
+  doc.setLineWidth(0.5);
+  doc.rect(x, y, 10, 15);
   
-  return yPos;
+  // Draw the page divider
+  doc.line(x + 5, y, x + 5, y + 15);
+  
+  // Add company name
+  setupHeaderStyle(doc);
+  doc.setTextColor(51, 51, 51); // Dark gray
+  doc.text("DigitBooks", x + 15, y + 7);
 };
 
 /**
