@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -114,6 +115,7 @@ const ApplicationsAdmin = () => {
         throw error;
       }
       
+      // Create a download link
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
@@ -153,9 +155,11 @@ const ApplicationsAdmin = () => {
     setIsDownloadingAll(true);
     
     try {
+      // Create a zip file containing all resumes
       const JSZip = (await import('jszip')).default;
       const zip = new JSZip();
       
+      // Download each resume and add to zip
       for (const app of applicationsWithResumes) {
         if (!app.resume_url) continue;
         
@@ -174,8 +178,10 @@ const ApplicationsAdmin = () => {
         zip.file(fileName, data);
       }
       
+      // Generate the zip file
       const content = await zip.generateAsync({ type: 'blob' });
       
+      // Create a download link for the zip
       const url = URL.createObjectURL(content);
       const a = document.createElement('a');
       a.href = url;
@@ -213,6 +219,7 @@ const ApplicationsAdmin = () => {
         throw error;
       }
       
+      // Update local state
       setApplications(applications.map(app => 
         app.id === applicationId ? { ...app, status: newStatus } : app
       ));
@@ -251,7 +258,7 @@ const ApplicationsAdmin = () => {
         return <Badge variant="warning">In Review</Badge>;
       case 'new':
       default:
-        return <Badge variant="default">New</Badge>;
+        return <Badge variant="info">New</Badge>;
     }
   };
 
@@ -332,7 +339,7 @@ const ApplicationsAdmin = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="new" className="flex items-center gap-2">
-                            <Badge variant="default">New</Badge>
+                            <Badge variant="info">New</Badge>
                           </SelectItem>
                           <SelectItem value="in-review" className="flex items-center gap-2">
                             <Badge variant="warning">In Review</Badge>
@@ -413,7 +420,7 @@ const ApplicationsAdmin = () => {
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="new" className="flex items-center gap-2">
-                                        <Badge variant="default" className="mr-1">New</Badge>
+                                        <Badge variant="info" className="mr-1">New</Badge>
                                       </SelectItem>
                                       <SelectItem value="in-review" className="flex items-center gap-2">
                                         <Badge variant="warning" className="mr-1">In Review</Badge>
