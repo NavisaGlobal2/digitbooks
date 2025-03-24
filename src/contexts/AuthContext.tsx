@@ -20,6 +20,15 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+// Helper function to generate a valid UUID
+const generateUUID = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, 
+        v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
@@ -35,8 +44,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     // Mock login functionality with a proper UUID format
+    const userUUID = generateUUID();
+    console.log("Generated UUID for login:", userUUID);
+    
     const loggedInUser = {
-      id: "d290f1ee-6c54-4b01-90e6-d701748f0851", // Using a valid UUID format
+      id: userUUID,
       name: "John Doe",
       email,
       avatar: "",
@@ -54,8 +66,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (email: string, password: string, name: string) => {
     // Mock signup functionality with a proper UUID format
+    const userUUID = generateUUID();
+    console.log("Generated UUID for signup:", userUUID);
+    
     const newUser = {
-      id: "d290f1ee-6c54-4b01-90e6-d701748f0851", // Using a valid UUID format
+      id: userUUID,
       name,
       email,
       avatar: "",
