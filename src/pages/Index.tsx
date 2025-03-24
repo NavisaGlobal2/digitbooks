@@ -1,5 +1,7 @@
+
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { WaitlistForm } from "@/components/WaitlistForm";
@@ -27,13 +29,13 @@ const Index = () => {
               Save 10+ hours every week with automated bookkeeping. Perfect for small businesses, freelancers, and startups.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in [animation-delay:400ms]">
-              <a 
-                href="https://digitbookwise.lovable.app/onboarding"
-                className="group px-8 py-4 bg-primary text-white rounded-full hover:bg-primary/90 transition-all duration-300 transform hover:-translate-y-1"
+              <Link 
+                to="/auth"
+                className="group px-8 py-4 bg-primary text-white rounded-full hover:bg-primary/90 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center"
               >
                 Try Free for 14 Days
                 <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </a>
+              </Link>
               {!showWaitlistForm ? (
                 <button 
                   onClick={() => setShowWaitlistForm(true)}
@@ -68,7 +70,6 @@ const Index = () => {
               />
             </div>
           </div>
-
         </section>
 
         {/* Features Section */}
@@ -168,13 +169,13 @@ const Index = () => {
             <p className="text-white/80 mb-10 sm:mb-12 max-w-2xl mx-auto text-lg sm:text-xl animate-fade-in [animation-delay:200ms]">
               Join thousands of businesses saving 10+ hours every week with automated bookkeeping.
             </p>
-            <a 
-              href="https://digitbookwise.lovable.app/onboarding"
+            <Link 
+              to="/auth"
               className="inline-block group px-8 py-4 bg-accent text-primary rounded-full font-semibold hover:bg-accent/90 transition-all duration-300 transform hover:-translate-y-1 animate-fade-in [animation-delay:400ms]"
             >
               Start Your Free Trial
               <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </a>
+            </Link>
           </div>
         </section>
       </main>

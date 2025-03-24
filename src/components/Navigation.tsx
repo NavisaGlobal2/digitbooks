@@ -42,11 +42,11 @@ const Navigation = () => {
         </div>
 
         <div className="flex items-center">
-          <a href="https://digitbookwise.lovable.app/onboarding">
+          <Link to="/auth">
             <Button className="text-white">
               Get Started
             </Button>
-          </a>
+          </Link>
         </div>
       </div>
     </nav>
