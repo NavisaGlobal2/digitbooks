@@ -20,6 +20,28 @@ const FALLBACK_BANKS = [
 export const fetchBanks = async (): Promise<Array<{ name: string; code: string }>> => {
   try {
     console.log("Fetching banks from edge function...");
+    
+    // First, check if the edge function is available by doing a simple ping
+    try {
+      const pingResponse = await fetch(`${supabase.functions.url}/list-banks`, {
+        method: 'OPTIONS',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.auth.getSession()}`
+        }
+      });
+      
+      // If we can't even ping the function, throw an error to use fallback
+      if (!pingResponse.ok) {
+        throw new Error("Edge function not available");
+      }
+    } catch (pingError) {
+      console.warn("Edge function ping failed:", pingError);
+      toast.error("Using cached bank list as Supabase Edge Function is not available.");
+      return FALLBACK_BANKS;
+    }
+    
+    // If ping succeeds, try the actual request
     const { data, error } = await supabase.functions.invoke("list-banks");
     
     if (error) {
@@ -71,6 +93,28 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
       };
     }
     
+    // First, check if the edge function is available
+    try {
+      const pingResponse = await fetch(`${supabase.functions.url}/verify-account`, {
+        method: 'OPTIONS',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.auth.getSession()}`
+        }
+      });
+      
+      if (!pingResponse.ok) {
+        throw new Error("Edge function not available");
+      }
+    } catch (pingError) {
+      console.warn("Edge function ping failed:", pingError);
+      toast.error("Account verification service is currently unavailable.");
+      return {
+        verified: false,
+        message: "Verification service is currently unavailable. Please try again later."
+      };
+    }
+    
     const { data, error } = await supabase.functions.invoke("verify-account", {
       body: { accountNumber, bankCode }
     });
@@ -86,12 +130,12 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
       };
     }
     
-    if (!data.status) {
+    if (!data || !data.status) {
       console.error("Error response from Paystack:", data);
-      toast.error(data.message || "Verification failed");
+      toast.error(data?.message || "Verification failed");
       return { 
         verified: false, 
-        message: data.message || "Verification failed"
+        message: data?.message || "Verification failed"
       };
     }
 
