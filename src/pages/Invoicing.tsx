@@ -57,15 +57,15 @@ const InvoiceForm = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-6">
-      {/* Invoice Form */}
-      <div className="w-full md:w-1/2">
+    <div className="flex flex-col lg:flex-row gap-8">
+      {/* Invoice Form - Made narrower */}
+      <div className="w-full lg:w-2/5 space-y-6 lg:overflow-y-auto lg:max-h-[calc(100vh-140px)] pr-4">
         {/* Template Selection */}
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-3">Select template</h3>
+        <div className="bg-white p-6 rounded-lg border border-border">
+          <h3 className="text-lg font-medium mb-4">Select template</h3>
           <div className="grid grid-cols-3 gap-4">
             <div 
-              className={`border rounded-md p-2 cursor-pointer ${selectedTemplate === "default" ? "border-green-500 bg-green-50" : "border-gray-200"}`}
+              className={`border rounded-md p-2 cursor-pointer transition-all hover:shadow-md ${selectedTemplate === "default" ? "border-green-500 bg-green-50" : "border-gray-200"}`}
               onClick={() => setSelectedTemplate("default")}
             >
               <div className="aspect-[3/4] bg-white rounded border border-gray-200 flex items-center justify-center">
@@ -78,7 +78,7 @@ const InvoiceForm = () => {
               <p className="text-sm text-center mt-2">Default template</p>
             </div>
             <div 
-              className={`border rounded-md p-2 cursor-pointer ${selectedTemplate === "professional" ? "border-green-500 bg-green-50" : "border-gray-200"}`}
+              className={`border rounded-md p-2 cursor-pointer transition-all hover:shadow-md ${selectedTemplate === "professional" ? "border-green-500 bg-green-50" : "border-gray-200"}`}
               onClick={() => setSelectedTemplate("professional")}
             >
               <div className="aspect-[3/4] bg-white rounded border border-gray-200 flex items-center justify-center">
@@ -91,7 +91,7 @@ const InvoiceForm = () => {
               <p className="text-sm text-center mt-2">Professional template</p>
             </div>
             <div 
-              className={`border rounded-md p-2 cursor-pointer ${selectedTemplate === "minimalist" ? "border-green-500 bg-green-50" : "border-gray-200"}`}
+              className={`border rounded-md p-2 cursor-pointer transition-all hover:shadow-md ${selectedTemplate === "minimalist" ? "border-green-500 bg-green-50" : "border-gray-200"}`}
               onClick={() => setSelectedTemplate("minimalist")}
             >
               <div className="aspect-[3/4] bg-white rounded border border-gray-200 flex items-center justify-center">
@@ -103,8 +103,8 @@ const InvoiceForm = () => {
         </div>
 
         {/* Logo Upload */}
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-3">Upload logo</h3>
+        <div className="bg-white p-6 rounded-lg border border-border">
+          <h3 className="text-lg font-medium mb-4">Upload logo</h3>
           <div className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center bg-gray-50">
             <Upload className="h-10 w-10 text-gray-400 mb-2" />
             <p className="text-sm text-gray-500 mb-1">Drag & drop file here</p>
@@ -115,118 +115,121 @@ const InvoiceForm = () => {
           </div>
         </div>
 
-        {/* Invoice Details */}
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-3">Invoice number</h3>
-          <div className="relative">
-            <Input placeholder="INV-001" />
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2"
-            >
-              <Copy className="h-4 w-4" />
+        {/* Business Details Section */}
+        <div className="bg-white p-6 rounded-lg border border-border space-y-4">
+          {/* Invoice Number */}
+          <div>
+            <h3 className="text-lg font-medium mb-2">Invoice number</h3>
+            <div className="relative">
+              <Input placeholder="INV-001" />
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Client Selection */}
+          <div className="pt-2">
+            <h3 className="text-lg font-medium mb-2">Select client</h3>
+            <div className="relative mb-2">
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a client" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="client1">Amarachhhlii LTD</SelectItem>
+                  <SelectItem value="client2">Client 2</SelectItem>
+                  <SelectItem value="client3">Client 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button variant="outline" className="text-green-500 border-green-500 hover:bg-green-50 w-full">
+              <Plus className="h-4 w-4 mr-2" />
+              Create client
             </Button>
           </div>
-        </div>
+          
+          {/* Dates */}
+          <div className="grid grid-cols-2 gap-4 pt-2">
+            <div>
+              <Label htmlFor="invoice-date">Invoice date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !invoiceDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarRange className="mr-2 h-4 w-4" />
+                    {invoiceDate ? format(invoiceDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={invoiceDate}
+                    onSelect={setInvoiceDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <Label htmlFor="due-date">Due date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dueDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarRange className="mr-2 h-4 w-4" />
+                    {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={setDueDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
 
-        {/* Client Selection */}
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-3">Select client</h3>
-          <div className="relative mb-2">
-            <Select>
+          {/* Payment Terms */}
+          <div className="pt-2">
+            <Label htmlFor="payment-terms">Payment terms</Label>
+            <Select defaultValue="full">
               <SelectTrigger>
-                <SelectValue placeholder="Select a client" />
+                <SelectValue placeholder="Select payment terms" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="client1">Amarachhhlii LTD</SelectItem>
-                <SelectItem value="client2">Client 2</SelectItem>
-                <SelectItem value="client3">Client 3</SelectItem>
+                <SelectItem value="full">100% upon project completion</SelectItem>
+                <SelectItem value="50-50">50% upfront, 50% upon completion</SelectItem>
+                <SelectItem value="net30">Net 30</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" className="text-green-500 border-green-500 hover:bg-green-50 w-full">
-            <Plus className="h-4 w-4 mr-2" />
-            Create client
-          </Button>
-        </div>
-
-        {/* Dates */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div>
-            <Label htmlFor="invoice-date">Invoice date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !invoiceDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarRange className="mr-2 h-4 w-4" />
-                  {invoiceDate ? format(invoiceDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={invoiceDate}
-                  onSelect={setInvoiceDate}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div>
-            <Label htmlFor="due-date">Due date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dueDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarRange className="mr-2 h-4 w-4" />
-                  {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={setDueDate}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-
-        {/* Payment Terms */}
-        <div className="mb-6">
-          <Label htmlFor="payment-terms">Payment terms</Label>
-          <Select defaultValue="full">
-            <SelectTrigger>
-              <SelectValue placeholder="Select payment terms" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="full">100% upon project completion</SelectItem>
-              <SelectItem value="50-50">50% upfront, 50% upon completion</SelectItem>
-              <SelectItem value="net30">Net 30</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         {/* Itemized Products/Services */}
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-3">Itemized products/services</h3>
+        <div className="bg-white p-6 rounded-lg border border-border">
+          <h3 className="text-lg font-medium mb-4">Itemized products/services</h3>
           {invoiceItems.map((item, index) => (
-            <div key={index} className="mb-6 border border-gray-200 rounded-md p-4">
+            <div key={index} className="mb-4 border border-gray-200 rounded-md p-4">
               <div className="mb-4">
                 <Label htmlFor={`description-${index}`}>Description</Label>
                 <Input id={`description-${index}`} placeholder="Web design services" />
@@ -284,7 +287,7 @@ const InvoiceForm = () => {
         </div>
 
         {/* Additional Info */}
-        <div className="mb-6">
+        <div className="bg-white p-6 rounded-lg border border-border">
           <Label htmlFor="additional-info">Additional information</Label>
           <Textarea 
             id="additional-info" 
@@ -294,98 +297,100 @@ const InvoiceForm = () => {
         </div>
       </div>
 
-      {/* Invoice Preview */}
-      <div className="w-full md:w-1/2 border rounded-lg p-6 bg-white">
-        <h3 className="text-xl font-medium mb-4">Invoice preview</h3>
-        <div className="border rounded-lg p-6 bg-white">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold">INVOICE</h1>
-            <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center">
-              <span className="text-gray-400">Logo</span>
-            </div>
-          </div>
-          
-          <div className="flex justify-between mb-8">
-            <div>
-              <h4 className="font-medium mb-1">Billed to</h4>
-              <p>Client name</p>
-              <p>Client email</p>
-              <p>Company address</p>
-              <p>City, Country - 00000</p>
-            </div>
-            <div className="text-right">
-              <p className="font-medium">Business name</p>
-              <p>youremail@example.com</p>
-              <p>Business address</p>
-              <p>City, State, IN - 000 000</p>
-              <p>TAX ID 00XXXXX1234XXXX</p>
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <div className="grid grid-cols-5 font-medium text-sm border-b pb-2">
-              <div>Invoice #</div>
-              <div>Description</div>
-              <div className="text-center">Qty</div>
-              <div className="text-right">Price</div>
-              <div className="text-right">Total</div>
+      {/* Invoice Preview - Made larger and sticky */}
+      <div className="w-full lg:w-3/5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto">
+        <div className="border rounded-lg p-6 bg-white shadow-sm">
+          <h3 className="text-xl font-medium mb-4">Invoice preview</h3>
+          <div className="border rounded-lg p-8 bg-white">
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="text-4xl font-bold">INVOICE</h1>
+              <div className="h-20 w-20 bg-gray-100 rounded-full flex items-center justify-center">
+                <span className="text-gray-400">Logo</span>
+              </div>
             </div>
             
-            <div className="grid grid-cols-5 py-3 border-b text-sm">
-              <div>INV-001</div>
-              <div>Web design service</div>
-              <div className="text-center">1</div>
-              <div className="text-right">$3,000.00</div>
-              <div className="text-right">$3,000.00</div>
+            <div className="flex justify-between mb-10">
+              <div>
+                <h4 className="font-medium mb-2 text-lg">Billed to</h4>
+                <p>Client name</p>
+                <p>Client email</p>
+                <p>Company address</p>
+                <p>City, Country - 00000</p>
+              </div>
+              <div className="text-right">
+                <p className="font-medium text-lg">Business name</p>
+                <p>youremail@example.com</p>
+                <p>Business address</p>
+                <p>City, State, IN - 000 000</p>
+                <p>TAX ID 00XXXXX1234XXXX</p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex justify-between mb-6">
-            <div>
-              <p className="font-medium mb-1">Invoice date</p>
-              <p>{invoiceDate ? format(invoiceDate, "dd MMM, yyyy") : "01 Jan, 2023"}</p>
+            <div className="mb-6">
+              <div className="grid grid-cols-5 font-medium text-sm border-b pb-2">
+                <div>Invoice #</div>
+                <div>Description</div>
+                <div className="text-center">Qty</div>
+                <div className="text-right">Price</div>
+                <div className="text-right">Total</div>
+              </div>
               
-              <p className="font-medium mt-4 mb-1">Due date</p>
-              <p>{dueDate ? format(dueDate, "dd MMM, yyyy") : "15 Jan, 2023"}</p>
-            </div>
-            
-            <div className="text-right w-1/3">
-              <div className="flex justify-between mb-1">
-                <span>Subtotal</span>
-                <span>$3,000.00</span>
-              </div>
-              <div className="flex justify-between mb-1">
-                <span>Tax (0%)</span>
-                <span>$0.00</span>
-              </div>
-              <div className="flex justify-between font-bold pt-2 border-t mt-2">
-                <span>Total due</span>
-                <span>$3,000.00</span>
+              <div className="grid grid-cols-5 py-4 border-b text-sm">
+                <div>INV-001</div>
+                <div>Web design service</div>
+                <div className="text-center">1</div>
+                <div className="text-right">$3,000.00</div>
+                <div className="text-right">$3,000.00</div>
               </div>
             </div>
-          </div>
 
-          <div className="border-t pt-4">
-            <p className="font-medium mb-2">Payment terms</p>
-            <p>100% upon project completion</p>
-            <div className="flex items-start mt-2">
-              <input type="checkbox" className="mt-1 mr-2" />
-              <p className="text-sm">Please pay within 15 days of receiving this invoice.</p>
-            </div>
-          </div>
-
-          <div className="border-t mt-4 pt-4">
-            <p className="font-medium mb-2">Payment details</p>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="flex justify-between mb-8">
               <div>
-                <p>Bank name</p>
-                <p>IBAN/Account #</p>
-                <p>Swift code</p>
+                <p className="font-medium mb-2">Invoice date</p>
+                <p>{invoiceDate ? format(invoiceDate, "dd MMM, yyyy") : "01 Jan, 2023"}</p>
+                
+                <p className="font-medium mt-4 mb-2">Due date</p>
+                <p>{dueDate ? format(dueDate, "dd MMM, yyyy") : "15 Jan, 2023"}</p>
               </div>
-              <div>
-                <p>ABCD BANK</p>
-                <p>3747489 2300011</p>
-                <p>ABCDUSBBXXX</p>
+              
+              <div className="text-right w-1/3">
+                <div className="flex justify-between mb-2">
+                  <span>Subtotal</span>
+                  <span>$3,000.00</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span>Tax (0%)</span>
+                  <span>$0.00</span>
+                </div>
+                <div className="flex justify-between font-bold pt-2 border-t mt-3 text-lg">
+                  <span>Total due</span>
+                  <span>$3,000.00</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-5">
+              <p className="font-medium mb-2">Payment terms</p>
+              <p>100% upon project completion</p>
+              <div className="flex items-start mt-3">
+                <input type="checkbox" className="mt-1 mr-2" />
+                <p className="text-sm">Please pay within 15 days of receiving this invoice.</p>
+              </div>
+            </div>
+
+            <div className="border-t mt-6 pt-5">
+              <p className="font-medium mb-2">Payment details</p>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p>Bank name</p>
+                  <p>IBAN/Account #</p>
+                  <p>Swift code</p>
+                </div>
+                <div>
+                  <p>ABCD BANK</p>
+                  <p>3747489 2300011</p>
+                  <p>ABCDUSBBXXX</p>
+                </div>
               </div>
             </div>
           </div>
