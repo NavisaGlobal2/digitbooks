@@ -6,6 +6,7 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import QuickActions from "@/components/dashboard/QuickActions";
 import FinancialOverview from "@/components/dashboard/FinancialOverview";
 import CashflowSection from "@/components/dashboard/CashflowSection";
+import FinancialChartsSection from "@/components/dashboard/FinancialChartsSection";
 import TransactionsSection from "@/components/dashboard/TransactionsSection";
 import BillsSection from "@/components/dashboard/BillsSection";
 
@@ -42,6 +43,9 @@ const Dashboard = () => {
 
             {/* Cashflow Analysis */}
             <CashflowSection />
+            
+            {/* Financial Charts Section (New) */}
+            <FinancialChartsSection />
 
             {/* Bottom Section */}
             <div className="grid grid-cols-2 gap-5">
