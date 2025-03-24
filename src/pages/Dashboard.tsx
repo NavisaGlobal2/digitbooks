@@ -9,6 +9,7 @@ import CashflowSection from "@/components/dashboard/CashflowSection";
 import FinancialChartsSection from "@/components/dashboard/FinancialChartsSection";
 import TransactionsSection from "@/components/dashboard/TransactionsSection";
 import BillsSection from "@/components/dashboard/BillsSection";
+import AIInsights from "@/components/dashboard/AIInsights";
 
 const Dashboard = () => {
   // Sample data for our dashboard
@@ -44,7 +45,10 @@ const Dashboard = () => {
             {/* Cashflow Analysis */}
             <CashflowSection />
             
-            {/* Financial Charts Section (New) */}
+            {/* AI Insights Section */}
+            <AIInsights />
+            
+            {/* Financial Charts Section */}
             <FinancialChartsSection />
 
             {/* Bottom Section */}
