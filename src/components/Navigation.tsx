@@ -1,4 +1,3 @@
-
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 import { Home, DollarSign, Info, Settings, HelpCircle, Briefcase } from "lucide-react";
