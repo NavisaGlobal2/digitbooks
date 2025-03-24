@@ -1,6 +1,7 @@
 
 import { Revenue } from "@/types/revenue";
 import RevenueForm from "@/components/revenue/RevenueForm";
+import { DollarSign } from "lucide-react";
 
 interface AddRevenueDialogProps {
   open: boolean;
@@ -16,11 +17,16 @@ const AddRevenueDialog = ({ open, onOpenChange, onRevenueAdded }: AddRevenueDial
   };
 
   return (
-    <RevenueForm 
-      open={open}
-      onOpenChange={onOpenChange}
-      onSubmit={handleSubmit}
-    />
+    <div>
+      <div className="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-100 rounded-full p-6 z-10">
+        <DollarSign className="h-8 w-8 text-green-500" />
+      </div>
+      <RevenueForm 
+        open={open}
+        onOpenChange={onOpenChange}
+        onSubmit={handleSubmit}
+      />
+    </div>
   );
 };
 

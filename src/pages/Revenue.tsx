@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRevenue } from "@/contexts/RevenueContext";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, PieChart, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import RevenueContent from "@/components/revenue/RevenueContent";
 import AddRevenueDialog from "@/components/revenue/AddRevenueDialog";
@@ -49,17 +49,31 @@ const RevenuePage = () => {
   };
   
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-gray-50">
       <Sidebar />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b px-6 py-4">
+        <header className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-5">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-green-600">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <h1 className="text-2xl font-semibold">Revenue tracking</h1>
+              <div className="flex items-center">
+                <PieChart className="h-6 w-6 mr-2" />
+                <h1 className="text-2xl font-semibold">Revenue Tracking</h1>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline" 
+                className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+                onClick={() => {}}
+              >
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Revenue Reports
+              </Button>
             </div>
           </div>
         </header>
