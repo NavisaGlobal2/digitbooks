@@ -18,20 +18,7 @@ import {
   addAdditionalInfo, 
   addFooter 
 } from "./pdfContent";
-
-export interface InvoiceDetails {
-  logoPreview: string | null;
-  invoiceItems: { description: string; quantity: number; price: number; tax: number }[];
-  invoiceDate?: Date;
-  dueDate?: Date;
-  additionalInfo: string;
-  bankName: string;
-  accountNumber: string;
-  swiftCode: string;
-  accountName: string;
-  clientName?: string;
-  invoiceNumber?: string;
-}
+import { InvoiceDetails } from "./pdfSections/types";
 
 /**
  * Generate a PDF invoice

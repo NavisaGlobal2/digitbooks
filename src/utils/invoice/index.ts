@@ -2,8 +2,10 @@
 // Re-export all invoice utilities from a single entry point
 export * from "./formatters";
 export * from "./calculations";
-export * from "./pdfGenerator";
+export { generateInvoice } from "./pdfGenerator";
 export * from "./documentActions";
-export * from "./pdfContent";
-export * from "./pdfStyles";
 export * from "./pdfSections";
+export * from "./pdfStyles";
+
+// Explicitly re-export types to avoid duplicate exports
+export { InvoiceDetails } from "./pdfSections/types";
