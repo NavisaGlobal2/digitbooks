@@ -117,11 +117,11 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
         return false;
       }
       
-      // Validate the user ID is a proper UUID
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(user.id)) {
-        console.error("Invalid UUID format:", user.id);
-        toast.error("Invalid user identifier. Please try logging in again.");
+      // Check if the user is authenticated in Supabase
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        console.error("No active Supabase session found");
+        toast.error("Your session has expired. Please log in again.");
         return false;
       }
       
