@@ -28,7 +28,7 @@ import Budget from "./pages/Budget";
 import Ledger from "./pages/Ledger";
 import FinancialReports from "./pages/FinancialReports";
 import Settings from "./pages/Settings";
-import Auth from "./Auth";
+import Auth from "./pages/Auth";
 import Onboarding from "./Onboarding";
 import { RequireAuth } from "./components/auth/RequireAuth";
 

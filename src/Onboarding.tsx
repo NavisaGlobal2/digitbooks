@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -384,7 +385,11 @@ const Onboarding = () => {
               <Button 
                 variant="outline" 
                 className="flex-1"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => {
+                  // When skipping, still mark onboarding as completed
+                  completeOnboarding();
+                  navigate("/dashboard");
+                }}
               >
                 Skip for now
               </Button>
