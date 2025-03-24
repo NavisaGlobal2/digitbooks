@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useExpenses } from "@/contexts/ExpenseContext";
 import { Button } from "@/components/ui/button";
@@ -12,31 +11,11 @@ import { CalendarIcon, Plus, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { ExpenseCategory } from "@/types/expense";
+import { EXPENSE_CATEGORIES, PAYMENT_METHODS } from "@/utils/expenseCategories";
 
 interface ExpenseFormProps {
   onCancel: () => void;
 }
-
-const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string }[] = [
-  { value: "office", label: "Office Supplies" },
-  { value: "travel", label: "Travel" },
-  { value: "meals", label: "Meals & Entertainment" },
-  { value: "utilities", label: "Utilities" },
-  { value: "rent", label: "Rent" },
-  { value: "software", label: "Software" },
-  { value: "hardware", label: "Hardware" },
-  { value: "marketing", label: "Marketing" },
-  { value: "salaries", label: "Salaries" },
-  { value: "taxes", label: "Taxes" },
-  { value: "other", label: "Other" }
-];
-
-const PAYMENT_METHODS = [
-  { value: "cash", label: "Cash" },
-  { value: "card", label: "Card" },
-  { value: "bank transfer", label: "Bank Transfer" },
-  { value: "other", label: "Other" }
-];
 
 const ExpenseForm = ({ onCancel }: ExpenseFormProps) => {
   const { addExpense } = useExpenses();

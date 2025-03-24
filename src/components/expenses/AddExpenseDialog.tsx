@@ -1,4 +1,3 @@
-
 import { X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -8,32 +7,12 @@ import { useState } from "react";
 import { useExpenses } from "@/contexts/ExpenseContext";
 import { toast } from "sonner";
 import { ExpenseCategory } from "@/types/expense";
+import { EXPENSE_CATEGORIES, PAYMENT_METHODS } from "@/utils/expenseCategories";
 
 interface AddExpenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string }[] = [
-  { value: "office", label: "Office Supplies" },
-  { value: "travel", label: "Travel" },
-  { value: "meals", label: "Meals & Entertainment" },
-  { value: "utilities", label: "Utilities" },
-  { value: "rent", label: "Rent" },
-  { value: "software", label: "Software" },
-  { value: "hardware", label: "Hardware" },
-  { value: "marketing", label: "Marketing" },
-  { value: "salaries", label: "Salaries" },
-  { value: "taxes", label: "Taxes" },
-  { value: "other", label: "Other" }
-];
-
-const PAYMENT_METHODS = [
-  { value: "cash", label: "Cash" },
-  { value: "card", label: "Card" },
-  { value: "bank transfer", label: "Bank Transfer" },
-  { value: "other", label: "Other" }
-];
 
 const AddExpenseDialog = ({ open, onOpenChange }: AddExpenseDialogProps) => {
   const { addExpense } = useExpenses();
@@ -92,7 +71,6 @@ const AddExpenseDialog = ({ open, onOpenChange }: AddExpenseDialogProps) => {
       return;
     }
     
-    // Create receipt URL if file exists
     let receiptUrl;
     if (receiptFile) {
       const reader = new FileReader();
@@ -100,7 +78,6 @@ const AddExpenseDialog = ({ open, onOpenChange }: AddExpenseDialogProps) => {
       reader.onload = () => {
         receiptUrl = reader.result as string;
         
-        // Add the expense
         addExpense({
           description,
           amount: Number(amount),
@@ -108,7 +85,7 @@ const AddExpenseDialog = ({ open, onOpenChange }: AddExpenseDialogProps) => {
           category: category as ExpenseCategory,
           status: "pending",
           paymentMethod: paymentMethod as "cash" | "card" | "bank transfer" | "other",
-          vendor: "Unknown", // Not in the form but required by the type
+          vendor: "Unknown",
           receiptUrl
         });
         
@@ -116,7 +93,6 @@ const AddExpenseDialog = ({ open, onOpenChange }: AddExpenseDialogProps) => {
         handleClose();
       };
     } else {
-      // Add the expense without receipt
       addExpense({
         description,
         amount: Number(amount),
@@ -124,7 +100,7 @@ const AddExpenseDialog = ({ open, onOpenChange }: AddExpenseDialogProps) => {
         category: category as ExpenseCategory,
         status: "pending",
         paymentMethod: paymentMethod as "cash" | "card" | "bank transfer" | "other",
-        vendor: "Unknown", // Not in the form but required by the type
+        vendor: "Unknown"
       });
       
       toast.success("Expense added successfully");
