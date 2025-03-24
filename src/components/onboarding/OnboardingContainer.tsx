@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useOnboardingData } from "@/hooks/useOnboardingData";
@@ -31,6 +31,14 @@ const OnboardingContainer = () => {
     isSaving,
     saveProfile
   } = useOnboardingData();
+
+  useEffect(() => {
+    // If loading is finished and the user is already onboarded, redirect to dashboard
+    if (!isLoading && businessInfo.name && legalInfo.rcNumber) {
+      // This indicates user might have completed onboarding previously
+      console.log("User appears to have previous onboarding data");
+    }
+  }, [isLoading, businessInfo, legalInfo, navigate]);
 
   const handleNext = async () => {
     if (currentStep === ONBOARDING_STEPS.length - 1) {

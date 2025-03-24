@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -59,14 +60,18 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
       
       try {
         setIsLoading(true);
+        console.log("Fetching profile for user ID:", user.id);
+        
+        // First check if the profile exists
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
         
         if (error) {
           console.error('Error fetching profile:', error);
+          setIsLoading(false);
           return;
         }
         
@@ -93,7 +98,6 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
           
           if (user.onboardingCompleted) {
             navigate('/dashboard');
-            return;
           }
         }
       } catch (err) {
@@ -108,11 +112,18 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
 
   const saveProfile = async (): Promise<boolean> => {
     try {
+      if (!user?.id) {
+        toast.error("User ID is missing. Please try logging in again.");
+        return false;
+      }
+      
       setIsSaving(true);
+      console.log("Saving profile for user ID:", user.id);
+      
       const { error } = await supabase
         .from('profiles')
         .upsert({
-          id: user?.id,
+          id: user.id,
           business_name: businessInfo.name,
           industry: businessInfo.industry,
           tax_number: legalInfo.taxId || null,
@@ -125,12 +136,17 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
           address: businessInfo.address
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving profile:', error);
+        toast.error(error.message || "Failed to save business profile");
+        return false;
+      }
 
       completeOnboarding();
       
       toast.success("Setup completed! Welcome to DigiBooks");
       
+      // Navigate to dashboard after successful save
       navigate("/dashboard", { replace: true });
       return true;
     } catch (error: any) {
