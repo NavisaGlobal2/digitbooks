@@ -36,7 +36,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        console.log("Retrieved user from localStorage:", parsedUser);
+        // Make sure parsedUser has the onboardingCompleted property explicitly set
+        if (parsedUser.onboardingCompleted === undefined) {
+          parsedUser.onboardingCompleted = false;
+        }
+        setUser(parsedUser);
+      } catch (error) {
+        console.error("Error parsing stored user data:", error);
+        localStorage.removeItem("user");
+      }
     }
   }, []);
 
@@ -87,6 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         ...user, 
         onboardingCompleted: true 
       };
+      console.log("Completing onboarding, updated user:", updatedUser);
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
     }

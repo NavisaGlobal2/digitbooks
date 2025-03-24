@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useOnboardingData } from "@/hooks/useOnboardingData";
 import { ChevronLeft } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Components
 import OnboardingStepIndicator from "@/components/onboarding/OnboardingStepIndicator";
@@ -19,6 +20,7 @@ import { BUSINESS_TYPES, INDUSTRIES, ONBOARDING_STEPS } from "@/components/onboa
 const OnboardingContainer = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
+  const { user, completeOnboarding } = useAuth();
   
   const {
     businessInfo,
@@ -34,18 +36,26 @@ const OnboardingContainer = () => {
 
   useEffect(() => {
     // If loading is finished and the user is already onboarded, redirect to dashboard
-    if (!isLoading && businessInfo.name && legalInfo.rcNumber) {
-      // This indicates user might have completed onboarding previously
-      console.log("User appears to have previous onboarding data");
+    if (!isLoading && user?.onboardingCompleted) {
+      console.log("User already completed onboarding, redirecting to dashboard");
+      navigate('/dashboard', { replace: true });
     }
-  }, [isLoading, businessInfo, legalInfo, navigate]);
+  }, [isLoading, user, navigate]);
 
   const handleNext = async () => {
     if (currentStep === ONBOARDING_STEPS.length - 1) {
       // If we're on the last step, save the profile and redirect to dashboard
-      const success = await saveProfile();
-      if (success) {
-        navigate('/dashboard', { replace: true });
+      try {
+        console.log("Saving profile from last step");
+        const success = await saveProfile();
+        if (success) {
+          console.log("Profile saved successfully, marking onboarding as complete");
+          completeOnboarding();
+          navigate('/dashboard', { replace: true });
+        }
+      } catch (error) {
+        console.error("Error saving profile:", error);
+        toast.error("Failed to save profile");
       }
     } else {
       setCurrentStep(currentStep + 1);
@@ -61,8 +71,11 @@ const OnboardingContainer = () => {
   const handleSkip = async () => {
     try {
       // Save profile data and redirect to dashboard
+      console.log("Saving profile from skip action");
       const success = await saveProfile();
       if (success) {
+        console.log("Profile saved successfully from skip, marking onboarding as complete");
+        completeOnboarding();
         navigate('/dashboard', { replace: true });
       }
     } catch (error: any) {
