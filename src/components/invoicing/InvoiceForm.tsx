@@ -19,6 +19,7 @@ const InvoiceForm = () => {
   );
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [additionalInfo, setAdditionalInfo] = useState("Payment can be made directly to the bank account provided.");
+  const [isAccountVerified, setIsAccountVerified] = useState(false);
   
   // Bank details
   const [accountName, setAccountName] = useState("");
@@ -100,12 +101,15 @@ const InvoiceForm = () => {
           setBankAddress={setBankAddress}
           swiftCode={swiftCode}
           setSwiftCode={setSwiftCode}
+          isVerified={isAccountVerified}
+          setIsVerified={setIsAccountVerified}
         />
 
         {/* Action Buttons */}
         <ActionButtons 
           handleGenerateInvoice={handleGenerateInvoice}
           handleShareInvoice={handleShareInvoice}
+          isAccountVerified={isAccountVerified}
         />
       </div>
 
