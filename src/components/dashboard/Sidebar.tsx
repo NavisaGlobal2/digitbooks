@@ -2,13 +2,16 @@
 import { 
   LayoutDashboard, 
   FileText, 
-  CircleDollarSign, 
+  Receipt, 
   BarChart, 
   CreditCard, 
   Settings,
   ChevronRight,
   LogOut,
-  Receipt
+  Banknote,
+  Calculator,
+  BookOpen,
+  PieChart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation, Link } from "react-router-dom";
@@ -67,27 +70,44 @@ const Sidebar = () => {
               Expenses
             </Button>
           </Link>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start gap-3 text-secondary"
-          >
-            <CircleDollarSign className="h-5 w-5" />
-            Banking
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start gap-3 text-secondary"
-          >
-            <BarChart className="h-5 w-5" />
-            Reports
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start gap-3 text-secondary"
-          >
-            <CreditCard className="h-5 w-5" />
-            Payments
-          </Button>
+          <Link to="/revenue">
+            <Button 
+              variant="ghost" 
+              className={`w-full justify-start gap-3 ${path === '/revenue' 
+                ? 'text-primary font-medium bg-accent/10 border-r-4 border-primary' 
+                : 'text-secondary'}`}
+            >
+              <Banknote className="h-5 w-5" />
+              Revenue tracking
+            </Button>
+          </Link>
+          <Link to="/reports">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start gap-3 text-secondary"
+            >
+              <BarChart className="h-5 w-5" />
+              Financial Reports
+            </Button>
+          </Link>
+          <Link to="/budgeting">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start gap-3 text-secondary"
+            >
+              <Calculator className="h-5 w-5" />
+              Budgeting tools
+            </Button>
+          </Link>
+          <Link to="/ledger">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start gap-3 text-secondary"
+            >
+              <BookOpen className="h-5 w-5" />
+              General ledger
+            </Button>
+          </Link>
           <Button 
             variant="ghost" 
             className="w-full justify-start gap-3 text-secondary"

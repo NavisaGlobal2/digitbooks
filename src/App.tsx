@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { InvoiceProvider } from "@/contexts/InvoiceContext";
 import { ClientProvider } from "@/contexts/ClientContext";
 import { ExpenseProvider } from "@/contexts/ExpenseContext";
+import { RevenueProvider } from "@/contexts/RevenueContext";
 import Index from "./pages/Index";
 import Features from "./pages/Features";
 import Pricing from "./pages/Pricing";
@@ -19,6 +20,7 @@ import Dashboard from "./pages/Dashboard";
 import Invoicing from "./pages/Invoicing";
 import Expenses from "./pages/Expenses";
 import Clients from "./pages/Clients";
+import Revenue from "./pages/Revenue";
 
 const queryClient = new QueryClient();
 
@@ -28,24 +30,27 @@ const App = () => (
       <ClientProvider>
         <InvoiceProvider>
           <ExpenseProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/features" element={<Features />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/help" element={<Help />} />
-                <Route path="/careers" element={<Careers />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/invoicing" element={<Invoicing />} />
-                <Route path="/expenses" element={<Expenses />} />
-                <Route path="/clients" element={<Clients />} />
-                <Route path="/admin/applications" element={<ApplicationsAdmin />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
+            <RevenueProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/features" element={<Features />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/help" element={<Help />} />
+                  <Route path="/careers" element={<Careers />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/invoicing" element={<Invoicing />} />
+                  <Route path="/expenses" element={<Expenses />} />
+                  <Route path="/revenue" element={<Revenue />} />
+                  <Route path="/clients" element={<Clients />} />
+                  <Route path="/admin/applications" element={<ApplicationsAdmin />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </RevenueProvider>
           </ExpenseProvider>
         </InvoiceProvider>
       </ClientProvider>
