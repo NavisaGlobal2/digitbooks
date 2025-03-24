@@ -1,6 +1,7 @@
 
 import { format } from "date-fns";
 import { InvoiceItem } from "@/types/invoice";
+import { formatNaira } from "@/utils/invoice/formatters";
 
 interface InvoicePreviewProps {
   logoPreview: string | null;
@@ -17,13 +18,6 @@ interface InvoicePreviewProps {
   calculateTotal: (items: InvoiceItem[]) => number;
   clientName: string;
 }
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN'
-  }).format(amount);
-};
 
 const InvoicePreview = ({
   logoPreview,
@@ -97,10 +91,10 @@ const InvoicePreview = ({
               <tr key={index} className="border-b border-gray-100">
                 <td className="py-3">{item.description}</td>
                 <td className="py-3 text-right">{item.quantity}</td>
-                <td className="py-3 text-right">{formatCurrency(item.price)}</td>
+                <td className="py-3 text-right">{formatNaira(item.price)}</td>
                 <td className="py-3 text-right">{item.tax}%</td>
                 <td className="py-3 text-right">
-                  {formatCurrency(item.quantity * item.price)}
+                  {formatNaira(item.quantity * item.price)}
                 </td>
               </tr>
             ))}
@@ -113,15 +107,15 @@ const InvoicePreview = ({
         <div className="w-64">
           <div className="flex justify-between py-1">
             <span className="text-gray-600">Subtotal:</span>
-            <span>{formatCurrency(calculateSubtotal(invoiceItems))}</span>
+            <span>{formatNaira(calculateSubtotal(invoiceItems))}</span>
           </div>
           <div className="flex justify-between py-1">
             <span className="text-gray-600">Tax:</span>
-            <span>{formatCurrency(calculateTax(invoiceItems))}</span>
+            <span>{formatNaira(calculateTax(invoiceItems))}</span>
           </div>
           <div className="flex justify-between py-2 font-bold border-t border-gray-200 mt-2">
             <span>Total:</span>
-            <span>{formatCurrency(calculateTotal(invoiceItems))}</span>
+            <span>{formatNaira(calculateTotal(invoiceItems))}</span>
           </div>
         </div>
       </div>

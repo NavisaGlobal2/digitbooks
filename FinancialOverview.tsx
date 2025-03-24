@@ -1,6 +1,7 @@
 
 import { ArrowDown, ArrowUp, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatNaira } from "@/utils/invoice/formatters";
 
 interface FinancialData {
   totalRevenue: number;
@@ -27,7 +28,7 @@ const FinancialOverview = ({ data }: FinancialOverviewProps) => {
                 <ArrowDown className="text-green-500 h-5 w-5" />
               </div>
             </div>
-            <div className="text-3xl font-bold mb-2">${data.totalRevenue.toLocaleString()}</div>
+            <div className="text-3xl font-bold mb-2">{formatNaira(data.totalRevenue)}</div>
             <div className="flex items-center text-sm">
               <span className="text-muted-foreground">Cash inflow</span>
             </div>
@@ -43,7 +44,7 @@ const FinancialOverview = ({ data }: FinancialOverviewProps) => {
                 <ArrowUp className="text-purple-500 h-5 w-5" />
               </div>
             </div>
-            <div className="text-3xl font-bold mb-2">${data.totalExpenses.toLocaleString()}</div>
+            <div className="text-3xl font-bold mb-2">{formatNaira(data.totalExpenses)}</div>
             <div className="flex items-center text-sm">
               <span className="text-muted-foreground">Cash outflow</span>
             </div>
@@ -59,7 +60,7 @@ const FinancialOverview = ({ data }: FinancialOverviewProps) => {
                 <TrendingUp className="text-blue-500 h-5 w-5" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-success mb-2">${data.netCashflow.toLocaleString()}</div>
+            <div className="text-3xl font-bold text-success mb-2">{formatNaira(data.netCashflow)}</div>
             <div className="flex items-center text-sm">
               <span className="text-success">Positive cashflow</span>
             </div>

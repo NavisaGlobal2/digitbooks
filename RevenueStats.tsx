@@ -1,5 +1,6 @@
+
 import { Card, CardContent } from "@/components/ui/card";
-import { formatNaira } from "@/utils/invoice";
+import { formatNaira } from "@/utils/invoice/formatters";
 
 interface RevenueStatsProps {
   totalReceivables: number;
