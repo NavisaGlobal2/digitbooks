@@ -1,13 +1,22 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useLedger } from "@/contexts/LedgerContext";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { BookOpen, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { AddTransactionDialog } from "@/components/ledger/AddTransactionDialog";
+import TransactionList from "./TransactionList";
+import { EditTransactionDialog } from "./EditTransactionDialog";
 
 const Ledger = () => {
-  const [transactions, setTransactions] = useState([]);
+  const { transactions } = useLedger();
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editTransactionId, setEditTransactionId] = useState<string | null>(null);
+
+  const handleEditTransaction = (id: string) => {
+    setEditTransactionId(id);
+  };
 
   return (
     <div className="flex h-screen bg-background">
@@ -22,34 +31,61 @@ const Ledger = () => {
             <h1 className="text-xl font-semibold">General ledger</h1>
           </div>
           
-          {transactions.length > 0 && (
-            <Button 
-              className="bg-green-500 hover:bg-green-600 text-white"
-              onClick={() => setShowAddDialog(true)}
-            >
-              Add transaction
-            </Button>
-          )}
+          <Button 
+            className="bg-green-500 hover:bg-green-600 text-white"
+            onClick={() => setShowAddDialog(true)}
+          >
+            Add transaction
+          </Button>
         </header>
 
         <main className="flex-1 overflow-auto p-6">
-          <div className="h-full flex flex-col items-center justify-center max-w-md mx-auto text-center">
-            <div className="w-48 h-48 mb-8 flex items-center justify-center bg-green-50 rounded-full">
-              <BookOpen className="w-24 h-24 text-green-500" strokeWidth={1.5} />
+          {transactions.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center max-w-md mx-auto text-center">
+              <div className="w-48 h-48 mb-8 flex items-center justify-center bg-green-50 rounded-full">
+                <BookOpen className="w-24 h-24 text-green-500" strokeWidth={1.5} />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">You have no transaction record yet.</h2>
+              <p className="text-muted-foreground mb-8">
+                Click on the 'Add transaction' button to create your first revenue entry.
+              </p>
+              <Button 
+                className="bg-green-500 hover:bg-green-600 text-white"
+                onClick={() => setShowAddDialog(true)}
+              >
+                Add transaction
+              </Button>
             </div>
-            <h2 className="text-xl font-semibold mb-2">You have no transaction record yet.</h2>
-            <p className="text-muted-foreground mb-8">
-              Click on the 'Add transaction' button to create your first transaction entry.
-            </p>
-            <Button 
-              className="bg-green-500 hover:bg-green-600 text-white"
-              onClick={() => setShowAddDialog(true)}
-            >
-              Add transaction
-            </Button>
-          </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Transaction History</h2>
+                <Button 
+                  className="bg-green-500 hover:bg-green-600 text-white"
+                  onClick={() => setShowAddDialog(true)}
+                >
+                  Add transaction
+                </Button>
+              </div>
+              
+              <TransactionList onEditTransaction={handleEditTransaction} />
+            </div>
+          )}
         </main>
       </div>
+
+      <AddTransactionDialog 
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+      />
+      
+      <EditTransactionDialog 
+        open={!!editTransactionId}
+        onOpenChange={(open) => {
+          if (!open) setEditTransactionId(null);
+        }}
+        transactionId={editTransactionId}
+      />
     </div>
   );
 };

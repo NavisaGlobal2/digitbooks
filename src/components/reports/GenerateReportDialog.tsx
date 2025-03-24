@@ -1,39 +1,60 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface GenerateReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onGenerate: (reportType: string, reportPeriod: string, fileFormat: string) => void;
 }
 
-const REPORT_TYPES = [
-  { value: "profit-loss", label: "Profit & Loss" },
-  { value: "balance-sheet", label: "Balance Sheet" },
-  { value: "cash-flow", label: "Cash Flow" },
-  { value: "custom", label: "Custom Report" }
-];
-
-export const GenerateReportDialog = ({ open, onOpenChange }: GenerateReportDialogProps) => {
-  const [reportType, setReportType] = useState("profit-loss");
-  const [startDate, setStartDate] = useState(
-    new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0]
-  );
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+export const GenerateReportDialog = ({
+  open,
+  onOpenChange,
+  onGenerate,
+}: GenerateReportDialogProps) => {
+  const [reportType, setReportType] = useState("");
+  const [reportPeriod, setReportPeriod] = useState("");
+  const [fileFormat, setFileFormat] = useState("pdf");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // In a real implementation, this would generate the report
-    toast.success(`Generating ${REPORT_TYPES.find(t => t.value === reportType)?.label} report`);
-    toast.info("This feature is coming soon!");
-    
+
+    if (!reportType) {
+      toast.error("Please select a report type");
+      return;
+    }
+
+    if (!reportPeriod) {
+      toast.error("Please select a report period");
+      return;
+    }
+
+    onGenerate(reportType, reportPeriod, fileFormat);
+    resetForm();
     onOpenChange(false);
+  };
+
+  const resetForm = () => {
+    setReportType("");
+    setReportPeriod("");
+    setFileFormat("pdf");
   };
 
   return (
@@ -42,49 +63,78 @@ export const GenerateReportDialog = ({ open, onOpenChange }: GenerateReportDialo
         <DialogHeader>
           <DialogTitle>Generate Financial Report</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="reportType">Report Type</Label>
             <Select value={reportType} onValueChange={setReportType}>
-              <SelectTrigger>
+              <SelectTrigger id="reportType">
                 <SelectValue placeholder="Select report type" />
               </SelectTrigger>
               <SelectContent>
-                {REPORT_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="income-statement">Income Statement</SelectItem>
+                <SelectItem value="cash-flow">Cash Flow Statement</SelectItem>
+                <SelectItem value="expense-summary">Expense Summary</SelectItem>
+                <SelectItem value="revenue-summary">Revenue Summary</SelectItem>
+                <SelectItem value="budget-analysis">Budget Analysis</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="startDate">Start Date</Label>
-            <Input
-              id="startDate"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
+            <Label htmlFor="reportPeriod">Report Period</Label>
+            <Select value={reportPeriod} onValueChange={setReportPeriod}>
+              <SelectTrigger id="reportPeriod">
+                <SelectValue placeholder="Select time period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="current-month">Current Month</SelectItem>
+                <SelectItem value="previous-month">Previous Month</SelectItem>
+                <SelectItem value="current-quarter">Current Quarter</SelectItem>
+                <SelectItem value="previous-quarter">Previous Quarter</SelectItem>
+                <SelectItem value="year-to-date">Year to Date</SelectItem>
+                <SelectItem value="last-year">Last Year</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="endDate">End Date</Label>
-            <Input
-              id="endDate"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
+            <Label>File Format</Label>
+            <RadioGroup
+              value={fileFormat}
+              onValueChange={setFileFormat}
+              className="flex space-x-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="pdf" id="pdf" />
+                <Label htmlFor="pdf">PDF</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="excel" id="excel" />
+                <Label htmlFor="excel">Excel</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="csv" id="csv" />
+                <Label htmlFor="csv">CSV</Label>
+              </div>
+            </RadioGroup>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                resetForm();
+                onOpenChange(false);
+              }}
+            >
               Cancel
             </Button>
-            <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
+            <Button
+              type="submit"
+              className="bg-green-500 hover:bg-green-600 text-white"
+            >
               Generate Report
             </Button>
           </div>

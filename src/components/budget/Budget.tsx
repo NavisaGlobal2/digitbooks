@@ -1,12 +1,17 @@
 
 import { useState } from "react";
+import { useBudget } from "@/contexts/BudgetContext";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CreateBudgetDialog } from "@/components/budget/CreateBudgetDialog";
+import BudgetList from "./BudgetList";
+import BudgetDetail from "./BudgetDetail";
 
 const Budget = () => {
-  const [budgets, setBudgets] = useState([]);
+  const { budgets } = useBudget();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [selectedBudgetId, setSelectedBudgetId] = useState<string | null>(null);
 
   return (
     <div className="flex h-screen bg-background">
@@ -16,7 +21,7 @@ const Budget = () => {
         <header className="bg-white border-b px-6 h-16 flex items-center justify-between">
           <h1 className="text-xl font-semibold">Budgeting tools</h1>
           
-          {budgets.length > 0 && (
+          {budgets.length > 0 && !selectedBudgetId && (
             <Button 
               className="bg-green-500 hover:bg-green-600 text-white"
               onClick={() => setShowCreateDialog(true)}
@@ -27,23 +32,44 @@ const Budget = () => {
         </header>
 
         <main className="flex-1 overflow-auto p-6">
-          <div className="h-full flex flex-col items-center justify-center max-w-md mx-auto text-center">
-            <div className="w-48 h-48 mb-8 flex items-center justify-center bg-green-50 rounded-full">
-              <Calculator className="w-24 h-24 text-green-500" strokeWidth={1.5} />
+          {budgets.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center max-w-md mx-auto text-center">
+              <div className="w-48 h-48 mb-8 flex items-center justify-center bg-green-50 rounded-full">
+                <Calculator className="w-24 h-24 text-green-500" strokeWidth={1.5} />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">No budget created</h2>
+              <p className="text-muted-foreground mb-8">
+                Click on the 'Create budget' button to create your first budget.
+              </p>
+              <Button 
+                className="bg-green-500 hover:bg-green-600 text-white"
+                onClick={() => setShowCreateDialog(true)}
+              >
+                Create budget
+              </Button>
             </div>
-            <h2 className="text-xl font-semibold mb-2">No budget created</h2>
-            <p className="text-muted-foreground mb-8">
-              Click on the 'Create budget' button to create your first budget.
-            </p>
-            <Button 
-              className="bg-green-500 hover:bg-green-600 text-white"
-              onClick={() => setShowCreateDialog(true)}
-            >
-              Create budget
-            </Button>
-          </div>
+          ) : (
+            <>
+              {selectedBudgetId ? (
+                <BudgetDetail 
+                  budgetId={selectedBudgetId} 
+                  onBack={() => setSelectedBudgetId(null)} 
+                />
+              ) : (
+                <BudgetList 
+                  onSelectBudget={setSelectedBudgetId}
+                  onCreateBudget={() => setShowCreateDialog(true)}
+                />
+              )}
+            </>
+          )}
         </main>
       </div>
+
+      <CreateBudgetDialog 
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+      />
     </div>
   );
 };

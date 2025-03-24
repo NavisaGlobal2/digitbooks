@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,17 +15,19 @@ import {
 import { useLedger } from "@/contexts/LedgerContext";
 import { toast } from "sonner";
 
-interface AddTransactionDialogProps {
+interface EditTransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  transactionId: string | null;
 }
 
-export const AddTransactionDialog = ({
+export const EditTransactionDialog = ({
   open,
   onOpenChange,
-}: AddTransactionDialogProps) => {
-  const { addTransaction } = useLedger();
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  transactionId,
+}: EditTransactionDialogProps) => {
+  const { transactions, updateTransaction } = useLedger();
+  const [date, setDate] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
@@ -45,6 +47,19 @@ export const AddTransactionDialog = ({
     "Income",
     "Other",
   ];
+
+  useEffect(() => {
+    if (open && transactionId) {
+      const transaction = transactions.find((t) => t.id === transactionId);
+      if (transaction) {
+        setDate(new Date(transaction.date).toISOString().split("T")[0]);
+        setDescription(transaction.description);
+        setAmount(transaction.amount.toString());
+        setCategory(transaction.category);
+        setType(transaction.type);
+      }
+    }
+  }, [open, transactionId, transactions]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +84,12 @@ export const AddTransactionDialog = ({
       return;
     }
 
-    addTransaction({
+    if (!transactionId) {
+      toast.error("Transaction ID is missing");
+      return;
+    }
+
+    updateTransaction(transactionId, {
       date: new Date(date),
       description: description.trim(),
       amount: parseFloat(amount),
@@ -77,13 +97,13 @@ export const AddTransactionDialog = ({
       type,
     });
 
-    toast.success("Transaction added successfully");
+    toast.success("Transaction updated successfully");
     resetForm();
     onOpenChange(false);
   };
 
   const resetForm = () => {
-    setDate(new Date().toISOString().split("T")[0]);
+    setDate("");
     setDescription("");
     setAmount("");
     setCategory("");
@@ -94,7 +114,7 @@ export const AddTransactionDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Transaction</DialogTitle>
+          <DialogTitle>Edit Transaction</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -181,7 +201,7 @@ export const AddTransactionDialog = ({
               type="submit"
               className="bg-green-500 hover:bg-green-600 text-white"
             >
-              Add Transaction
+              Update Transaction
             </Button>
           </div>
         </form>
