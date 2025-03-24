@@ -1,8 +1,8 @@
-
 import { saveAs } from "file-saver";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { InvoiceDetails, generateInvoice } from "./pdfGenerator";
+import { generateInvoice } from "./pdfGenerator";
+import { InvoiceDetails } from "./pdfSections/types";
 
 /**
  * Function to download the invoice
@@ -73,4 +73,3 @@ export const shareInvoice = async (invoiceDetails: InvoiceDetails) => {
     return false;
   }
 };
-

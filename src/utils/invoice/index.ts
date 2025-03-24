@@ -8,4 +8,4 @@ export * from "./pdfSections";
 export * from "./pdfStyles";
 
 // Explicitly re-export types to avoid duplicate exports
-export { InvoiceDetails } from "./pdfSections/types";
+export type { InvoiceDetails } from "./pdfSections/types";
