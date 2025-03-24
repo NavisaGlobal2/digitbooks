@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { formatNaira } from "@/utils/invoice";
 
 interface TransactionListProps {
   onEditTransaction: (id: string) => void;
@@ -26,13 +27,6 @@ const TransactionList = ({ onEditTransaction }: TransactionListProps) => {
       deleteTransaction(id);
       toast.success("Transaction deleted successfully");
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
   };
 
   return (
@@ -63,7 +57,7 @@ const TransactionList = ({ onEditTransaction }: TransactionListProps) => {
                 </TableCell>
                 <TableCell>{transaction.description}</TableCell>
                 <TableCell>{transaction.category}</TableCell>
-                <TableCell>{formatCurrency(transaction.amount)}</TableCell>
+                <TableCell>{formatNaira(transaction.amount)}</TableCell>
                 <TableCell>
                   <Badge
                     variant={transaction.type === "credit" ? "success" : "destructive"}

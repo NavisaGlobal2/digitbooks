@@ -1,58 +1,56 @@
 
 import { format } from "date-fns";
-import { MoreVertical, FileEdit, Trash2 } from "lucide-react";
+import { MoreVertical, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { Revenue, PaymentStatus } from "@/types/revenue";
 import { formatNaira } from "@/utils/invoice";
-import { Badge } from "@/components/ui/badge";
 
 interface RevenueTableProps {
   revenues: Revenue[];
-  onDeleteRevenue: (id: string) => void;
-  onEditRevenue: (id: string) => void;
+  onUpdateStatus: (id: string, status: PaymentStatus) => void;
+  onDelete: (id: string) => void;
 }
 
-const RevenueTable = ({ revenues, onDeleteRevenue, onEditRevenue }: RevenueTableProps) => {
-  const getPaymentStatusBadge = (status: PaymentStatus) => {
-    const statusStyles = {
-      paid: "bg-green-100 text-green-800 hover:bg-green-100",
-      pending: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
-      overdue: "bg-red-100 text-red-800 hover:bg-red-100",
-      cancelled: "bg-gray-100 text-gray-800 hover:bg-gray-100"
-    };
-    
-    return (
-      <Badge className={`${statusStyles[status]} capitalize`} variant="outline">
-        {status}
-      </Badge>
-    );
+export const RevenueTable = ({ revenues, onUpdateStatus, onDelete }: RevenueTableProps) => {
+  const getStatusBadge = (status: PaymentStatus) => {
+    switch (status) {
+      case "paid":
+        return <Badge variant="success">Paid</Badge>;
+      case "pending":
+        return <Badge variant="warning">Pending</Badge>;
+      case "overdue":
+        return <Badge variant="destructive">Overdue</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
-  
+
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Revenue #</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead>Description</TableHead>
             <TableHead>Source</TableHead>
-            <TableHead>Client</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>Description</TableHead>
             <TableHead className="text-right">Amount</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead className="w-[80px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {revenues.map((revenue) => (
             <TableRow key={revenue.id}>
+              <TableCell className="font-medium">{revenue.id.substring(0, 8)}</TableCell>
               <TableCell>{format(new Date(revenue.date), "dd/MM/yyyy")}</TableCell>
-              <TableCell className="font-medium">{revenue.description}</TableCell>
               <TableCell className="capitalize">{revenue.source}</TableCell>
-              <TableCell>{revenue.clientName || "-"}</TableCell>
-              <TableCell>{getPaymentStatusBadge(revenue.paymentStatus)}</TableCell>
+              <TableCell>{revenue.description}</TableCell>
               <TableCell className="text-right">{formatNaira(revenue.amount)}</TableCell>
+              <TableCell>{getStatusBadge(revenue.paymentStatus)}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -61,18 +59,28 @@ const RevenueTable = ({ revenues, onDeleteRevenue, onEditRevenue }: RevenueTable
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem 
-                      className="cursor-pointer"
-                      onClick={() => onEditRevenue(revenue.id)}
+                    <DropdownMenuItem
+                      onClick={() => onUpdateStatus(revenue.id, "paid")}
+                      disabled={revenue.paymentStatus === "paid"}
                     >
-                      <FileEdit className="h-4 w-4 mr-2" />
-                      Edit
+                      Mark as Paid
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="cursor-pointer text-red-500 focus:text-red-500"
-                      onClick={() => onDeleteRevenue(revenue.id)}
+                    <DropdownMenuItem
+                      onClick={() => onUpdateStatus(revenue.id, "pending")}
+                      disabled={revenue.paymentStatus === "pending"}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      Mark as Pending
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => onUpdateStatus(revenue.id, "overdue")}
+                      disabled={revenue.paymentStatus === "overdue"}
+                    >
+                      Mark as Overdue
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-600 focus:text-red-600"
+                      onClick={() => onDelete(revenue.id)}
+                    >
                       Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -85,5 +93,3 @@ const RevenueTable = ({ revenues, onDeleteRevenue, onEditRevenue }: RevenueTable
     </div>
   );
 };
-
-export default RevenueTable;
