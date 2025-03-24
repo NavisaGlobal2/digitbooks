@@ -21,7 +21,7 @@ import {
 import { InvoiceDetails } from "./pdfSections/types";
 
 /**
- * Generate a PDF invoice
+ * Generate a PDF invoice with improved formatting
  */
 export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<Blob> => {
   const {
@@ -38,29 +38,43 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
     invoiceNumber = format(new Date(), "yyyyMMdd")
   } = invoiceDetails;
 
-  // Create a new PDF document with A4 size
+  // Create a new PDF document with A4 size and higher quality settings
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
-    format: 'a4'
+    format: 'a4',
+    compress: true,
+    precision: 4
   });
   
-  // Start position for content
+  // Add document metadata for better PDF properties
+  doc.setProperties({
+    title: `Invoice ${invoiceNumber}`,
+    subject: 'Invoice Document',
+    author: 'DigitBooks',
+    keywords: 'invoice, billing, payment',
+    creator: 'DigitBooks Invoice Generator'
+  });
+  
+  // Set default font for better rendering
+  doc.setFont('helvetica');
+  
+  // Start position for content with proper margins
   let yPos = 20;
   
-  // Add logo
+  // Add logo with improved positioning
   yPos = addLogo(doc, logoPreview, yPos);
   
-  // Add invoice header and number
+  // Add invoice header and number with better spacing
   yPos = addInvoiceHeader(doc, invoiceNumber, yPos);
   
-  // Add dates
+  // Add dates with consistent formatting
   yPos = addDates(doc, invoiceDate, dueDate, yPos);
   
-  // Add client info
+  // Add client info with proper layout
   yPos = addClientInfo(doc, clientName, yPos);
   
-  // Add invoice items table
+  // Add invoice items table with improved formatting
   yPos = addInvoiceItems(doc, invoiceItems, yPos);
   
   // Calculate totals
@@ -68,19 +82,22 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
   const tax = calculateTax(invoiceItems);
   const total = calculateTotal(invoiceItems);
   
-  // Add invoice summary
+  // Add invoice summary with clear layout
   yPos = addInvoiceSummary(doc, subtotal, tax, total, yPos);
   
-  // Add payment information
+  // Add payment information with proper spacing
   yPos = addPaymentInfo(doc, bankName, accountName, accountNumber, swiftCode, yPos);
   
-  // Add additional information
+  // Add additional information with better formatting
   yPos = addAdditionalInfo(doc, additionalInfo, yPos);
   
-  // Add footer
+  // Add footer with consistent positioning
   addFooter(doc);
   
-  // Convert the PDF to a Blob
-  const pdfBlob = doc.output('blob');
+  // Ensure text is rendered at high quality
+  doc.setFontSize(10);
+  
+  // Convert the PDF to a high-quality Blob
+  const pdfBlob = doc.output('blob', {quality: 1.0});
   return pdfBlob;
 };

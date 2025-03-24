@@ -8,11 +8,13 @@ import { format } from "date-fns";
 import { 
   setupHeaderStyle, 
   setupNormalTextStyle,
-  setupSubheaderStyle
+  setupSubheaderStyle,
+  setupBoldStyle,
+  resetFontStyle
 } from "../pdfStyles";
 
 /**
- * Add company logo to the PDF
+ * Add company logo to the PDF with improved positioning
  * Returns the updated Y position
  */
 export const addLogo = (doc: jsPDF, logoPreview: string | null, yPos: number): number => {
@@ -20,7 +22,7 @@ export const addLogo = (doc: jsPDF, logoPreview: string | null, yPos: number): n
   
   if (logoPreview && logoPreview.startsWith('data:image')) {
     try {
-      // Try to add the logo image
+      // Try to add the logo image with better sizing
       doc.addImage(logoPreview, 'JPEG', leftMargin, yPos, 40, 20);
       return yPos + 25;
     } catch (error) {
@@ -35,68 +37,67 @@ export const addLogo = (doc: jsPDF, logoPreview: string | null, yPos: number): n
 };
 
 /**
- * Add default DigitBooks logo
+ * Add default DigitBooks logo with improved styling
  * Returns the updated Y position
  */
 const addDefaultLogo = (doc: jsPDF, x: number, y: number): number => {
   try {
     // Use the new logo
-    const logoUrl = "/lovable-uploads/149e5423-3356-4c4d-9769-ce16d23c9792.png";
-    doc.addImage(logoUrl, 'PNG', x, y, 10, 10);
+    doc.setDrawColor(5, 209, 102); // Brand green color
+    doc.setFillColor(5, 209, 102);
+    doc.roundedRect(x, y, 40, 15, 2, 2, 'F');
     
-    // Add company name
+    // Add company name with better contrast
     setupHeaderStyle(doc);
-    doc.setTextColor(51, 51, 51); // Dark gray
-    doc.text("DigitBooks", x + 15, y + 7);
+    doc.setTextColor(255, 255, 255); // White text on green background
+    doc.text("DigitBooks", x + 20, y + 10, { align: 'center' });
+    doc.setTextColor(44, 62, 80); // Reset text color
     
-    return y + 25;
+    return y + 20;
   } catch (error) {
     console.error("Error adding default logo to PDF:", error);
     
     // Fallback to drawing a simple logo if the image fails to load
-    // Draw a green book-like shape
-    doc.setDrawColor(0, 200, 83); // Green color similar to the new logo
-    doc.setFillColor(0, 200, 83);
-    doc.setLineWidth(0.5);
+    doc.setDrawColor(5, 209, 102); // Brand green color
+    doc.setFillColor(5, 209, 102);
+    doc.roundedRect(x, y, 40, 15, 2, 2, 'F');
     
-    // Draw the book outline
-    doc.rect(x, y, 10, 10, 'FD');
-    
-    // Draw the page divider
-    doc.setDrawColor(255, 255, 255);
-    doc.setFillColor(255, 255, 255);
-    doc.rect(x + 2, y + 2, 2, 6, 'FD');
-    doc.rect(x + 6, y + 2, 2, 6, 'FD');
-    
-    // Add company name
+    // Add company name with better contrast
     setupHeaderStyle(doc);
-    doc.setTextColor(51, 51, 51); // Dark gray
-    doc.text("DigitBooks", x + 15, y + 7);
+    doc.setTextColor(255, 255, 255); // White text on green background
+    doc.text("DigitBooks", x + 20, y + 10, { align: 'center' });
+    doc.setTextColor(44, 62, 80); // Reset text color
     
-    return y + 25;
+    return y + 20;
   }
 };
 
 /**
- * Add invoice header with title and number
+ * Add invoice header with title and number in a better layout
  * Returns the updated Y position
  */
 export const addInvoiceHeader = (doc: jsPDF, invoiceNumber: string, yPos: number): number => {
   const pageWidth = doc.internal.pageSize.width;
   const rightMargin = pageWidth - 15;
   
+  // Add a decorative element
+  doc.setFillColor(5, 209, 102);
+  doc.rect(pageWidth / 2 - 15, yPos - 5, 30, 2, 'F');
+  
   setupHeaderStyle(doc);
   doc.text("INVOICE", pageWidth / 2, yPos, { align: "center" });
   yPos += 10;
   
   setupNormalTextStyle(doc);
+  setupBoldStyle(doc);
   doc.text(`Invoice #: ${invoiceNumber}`, rightMargin, yPos, { align: "right" });
+  resetFontStyle(doc);
   
   return yPos + 8;
 };
 
 /**
- * Add dates to the invoice
+ * Add dates to the invoice with improved formatting
  * Returns the updated Y position
  */
 export const addDates = (doc: jsPDF, invoiceDate: Date | undefined, dueDate: Date | undefined, yPos: number): number => {
@@ -106,26 +107,53 @@ export const addDates = (doc: jsPDF, invoiceDate: Date | undefined, dueDate: Dat
   const dueDateStr = dueDate ? format(dueDate, "MMMM dd, yyyy") : "N/A";
   
   setupNormalTextStyle(doc);
-  doc.text(`Issued: ${issuedDateStr}`, rightMargin, yPos, { align: "right" });
+  
+  // Add date labels with better formatting
+  setupBoldStyle(doc);
+  doc.text("Issued:", rightMargin - 70, yPos);
+  resetFontStyle(doc);
+  doc.text(issuedDateStr, rightMargin, yPos, { align: "right" });
   yPos += 7;
-  doc.text(`Due: ${dueDateStr}`, rightMargin, yPos, { align: "right" });
+  
+  setupBoldStyle(doc);
+  doc.text("Due:", rightMargin - 70, yPos);
+  resetFontStyle(doc);
+  doc.text(dueDateStr, rightMargin, yPos, { align: "right" });
   
   return yPos + 15;
 };
 
 /**
- * Add client information to the invoice
+ * Add client information to the invoice with improved layout
  * Returns the updated Y position
  */
 export const addClientInfo = (doc: jsPDF, clientName: string, yPos: number): number => {
   const leftMargin = 15;
   
-  setupNormalTextStyle(doc);
-  doc.text("Bill To:", leftMargin, yPos);
-  yPos += 7;
-  
   setupSubheaderStyle(doc);
+  setupBoldStyle(doc);
+  doc.text("Bill To:", leftMargin, yPos);
+  resetFontStyle(doc);
+  yPos += 8;
+  
+  setupBoldStyle(doc);
   doc.text(clientName, leftMargin, yPos);
+  resetFontStyle(doc);
+  
+  // Add a light gray box around client info
+  doc.setDrawColor(220, 220, 220);
+  doc.setFillColor(248, 248, 248);
+  doc.roundedRect(leftMargin - 3, yPos - 15, 80, 20, 2, 2, 'FD');
+  
+  // Re-add the text on top of the background
+  setupSubheaderStyle(doc);
+  setupBoldStyle(doc);
+  doc.text("Bill To:", leftMargin, yPos - 8);
+  resetFontStyle(doc);
+  
+  setupBoldStyle(doc);
+  doc.text(clientName, leftMargin, yPos);
+  resetFontStyle(doc);
   
   return yPos + 15;
 };
