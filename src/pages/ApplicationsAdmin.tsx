@@ -251,14 +251,14 @@ const ApplicationsAdmin = () => {
   const getStatusBadge = (status: string) => {
     switch(status) {
       case 'accepted':
-        return <Badge className="bg-green-500">Accepted</Badge>;
+        return <Badge variant="success">Accepted</Badge>;
       case 'rejected':
-        return <Badge className="bg-red-500">Rejected</Badge>;
+        return <Badge variant="destructive">Rejected</Badge>;
       case 'in-review':
-        return <Badge className="bg-yellow-500">In Review</Badge>;
+        return <Badge variant="warning">In Review</Badge>;
       case 'new':
       default:
-        return <Badge className="bg-blue-500">New</Badge>;
+        return <Badge variant="info">New</Badge>;
     }
   };
 
@@ -283,6 +283,7 @@ const ApplicationsAdmin = () => {
               onClick={handleDownloadAllResumes}
               disabled={isDownloadingAll || isLoading}
               size="sm"
+              variant="accent"
             >
               <FileDown className="h-4 w-4 mr-2" />
               {isDownloadingAll ? 'Downloading...' : 'Download All CVs'}
@@ -337,17 +338,17 @@ const ApplicationsAdmin = () => {
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="new">
-                            <Badge className="bg-blue-500">New</Badge>
+                          <SelectItem value="new" className="flex items-center gap-2">
+                            <Badge variant="info">New</Badge>
                           </SelectItem>
-                          <SelectItem value="in-review">
-                            <Badge className="bg-yellow-500">In Review</Badge>
+                          <SelectItem value="in-review" className="flex items-center gap-2">
+                            <Badge variant="warning">In Review</Badge>
                           </SelectItem>
-                          <SelectItem value="accepted">
-                            <Badge className="bg-green-500">Accepted</Badge>
+                          <SelectItem value="accepted" className="flex items-center gap-2">
+                            <Badge variant="success">Accepted</Badge>
                           </SelectItem>
-                          <SelectItem value="rejected">
-                            <Badge className="bg-red-500">Rejected</Badge>
+                          <SelectItem value="rejected" className="flex items-center gap-2">
+                            <Badge variant="destructive">Rejected</Badge>
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -369,7 +370,7 @@ const ApplicationsAdmin = () => {
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button 
-                            variant="outline" 
+                            variant="secondary" 
                             size="sm"
                             onClick={() => setSelectedApplication(app)}
                           >
@@ -418,10 +419,18 @@ const ApplicationsAdmin = () => {
                                       <SelectValue>Change Status</SelectValue>
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="new">New</SelectItem>
-                                      <SelectItem value="in-review">In Review</SelectItem>
-                                      <SelectItem value="accepted">Accepted</SelectItem>
-                                      <SelectItem value="rejected">Rejected</SelectItem>
+                                      <SelectItem value="new" className="flex items-center gap-2">
+                                        <Badge variant="info" className="mr-1">New</Badge>
+                                      </SelectItem>
+                                      <SelectItem value="in-review" className="flex items-center gap-2">
+                                        <Badge variant="warning" className="mr-1">In Review</Badge>
+                                      </SelectItem>
+                                      <SelectItem value="accepted" className="flex items-center gap-2">
+                                        <Badge variant="success" className="mr-1">Accepted</Badge>
+                                      </SelectItem>
+                                      <SelectItem value="rejected" className="flex items-center gap-2">
+                                        <Badge variant="destructive" className="mr-1">Rejected</Badge>
+                                      </SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
@@ -457,6 +466,7 @@ const ApplicationsAdmin = () => {
                               {app.resume_url && (
                                 <Button 
                                   onClick={() => handleDownloadResume(app.resume_url, app.full_name)}
+                                  variant="accent"
                                   className="ml-2"
                                 >
                                   <Download className="h-4 w-4 mr-2" /> Download Resume

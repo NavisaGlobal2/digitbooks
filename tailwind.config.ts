@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -29,6 +30,11 @@ export default {
         border: "#E6E4DD",
         input: "#F0EFEA",
         foreground: "hsl(var(--foreground))",
+        // Status colors
+        success: "#10B981", // green
+        warning: "#F59E0B", // yellow/amber
+        info: "#3B82F6",    // blue
+        error: "#EF4444",   // red/destructive
       },
       textColor: {
         foreground: "hsl(var(--foreground))",
