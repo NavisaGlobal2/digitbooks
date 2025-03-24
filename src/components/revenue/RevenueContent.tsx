@@ -49,10 +49,30 @@ const RevenueContent = ({
   
   if (revenues.length === 0) {
     return (
-      <RevenueEmptyState 
-        onAddRevenue={onAddRevenue} 
-        onImportRevenue={onImportRevenue} 
-      />
+      <div className="flex flex-col items-center justify-center h-[70vh] gap-8">
+        <div className="text-center max-w-md">
+          <h2 className="text-xl font-semibold mb-2">No revenue entries yet</h2>
+          <p className="text-gray-500 mb-6">Record your first revenue entry.</p>
+          
+          <div className="flex flex-col gap-3">
+            <Button 
+              className="bg-green-500 hover:bg-green-600 text-white w-full py-6 text-base"
+              onClick={onAddRevenue}
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add revenue
+            </Button>
+            
+            <Button 
+              variant="outline"
+              className="border-green-500 text-green-500 hover:bg-green-50 w-full py-6 text-base"
+              onClick={onImportRevenue}
+            >
+              Import revenue
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
   
@@ -98,7 +118,7 @@ const RevenueContent = ({
             onClick={onAddRevenue}
           >
             <Plus className="h-4 w-4 mr-2" />
-            New Revenue
+            Add revenue
           </Button>
         </div>
       </div>

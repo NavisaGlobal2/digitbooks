@@ -37,12 +37,15 @@ const RevenuePage = () => {
   const handleRevenueAdded = (revenue: Omit<Revenue, "id">) => {
     addRevenue(revenue);
     toast.success("Revenue added successfully");
+    setShowAddDialog(false);
   };
   
   const handleRevenuesImported = (revenues: Omit<Revenue, "id">[]) => {
     revenues.forEach(revenue => {
       addRevenue(revenue);
     });
+    toast.success(`${revenues.length} revenues imported successfully`);
+    setShowImportDialog(false);
   };
   
   return (

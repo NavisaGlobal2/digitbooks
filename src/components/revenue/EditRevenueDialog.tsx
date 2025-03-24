@@ -1,8 +1,8 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useRevenue } from "@/contexts/RevenueContext";
 import { Revenue } from "@/types/revenue";
 import RevenueForm from "@/components/revenue/RevenueForm";
-import { useRevenue } from "@/contexts/RevenueContext";
+import { toast } from "sonner";
 
 interface EditRevenueDialogProps {
   open: boolean;
@@ -13,30 +13,25 @@ interface EditRevenueDialogProps {
 const EditRevenueDialog = ({ open, onOpenChange, revenueId }: EditRevenueDialogProps) => {
   const { revenues, updateRevenue } = useRevenue();
   
-  const revenue = revenues.find(r => r.id === revenueId);
+  const revenue = revenueId ? revenues.find(rev => rev.id === revenueId) : null;
   
   const handleSubmit = (values: Omit<Revenue, "id">) => {
     if (revenueId) {
       updateRevenue(revenueId, values);
-      onOpenChange(false);
+      toast.success("Revenue updated successfully");
     }
   };
-
+  
   if (!revenue) return null;
-
+  
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Edit Revenue</DialogTitle>
-        </DialogHeader>
-        <RevenueForm 
-          onSubmit={handleSubmit} 
-          defaultValues={revenue}
-          isEdit
-        />
-      </DialogContent>
-    </Dialog>
+    <RevenueForm
+      open={open}
+      onOpenChange={onOpenChange}
+      onSubmit={handleSubmit}
+      defaultValues={revenue}
+      isEdit={true}
+    />
   );
 };
 

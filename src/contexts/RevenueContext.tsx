@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { Revenue } from "@/types/revenue";
+import { Revenue, PaymentStatus } from "@/types/revenue";
 
 interface RevenueContextType {
   revenues: Revenue[];
@@ -9,6 +9,7 @@ interface RevenueContextType {
   deleteRevenue: (id: string) => void;
   getTotalRevenue: () => number;
   getRevenueBySource: () => Record<string, number>;
+  getRevenueByStatus: () => Record<PaymentStatus, number>;
 }
 
 const RevenueContext = createContext<RevenueContextType | undefined>(undefined);
@@ -72,6 +73,21 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
     }, {} as Record<string, number>);
   };
 
+  const getRevenueByStatus = () => {
+    const statusTotals: Record<PaymentStatus, number> = {
+      paid: 0,
+      pending: 0,
+      overdue: 0,
+      cancelled: 0
+    };
+    
+    revenues.forEach(revenue => {
+      statusTotals[revenue.paymentStatus] += revenue.amount;
+    });
+    
+    return statusTotals;
+  };
+
   return (
     <RevenueContext.Provider
       value={{
@@ -81,6 +97,7 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
         deleteRevenue,
         getTotalRevenue,
         getRevenueBySource,
+        getRevenueByStatus,
       }}
     >
       {children}

@@ -1,8 +1,7 @@
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Revenue } from "@/types/revenue";
 import RevenueForm from "@/components/revenue/RevenueForm";
+import { useState } from "react";
 
 interface AddRevenueDialogProps {
   open: boolean;
@@ -15,18 +14,14 @@ const AddRevenueDialog = ({ open, onOpenChange, onRevenueAdded }: AddRevenueDial
     if (onRevenueAdded) {
       onRevenueAdded(values);
     }
-    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Add New Revenue</DialogTitle>
-        </DialogHeader>
-        <RevenueForm onSubmit={handleSubmit} />
-      </DialogContent>
-    </Dialog>
+    <RevenueForm 
+      open={open}
+      onOpenChange={onOpenChange}
+      onSubmit={handleSubmit}
+    />
   );
 };
 

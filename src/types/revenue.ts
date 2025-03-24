@@ -11,6 +11,8 @@ export type RevenueSource =
   | 'affiliate' 
   | 'other';
 
+export type PaymentStatus = 'paid' | 'pending' | 'overdue' | 'cancelled';
+
 export interface Revenue {
   id: string;
   description: string;
@@ -19,6 +21,7 @@ export interface Revenue {
   source: RevenueSource;
   notes?: string;
   paymentMethod: 'cash' | 'card' | 'bank transfer' | 'crypto' | 'other';
+  paymentStatus: PaymentStatus;
   clientId?: string;
   clientName?: string;
   invoiceId?: string;

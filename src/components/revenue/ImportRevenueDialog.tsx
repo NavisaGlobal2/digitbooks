@@ -1,7 +1,7 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { X, Upload, FileText } from "lucide-react";
 import { useState } from "react";
 import { Revenue } from "@/types/revenue";
 import { toast } from "sonner";
@@ -14,12 +14,35 @@ interface ImportRevenueDialogProps {
 
 const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportRevenueDialogProps) => {
   const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
     }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleBrowseClick = () => {
+    document.getElementById('file-upload')?.click();
   };
 
   const handleImport = async () => {
@@ -42,7 +65,8 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
             source: "sales",
             paymentMethod: "bank transfer",
             clientName: "Acme Corp",
-            notes: "Annual subscription"
+            notes: "Annual subscription",
+            paymentStatus: "paid"
           },
           {
             description: "Consulting Services",
@@ -50,7 +74,8 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
             date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
             source: "consulting",
             paymentMethod: "card",
-            clientName: "Tech Innovators Ltd"
+            clientName: "Tech Innovators Ltd",
+            paymentStatus: "paid"
           },
           {
             description: "Workshop Revenue",
@@ -58,7 +83,8 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
             date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
             source: "services",
             paymentMethod: "cash",
-            clientName: "Multiple Clients"
+            clientName: "Multiple Clients",
+            paymentStatus: "pending"
           },
           {
             description: "Software License",
@@ -66,14 +92,16 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
             date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 days ago
             source: "sales",
             paymentMethod: "bank transfer",
-            clientName: "Global Systems Inc"
+            clientName: "Global Systems Inc",
+            paymentStatus: "paid"
           },
           {
             description: "Affiliate Commission",
             amount: 12500,
             date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
             source: "affiliate",
-            paymentMethod: "bank transfer"
+            paymentMethod: "bank transfer",
+            paymentStatus: "pending"
           }
         ];
 
@@ -95,46 +123,72 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Import Revenue Data</DialogTitle>
-          <DialogDescription>
-            Upload a CSV or Excel file with your revenue data. The file should include columns for description, amount, date, source, and payment method.
-          </DialogDescription>
+          <DialogTitle className="text-xl font-semibold">Import revenue</DialogTitle>
+          <button 
+            onClick={() => onOpenChange(false)} 
+            className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus:outline-none"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          <div className="flex flex-col gap-2">
-            <label htmlFor="file-upload" className="text-sm font-medium">
-              Upload File (CSV or Excel)
-            </label>
-            <Input 
-              id="file-upload" 
-              type="file" 
-              accept=".csv,.xlsx,.xls" 
+        <div className="py-4">
+          <div 
+            className={`border-2 border-dashed rounded-md p-8 ${isDragging ? 'border-green-500 bg-green-50' : 'border-gray-200'} flex flex-col items-center justify-center text-center cursor-pointer`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={handleBrowseClick}
+          >
+            <FileText className="h-12 w-12 text-gray-400 mb-2" />
+            <p className="text-gray-600 mb-1">Drag & drop file here</p>
+            <p className="text-gray-500 text-sm mb-2">Or</p>
+            <button 
+              type="button" 
+              className="text-green-500 font-medium text-sm hover:text-green-600 focus:outline-none"
+            >
+              Browse files
+            </button>
+            <input
+              id="file-upload"
+              type="file"
+              accept=".csv,.xlsx,.xls"
               onChange={handleFileChange}
+              className="hidden"
             />
-            <p className="text-xs text-muted-foreground">
-              Supported formats: CSV, Excel (.xlsx, .xls)
-            </p>
           </div>
           
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Download Template</p>
-            <Button variant="outline" size="sm" className="w-full">
-              Download CSV Template
-            </Button>
-          </div>
+          {file && (
+            <div className="mt-4 p-2 bg-gray-50 rounded-md flex items-center justify-between">
+              <div className="flex items-center">
+                <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                <span className="text-sm font-medium truncate">{file.name}</span>
+              </div>
+              <button
+                onClick={() => setFile(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
         
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <div className="flex justify-between gap-3 mt-2">
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            className="flex-1"
+          >
             Cancel
           </Button>
           <Button 
             onClick={handleImport} 
             disabled={!file || isUploading}
-            className="bg-green-500 hover:bg-green-600 text-white"
+            className="flex-1 bg-green-500 hover:bg-green-600 text-white"
           >
-            {isUploading ? "Processing..." : "Import"}
+            {isUploading ? "Processing..." : "Upload"}
           </Button>
         </div>
       </DialogContent>
