@@ -116,6 +116,8 @@ const InvoiceForm = () => {
           accountNumber={accountNumber}
           swiftCode={swiftCode}
           accountName={accountName}
+          clientName={clientName}
+          selectedTemplate={selectedTemplate}
         />
       </div>
     </>

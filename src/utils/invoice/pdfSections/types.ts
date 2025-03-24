@@ -17,4 +17,5 @@ export interface InvoiceDetails {
   accountName: string;
   clientName?: string;
   invoiceNumber?: string;
+  selectedTemplate?: string;
 }

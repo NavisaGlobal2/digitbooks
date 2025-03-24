@@ -1,14 +1,11 @@
-import { Download, Share2 } from "lucide-react";
+
+import { Download, Share } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { downloadInvoice, shareInvoice } from "@/utils/invoice/documentActions";
-
-interface InvoiceItem {
-  description: string;
-  quantity: number;
-  price: number;
-  tax: number;
-}
+import { InvoiceItem } from "@/types/invoice";
+import { generateInvoice } from "@/utils/invoice";
+import { saveAs } from "file-saver";
+import { format } from "date-fns";
 
 interface ActionButtonsProps {
   handleGenerateInvoice: () => void;
@@ -23,9 +20,13 @@ interface ActionButtonsProps {
   accountNumber: string;
   swiftCode: string;
   accountName: string;
+  clientName?: string;
+  selectedTemplate?: string;
 }
 
-const ActionButtons = ({ 
+const ActionButtons = ({
+  handleGenerateInvoice,
+  handleShareInvoice,
   isAccountVerified,
   logoPreview,
   invoiceItems,
@@ -35,12 +36,15 @@ const ActionButtons = ({
   bankName,
   accountNumber,
   swiftCode,
-  accountName
+  accountName,
+  clientName = "Client",
+  selectedTemplate = "default"
 }: ActionButtonsProps) => {
   
-  const generateAndDownloadInvoice = async () => {
+  const handleDownloadInvoice = async () => {
     try {
-      await downloadInvoice({
+      // Generate the invoice PDF
+      const pdfBlob = await generateInvoice({
         logoPreview,
         invoiceItems,
         invoiceDate,
@@ -49,53 +53,52 @@ const ActionButtons = ({
         bankName,
         accountNumber,
         swiftCode,
-        accountName
+        accountName,
+        clientName,
+        selectedTemplate
       });
-    } catch (error) {
-      console.error("Error generating invoice:", error);
-      toast.error("Could not generate invoice. Please try again.");
-    }
-  };
 
-  const generateAndShareInvoice = async () => {
-    try {
-      await shareInvoice({
-        logoPreview,
-        invoiceItems,
-        invoiceDate,
-        dueDate,
-        additionalInfo,
-        bankName,
-        accountNumber,
-        swiftCode,
-        accountName
-      });
+      // Generate a filename with the current date
+      const dateStr = format(new Date(), "yyyy-MM-dd");
+      const fileName = `invoice-${clientName.replace(/\s+/g, '_').toLowerCase()}-${dateStr}.pdf`;
+
+      // Download the file
+      saveAs(pdfBlob, fileName);
+      
+      toast.success("Invoice downloaded successfully!");
+      
+      // Call the parent's handler for analytics/tracking
+      handleGenerateInvoice();
     } catch (error) {
-      console.error("Error sharing invoice:", error);
-      toast.error("Could not share invoice. Please try again.");
+      console.error("Failed to generate invoice:", error);
+      toast.error("Failed to generate invoice. Please try again.");
     }
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4 mb-6">
-      <Button 
-        className="bg-[#05D166] hover:bg-[#05D166]/80 text-white flex items-center justify-center gap-2"
-        onClick={generateAndDownloadInvoice}
+    <div className="flex flex-col space-y-3">
+      <Button
+        onClick={handleDownloadInvoice}
+        className="text-white bg-gray-700 hover:bg-gray-800"
+        disabled={!isAccountVerified}
       >
-        <Download className="h-5 w-5" />
-        <span>Download</span>
+        <Download className="h-4 w-4 mr-2" />
+        Download Invoice
       </Button>
-      <Button 
-        variant="outline" 
-        className="border-[#05D166] text-[#05D166] hover:bg-[#05D166]/10 flex items-center justify-center gap-2"
-        onClick={generateAndShareInvoice}
+      
+      <Button
+        onClick={handleShareInvoice}
+        variant="outline"
+        className="border-gray-300 text-gray-700 hover:bg-gray-50"
+        disabled={!isAccountVerified}
       >
-        <Share2 className="h-5 w-5" />
-        <span>Share Invoice</span>
+        <Share className="h-4 w-4 mr-2" />
+        Share Invoice
       </Button>
+      
       {!isAccountVerified && (
-        <p className="col-span-2 text-amber-600 text-sm">
-          Note: Your bank account isn't verified. You can still proceed, but verification ensures accuracy.
+        <p className="text-sm text-red-500 mt-1">
+          Please verify your account details first
         </p>
       )}
     </div>

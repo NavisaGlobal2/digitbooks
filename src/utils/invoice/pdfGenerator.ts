@@ -1,27 +1,17 @@
 
 /**
- * Main PDF generator for invoices
+ * Main PDF generator for invoices with enhanced design and layout
  */
 
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { format } from "date-fns";
 import { calculateSubtotal, calculateTax, calculateTotal } from "./calculations";
-import { 
-  addLogo, 
-  addInvoiceHeader, 
-  addDates, 
-  addClientInfo, 
-  addInvoiceItems, 
-  addInvoiceSummary, 
-  addPaymentInfo, 
-  addAdditionalInfo, 
-  addFooter 
-} from "./pdfContent";
 import { InvoiceDetails } from "./pdfSections/types";
+import { renderInvoiceTemplate } from "./templates/templateRenderer";
 
 /**
- * Generate a PDF invoice with improved formatting
+ * Generate a PDF invoice with professional design and layout
  */
 export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<Blob> => {
   const {
@@ -35,10 +25,11 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
     swiftCode,
     accountName,
     clientName = "Client",
-    invoiceNumber = format(new Date(), "yyyyMMdd")
+    invoiceNumber = format(new Date(), "yyyyMMdd"),
+    selectedTemplate = "default"
   } = invoiceDetails;
 
-  // Create a new PDF document with A4 size and higher quality settings
+  // Create a new PDF document with A4 size
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -47,7 +38,7 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
     precision: 4
   });
   
-  // Add document metadata for better PDF properties
+  // Add document metadata
   doc.setProperties({
     title: `Invoice ${invoiceNumber}`,
     subject: 'Invoice Document',
@@ -56,50 +47,20 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
     creator: 'DigitBooks Invoice Generator'
   });
   
-  // Set default font for better rendering
-  doc.setFont('helvetica');
-  
-  // Start position for content with proper margins
-  let yPos = 20;
-  
-  // Add logo with improved positioning
-  yPos = addLogo(doc, logoPreview, yPos);
-  
-  // Add invoice header and number with better spacing
-  yPos = addInvoiceHeader(doc, invoiceNumber, yPos);
-  
-  // Add dates with consistent formatting
-  yPos = addDates(doc, invoiceDate, dueDate, yPos);
-  
-  // Add client info with proper layout
-  yPos = addClientInfo(doc, clientName, yPos);
-  
-  // Add invoice items table with improved formatting
-  yPos = addInvoiceItems(doc, invoiceItems, yPos);
-  
-  // Calculate totals
+  // Calculate financial totals
   const subtotal = calculateSubtotal(invoiceItems);
   const tax = calculateTax(invoiceItems);
   const total = calculateTotal(invoiceItems);
   
-  // Add invoice summary with clear layout
-  yPos = addInvoiceSummary(doc, subtotal, tax, total, yPos);
+  // Render the selected template
+  renderInvoiceTemplate(doc, {
+    ...invoiceDetails,
+    subtotal,
+    tax,
+    total
+  });
   
-  // Add payment information with proper spacing
-  yPos = addPaymentInfo(doc, bankName, accountName, accountNumber, swiftCode, yPos);
-  
-  // Add additional information with better formatting
-  yPos = addAdditionalInfo(doc, additionalInfo, yPos);
-  
-  // Add footer with consistent positioning
-  addFooter(doc);
-  
-  // Ensure text is rendered at high quality
-  doc.setFontSize(10);
-  
-  // Convert the PDF to a Blob - fixed to use the correct output format
-  // The error was caused by using 'blob' which is not a valid output type
-  // Instead, we get the arrayBuffer and create a Blob from it
+  // Convert the PDF to a Blob
   const arrayBuffer = doc.output('arraybuffer');
   const pdfBlob = new Blob([arrayBuffer], { type: 'application/pdf' });
   
