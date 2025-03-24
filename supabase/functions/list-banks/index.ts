@@ -11,6 +11,7 @@ const corsHeaders = {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log("Handling CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -38,6 +39,16 @@ serve(async (req) => {
       }
     );
 
+    // Check if the response is OK
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Paystack API error: ${response.status} - ${errorText}`);
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch banks from Paystack API', details: errorText }),
+        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Get response data
     const data = await response.json();
     
@@ -47,7 +58,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify(data),
       { 
-        status: response.status, 
+        status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );

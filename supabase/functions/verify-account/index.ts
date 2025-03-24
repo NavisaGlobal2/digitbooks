@@ -11,16 +11,29 @@ const corsHeaders = {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log("Handling CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     // Get request data
-    const { accountNumber, bankCode } = await req.json();
+    let accountNumber, bankCode;
     
-    console.log(`Verifying account number: ${accountNumber} for bank code: ${bankCode}`);
-
+    try {
+      const requestData = await req.json();
+      accountNumber = requestData.accountNumber;
+      bankCode = requestData.bankCode;
+      console.log(`Request data: Account number: ${accountNumber}, Bank code: ${bankCode}`);
+    } catch (e) {
+      console.error('Error parsing request JSON:', e);
+      return new Response(
+        JSON.stringify({ error: 'Invalid request format', details: e.message }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     if (!accountNumber || !bankCode) {
+      console.error(`Missing required fields: Account number: ${!!accountNumber}, Bank code: ${!!bankCode}`);
       return new Response(
         JSON.stringify({ error: 'Account number and bank code are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -36,6 +49,8 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Calling Paystack API to verify account: ${accountNumber} with bank code: ${bankCode}`);
+    
     // Call Paystack API to verify account
     const response = await fetch(
       `https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`,

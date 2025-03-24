@@ -1,13 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { fetchBanks } from "@/utils/paystackService";
-import { toast } from "sonner";
-import AccountNameInput from "./AccountNameInput";
+import { fetchBanks, verifyBankAccount } from "@/utils/paystackService";
 import AccountNumberInput from "./AccountNumberInput";
+import AccountNameInput from "./AccountNameInput"; 
 import BankSelector from "./BankSelector";
 import AccountVerifier from "./AccountVerifier";
+import { toast } from "sonner";
 
 interface BankDetailsFormProps {
   accountName: string;
@@ -24,11 +22,6 @@ interface BankDetailsFormProps {
   setIsVerified: (value: boolean) => void;
 }
 
-interface Bank {
-  name: string;
-  code: string;
-}
-
 const BankDetailsForm = ({
   accountName, setAccountName,
   accountNumber, setAccountNumber,
@@ -37,96 +30,123 @@ const BankDetailsForm = ({
   swiftCode, setSwiftCode,
   isVerified, setIsVerified
 }: BankDetailsFormProps) => {
-  const [banks, setBanks] = useState<Bank[]>([]);
-  const [selectedBankCode, setSelectedBankCode] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  
+  const [banks, setBanks] = useState<Array<{ name: string; code: string }>>([]);
+  const [selectedBankCode, setSelectedBankCode] = useState("");
+  const [isLoadingBanks, setIsLoadingBanks] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  // Fetch banks on component mount
   useEffect(() => {
     const loadBanks = async () => {
-      setIsLoading(true);
-      setLoadError(null);
-      
+      setIsLoadingBanks(true);
       try {
-        console.log("Loading banks...");
         const banksList = await fetchBanks();
-        
-        if (banksList.length === 0) {
-          setLoadError("Failed to load banks. Please try again later.");
-          toast.error("Failed to load banks. Please try again later.");
-        } else {
-          console.log(`Loaded ${banksList.length} banks successfully`);
-          setBanks(banksList);
-        }
+        console.log("Fetched banks:", banksList);
+        setBanks(banksList);
       } catch (error) {
         console.error("Error loading banks:", error);
-        setLoadError("Failed to load banks. Please try again later.");
         toast.error("Failed to load banks. Please try again later.");
       } finally {
-        setIsLoading(false);
+        setIsLoadingBanks(false);
       }
     };
-    
+
     loadBanks();
   }, []);
 
+  const handleVerify = async () => {
+    if (!accountNumber || !selectedBankCode) {
+      toast.error("Please enter an account number and select a bank");
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      const result = await verifyBankAccount(accountNumber, selectedBankCode);
+      
+      if (result.verified && result.accountName) {
+        setAccountName(result.accountName);
+        setIsVerified(true);
+      } else {
+        setIsVerified(false);
+        toast.error(result.message || "Verification failed");
+      }
+    } catch (error) {
+      console.error("Verification error:", error);
+      setIsVerified(false);
+      toast.error("Failed to verify account. Please try again.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <AccountNameInput 
-        accountName={accountName} 
-        setAccountName={setAccountName} 
-        isVerified={isVerified} 
-        setIsVerified={setIsVerified} 
-      />
-      
-      <div className="grid grid-cols-2 gap-4">
-        <AccountNumberInput 
-          accountNumber={accountNumber} 
-          setAccountNumber={setAccountNumber} 
-          isVerified={isVerified} 
-        />
-        <BankSelector 
-          banks={banks} 
-          bankName={bankName} 
-          setBankName={setBankName} 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <BankSelector
+          banks={banks}
+          bankName={bankName}
+          setBankName={setBankName}
           setSelectedBankCode={setSelectedBankCode}
           isVerified={isVerified}
-          isLoading={isLoading}
+          isLoading={isLoadingBanks}
+        />
+
+        <div className="w-full">
+          <AccountNumberInput
+            accountNumber={accountNumber}
+            setAccountNumber={setAccountNumber}
+            isVerified={isVerified}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <AccountNameInput
+          accountName={accountName}
+          setAccountName={setAccountName}
+          isVerified={isVerified}
+          isVerifying={isVerifying}
+        />
+
+        <AccountVerifier
+          onVerify={handleVerify}
+          isVerified={isVerified}
+          disabled={!accountNumber || !selectedBankCode || isVerifying}
+          isVerifying={isVerifying}
         />
       </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="bank-address">Bank branch</Label>
-          <Input 
-            id="bank-address" 
-            placeholder="Enter bank branch" 
+
+      {/* Additional bank details */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="w-full">
+          <label htmlFor="bank-address" className="block text-sm font-medium text-gray-700 mb-1">
+            Bank Address
+          </label>
+          <input
+            type="text"
+            id="bank-address"
             value={bankAddress}
             onChange={(e) => setBankAddress(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter bank address"
           />
         </div>
-        <div>
-          <Label htmlFor="swift-code">Sort code (optional)</Label>
-          <Input 
-            id="swift-code" 
-            placeholder="Bank sort code" 
+
+        <div className="w-full">
+          <label htmlFor="swift-code" className="block text-sm font-medium text-gray-700 mb-1">
+            SWIFT/BIC Code
+          </label>
+          <input
+            type="text"
+            id="swift-code"
             value={swiftCode}
             onChange={(e) => setSwiftCode(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter SWIFT/BIC code"
           />
         </div>
       </div>
-
-      {loadError && (
-        <div className="text-red-500 text-sm">{loadError}</div>
-      )}
-
-      <AccountVerifier 
-        accountNumber={accountNumber}
-        selectedBankCode={selectedBankCode}
-        setAccountName={setAccountName}
-        isVerified={isVerified}
-        setIsVerified={setIsVerified}
-      />
     </div>
   );
 };

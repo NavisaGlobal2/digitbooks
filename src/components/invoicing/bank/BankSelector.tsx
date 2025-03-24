@@ -41,8 +41,11 @@ const BankSelector = ({
   return (
     <div>
       <Label htmlFor="bank-name">Bank name</Label>
-      <Select onValueChange={handleBankSelection} value={bankName}>
-        <SelectTrigger id="bank-name" className={isVerified ? "border-green-500" : ""}>
+      <Select onValueChange={handleBankSelection} value={bankName} disabled={isLoading}>
+        <SelectTrigger 
+          id="bank-name" 
+          className={isVerified ? "border-green-500" : ""}
+        >
           {isLoading ? (
             <div className="flex items-center space-x-2">
               <Loader2 className="h-4 w-4 animate-spin" />

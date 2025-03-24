@@ -2,23 +2,6 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-// Interface for the account verification request
-interface VerifyAccountRequest {
-  account_number: string;
-  bank_code: string;
-}
-
-// Interface for the account verification response
-interface VerifyAccountResponse {
-  status: boolean;
-  message: string;
-  data?: {
-    account_number: string;
-    account_name: string;
-    bank_id: number;
-  };
-}
-
 // Interface for the bank list response
 interface BankListResponse {
   status: boolean;
@@ -43,12 +26,20 @@ export const fetchBanks = async (): Promise<Array<{ name: string; code: string }
     
     if (error) {
       console.error("Error from supabase function:", error);
+      toast.error("Could not load banks list. Please try again later.");
       throw new Error(error.message);
     }
     
-    if (!data.status) {
+    if (!data || !data.status) {
       console.error("Error response from Paystack:", data);
-      throw new Error(data.message || "Failed to fetch banks");
+      toast.error(data?.message || "Failed to fetch banks list");
+      return [];
+    }
+    
+    if (!Array.isArray(data.data)) {
+      console.error("Unexpected data format:", data);
+      toast.error("Received invalid data format from server");
+      return [];
     }
     
     console.log(`Successfully fetched ${data.data.length} banks`);
@@ -73,6 +64,14 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
   try {
     console.log(`Verifying account: ${accountNumber} with bank code: ${bankCode}`);
     
+    if (!accountNumber || !bankCode) {
+      console.error("Missing required fields for account verification");
+      return { 
+        verified: false, 
+        message: "Account number and bank code are required" 
+      };
+    }
+    
     const { data, error } = await supabase.functions.invoke("verify-account", {
       body: { accountNumber, bankCode }
     });
@@ -81,20 +80,31 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
     
     if (error) {
       console.error("Error from supabase function:", error);
+      toast.error("Account verification failed. Please try again later.");
       return { 
         verified: false, 
         message: error.message || "Verification failed" 
       };
     }
     
-    if (!data.status || !data.data) {
+    if (!data.status) {
       console.error("Error response from Paystack:", data);
+      toast.error(data.message || "Verification failed");
       return { 
         verified: false, 
         message: data.message || "Verification failed"
       };
     }
 
+    if (!data.data || !data.data.account_name) {
+      console.error("Missing account name in response:", data);
+      return {
+        verified: false,
+        message: "Could not retrieve account name"
+      };
+    }
+
+    toast.success("Account verified successfully!");
     return {
       verified: true,
       accountName: data.data.account_name,
@@ -102,6 +112,7 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
     };
   } catch (error) {
     console.error("Error verifying account:", error);
+    toast.error("An error occurred during verification. Please try again.");
     return { 
       verified: false, 
       message: "An error occurred during verification" 
