@@ -5,34 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Toaster } from "@/components/ui/toaster";
-import { 
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Download, AlertCircle, RefreshCw, Eye, Check, Clock, FileDown } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, RefreshCw, FileDown } from "lucide-react";
+import ApplicationsTable from "@/components/applications/ApplicationsTable";
 
 interface JobApplication {
   id: string;
@@ -54,7 +30,6 @@ const ApplicationsAdmin = () => {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null);
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   const { toast } = useToast();
 
@@ -238,30 +213,6 @@ const ApplicationsAdmin = () => {
     }
   };
 
-  const formatAvailability = (availability: string) => {
-    switch(availability) {
-      case 'immediately': return 'Immediately';
-      case '2weeks': return 'In 2 weeks';
-      case '1month': return 'In 1 month';
-      case 'other': return 'Other (see cover letter)';
-      default: return availability;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch(status) {
-      case 'accepted':
-        return <Badge variant="success">Accepted</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
-      case 'in-review':
-        return <Badge variant="warning">In Review</Badge>;
-      case 'new':
-      default:
-        return <Badge variant="info">New</Badge>;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-white to-background">
       <Navigation />
@@ -304,184 +255,11 @@ const ApplicationsAdmin = () => {
         ) : applications.length === 0 ? (
           <div className="text-center py-10">No applications submitted yet.</div>
         ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableCaption>List of job applications</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Resume</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {applications.map((app) => (
-                  <TableRow key={app.id}>
-                    <TableCell className="font-medium">{app.full_name}</TableCell>
-                    <TableCell>{app.job_title}</TableCell>
-                    <TableCell>{app.job_department}</TableCell>
-                    <TableCell>{app.email}</TableCell>
-                    <TableCell>{new Date(app.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Select
-                        defaultValue={app.status || 'new'}
-                        onValueChange={(value) => updateApplicationStatus(app.id, value)}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue>
-                            {getStatusBadge(app.status || 'new')}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="new" className="flex items-center gap-2">
-                            <Badge variant="info">New</Badge>
-                          </SelectItem>
-                          <SelectItem value="in-review" className="flex items-center gap-2">
-                            <Badge variant="warning">In Review</Badge>
-                          </SelectItem>
-                          <SelectItem value="accepted" className="flex items-center gap-2">
-                            <Badge variant="success">Accepted</Badge>
-                          </SelectItem>
-                          <SelectItem value="rejected" className="flex items-center gap-2">
-                            <Badge variant="destructive">Rejected</Badge>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      {app.resume_url ? (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleDownloadResume(app.resume_url, app.full_name)}
-                        >
-                          <Download className="h-4 w-4 mr-2" /> Download
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">No resume</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            variant="secondary" 
-                            size="sm"
-                            onClick={() => setSelectedApplication(app)}
-                          >
-                            <Eye className="h-4 w-4 mr-2" /> View
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Application Details</DialogTitle>
-                            <DialogDescription>
-                              Submitted on {new Date(app.created_at).toLocaleString()}
-                            </DialogDescription>
-                          </DialogHeader>
-                          
-                          <div className="space-y-4 mt-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <h3 className="text-sm font-medium">Full Name</h3>
-                                <p>{app.full_name}</p>
-                              </div>
-                              <div>
-                                <h3 className="text-sm font-medium">Position</h3>
-                                <p>{app.job_title} ({app.job_department})</p>
-                              </div>
-                              <div>
-                                <h3 className="text-sm font-medium">Email</h3>
-                                <p>{app.email}</p>
-                              </div>
-                              <div>
-                                <h3 className="text-sm font-medium">Phone</h3>
-                                <p>{app.phone}</p>
-                              </div>
-                              <div>
-                                <h3 className="text-sm font-medium">Availability</h3>
-                                <p>{formatAvailability(app.availability)}</p>
-                              </div>
-                              <div>
-                                <h3 className="text-sm font-medium">Status</h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                  {getStatusBadge(app.status || 'new')}
-                                  <Select
-                                    defaultValue={app.status || 'new'}
-                                    onValueChange={(value) => updateApplicationStatus(app.id, value)}
-                                  >
-                                    <SelectTrigger className="w-32 h-8">
-                                      <SelectValue>Change Status</SelectValue>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="new" className="flex items-center gap-2">
-                                        <Badge variant="info" className="mr-1">New</Badge>
-                                      </SelectItem>
-                                      <SelectItem value="in-review" className="flex items-center gap-2">
-                                        <Badge variant="warning" className="mr-1">In Review</Badge>
-                                      </SelectItem>
-                                      <SelectItem value="accepted" className="flex items-center gap-2">
-                                        <Badge variant="success" className="mr-1">Accepted</Badge>
-                                      </SelectItem>
-                                      <SelectItem value="rejected" className="flex items-center gap-2">
-                                        <Badge variant="destructive" className="mr-1">Rejected</Badge>
-                                      </SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                              {app.portfolio_link && (
-                                <div>
-                                  <h3 className="text-sm font-medium">Portfolio Link</h3>
-                                  <a 
-                                    href={app.portfolio_link} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline"
-                                  >
-                                    {app.portfolio_link}
-                                  </a>
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div>
-                              <h3 className="text-sm font-medium">Experience</h3>
-                              <p className="whitespace-pre-wrap">{app.experience}</p>
-                            </div>
-                            
-                            {app.cover_letter && (
-                              <div>
-                                <h3 className="text-sm font-medium">Cover Letter</h3>
-                                <p className="whitespace-pre-wrap">{app.cover_letter}</p>
-                              </div>
-                            )}
-                            
-                            <div className="flex justify-end">
-                              {app.resume_url && (
-                                <Button 
-                                  onClick={() => handleDownloadResume(app.resume_url, app.full_name)}
-                                  variant="accent"
-                                  className="ml-2"
-                                >
-                                  <Download className="h-4 w-4 mr-2" /> Download Resume
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <ApplicationsTable 
+            applications={applications} 
+            onDownloadResume={handleDownloadResume}
+            onStatusChange={updateApplicationStatus}
+          />
         )}
       </main>
       
