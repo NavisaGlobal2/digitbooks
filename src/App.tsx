@@ -21,6 +21,9 @@ import Invoicing from "./pages/Invoicing";
 import Expenses from "./pages/Expenses";
 import Clients from "./pages/Clients";
 import Revenue from "./pages/Revenue";
+import Budget from "./pages/Budget";
+import Ledger from "./pages/Ledger";
+import FinancialReports from "./pages/FinancialReports";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +49,9 @@ const App = () => (
                   <Route path="/expenses" element={<Expenses />} />
                   <Route path="/revenue" element={<Revenue />} />
                   <Route path="/clients" element={<Clients />} />
+                  <Route path="/budget" element={<Budget />} />
+                  <Route path="/ledger" element={<Ledger />} />
+                  <Route path="/reports" element={<FinancialReports />} />
                   <Route path="/admin/applications" element={<ApplicationsAdmin />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
