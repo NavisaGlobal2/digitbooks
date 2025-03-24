@@ -2,15 +2,18 @@
 import { FileText, CreditCard, Wallet, LayoutGrid, BarChart4, FileSpreadsheet } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const QuickActions = () => {
+  const navigate = useNavigate();
+  
   const actions = [
-    { icon: FileText, label: "Create Invoice" },
-    { icon: CreditCard, label: "Track Expense" },
-    { icon: Wallet, label: "Manage Revenue" },
-    { icon: LayoutGrid, label: "General Ledger" },
-    { icon: BarChart4, label: "Analytics" },
-    { icon: FileSpreadsheet, label: "Reports" }
+    { icon: FileText, label: "Create Invoice", path: "/invoicing" },
+    { icon: CreditCard, label: "Track Expense", path: "/expenses" },
+    { icon: Wallet, label: "Manage Revenue", path: "/revenue" },
+    { icon: LayoutGrid, label: "General Ledger", path: "/ledger" },
+    { icon: BarChart4, label: "Analytics", path: "/dashboard" }, // Currently points to dashboard since there's no dedicated analytics page
+    { icon: FileSpreadsheet, label: "Reports", path: "/reports" }
   ];
 
   return (
@@ -22,6 +25,7 @@ const QuickActions = () => {
             <Button 
               variant="ghost" 
               className="w-full h-full flex flex-col items-center justify-center py-3 px-2 space-y-1.5"
+              onClick={() => navigate(action.path)}
             >
               <action.icon className="h-4 w-4 text-primary mb-1" />
               <span className="text-xs font-medium">{action.label}</span>
