@@ -53,15 +53,16 @@ const AccountVerifier = ({
         setAccountName(result.accountName);
         setIsVerified(true);
         toast.success(result.message || "Account verified successfully");
+        setVerificationMessage(`Account verified: ${result.accountName}`);
       } else {
         if (setIsVerified) setIsVerified(false);
         toast.error(result.message || "Verification failed");
+        setVerificationMessage(result.message || "Verification failed");
       }
-      
-      setVerificationMessage(result.message || "");
     } catch (error) {
       if (setIsVerified) setIsVerified(false);
       toast.error("An error occurred during verification");
+      setVerificationMessage("An error occurred during verification");
     }
   };
 

@@ -16,35 +16,22 @@ const FALLBACK_BANKS = [
   { name: "Ecobank", code: "050" }
 ];
 
-// Define Supabase URL and key as constants
-const SUPABASE_URL = "https://naxmgtoskeijvdofqyik.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5heG1ndG9za2VpanZkb2ZxeWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxNDI0NDMsImV4cCI6MjA1MjcxODQ0M30.HhErJymz_YynLmN9lAMcxr7JoXBR8XyH9ex1gqWVv5c";
-
-// Paystack public key - this is a publishable key that can be used in the frontend
-const PAYSTACK_PUBLIC_KEY = "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-
-// Function to fetch banks from Paystack API directly
+// Function to fetch banks from our Supabase Edge Function
 export const fetchBanks = async (): Promise<Array<{ name: string; code: string }>> => {
   try {
-    console.log("Fetching banks directly from Paystack API...");
+    console.log("Fetching banks from Supabase Edge Function...");
     
-    const response = await fetch('https://api.paystack.co/bank', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${PAYSTACK_PUBLIC_KEY}`,
-        'Content-Type': 'application/json',
-      }
+    const { data, error } = await supabase.functions.invoke('list-banks', {
+      method: 'GET'
     });
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch banks: ${response.status} ${response.statusText}`);
+    if (error) {
+      throw new Error(`Failed to fetch banks: ${error.message}`);
     }
-    
-    const data = await response.json();
     
     if (!data.status || !Array.isArray(data.data)) {
       console.error("Unexpected data format:", data);
-      toast.error("Received invalid data format from Paystack API, using cached banks.");
+      toast.error("Received invalid data format from API, using cached banks.");
       return FALLBACK_BANKS;
     }
     
@@ -61,7 +48,7 @@ export const fetchBanks = async (): Promise<Array<{ name: string; code: string }
   }
 };
 
-// Function to verify bank account directly with Paystack API
+// Function to verify bank account using our Supabase Edge Function
 export const verifyBankAccount = async (accountNumber: string, bankCode: string): Promise<{ 
   verified: boolean; 
   accountName?: string;
@@ -78,32 +65,24 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
       };
     }
 
-    // Direct Paystack API call
-    const response = await fetch(
-      `https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${PAYSTACK_PUBLIC_KEY}`,
-          'Content-Type': 'application/json',
-        }
-      }
-    );
+    // Call our Supabase Edge Function
+    const { data, error } = await supabase.functions.invoke('verify-account', {
+      method: 'POST',
+      body: { accountNumber, bankCode }
+    });
     
-    const data = await response.json();
-    console.log("Verification response:", data);
-    
-    if (!response.ok) {
-      toast.error(data?.message || "Verification failed");
+    if (error) {
+      console.error("Error from Edge Function:", error);
       return { 
         verified: false, 
-        message: data?.message || "Verification failed"
+        message: error.message || "Verification failed"
       };
     }
     
+    console.log("Verification response:", data);
+    
     if (!data.status) {
-      console.error("Error response from Paystack:", data);
-      toast.error(data?.message || "Verification failed");
+      console.error("Error response from API:", data);
       return { 
         verified: false, 
         message: data?.message || "Verification failed"
@@ -118,7 +97,6 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
       };
     }
 
-    toast.success("Account verified successfully!");
     return {
       verified: true,
       accountName: data.data.account_name,
@@ -126,7 +104,6 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
     };
   } catch (error) {
     console.error("Error verifying account:", error);
-    toast.error("An error occurred during verification. Please try again.");
     return { 
       verified: false, 
       message: "An error occurred during verification" 
