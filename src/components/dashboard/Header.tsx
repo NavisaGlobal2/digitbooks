@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Link, useNavigate } from "react-router-dom";
 
 const Header = () => {
   const { user } = useAuth();
   const [businessName, setBusinessName] = useState("");
+  const navigate = useNavigate();
   
   useEffect(() => {
     const fetchBusinessProfile = async () => {
@@ -37,6 +39,10 @@ const Header = () => {
     fetchBusinessProfile();
   }, [user]);
   
+  const handleReportGeneration = () => {
+    navigate("/reports");
+  };
+  
   return (
     <header className="h-16 border-b border-border px-6 flex items-center justify-between bg-white shadow-sm z-10">
       <h1 className="text-xl font-bold">
@@ -64,7 +70,10 @@ const Header = () => {
           <Bell className="h-5 w-5 text-secondary" />
           <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full border-2 border-white"></span>
         </Button>
-        <Button className="bg-primary hover:bg-primary/90 text-white px-4 rounded-full text-sm">
+        <Button 
+          className="bg-primary hover:bg-primary/90 text-white px-4 rounded-full text-sm"
+          onClick={handleReportGeneration}
+        >
           Generate Report
         </Button>
       </div>
