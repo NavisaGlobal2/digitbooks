@@ -34,9 +34,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAuthenticated = !!user;
 
   const login = async (email: string, password: string) => {
-    // Mock login functionality
+    // Mock login functionality with a proper UUID format
     const loggedInUser = {
-      id: "1",
+      id: "d290f1ee-6c54-4b01-90e6-d701748f0851", // Using a valid UUID format
       name: "John Doe",
       email,
       avatar: "",
@@ -53,9 +53,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signup = async (email: string, password: string, name: string) => {
-    // Mock signup functionality
+    // Mock signup functionality with a proper UUID format
     const newUser = {
-      id: "1",
+      id: "d290f1ee-6c54-4b01-90e6-d701748f0851", // Using a valid UUID format
       name,
       email,
       avatar: "",
