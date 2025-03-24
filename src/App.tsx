@@ -12,6 +12,7 @@ import Help from "./pages/Help";
 import Careers from "./pages/Careers";
 import NotFound from "./pages/NotFound";
 import ApplicationsAdmin from "./pages/ApplicationsAdmin";
+import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/help" element={<Help />} />
           <Route path="/careers" element={<Careers />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/admin/applications" element={<ApplicationsAdmin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

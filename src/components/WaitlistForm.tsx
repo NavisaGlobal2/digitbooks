@@ -1,39 +1,27 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
+const waitlistSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
   company: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+type WaitlistValues = z.infer<typeof waitlistSchema>;
 
-export function WaitlistForm() {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+export const WaitlistForm = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<WaitlistValues>({
+    resolver: zodResolver(waitlistSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -41,88 +29,76 @@ export function WaitlistForm() {
     },
   });
 
-  const onSubmit = async (values: FormValues) => {
-    setLoading(true);
+  const onSubmit = async (values: WaitlistValues) => {
+    setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from("waitlist")
-        .insert([values]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Thank you!",
-        description: "You have been added to the waitlist.",
+      // Fix: ensure name and email are not undefined
+      const { error } = await supabase.from("waitlist").insert({
+        name: values.name,
+        email: values.email,
+        company: values.company || null,
       });
-      
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success("Thank you for joining our waitlist!");
       form.reset();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to join waitlist. Please try again.",
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("Failed to join waitlist. Please try again.");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-6 rounded-xl backdrop-blur-sm bg-white/30 border border-border">
-      <h2 className="text-2xl font-semibold text-center mb-6">Join our Waitlist</h2>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Your name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input placeholder="you@example.com" type="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="company"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Company (Optional)</FormLabel>
-                <FormControl>
-                  <Input placeholder="Your company name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <Button 
-            type="submit" 
-            className="w-full bg-accent text-primary hover:bg-accent/90 transition-all"
-            disabled={loading}
-          >
-            {loading ? "Submitting..." : "Join Waitlist"}
-          </Button>
-        </form>
-      </Form>
-    </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-md mx-auto">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Your name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="your.email@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="company"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Company (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="Your company name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Submitting..." : "Join Waitlist"}
+        </Button>
+      </form>
+    </Form>
   );
-}
+};
