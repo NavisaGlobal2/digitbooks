@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -55,6 +55,7 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const { user, completeOnboarding } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [businessInfo, setBusinessInfo] = useState({
     name: "",
@@ -84,6 +85,63 @@ const Onboarding = () => {
     budgeting: false,
     inventory: false
   });
+
+  // Fetch existing profile data when component mounts
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return;
+        }
+        
+        if (data) {
+          // If user already has a profile with required fields
+          // Pre-fill the form with existing data
+          setBusinessInfo({
+            name: data.business_name || "",
+            type: data.business_type || "",
+            industry: data.industry || "",
+            size: "",
+            country: "Nigeria",
+            state: "",
+            city: "",
+            address: data.address || "",
+            phone: data.phone || "",
+            website: data.website || ""
+          });
+          
+          setLegalInfo({
+            rcNumber: data.rc_number || "",
+            taxId: data.tax_number || "",
+            vatNumber: data.vat_number || "",
+            registrationDate: data.registration_date ? new Date(data.registration_date).toISOString().split('T')[0] : ""
+          });
+          
+          // If user has completed all required fields before, redirect to dashboard
+          if (user.onboardingCompleted) {
+            navigate('/dashboard');
+            return;
+          }
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfileData();
+  }, [user, navigate]);
 
   const handleNext = async () => {
     // Validate current step
@@ -410,26 +468,32 @@ const Onboarding = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8">
-          <div className="flex justify-between mb-4">
-            {steps.map((step, index) => (
-              <div 
-                key={index}
-                className={`h-2 flex-1 rounded-full mx-1 ${
-                  index <= currentStep ? 'bg-primary' : 'bg-border'
-                }`}
-              />
-            ))}
-          </div>
-          <div className="text-center mb-8">
-            <h2 className="text-xl font-semibold mb-1">{steps[currentStep].title}</h2>
-            <p className="text-muted-foreground">{steps[currentStep].description}</p>
-          </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
+      ) : (
+        <div className="w-full max-w-md">
+          <div className="mb-8">
+            <div className="flex justify-between mb-4">
+              {steps.map((step, index) => (
+                <div 
+                  key={index}
+                  className={`h-2 flex-1 rounded-full mx-1 ${
+                    index <= currentStep ? 'bg-primary' : 'bg-border'
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="text-center mb-8">
+              <h2 className="text-xl font-semibold mb-1">{steps[currentStep].title}</h2>
+              <p className="text-muted-foreground">{steps[currentStep].description}</p>
+            </div>
+          </div>
 
-        {renderStepContent()}
-      </div>
+          {renderStepContent()}
+        </div>
+      )}
     </div>
   );
 };
