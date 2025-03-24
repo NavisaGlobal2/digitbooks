@@ -1,5 +1,6 @@
 
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // Interface for the account verification request
 interface VerifyAccountRequest {
@@ -34,28 +35,20 @@ interface BankListResponse {
   }>;
 }
 
-// Function to fetch banks from Paystack API
+// Function to fetch banks from Paystack API via Supabase Edge Function
 export const fetchBanks = async (): Promise<Array<{ name: string; code: string }>> => {
   try {
-    const response = await fetch("https://api.paystack.co/bank", {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${import.meta.env.VITE_PAYSTACK_SECRET_KEY}`,
-        "Content-Type": "application/json"
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch banks");
+    const { data, error } = await supabase.functions.invoke("list-banks");
+    
+    if (error) {
+      throw new Error(error.message);
     }
-
-    const data: BankListResponse = await response.json();
     
     if (!data.status) {
-      throw new Error(data.message);
+      throw new Error(data.message || "Failed to fetch banks");
     }
-
-    return data.data.map(bank => ({
+    
+    return data.data.map((bank: any) => ({
       name: bank.name,
       code: bank.code
     }));
@@ -66,30 +59,23 @@ export const fetchBanks = async (): Promise<Array<{ name: string; code: string }
   }
 };
 
-// Function to verify bank account
+// Function to verify bank account via Supabase Edge Function
 export const verifyBankAccount = async (accountNumber: string, bankCode: string): Promise<{ 
   verified: boolean; 
   accountName?: string;
   message?: string;
 }> => {
   try {
-    const response = await fetch(`https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${import.meta.env.VITE_PAYSTACK_SECRET_KEY}`,
-        "Content-Type": "application/json"
-      }
+    const { data, error } = await supabase.functions.invoke("verify-account", {
+      body: { accountNumber, bankCode }
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
+    
+    if (error) {
       return { 
         verified: false, 
-        message: errorData.message || "Verification failed" 
+        message: error.message || "Verification failed" 
       };
     }
-
-    const data: VerifyAccountResponse = await response.json();
     
     if (!data.status || !data.data) {
       return { 

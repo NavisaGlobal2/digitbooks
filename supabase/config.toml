@@ -1,1 +1,8 @@
+
 project_id = "naxmgtoskeijvdofqyik"
+
+[verify-account]
+node_version = 18
+
+[list-banks]
+node_version = 18
