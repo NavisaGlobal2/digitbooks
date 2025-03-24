@@ -1,5 +1,5 @@
 
-import { Receipt } from "lucide-react";
+import { Receipt, Upload } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 
 interface ExpenseEmptyStateProps {
@@ -12,10 +12,11 @@ const ExpenseEmptyState = ({ onAddExpense, onConnectBank }: ExpenseEmptyStatePro
     <EmptyState
       icon={<Receipt className="w-20 h-20 text-gray-400" strokeWidth={1.5} />}
       title="No expenses tracked yet"
-      description="Begin by connecting your bank account so we can do the rest. Also you can manually add expenses made."
+      description="Begin by connecting your bank account and uploading your statement so we can do the rest. Also you can manually add expenses made."
       primaryAction={{
         label: "Connect bank account",
         onClick: onConnectBank,
+        icon: <Upload className="w-4 h-4 mr-2" />
       }}
       secondaryAction={{
         label: "Add expense",
