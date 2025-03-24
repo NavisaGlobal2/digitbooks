@@ -27,6 +27,7 @@ import Revenue from "./pages/Revenue";
 import Budget from "./pages/Budget";
 import Ledger from "./pages/Ledger";
 import FinancialReports from "./pages/FinancialReports";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
                         <Route path="/budget" element={<Budget />} />
                         <Route path="/ledger" element={<Ledger />} />
                         <Route path="/reports" element={<FinancialReports />} />
+                        <Route path="/settings" element={<Settings />} />
                         <Route path="/admin/applications" element={<ApplicationsAdmin />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
