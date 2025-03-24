@@ -75,13 +75,13 @@ const AIInsights = () => {
 
   return (
     <Card className="border-none shadow-sm h-full">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 pt-6 px-6">
+      <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 md:pt-6 px-4 md:px-6">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-amber-500" />
           AI Insights
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-6 pb-6">
+      <CardContent className="px-4 md:px-6 pb-6">
         <div className="space-y-2">
           {insights.map((insight, index) => (
             <Insight key={index} message={insight.message} type={insight.type} />

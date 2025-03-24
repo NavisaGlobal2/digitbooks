@@ -13,15 +13,15 @@ const BillsSection = () => {
 
   return (
     <Card className="border-none shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 pt-6 px-6">
-        <CardTitle className="text-lg font-semibold">Upcoming Bills</CardTitle>
-        <Button variant="outline" size="sm" className="text-sm gap-2 h-9">
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 pt-4 md:pt-6 px-4 md:px-6">
+        <CardTitle className="text-lg font-semibold mb-2 sm:mb-0">Upcoming Bills</CardTitle>
+        <Button variant="outline" size="sm" className="text-sm gap-2 h-9 w-full sm:w-auto">
           <Calendar className="h-4 w-4" />
           This Month
         </Button>
       </CardHeader>
-      <CardContent className="px-6 pb-4">
-        <div className="grid grid-cols-4 gap-4">
+      <CardContent className="px-4 md:px-6 pb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {bills.map((bill, index) => (
             <Card key={index} className="p-4 border border-border hover:border-primary/20 transition-all">
               <div className="flex flex-col items-center text-center">

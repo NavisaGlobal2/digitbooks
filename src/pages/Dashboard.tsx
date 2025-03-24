@@ -25,29 +25,37 @@ const Dashboard = () => {
       <DashboardHeader />
       
       {/* Financial Overview Cards */}
-      <FinancialOverview data={financialData} />
+      <div className="mb-6">
+        <FinancialOverview data={financialData} />
+      </div>
       
       {/* Quick Action Buttons */}
-      <QuickActions />
+      <div className="mb-6">
+        <QuickActions />
+      </div>
 
       {/* Main Content Sections */}
-      <MainContentSection 
-        leftContent={
-          <>
-            <CashflowSection />
-            <FinancialChartsSection />
-          </>
-        }
-        rightContent={
-          <>
-            <AIInsights />
-            <TransactionsSection />
-          </>
-        }
-      />
+      <div className="mb-6">
+        <MainContentSection 
+          leftContent={
+            <>
+              <CashflowSection />
+              <FinancialChartsSection />
+            </>
+          }
+          rightContent={
+            <>
+              <AIInsights />
+              <TransactionsSection />
+            </>
+          }
+        />
+      </div>
       
       {/* Bills Section */}
-      <BillsSection />
+      <div className="mb-6">
+        <BillsSection />
+      </div>
     </DashboardContainer>
   );
 };

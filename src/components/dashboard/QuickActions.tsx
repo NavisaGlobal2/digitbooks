@@ -16,7 +16,7 @@ const QuickActions = () => {
   return (
     <div className="mb-6">
       <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-      <div className="grid grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         {actions.map((action, index) => (
           <Card key={index} className="p-0 border border-border shadow-sm hover:shadow-md transition-all hover:border-primary/20 hover:translate-y-[-2px]">
             <Button 

@@ -27,17 +27,17 @@ const FinancialChartsSection = () => {
 
   return (
     <div className="mb-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Financial breakdown</h2>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="text-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6">
+        <h2 className="text-xl font-semibold mb-2 sm:mb-0">Financial breakdown</h2>
+        <div className="flex items-center w-full sm:w-auto">
+          <Button variant="outline" className="text-sm w-full sm:w-auto">
             {filterPeriod}
             <Filter className="h-4 w-4 ml-2 text-muted-foreground" />
           </Button>
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-5 mb-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-5">
         <PieChartCard title="Expense breakdown" data={expenseData} />
         <PieChartCard title="Revenue sources" data={revenueData} />
       </div>
