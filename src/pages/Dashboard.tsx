@@ -21,7 +21,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <Sidebar />
 
@@ -32,30 +32,37 @@ const Dashboard = () => {
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto p-6 bg-background">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto space-y-8">
             {/* Dashboard Header */}
             <DashboardHeader />
+            
+            {/* Financial Overview Cards */}
+            <FinancialOverview data={financialData} />
             
             {/* Quick Action Buttons */}
             <QuickActions />
 
-            {/* Financial Overview Cards */}
-            <FinancialOverview data={financialData} />
-
-            {/* Cashflow Analysis */}
-            <CashflowSection />
-            
-            {/* Financial Charts Section */}
-            <FinancialChartsSection />
-            
-            {/* AI Insights Section */}
-            <AIInsights />
-
-            {/* Bottom Section */}
-            <div className="grid grid-cols-2 gap-5">
-              <TransactionsSection />
-              <BillsSection />
+            {/* Main Content Sections */}
+            <div className="grid grid-cols-3 gap-6">
+              <div className="col-span-2 space-y-6">
+                {/* Cashflow Analysis */}
+                <CashflowSection />
+                
+                {/* Financial Charts Section */}
+                <FinancialChartsSection />
+              </div>
+              
+              <div className="space-y-6">
+                {/* AI Insights Section */}
+                <AIInsights />
+                
+                {/* Transactions Section */}
+                <TransactionsSection />
+              </div>
             </div>
+            
+            {/* Bills Section */}
+            <BillsSection />
           </div>
         </div>
       </div>

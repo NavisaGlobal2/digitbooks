@@ -1,21 +1,22 @@
 
 import { 
-  ArrowDown, 
-  ArrowUp, 
+  LayoutDashboard, 
+  FileText, 
+  CircleDollarSign, 
   BarChart, 
   CreditCard, 
-  FileText, 
-  LayoutGrid, 
-  Settings
+  Settings,
+  ChevronRight,
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Sidebar = () => {
   return (
-    <div className="w-[240px] h-screen border-r border-border py-4 flex flex-col">
+    <div className="w-[240px] h-screen border-r border-border py-4 flex flex-col bg-white shadow-sm">
       <div className="px-4 mb-6">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center">
+          <div className="h-8 w-8 rounded-md bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
             <span className="text-white font-bold">DB</span>
           </div>
           <span className="font-semibold text-lg">DigiBooks</span>
@@ -26,9 +27,9 @@ const Sidebar = () => {
         <nav className="space-y-1">
           <Button 
             variant="ghost" 
-            className="w-full justify-start gap-3 text-primary font-medium bg-accent/10"
+            className="w-full justify-start gap-3 text-primary font-medium bg-accent/10 border-r-4 border-primary"
           >
-            <LayoutGrid className="h-5 w-5" />
+            <LayoutDashboard className="h-5 w-5" />
             Dashboard
           </Button>
           <Button 
@@ -42,15 +43,8 @@ const Sidebar = () => {
             variant="ghost" 
             className="w-full justify-start gap-3 text-secondary"
           >
-            <ArrowDown className="h-5 w-5" />
+            <CircleDollarSign className="h-5 w-5" />
             Expenses
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start gap-3 text-secondary"
-          >
-            <ArrowUp className="h-5 w-5" />
-            Revenue
           </Button>
           <Button 
             variant="ghost" 
@@ -76,7 +70,23 @@ const Sidebar = () => {
         </nav>
       </div>
 
-      <div className="px-4 mt-auto">
+      <div className="px-4 mt-auto border-t border-border pt-4">
+        <div className="bg-gray-50 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <span className="text-blue-600 font-bold text-sm">P</span>
+            </div>
+            <div>
+              <p className="font-medium text-sm">Premium Plan</p>
+              <p className="text-xs text-muted-foreground">Upgrade features</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-secondary ml-auto" />
+          </div>
+          <div className="h-2 bg-gray-200 rounded-full">
+            <div className="h-2 w-3/4 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full"></div>
+          </div>
+        </div>
+        
         <div className="flex items-center gap-3 p-2">
           <div className="h-9 w-9 rounded-full bg-gray-100 overflow-hidden">
             <img 
@@ -87,8 +97,11 @@ const Sidebar = () => {
           </div>
           <div className="flex-1">
             <p className="font-medium text-sm">Amarachi</p>
-            <p className="text-xs text-muted-foreground">Premium plan</p>
+            <p className="text-xs text-muted-foreground">admin@digibooks.com</p>
           </div>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <LogOut className="h-4 w-4 text-secondary" />
+          </Button>
         </div>
       </div>
     </div>

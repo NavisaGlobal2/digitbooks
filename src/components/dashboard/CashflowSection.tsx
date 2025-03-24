@@ -1,30 +1,33 @@
 
 import { useState } from "react";
-import { Filter } from "lucide-react";
+import { Filter, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import CashflowChart from "@/components/dashboard/CashflowChart";
 
 const CashflowSection = () => {
   const [filterPeriod, setFilterPeriod] = useState("Last six month");
 
   return (
-    <div className="mb-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Cashflow analysis</h2>
+    <Card className="border-none shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between pb-2 pt-6 px-6">
+        <CardTitle className="text-xl font-semibold">Cashflow Analysis</CardTitle>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="text-sm">
+          <Button variant="outline" size="sm" className="text-sm h-9 gap-2">
+            <Calendar className="h-4 w-4" />
             {filterPeriod}
-            <Filter className="h-4 w-4 ml-2 text-muted-foreground" />
+          </Button>
+          <Button variant="outline" size="sm" className="text-sm h-9 w-9 p-0">
+            <Filter className="h-4 w-4" />
           </Button>
         </div>
-      </div>
-      <Card className="p-6 border-none shadow-sm">
-        <div className="h-[350px]">
+      </CardHeader>
+      <CardContent className="px-4 pb-4">
+        <div className="h-[320px]">
           <CashflowChart />
         </div>
-      </Card>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

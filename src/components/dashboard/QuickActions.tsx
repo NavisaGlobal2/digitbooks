@@ -1,39 +1,33 @@
 
-import { FileText, CreditCard, Wallet, LayoutGrid } from "lucide-react";
+import { FileText, CreditCard, Wallet, LayoutGrid, BarChart4, FileSpreadsheet } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 const QuickActions = () => {
+  const actions = [
+    { icon: FileText, label: "Create Invoice" },
+    { icon: CreditCard, label: "Track Expense" },
+    { icon: Wallet, label: "Manage Revenue" },
+    { icon: LayoutGrid, label: "General Ledger" },
+    { icon: BarChart4, label: "Analytics" },
+    { icon: FileSpreadsheet, label: "Reports" }
+  ];
+
   return (
     <div className="mb-6">
-      <div className="grid grid-cols-4 gap-3">
-        <Card className="p-0 border shadow-sm hover:shadow-md transition-shadow">
-          <Button variant="ghost" className="w-full h-full flex flex-col items-center justify-center py-4 px-3 space-y-1.5">
-            <FileText className="h-5 w-5 text-primary" />
-            <span className="text-xs font-medium">Create Invoice</span>
-          </Button>
-        </Card>
-        
-        <Card className="p-0 border shadow-sm hover:shadow-md transition-shadow">
-          <Button variant="ghost" className="w-full h-full flex flex-col items-center justify-center py-4 px-3 space-y-1.5">
-            <CreditCard className="h-5 w-5 text-primary" />
-            <span className="text-xs font-medium">Track expense</span>
-          </Button>
-        </Card>
-        
-        <Card className="p-0 border shadow-sm hover:shadow-md transition-shadow">
-          <Button variant="ghost" className="w-full h-full flex flex-col items-center justify-center py-4 px-3 space-y-1.5">
-            <Wallet className="h-5 w-5 text-primary" />
-            <span className="text-xs font-medium">Manage revenue</span>
-          </Button>
-        </Card>
-        
-        <Card className="p-0 border shadow-sm hover:shadow-md transition-shadow">
-          <Button variant="ghost" className="w-full h-full flex flex-col items-center justify-center py-4 px-3 space-y-1.5">
-            <LayoutGrid className="h-5 w-5 text-primary" />
-            <span className="text-xs font-medium">General ledger</span>
-          </Button>
-        </Card>
+      <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+      <div className="grid grid-cols-6 gap-3">
+        {actions.map((action, index) => (
+          <Card key={index} className="p-0 border border-border shadow-sm hover:shadow-md transition-all hover:border-primary/20 hover:translate-y-[-2px]">
+            <Button 
+              variant="ghost" 
+              className="w-full h-full flex flex-col items-center justify-center py-3 px-2 space-y-1.5"
+            >
+              <action.icon className="h-4 w-4 text-primary mb-1" />
+              <span className="text-xs font-medium">{action.label}</span>
+            </Button>
+          </Card>
+        ))}
       </div>
     </div>
   );

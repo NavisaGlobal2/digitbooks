@@ -1,6 +1,7 @@
 
-import { AlertTriangle, TrendingUp, TrendingDown, DollarSign, AlertCircle } from "lucide-react";
+import { AlertTriangle, TrendingUp, TrendingDown, DollarSign, AlertCircle, Lightbulb } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 interface InsightProps {
   message: string;
@@ -26,21 +27,21 @@ const Insight = ({ message, type }: InsightProps) => {
   const getIcon = () => {
     switch (type) {
       case "success":
-        return <TrendingUp className="h-4 w-4 mr-2" />;
+        return <TrendingUp className="h-4 w-4 mr-2 flex-shrink-0" />;
       case "warning":
-        return <AlertCircle className="h-4 w-4 mr-2" />;
+        return <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />;
       case "error":
-        return <AlertTriangle className="h-4 w-4 mr-2" />;
+        return <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />;
       case "info":
-        return <DollarSign className="h-4 w-4 mr-2" />;
+        return <DollarSign className="h-4 w-4 mr-2 flex-shrink-0" />;
       default:
         return null;
     }
   };
 
   return (
-    <Alert className={`flex items-center ${getBgColor()} border mb-2`}>
-      <AlertDescription className="flex items-center text-sm">
+    <Alert className={`flex items-center ${getBgColor()} border mb-2 py-2`}>
+      <AlertDescription className="flex items-center text-xs">
         {getIcon()}
         {message}
       </AlertDescription>
@@ -73,16 +74,21 @@ const AIInsights = () => {
   ];
 
   return (
-    <div className="mb-8">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">AI Insights</h2>
-      </div>
-      <div className="bg-white p-5 rounded-lg border shadow-sm">
-        {insights.map((insight, index) => (
-          <Insight key={index} message={insight.message} type={insight.type} />
-        ))}
-      </div>
-    </div>
+    <Card className="border-none shadow-sm h-full">
+      <CardHeader className="flex flex-row items-center justify-between pb-2 pt-6 px-6">
+        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <Lightbulb className="h-5 w-5 text-amber-500" />
+          AI Insights
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="px-6 pb-6">
+        <div className="space-y-2">
+          {insights.map((insight, index) => (
+            <Insight key={index} message={insight.message} type={insight.type} />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
