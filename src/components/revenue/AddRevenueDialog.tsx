@@ -1,7 +1,6 @@
 
 import { Revenue } from "@/types/revenue";
 import RevenueForm from "@/components/revenue/RevenueForm";
-import { useState } from "react";
 
 interface AddRevenueDialogProps {
   open: boolean;
