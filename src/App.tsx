@@ -58,16 +58,16 @@ const App = () => (
                         
                         {/* Auth routes */}
                         <Route path="/auth" element={<Auth />} />
+                        <Route path="/onboarding" element={
+                          <RequireAuth>
+                            <Onboarding />
+                          </RequireAuth>
+                        } />
                         
                         {/* Protected routes that require authentication */}
                         <Route path="/dashboard" element={
                           <RequireAuth>
                             <Dashboard />
-                          </RequireAuth>
-                        } />
-                        <Route path="/onboarding" element={
-                          <RequireAuth>
-                            <Onboarding />
                           </RequireAuth>
                         } />
                         <Route path="/invoicing" element={

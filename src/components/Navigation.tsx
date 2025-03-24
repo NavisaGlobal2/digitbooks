@@ -42,7 +42,7 @@ const Navigation = () => {
         </div>
 
         <div className="flex items-center">
-          <a href="https://digitbookwise.lovable.app/auth">
+          <a href="https://digitbookwise.lovable.app/onboarding">
             <Button className="text-white">
               Get Started
             </Button>
