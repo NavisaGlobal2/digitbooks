@@ -69,6 +69,7 @@ const BankDetailsForm = ({
       if (result.verified && result.accountName) {
         setAccountName(result.accountName);
         setIsVerified(true);
+        toast.success("Account verified successfully!");
       } else {
         setIsVerified(false);
         toast.error(result.message || "Verification failed");
@@ -84,6 +85,43 @@ const BankDetailsForm = ({
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-md font-medium">Bank Details</h4>
+        <p className="text-xs text-muted-foreground">Verification is optional</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="w-full">
+          <Label htmlFor="account-name-manual">Account Name</Label>
+          <Input
+            id="account-name-manual"
+            value={accountName}
+            onChange={(e) => {
+              setAccountName(e.target.value);
+              if (isVerified) setIsVerified(false);
+            }}
+            placeholder="Enter account holder name"
+            className={isVerified ? "border-green-500" : ""}
+          />
+        </div>
+
+        <div className="w-full">
+          <Label htmlFor="account-number">Account Number</Label>
+          <Input 
+            id="account-number" 
+            placeholder="Enter account number" 
+            maxLength={10}
+            value={accountNumber}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, '');
+              setAccountNumber(value);
+              if (isVerified) setIsVerified(false);
+            }}
+            className={isVerified ? "border-green-500" : ""}
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <BankSelector
           banks={banks}
@@ -92,24 +130,6 @@ const BankDetailsForm = ({
           setSelectedBankCode={setSelectedBankCode}
           isVerified={isVerified}
           isLoading={isLoadingBanks}
-        />
-
-        <div className="w-full">
-          <AccountNumberInput
-            accountNumber={accountNumber}
-            setAccountNumber={setAccountNumber}
-            isVerified={isVerified}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <AccountNameInput
-          accountName={accountName}
-          setAccountName={setAccountName}
-          isVerified={isVerified}
-          setIsVerified={setIsVerified}
-          isVerifying={isVerifying}
         />
 
         <AccountVerifier
