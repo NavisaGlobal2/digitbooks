@@ -15,7 +15,7 @@ const ClientsHeader = () => {
             className="flex items-center text-sm font-medium hover:text-primary"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
-            Clients
+            Back to Invoicing
           </button>
         </div>
         

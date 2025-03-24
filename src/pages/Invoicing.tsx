@@ -33,9 +33,11 @@ const Invoicing = () => {
           setIsCreatingInvoice={setIsCreatingInvoice} 
         />
         
-        <main className="flex-1 overflow-auto px-6 py-6">
+        <main className="flex-1 overflow-auto">
           {isCreatingInvoice ? (
-            <InvoiceForm />
+            <div className="px-6 py-6">
+              <InvoiceForm />
+            </div>
           ) : (
             <InvoiceDashboard 
               activeTab={activeTab}

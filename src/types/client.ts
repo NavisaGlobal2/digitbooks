@@ -13,3 +13,7 @@ export interface Client {
   invoiceCount: number;
   totalAmount: number;
 }
+
+export interface ClientWithDetails extends Client {
+  invoices?: string[];
+}
