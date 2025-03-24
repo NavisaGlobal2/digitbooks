@@ -52,8 +52,11 @@ const AccountVerifier = ({
         throw new Error("Please select a bank first");
       }
 
+      console.log(`Starting verification for account: ${accountNumber}, bank code: ${selectedBankCode}`);
+      
       // Call API to verify account
       const result = await verifyBankAccount(accountNumber, selectedBankCode);
+      console.log("Verification result:", result);
       
       if (result.verified && result.accountName && setAccountName && setIsVerified) {
         setAccountName(result.accountName);

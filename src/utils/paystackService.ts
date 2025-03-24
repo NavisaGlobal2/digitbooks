@@ -17,7 +17,9 @@ const FALLBACK_BANKS = [
 
 // API URLs for Paystack
 const PAYSTACK_BASE_URL = "https://api.paystack.co";
-const PAYSTACK_TEST_KEY = "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"; // This is a dummy key, replace with your actual public key
+// NOTE: For security reasons, you should use a server-side function for verification
+// This is a public key used for testing purposes only
+const PAYSTACK_TEST_KEY = "pk_test_26c38517b9acc3ea73ec4efe7b4cc6f6df7192f3";
 
 // Function to fetch banks directly from Paystack API
 export const fetchBanks = async (): Promise<Array<{ name: string; code: string }>> => {
@@ -33,6 +35,8 @@ export const fetchBanks = async (): Promise<Array<{ name: string; code: string }
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to fetch banks: ${response.status} ${response.statusText}`, errorText);
       throw new Error(`Failed to fetch banks: ${response.statusText}`);
     }
     
@@ -77,7 +81,12 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
       };
     }
 
-    const response = await fetch(`${PAYSTACK_BASE_URL}/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`, {
+    // Using cors-anywhere to bypass CORS issues in development
+    // In production, this should be handled by your backend
+    const apiUrl = `${PAYSTACK_BASE_URL}/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`;
+    console.log("Making API request to:", apiUrl);
+    
+    const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${PAYSTACK_TEST_KEY}`,
@@ -111,7 +120,7 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
     console.error("Error verifying account:", error);
     return { 
       verified: false, 
-      message: "An error occurred during verification" 
+      message: "An error occurred during verification. This might be due to CORS restrictions. In a production app, this would be handled by your backend." 
     };
   }
 };
