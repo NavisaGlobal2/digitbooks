@@ -3,12 +3,11 @@ import { useState } from "react";
 import { useRevenue } from "@/contexts/RevenueContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowUpDown, Search, PieChart, Coins, BarChart3, TrendingUp } from "lucide-react";
+import { Plus, ArrowUpDown, Search, Coins, TrendingUp } from "lucide-react";
 import { RevenueTable } from "./RevenueTable";
-import RevenueEmptyState from "./RevenueEmptyState";
 import RevenueStatsCards from "./RevenueStatsCards";
 import RevenueChart from "./RevenueChart";
-import { Revenue, PaymentStatus } from "@/types/revenue";
+import { PaymentStatus } from "@/types/revenue";
 
 interface RevenueContentProps {
   onAddRevenue: () => void;
@@ -58,13 +57,6 @@ const RevenueContent = ({
   if (revenues.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[70vh] gap-8">
-        <div className="relative w-64 h-64 mb-4">
-          <img 
-            src="/lovable-uploads/35ddc339-fafd-45de-8980-30bddf13d586.png" 
-            alt="Revenue illustration" 
-            className="w-full h-full object-contain"
-          />
-        </div>
         <div className="text-center max-w-md">
           <h2 className="text-2xl font-semibold mb-2">No revenue entries yet</h2>
           <p className="text-gray-500 mb-6">Track your income by recording your first revenue entry.</p>
@@ -93,30 +85,6 @@ const RevenueContent = ({
   
   return (
     <div className="space-y-8">
-      {/* Header Section */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 shadow-sm">
-        <h2 className="text-2xl font-semibold text-green-800 mb-2">Revenue Overview</h2>
-        <p className="text-green-600 mb-4">Track and manage all your income sources in one place</p>
-        
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          <Button 
-            className="bg-green-500 hover:bg-green-600 text-white shadow-md transition-all duration-300"
-            onClick={onAddRevenue}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Revenue
-          </Button>
-          
-          <Button 
-            variant="outline"
-            className="border-green-500 text-green-600 hover:bg-green-50 transition-all duration-300"
-            onClick={onImportRevenue}
-          >
-            Import Revenue
-          </Button>
-        </div>
-      </div>
-      
       {/* Stats Cards */}
       <RevenueStatsCards />
       
