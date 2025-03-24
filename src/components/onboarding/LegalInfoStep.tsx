@@ -5,13 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { validateLegalInfo } from "@/utils/validationUtils";
 import { toast } from "sonner";
-
-interface LegalInfo {
-  rcNumber: string;
-  taxId: string;
-  vatNumber: string;
-  registrationDate: string;
-}
+import { LegalInfo } from "@/types/onboarding";
 
 interface LegalInfoStepProps {
   legalInfo: LegalInfo;

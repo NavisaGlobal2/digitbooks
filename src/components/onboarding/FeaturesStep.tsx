@@ -2,15 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-
-interface FeatureState {
-  invoicing: boolean;
-  expenses: boolean;
-  banking: boolean;
-  reports: boolean;
-  budgeting: boolean;
-  inventory: boolean;
-}
+import { FeatureState } from "@/types/onboarding";
 
 interface FeaturesStepProps {
   features: FeatureState;

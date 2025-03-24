@@ -1,9 +1,7 @@
 
-export const validateBusinessInfo = (businessInfo: {
-  name: string;
-  type: string;
-  industry: string;
-}) => {
+import { BusinessInfo, LegalInfo, ValidationResult } from "@/types/onboarding";
+
+export const validateBusinessInfo = (businessInfo: BusinessInfo): ValidationResult => {
   const errors: Record<string, string> = {};
   
   if (!businessInfo.name.trim()) {
@@ -24,9 +22,7 @@ export const validateBusinessInfo = (businessInfo: {
   };
 };
 
-export const validateLegalInfo = (legalInfo: {
-  rcNumber: string;
-}) => {
+export const validateLegalInfo = (legalInfo: LegalInfo): ValidationResult => {
   const errors: Record<string, string> = {};
   
   if (!legalInfo.rcNumber.trim()) {

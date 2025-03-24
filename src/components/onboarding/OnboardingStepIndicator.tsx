@@ -1,10 +1,6 @@
 
 import React from "react";
-
-interface OnboardingStep {
-  title: string;
-  description: string;
-}
+import { OnboardingStep } from "@/types/onboarding";
 
 interface OnboardingStepIndicatorProps {
   steps: OnboardingStep[];

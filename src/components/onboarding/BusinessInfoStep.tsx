@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -6,26 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { validateBusinessInfo } from "@/utils/validationUtils";
 import { toast } from "sonner";
-
-interface BusinessInfo {
-  name: string;
-  type: string;
-  industry: string;
-  size: string;
-  country: string;
-  state: string;
-  city: string;
-  address: string;
-  phone: string;
-  website: string;
-}
+import { BusinessInfo, BusinessType, Industry } from "@/types/onboarding";
 
 interface BusinessInfoStepProps {
   businessInfo: BusinessInfo;
   onBusinessInfoChange: (info: BusinessInfo) => void;
   onNext: () => void;
-  businessTypes: { value: string; label: string }[];
-  industries: { value: string; label: string }[];
+  businessTypes: BusinessType[];
+  industries: Industry[];
 }
 
 const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({

@@ -1,12 +1,14 @@
 
-export const BUSINESS_TYPES = [
+import { BusinessType, Industry, OnboardingStep } from "@/types/onboarding";
+
+export const BUSINESS_TYPES: BusinessType[] = [
   { value: "sole_proprietorship", label: "Sole Proprietorship" },
   { value: "partnership", label: "Partnership" },
   { value: "limited_liability", label: "Limited Liability Company" },
   { value: "corporation", label: "Corporation" }
 ];
 
-export const INDUSTRIES = [
+export const INDUSTRIES: Industry[] = [
   { value: "technology", label: "Technology" },
   { value: "retail", label: "Retail & Commerce" },
   { value: "manufacturing", label: "Manufacturing" },
@@ -17,7 +19,7 @@ export const INDUSTRIES = [
   { value: "other", label: "Other" }
 ];
 
-export const ONBOARDING_STEPS = [
+export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: "Welcome to DigiBooks",
     description: "Let's get your business set up in just a few steps"

@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { BusinessInfo, LegalInfo, FeatureState } from "@/types/onboarding";
 
 // Components
 import OnboardingStepIndicator from "@/components/onboarding/OnboardingStepIndicator";
@@ -23,7 +23,7 @@ const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
-  const [businessInfo, setBusinessInfo] = useState({
+  const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
     name: "",
     type: "",
     industry: "",
@@ -36,14 +36,14 @@ const Onboarding = () => {
     website: ""
   });
 
-  const [legalInfo, setLegalInfo] = useState({
+  const [legalInfo, setLegalInfo] = useState<LegalInfo>({
     rcNumber: "", // Required
     taxId: "", // Optional
     vatNumber: "", // Optional
     registrationDate: "" // Optional
   });
 
-  const [selectedFeatures, setSelectedFeatures] = useState({
+  const [selectedFeatures, setSelectedFeatures] = useState<FeatureState>({
     invoicing: true,
     expenses: true,
     banking: false,
@@ -52,7 +52,6 @@ const Onboarding = () => {
     inventory: false
   });
 
-  // Fetch existing profile data when component mounts
   useEffect(() => {
     const fetchProfileData = async () => {
       if (!user?.id) return;
@@ -71,8 +70,6 @@ const Onboarding = () => {
         }
         
         if (data) {
-          // If user already has a profile with required fields
-          // Pre-fill the form with existing data
           setBusinessInfo({
             name: data.business_name || "",
             type: data.business_type || "",
@@ -93,7 +90,6 @@ const Onboarding = () => {
             registrationDate: data.registration_date ? new Date(data.registration_date).toISOString().split('T')[0] : ""
           });
           
-          // If user has completed all required fields before, redirect to dashboard
           if (user.onboardingCompleted) {
             navigate('/dashboard');
             return;
@@ -110,22 +106,20 @@ const Onboarding = () => {
   }, [user, navigate]);
 
   const handleNext = async () => {
-    // If this is the final step
     if (currentStep === ONBOARDING_STEPS.length - 1) {
       try {
         setIsSaving(true);
-        // Save business profile to Supabase
         const { error } = await supabase
           .from('profiles')
           .upsert({
             id: user?.id,
             business_name: businessInfo.name,
             industry: businessInfo.industry,
-            tax_number: legalInfo.taxId || null, // Optional
-            rc_number: legalInfo.rcNumber, // Required
+            tax_number: legalInfo.taxId || null,
+            rc_number: legalInfo.rcNumber,
             business_type: businessInfo.type,
-            registration_date: legalInfo.registrationDate || null, // Optional
-            vat_number: legalInfo.vatNumber || null, // Optional
+            registration_date: legalInfo.registrationDate || null,
+            vat_number: legalInfo.vatNumber || null,
             phone: businessInfo.phone,
             website: businessInfo.website,
             address: businessInfo.address
@@ -133,7 +127,6 @@ const Onboarding = () => {
 
         if (error) throw error;
 
-        // Mark onboarding as completed
         completeOnboarding();
         
         toast.success("Setup completed! Welcome to DigiBooks");
@@ -150,7 +143,6 @@ const Onboarding = () => {
   };
 
   const handleSkip = () => {
-    // When skipping, still mark onboarding as completed
     try {
       completeOnboarding();
       navigate("/dashboard");
