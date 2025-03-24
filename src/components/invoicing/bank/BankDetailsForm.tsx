@@ -1,13 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { fetchBanks, verifyBankAccount } from "@/utils/paystackService";
-import AccountNumberInput from "./AccountNumberInput";
-import AccountNameInput from "./AccountNameInput"; 
 import BankSelector from "./BankSelector";
 import AccountVerifier from "./AccountVerifier";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Loader2, Check } from "lucide-react";
 
 interface BankDetailsFormProps {
   accountName: string;
@@ -64,7 +63,9 @@ const BankDetailsForm = ({
 
     setIsVerifying(true);
     try {
+      console.log(`Verifying account ${accountNumber} with bank code ${selectedBankCode}`);
       const result = await verifyBankAccount(accountNumber, selectedBankCode);
+      console.log("Verification result:", result);
       
       if (result.verified && result.accountName) {
         setAccountName(result.accountName);
@@ -91,34 +92,56 @@ const BankDetailsForm = ({
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="w-full">
+        <div className="w-full space-y-1.5">
           <Label htmlFor="account-name-manual">Account Name</Label>
-          <Input
-            id="account-name-manual"
-            value={accountName}
-            onChange={(e) => {
-              setAccountName(e.target.value);
-              if (isVerified) setIsVerified(false);
-            }}
-            placeholder="Enter account holder name"
-            className={isVerified ? "border-green-500" : ""}
-          />
+          <div className="relative">
+            <Input
+              id="account-name-manual"
+              value={accountName}
+              onChange={(e) => {
+                setAccountName(e.target.value);
+                if (isVerified) setIsVerified(false);
+              }}
+              placeholder="Enter account holder name"
+              className={isVerified ? "border-green-500 pr-10" : ""}
+              readOnly={isVerified}
+            />
+            {isVerified && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+                <Check className="h-4 w-4" />
+              </div>
+            )}
+          </div>
+          {isVerified && (
+            <p className="text-xs text-green-600">Account holder verified</p>
+          )}
         </div>
 
-        <div className="w-full">
+        <div className="w-full space-y-1.5">
           <Label htmlFor="account-number">Account Number</Label>
-          <Input 
-            id="account-number" 
-            placeholder="Enter account number" 
-            maxLength={10}
-            value={accountNumber}
-            onChange={(e) => {
-              const value = e.target.value.replace(/\D/g, '');
-              setAccountNumber(value);
-              if (isVerified) setIsVerified(false);
-            }}
-            className={isVerified ? "border-green-500" : ""}
-          />
+          <div className="relative">
+            <Input 
+              id="account-number" 
+              placeholder="Enter 10-digit NUBAN number" 
+              maxLength={10}
+              value={accountNumber}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '');
+                setAccountNumber(value);
+                if (isVerified) setIsVerified(false);
+              }}
+              className={isVerified ? "border-green-500 pr-10" : ""}
+              readOnly={isVerified}
+            />
+            {isVerified && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+                <Check className="h-4 w-4" />
+              </div>
+            )}
+          </div>
+          {isVerified && (
+            <p className="text-xs text-green-600">Account number verified</p>
+          )}
         </div>
       </div>
 
@@ -133,9 +156,12 @@ const BankDetailsForm = ({
         />
 
         <AccountVerifier
-          onVerify={handleVerify}
+          accountNumber={accountNumber}
+          selectedBankCode={selectedBankCode}
+          setAccountName={setAccountName}
+          setIsVerified={setIsVerified}
           isVerified={isVerified}
-          disabled={!accountNumber || !selectedBankCode || isVerifying}
+          disabled={!accountNumber || accountNumber.length !== 10 || !selectedBankCode || isVerifying || isLoadingBanks}
           isVerifying={isVerifying}
         />
       </div>

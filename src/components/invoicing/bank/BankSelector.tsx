@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 
 interface Bank {
   name: string;
@@ -49,37 +49,47 @@ const BankSelector = ({
   };
 
   return (
-    <div>
+    <div className="space-y-1.5">
       <Label htmlFor="bank-name">Bank name</Label>
-      <Select onValueChange={handleBankSelection} value={bankName} disabled={isLoading || isVerified}>
-        <SelectTrigger 
-          id="bank-name" 
-          className={isVerified ? "border-green-500" : ""}
-        >
-          {isLoading ? (
-            <div className="flex items-center space-x-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Loading banks...</span>
-            </div>
-          ) : (
-            <SelectValue placeholder="Select a bank" />
-          )}
-        </SelectTrigger>
-        <SelectContent className="max-h-[300px]">
-          {banks.length === 0 && !isLoading ? (
-            <div className="p-2 text-center text-gray-500">No banks available</div>
-          ) : (
-            banks.map((bank) => (
-              <SelectItem 
-                key={bank.code} 
-                value={bank.name}
-              >
-                {bank.name}
-              </SelectItem>
-            ))
-          )}
-        </SelectContent>
-      </Select>
+      <div className="relative">
+        <Select onValueChange={handleBankSelection} value={bankName} disabled={isLoading || isVerified}>
+          <SelectTrigger 
+            id="bank-name" 
+            className={`${isVerified ? "border-green-500 pr-10" : ""}`}
+          >
+            {isLoading ? (
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Loading banks...</span>
+              </div>
+            ) : (
+              <SelectValue placeholder="Select a bank" />
+            )}
+          </SelectTrigger>
+          <SelectContent className="max-h-[300px]">
+            {banks.length === 0 && !isLoading ? (
+              <div className="p-2 text-center text-gray-500">No banks available</div>
+            ) : (
+              banks.map((bank) => (
+                <SelectItem 
+                  key={bank.code} 
+                  value={bank.name}
+                >
+                  {bank.name}
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+        {isVerified && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+            <Check className="h-4 w-4" />
+          </div>
+        )}
+      </div>
+      {isVerified && (
+        <p className="text-xs text-green-600">Bank verified</p>
+      )}
     </div>
   );
 };
