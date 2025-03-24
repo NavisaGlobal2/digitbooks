@@ -1,11 +1,49 @@
 
+import { useState, useEffect } from "react";
 import { Bell, Search, HelpCircle, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const Header = () => {
+  const { user } = useAuth();
+  const [businessName, setBusinessName] = useState("");
+  
+  useEffect(() => {
+    const fetchBusinessProfile = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('business_name')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error("Error fetching profile:", error);
+          return;
+        }
+        
+        if (data && data.business_name) {
+          setBusinessName(data.business_name);
+        }
+      } catch (error) {
+        console.error("Error fetching business profile:", error);
+      }
+    };
+    
+    fetchBusinessProfile();
+  }, [user]);
+  
   return (
     <header className="h-16 border-b border-border px-6 flex items-center justify-between bg-white shadow-sm z-10">
-      <h1 className="text-xl font-bold">Hi Amarachi, let's get organized</h1>
+      <h1 className="text-xl font-bold">
+        {businessName ? 
+          `Hi ${businessName}, let's get organized` : 
+          "Welcome, let's get organized"}
+      </h1>
       
       <div className="flex items-center gap-4">
         <div className="relative">
