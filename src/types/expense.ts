@@ -25,4 +25,5 @@ export interface Expense {
   notes?: string;
   paymentMethod: 'cash' | 'card' | 'bank transfer' | 'other';
   vendor: string;
+  fromStatement?: boolean;
 }

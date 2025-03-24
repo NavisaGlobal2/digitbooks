@@ -42,6 +42,14 @@ const Dashboard = () => {
       favicon.href = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M4 4H20V28H4V4Z" stroke="%2300C853" stroke-width="2.5" fill="none"/><path d="M12 4V28" stroke="%2300C853" stroke-width="2.5"/><path d="M4 4H20V28H4V4Z" fill="%2300C853" fill-opacity="0.2"/></svg>';
       document.head.appendChild(favicon);
     }
+    
+    // Force refresh any stale data
+    const forceUpdate = () => {
+      const timestamp = new Date().getTime();
+      document.body.dataset.refresh = timestamp.toString();
+    };
+    
+    forceUpdate();
   }, []);
 
   return (

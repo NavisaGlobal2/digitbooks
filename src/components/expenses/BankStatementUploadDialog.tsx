@@ -5,6 +5,8 @@ import { Upload } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useExpenses } from "@/contexts/ExpenseContext";
+import { ExpenseCategory } from "@/types/expense";
 
 interface BankStatementUploadDialogProps {
   open: boolean;
@@ -17,6 +19,7 @@ const BankStatementUploadDialog = ({
   onOpenChange,
   onStatementProcessed
 }: BankStatementUploadDialogProps) => {
+  const { addExpense } = useExpenses();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -36,6 +39,33 @@ const BankStatementUploadDialog = ({
     
     // Simulate processing bank statement
     setTimeout(() => {
+      // Create mock expenses from bank statement
+      const sampleCategories: ExpenseCategory[] = ["utilities", "rent", "software", "marketing", "office"];
+      const sampleVendors = ["Electric Company", "Office Space Ltd", "Software Solutions Inc", "Facebook Ads", "Office Supplies Co"];
+      const samplePaymentMethods = ["bank transfer", "card"] as const;
+      
+      // Generate 5 sample expenses from statement
+      for (let i = 0; i < 5; i++) {
+        const randomCategory = sampleCategories[Math.floor(Math.random() * sampleCategories.length)];
+        const matchingVendor = sampleVendors[sampleCategories.indexOf(randomCategory)];
+        const randomAmount = Math.floor(Math.random() * 100000) + 5000; // Between 5,000 and 105,000
+        const randomDaysAgo = Math.floor(Math.random() * 30) + 1; // Between 1 and 30 days ago
+        const randomDate = new Date();
+        randomDate.setDate(randomDate.getDate() - randomDaysAgo);
+        
+        addExpense({
+          description: `Payment to ${matchingVendor}`,
+          amount: randomAmount,
+          date: randomDate,
+          category: randomCategory,
+          status: "pending",
+          paymentMethod: samplePaymentMethods[Math.floor(Math.random() * samplePaymentMethods.length)],
+          vendor: matchingVendor,
+          notes: `Imported from bank statement: ${file.name}`,
+          fromStatement: true
+        });
+      }
+      
       setUploading(false);
       onStatementProcessed();
       onOpenChange(false);

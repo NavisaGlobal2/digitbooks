@@ -1,6 +1,6 @@
 
 import { format } from "date-fns";
-import { MoreVertical, Download, FileEdit, Trash2 } from "lucide-react";
+import { MoreVertical, Download, FileEdit, Trash2, FileText } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -32,7 +32,14 @@ const ExpensesTable = ({ expenses, onDeleteExpense }: ExpensesTableProps) => {
           {expenses.map((expense) => (
             <TableRow key={expense.id}>
               <TableCell>{format(new Date(expense.date), "dd/MM/yyyy")}</TableCell>
-              <TableCell className="font-medium">{expense.description}</TableCell>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  {expense.fromStatement && (
+                    <FileText className="h-4 w-4 text-green-500" title="From bank statement" />
+                  )}
+                  {expense.description}
+                </div>
+              </TableCell>
               <TableCell>{getCategoryLabel(expense.category)}</TableCell>
               <TableCell>{expense.vendor}</TableCell>
               <TableCell className="capitalize">{expense.paymentMethod}</TableCell>
