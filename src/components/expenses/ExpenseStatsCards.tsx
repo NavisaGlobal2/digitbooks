@@ -2,7 +2,7 @@
 import { Receipt, PieChart, TrendingUp, CreditCard } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExpenseCategory } from "@/types/expense";
-import { formatNaira } from "@/utils/invoice";
+import { formatNaira } from "@/utils/invoice/formatters";
 import { getCategoryLabel } from "@/utils/expenseCategories";
 
 interface ExpenseStatsCardsProps {

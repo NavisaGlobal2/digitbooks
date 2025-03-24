@@ -11,7 +11,7 @@ import {
   CartesianGrid, 
   Legend 
 } from "recharts";
-import { formatNaira } from "@/utils/invoice";
+import { formatNaira } from "@/utils/invoice/formatters";
 
 const RevenueChart = () => {
   const { revenues } = useRevenue();

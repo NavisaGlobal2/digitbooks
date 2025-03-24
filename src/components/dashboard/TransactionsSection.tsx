@@ -2,6 +2,7 @@
 import { ArrowDown, ArrowUp, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { formatNaira } from "@/utils/invoice/formatters";
 
 const TransactionsSection = () => {
   const transactions = [
@@ -33,7 +34,7 @@ const TransactionsSection = () => {
                 </div>
               </div>
               <p className={`font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()}
+                {transaction.type === 'income' ? '+' : '-'}{formatNaira(transaction.amount)}
               </p>
             </div>
           ))}

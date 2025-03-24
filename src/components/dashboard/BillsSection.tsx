@@ -2,6 +2,7 @@
 import { CreditCard, ChevronRight, Calendar, Zap, Building, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { formatNaira } from "@/utils/invoice/formatters";
 
 const BillsSection = () => {
   const bills = [
@@ -30,7 +31,7 @@ const BillsSection = () => {
                 </div>
                 <p className="font-medium text-sm mb-1">{bill.title}</p>
                 <p className="text-xs text-muted-foreground mb-2">Due in {bill.daysLeft} days</p>
-                <p className="font-bold text-base">${bill.amount}</p>
+                <p className="font-bold text-base">{formatNaira(bill.amount)}</p>
               </div>
             </Card>
           ))}

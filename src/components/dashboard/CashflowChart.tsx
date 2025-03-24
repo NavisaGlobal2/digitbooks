@@ -71,7 +71,7 @@ const CashflowChart = () => {
             axisLine={false}
             tickLine={false}
             tick={{ fill: '#828179' }}
-            tickFormatter={(value) => `$${value}`}
+            tickFormatter={(value) => `₦${value.toLocaleString()}`}
           />
           <CartesianGrid vertical={false} stroke="#E6E4DD" strokeDasharray="3 3" />
           <Tooltip

@@ -2,7 +2,7 @@
 import { format } from "date-fns";
 import { CheckCircle, Download, ExternalLink, MoreVertical } from "lucide-react";
 import { Invoice } from "@/types/invoice";
-import { formatNaira } from "@/utils/invoice";
+import { formatNaira } from "@/utils/invoice/formatters";
 import { downloadInvoice, shareInvoice } from "@/utils/invoice";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
