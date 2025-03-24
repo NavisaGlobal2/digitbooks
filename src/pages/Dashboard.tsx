@@ -24,14 +24,14 @@ const Dashboard = () => {
       {/* Dashboard Header */}
       <DashboardHeader />
       
+      {/* Quick Action Buttons - Now placed before Financial Overview */}
+      <div className="mb-6">
+        <QuickActions />
+      </div>
+      
       {/* Financial Overview Cards */}
       <div className="mb-6">
         <FinancialOverview data={financialData} />
-      </div>
-      
-      {/* Quick Action Buttons */}
-      <div className="mb-6">
-        <QuickActions />
       </div>
 
       {/* Main Content Sections */}
