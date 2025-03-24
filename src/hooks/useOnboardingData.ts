@@ -127,8 +127,21 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
       
       setIsSaving(true);
       console.log("Saving profile for user ID:", user.id);
+      console.log("Profile data being saved:", {
+        id: user.id,
+        business_name: businessInfo.name,
+        industry: businessInfo.industry,
+        tax_number: legalInfo.taxId || null,
+        rc_number: legalInfo.rcNumber,
+        business_type: businessInfo.type,
+        registration_date: legalInfo.registrationDate || null,
+        vat_number: legalInfo.vatNumber || null,
+        phone: businessInfo.phone,
+        website: businessInfo.website,
+        address: businessInfo.address
+      });
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
@@ -142,7 +155,8 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
           phone: businessInfo.phone,
           website: businessInfo.website,
           address: businessInfo.address
-        });
+        })
+        .select();
 
       if (error) {
         console.error('Error saving profile:', error);
@@ -150,6 +164,7 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
         return false;
       }
 
+      console.log("Profile saved successfully:", data);
       completeOnboarding();
       
       toast.success("Setup completed! Welcome to DigiBooks");
