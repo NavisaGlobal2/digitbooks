@@ -9,6 +9,7 @@ import TransactionsSection from "@/components/dashboard/TransactionsSection";
 import BillsSection from "@/components/dashboard/BillsSection";
 import AIInsights from "@/components/dashboard/AIInsights";
 import MainContentSection from "@/components/dashboard/sections/MainContentSection";
+import { useEffect } from "react";
 
 const Dashboard = () => {
   // Sample data for our dashboard
@@ -18,6 +19,22 @@ const Dashboard = () => {
     netCashflow: 24828,
     positive: true
   };
+
+  // Force re-render on initial load to ensure latest view
+  useEffect(() => {
+    // Clear any stale cache data
+    const clearCache = () => {
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          names.forEach(name => {
+            caches.delete(name);
+          });
+        });
+      }
+    };
+
+    clearCache();
+  }, []);
 
   return (
     <DashboardContainer>

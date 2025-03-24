@@ -7,6 +7,7 @@ import { Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ExpensesContent from "@/components/expenses/ExpensesContent";
 import BankStatementUploadDialog from "@/components/expenses/BankStatementUploadDialog";
+import AddExpenseDialog from "@/components/expenses/AddExpenseDialog";
 
 const ExpensesPage = () => {
   const { expenses, deleteExpense, getTotalExpenses, getExpensesByCategory } = useExpenses();
@@ -79,6 +80,12 @@ const ExpensesPage = () => {
         open={showBankUploadDialog}
         onOpenChange={setShowBankUploadDialog}
         onStatementProcessed={handleStatementProcessed}
+      />
+      
+      {/* Add Expense Dialog */}
+      <AddExpenseDialog
+        open={showExpenseDialog}
+        onOpenChange={setShowExpenseDialog}
       />
     </div>
   );
