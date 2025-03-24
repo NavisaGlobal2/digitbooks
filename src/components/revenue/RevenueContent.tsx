@@ -8,7 +8,7 @@ import { RevenueTable } from "./RevenueTable";
 import RevenueEmptyState from "./RevenueEmptyState";
 import RevenueStatsCards from "./RevenueStatsCards";
 import RevenueChart from "./RevenueChart";
-import { Revenue } from "@/types/revenue";
+import { Revenue, PaymentStatus } from "@/types/revenue";
 
 interface RevenueContentProps {
   onAddRevenue: () => void;
@@ -46,6 +46,13 @@ const RevenueContent = ({
   
   const toggleSortOrder = () => {
     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+  };
+
+  // Function to handle updating payment status 
+  const handleUpdateStatus = (id: string, status: PaymentStatus) => {
+    // This would typically call a method from the context to update the status
+    console.log(`Update status for ${id} to ${status}`);
+    // If there's a context method to update status, it would be called here
   };
   
   if (revenues.length === 0) {
@@ -178,8 +185,8 @@ const RevenueContent = ({
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
         <RevenueTable 
           revenues={sortedRevenues} 
-          onDeleteRevenue={onDeleteRevenue}
-          onEditRevenue={onEditRevenue}
+          onUpdateStatus={handleUpdateStatus}
+          onDelete={onDeleteRevenue}
         />
       </div>
     </div>
