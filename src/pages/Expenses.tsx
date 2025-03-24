@@ -4,6 +4,7 @@ import { useExpenses } from "@/contexts/ExpenseContext";
 import Sidebar from "@/components/dashboard/Sidebar";
 import ExpenseEmptyState from "@/components/expenses/ExpenseEmptyState";
 import ExpenseForm from "@/components/expenses/ExpenseForm";
+import AddExpenseDialog from "@/components/expenses/AddExpenseDialog";
 import { toast } from "sonner";
 import { 
   Search, 
@@ -32,9 +33,10 @@ const ExpensesPage = () => {
   const { expenses, deleteExpense, getTotalExpenses, getExpensesByCategory } = useExpenses();
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddingExpense, setIsAddingExpense] = useState(false);
+  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   
   const handleAddExpense = () => {
-    setIsAddingExpense(true);
+    setShowExpenseDialog(true);
   };
   
   const handleConnectBank = () => {
@@ -122,6 +124,7 @@ const ExpensesPage = () => {
                 />
               ) : (
                 <div className="space-y-6">
+                  {/* Stats cards */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <Card>
                       <CardContent className="p-4">
@@ -262,6 +265,12 @@ const ExpensesPage = () => {
           )}
         </main>
       </div>
+      
+      {/* Add expense dialog */}
+      <AddExpenseDialog 
+        open={showExpenseDialog} 
+        onOpenChange={setShowExpenseDialog} 
+      />
     </div>
   );
 };
