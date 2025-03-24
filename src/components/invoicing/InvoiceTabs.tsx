@@ -1,6 +1,6 @@
 
 import { MouseEvent } from "react";
-import { FileText, Receipt, Users } from "lucide-react";
+import { FileText, Users } from "lucide-react";
 
 interface InvoiceTabsProps {
   activeTab: string;
@@ -26,18 +26,6 @@ const InvoiceTabs = ({ activeTab, onTabChange }: InvoiceTabsProps) => {
         >
           <FileText className="h-5 w-5 mr-2" />
           Invoices
-        </button>
-        
-        <button
-          onClick={(e) => handleTabClick(e, "expenses")}
-          className={`flex items-center px-6 py-4 ${
-            activeTab === "expenses"
-              ? "text-green-500 border-b-2 border-green-500 font-medium"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <Receipt className="h-5 w-5 mr-2" />
-          Expenses
         </button>
         
         <button

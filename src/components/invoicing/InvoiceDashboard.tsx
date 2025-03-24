@@ -1,10 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import { useClients } from "@/contexts/ClientContext";
 import InvoiceTabs from "./InvoiceTabs";
 import InvoiceEmptyState from "./InvoiceEmptyState";
-import ExpenseEmptyState from "./ExpenseEmptyState";
 import ClientEmptyState from "./ClientEmptyState";
 import ClientsTable from "../clients/ClientsTable";
 import ClientsOverview from "../clients/ClientsOverview";
@@ -69,7 +69,6 @@ const InvoiceDashboard = ({ activeTab, setActiveTab, setIsCreatingInvoice }: Inv
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [isAddingClient, setIsAddingClient] = useState(false);
-  const [showExpenseTab, setShowExpenseTab] = useState(false);
   
   useEffect(() => {
     const handleInvoiceCreated = () => {
@@ -151,14 +150,6 @@ const InvoiceDashboard = ({ activeTab, setActiveTab, setIsCreatingInvoice }: Inv
   
   const handleMarkAsPaid = (invoiceId: string) => {
     updateInvoiceStatus(invoiceId, 'paid');
-  };
-  
-  const handleAddExpense = () => {
-    toast.info("Expense tracking functionality coming soon!");
-  };
-  
-  const handleConnectBank = () => {
-    toast.info("Bank connection functionality coming soon!");
   };
   
   const handleTabChange = (newTab: string) => {
@@ -311,13 +302,6 @@ const InvoiceDashboard = ({ activeTab, setActiveTab, setIsCreatingInvoice }: Inv
               </div>
             )}
           </>
-        )}
-
-        {activeTab === "expenses" && (
-          <ExpenseEmptyState 
-            onAddExpense={handleAddExpense} 
-            onConnectBank={handleConnectBank} 
-          />
         )}
         
         {activeTab === "clients" && (

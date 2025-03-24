@@ -7,7 +7,8 @@ import {
   CreditCard, 
   Settings,
   ChevronRight,
-  LogOut
+  LogOut,
+  Receipt
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation, Link } from "react-router-dom";
@@ -51,12 +52,23 @@ const Sidebar = () => {
               Invoicing
             </Button>
           </Link>
+          <Link to="/expenses">
+            <Button 
+              variant="ghost" 
+              className={`w-full justify-start gap-3 ${path === '/expenses' 
+                ? 'text-primary font-medium bg-accent/10 border-r-4 border-primary' 
+                : 'text-secondary'}`}
+            >
+              <Receipt className="h-5 w-5" />
+              Expenses
+            </Button>
+          </Link>
           <Button 
             variant="ghost" 
             className="w-full justify-start gap-3 text-secondary"
           >
             <CircleDollarSign className="h-5 w-5" />
-            Expenses
+            Banking
           </Button>
           <Button 
             variant="ghost" 
@@ -70,7 +82,7 @@ const Sidebar = () => {
             className="w-full justify-start gap-3 text-secondary"
           >
             <CreditCard className="h-5 w-5" />
-            Banking
+            Payments
           </Button>
           <Button 
             variant="ghost" 
