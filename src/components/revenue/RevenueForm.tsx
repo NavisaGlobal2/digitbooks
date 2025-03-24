@@ -69,8 +69,13 @@ const RevenueForm = ({ onSubmit, defaultValues, isEdit = false }: RevenueFormPro
 
   const handleSubmit = (values: RevenueFormValues) => {
     onSubmit({
-      ...values,
+      description: values.description,
+      amount: values.amount,
       date: values.date,
+      source: values.source,
+      paymentMethod: values.paymentMethod,
+      clientName: values.clientName || undefined,
+      notes: values.notes || undefined,
     });
   };
 
