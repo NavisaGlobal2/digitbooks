@@ -24,11 +24,12 @@ const AccountVerifier = ({
   setIsVerified,
   isVerified = false,
   disabled = false,
-  isVerifying = false,
+  isVerifying: externalIsVerifying = false,
   onVerify
 }: AccountVerifierProps) => {
   const [verificationMessage, setVerificationMessage] = useState("");
   const [isError, setIsError] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const handleVerify = async () => {
     if (onVerify) {
@@ -36,24 +37,22 @@ const AccountVerifier = ({
       return;
     }
 
+    // Reset states
     setIsError(false);
     setVerificationMessage("");
-
-    if (!accountNumber || accountNumber.length !== 10) {
-      toast.error("Please enter a valid 10-digit NUBAN account number");
-      setIsError(true);
-      setVerificationMessage("Please enter a valid 10-digit NUBAN account number");
-      return;
-    }
-
-    if (!selectedBankCode) {
-      toast.error("Please select a bank first");
-      setIsError(true);
-      setVerificationMessage("Please select a bank first");
-      return;
-    }
+    setIsVerifying(true);
 
     try {
+      // Validate inputs
+      if (!accountNumber || accountNumber.length !== 10) {
+        throw new Error("Please enter a valid 10-digit NUBAN account number");
+      }
+
+      if (!selectedBankCode) {
+        throw new Error("Please select a bank first");
+      }
+
+      // Call API to verify account
       const result = await verifyBankAccount(accountNumber, selectedBankCode);
       
       if (result.verified && result.accountName && setAccountName && setIsVerified) {
@@ -72,20 +71,26 @@ const AccountVerifier = ({
       console.error("Verification error:", error);
       if (setIsVerified) setIsVerified(false);
       setIsError(true);
-      toast.error("An error occurred during verification");
-      setVerificationMessage("An error occurred during verification");
+      const errorMessage = error instanceof Error ? error.message : "An error occurred during verification";
+      toast.error(errorMessage);
+      setVerificationMessage(errorMessage);
+    } finally {
+      setIsVerifying(false);
     }
   };
+
+  // Use external isVerifying state if provided
+  const showVerifying = externalIsVerifying || isVerifying;
 
   return (
     <div className="space-y-3">
       <Button 
         onClick={handleVerify} 
-        disabled={isVerifying || disabled}
+        disabled={showVerifying || disabled}
         className={`w-full ${isVerified ? "bg-green-600 hover:bg-green-700" : "bg-primary"} text-white`}
         variant={isVerified ? "success" : "default"}
       >
-        {isVerifying ? (
+        {showVerifying ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             Verifying...

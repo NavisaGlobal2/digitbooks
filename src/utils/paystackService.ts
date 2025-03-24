@@ -1,6 +1,5 @@
 
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 // Mock data for fallback (only used when API fails)
 const FALLBACK_BANKS = [
@@ -16,31 +15,44 @@ const FALLBACK_BANKS = [
   { name: "Ecobank", code: "050" }
 ];
 
-// Function to fetch banks from our Supabase Edge Function
+// API URLs for Paystack
+const PAYSTACK_BASE_URL = "https://api.paystack.co";
+const PAYSTACK_TEST_KEY = "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"; // This is a dummy key, replace with your actual public key
+
+// Function to fetch banks directly from Paystack API
 export const fetchBanks = async (): Promise<Array<{ name: string; code: string }>> => {
   try {
-    console.log("Fetching banks from Supabase Edge Function...");
+    console.log("Fetching banks directly from Paystack API...");
     
-    const { data, error } = await supabase.functions.invoke('list-banks', {
-      method: 'GET'
+    const response = await fetch(`${PAYSTACK_BASE_URL}/bank`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${PAYSTACK_TEST_KEY}`,
+        'Content-Type': 'application/json'
+      }
     });
     
-    if (error) {
-      throw new Error(`Failed to fetch banks: ${error.message}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch banks: ${response.statusText}`);
     }
+    
+    const data = await response.json();
     
     if (!data.status || !Array.isArray(data.data)) {
       console.error("Unexpected data format:", data);
-      toast.error("Received invalid data format from API, using cached banks.");
+      toast.error("Failed to load banks. Using cached list.");
       return FALLBACK_BANKS;
     }
     
     console.log(`Successfully fetched ${data.data.length} banks`);
     
-    return data.data.map((bank: any) => ({
-      name: bank.name,
-      code: bank.code
-    }));
+    // Filter to only Nigerian banks if needed
+    return data.data
+      .filter((bank: any) => bank.country === "Nigeria")
+      .map((bank: any) => ({
+        name: bank.name,
+        code: bank.code
+      }));
   } catch (error) {
     console.error("Error fetching banks:", error);
     toast.error("Using cached bank list due to connection issues.");
@@ -48,7 +60,7 @@ export const fetchBanks = async (): Promise<Array<{ name: string; code: string }
   }
 };
 
-// Function to verify bank account using our Supabase Edge Function
+// Function to verify bank account directly using Paystack API
 export const verifyBankAccount = async (accountNumber: string, bankCode: string): Promise<{ 
   verified: boolean; 
   accountName?: string;
@@ -65,32 +77,25 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
       };
     }
 
-    // Call our Supabase Edge Function
-    const { data, error } = await supabase.functions.invoke('verify-account', {
-      method: 'POST',
-      body: { accountNumber, bankCode }
+    const response = await fetch(`${PAYSTACK_BASE_URL}/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${PAYSTACK_TEST_KEY}`,
+        'Content-Type': 'application/json'
+      }
     });
     
-    if (error) {
-      console.error("Error from Edge Function:", error);
-      return { 
-        verified: false, 
-        message: error.message || "Verification failed"
-      };
-    }
-    
+    const data = await response.json();
     console.log("Verification response:", data);
     
-    if (!data.status) {
-      console.error("Error response from API:", data);
+    if (!response.ok || !data.status) {
       return { 
         verified: false, 
-        message: data?.message || "Verification failed"
+        message: data.message || "Verification failed" 
       };
     }
 
     if (!data.data || !data.data.account_name) {
-      console.error("Missing account name in response:", data);
       return {
         verified: false,
         message: "Could not retrieve account name"

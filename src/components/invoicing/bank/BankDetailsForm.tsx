@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { fetchBanks, verifyBankAccount } from "@/utils/paystackService";
+import { fetchBanks } from "@/utils/paystackService";
 import BankSelector from "./BankSelector";
 import AccountVerifier from "./AccountVerifier";
 import { toast } from "sonner";
@@ -54,35 +54,6 @@ const BankDetailsForm = ({
 
     loadBanks();
   }, []);
-
-  const handleVerify = async () => {
-    if (!accountNumber || !selectedBankCode) {
-      toast.error("Please enter an account number and select a bank");
-      return;
-    }
-
-    setIsVerifying(true);
-    try {
-      console.log(`Verifying account ${accountNumber} with bank code ${selectedBankCode}`);
-      const result = await verifyBankAccount(accountNumber, selectedBankCode);
-      console.log("Verification result:", result);
-      
-      if (result.verified && result.accountName) {
-        setAccountName(result.accountName);
-        setIsVerified(true);
-        toast.success("Account verified successfully!");
-      } else {
-        setIsVerified(false);
-        toast.error(result.message || "Verification failed");
-      }
-    } catch (error) {
-      console.error("Verification error:", error);
-      setIsVerified(false);
-      toast.error("Failed to verify account. Please try again.");
-    } finally {
-      setIsVerifying(false);
-    }
-  };
 
   return (
     <div className="space-y-4">
