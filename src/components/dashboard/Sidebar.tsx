@@ -10,8 +10,12 @@ import {
   LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLocation, Link } from "react-router-dom";
 
 const Sidebar = () => {
+  const location = useLocation();
+  const path = location.pathname;
+
   return (
     <div className="w-[240px] h-screen border-r border-border py-4 flex flex-col bg-white shadow-sm">
       <div className="px-4 mb-6">
@@ -25,20 +29,28 @@ const Sidebar = () => {
       
       <div className="flex-1 px-2">
         <nav className="space-y-1">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start gap-3 text-primary font-medium bg-accent/10 border-r-4 border-primary"
-          >
-            <LayoutDashboard className="h-5 w-5" />
-            Dashboard
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start gap-3 text-secondary"
-          >
-            <FileText className="h-5 w-5" />
-            Invoicing
-          </Button>
+          <Link to="/dashboard">
+            <Button 
+              variant="ghost" 
+              className={`w-full justify-start gap-3 ${path === '/dashboard' 
+                ? 'text-primary font-medium bg-accent/10 border-r-4 border-primary' 
+                : 'text-secondary'}`}
+            >
+              <LayoutDashboard className="h-5 w-5" />
+              Dashboard
+            </Button>
+          </Link>
+          <Link to="/invoicing">
+            <Button 
+              variant="ghost" 
+              className={`w-full justify-start gap-3 ${path === '/invoicing' 
+                ? 'text-primary font-medium bg-accent/10 border-r-4 border-primary' 
+                : 'text-secondary'}`}
+            >
+              <FileText className="h-5 w-5" />
+              Invoicing
+            </Button>
+          </Link>
           <Button 
             variant="ghost" 
             className="w-full justify-start gap-3 text-secondary"
