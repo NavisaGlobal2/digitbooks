@@ -258,7 +258,7 @@ const ApplicationsAdmin = () => {
         return <Badge variant="warning">In Review</Badge>;
       case 'new':
       default:
-        return <Badge variant="default">New</Badge>;
+        return <Badge variant="info">New</Badge>;
     }
   };
 
@@ -339,7 +339,7 @@ const ApplicationsAdmin = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="new" className="flex items-center gap-2">
-                            <Badge variant="default">New</Badge>
+                            <Badge variant="info">New</Badge>
                           </SelectItem>
                           <SelectItem value="in-review" className="flex items-center gap-2">
                             <Badge variant="warning">In Review</Badge>
@@ -420,7 +420,7 @@ const ApplicationsAdmin = () => {
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="new" className="flex items-center gap-2">
-                                        <Badge variant="default" className="mr-1">New</Badge>
+                                        <Badge variant="info" className="mr-1">New</Badge>
                                       </SelectItem>
                                       <SelectItem value="in-review" className="flex items-center gap-2">
                                         <Badge variant="warning" className="mr-1">In Review</Badge>

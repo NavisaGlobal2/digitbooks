@@ -9,183 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      budgets: {
-        Row: {
-          created_at: string
-          end_date: string
-          id: string
-          items: Json
-          name: string
-          start_date: string
-          status: string
-          total_budget: number
-          total_spent: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          end_date: string
-          id?: string
-          items: Json
-          name: string
-          start_date: string
-          status: string
-          total_budget: number
-          total_spent?: number
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          end_date?: string
-          id?: string
-          items?: Json
-          name?: string
-          start_date?: string
-          status?: string
-          total_budget?: number
-          total_spent?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
-      clients: {
-        Row: {
-          address: string | null
-          company: string | null
-          created_at: string
-          email: string
-          id: string
-          invoice_count: number | null
-          name: string
-          phone: string | null
-          status: string
-          total_amount: number | null
-          user_id: string
-        }
-        Insert: {
-          address?: string | null
-          company?: string | null
-          created_at?: string
-          email: string
-          id?: string
-          invoice_count?: number | null
-          name: string
-          phone?: string | null
-          status: string
-          total_amount?: number | null
-          user_id: string
-        }
-        Update: {
-          address?: string | null
-          company?: string | null
-          created_at?: string
-          email?: string
-          id?: string
-          invoice_count?: number | null
-          name?: string
-          phone?: string | null
-          status?: string
-          total_amount?: number | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      expenses: {
-        Row: {
-          amount: number
-          category: string
-          created_at: string
-          date: string
-          description: string
-          from_statement: boolean | null
-          id: string
-          notes: string | null
-          payment_method: string
-          receipt_url: string | null
-          status: string
-          user_id: string
-          vendor: string
-        }
-        Insert: {
-          amount: number
-          category: string
-          created_at?: string
-          date: string
-          description: string
-          from_statement?: boolean | null
-          id?: string
-          notes?: string | null
-          payment_method: string
-          receipt_url?: string | null
-          status: string
-          user_id: string
-          vendor: string
-        }
-        Update: {
-          amount?: number
-          category?: string
-          created_at?: string
-          date?: string
-          description?: string
-          from_statement?: boolean | null
-          id?: string
-          notes?: string | null
-          payment_method?: string
-          receipt_url?: string | null
-          status?: string
-          user_id?: string
-          vendor?: string
-        }
-        Relationships: []
-      }
-      invoices: {
-        Row: {
-          additional_info: string | null
-          amount: number
-          bank_details: Json
-          client_name: string
-          created_at: string
-          due_date: string
-          id: string
-          invoice_number: string
-          issued_date: string
-          items: Json
-          logo_url: string | null
-          status: string
-          user_id: string
-        }
-        Insert: {
-          additional_info?: string | null
-          amount: number
-          bank_details: Json
-          client_name: string
-          created_at?: string
-          due_date: string
-          id?: string
-          invoice_number: string
-          issued_date: string
-          items: Json
-          logo_url?: string | null
-          status: string
-          user_id: string
-        }
-        Update: {
-          additional_info?: string | null
-          amount?: number
-          bank_details?: Json
-          client_name?: string
-          created_at?: string
-          due_date?: string
-          id?: string
-          invoice_number?: string
-          issued_date?: string
-          items?: Json
-          logo_url?: string | null
-          status?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       job_applications: {
         Row: {
           availability: string
@@ -236,127 +59,25 @@ export type Database = {
       }
       profiles: {
         Row: {
-          address: string | null
           business_name: string | null
-          business_type: string | null
           created_at: string
           id: string
           industry: string | null
-          phone: string | null
-          rc_number: string | null
-          registration_date: string | null
           tax_number: string | null
-          vat_number: string | null
-          website: string | null
         }
         Insert: {
-          address?: string | null
           business_name?: string | null
-          business_type?: string | null
           created_at?: string
           id: string
           industry?: string | null
-          phone?: string | null
-          rc_number?: string | null
-          registration_date?: string | null
           tax_number?: string | null
-          vat_number?: string | null
-          website?: string | null
         }
         Update: {
-          address?: string | null
           business_name?: string | null
-          business_type?: string | null
           created_at?: string
           id?: string
           industry?: string | null
-          phone?: string | null
-          rc_number?: string | null
-          registration_date?: string | null
           tax_number?: string | null
-          vat_number?: string | null
-          website?: string | null
-        }
-        Relationships: []
-      }
-      revenues: {
-        Row: {
-          amount: number
-          created_at: string
-          date: string
-          description: string
-          id: string
-          notes: string | null
-          reference: string | null
-          revenue_number: string
-          source: string
-          status: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          date: string
-          description: string
-          id?: string
-          notes?: string | null
-          reference?: string | null
-          revenue_number: string
-          source: string
-          status: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          date?: string
-          description?: string
-          id?: string
-          notes?: string | null
-          reference?: string | null
-          revenue_number?: string
-          source?: string
-          status?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      transactions: {
-        Row: {
-          amount: number
-          created_at: string
-          date: string
-          description: string
-          id: string
-          notes: string | null
-          reference: string | null
-          status: string
-          type: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          date: string
-          description: string
-          id?: string
-          notes?: string | null
-          reference?: string | null
-          status: string
-          type: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          date?: string
-          description?: string
-          id?: string
-          notes?: string | null
-          reference?: string | null
-          status?: string
-          type?: string
-          user_id?: string
         }
         Relationships: []
       }
