@@ -45,7 +45,7 @@ export const availableJobs: JobPosition[] = [
   {
     title: "Senior Full-Stack Developer",
     department: "Engineering",
-    location: "Remote (US/EU)",
+    location: "Akure, Nigeria",
     type: "Full-time",
     description: "Join our engineering team to build and scale our AI-powered bookkeeping platform.",
     experience: "5+ years"
@@ -53,7 +53,7 @@ export const availableJobs: JobPosition[] = [
   {
     title: "AI/ML Engineer",
     department: "AI Research",
-    location: "San Francisco, CA",
+    location: "Akure, Nigeria",
     type: "Full-time",
     description: "Help improve our transaction categorization algorithms and develop new AI features.",
     experience: "3+ years"
@@ -61,7 +61,7 @@ export const availableJobs: JobPosition[] = [
   {
     title: "Product Designer",
     department: "Design",
-    location: "Remote",
+    location: "Akure, Nigeria",
     type: "Full-time",
     description: "Create intuitive and delightful experiences for our financial management platform.",
     experience: "3+ years"
@@ -69,7 +69,7 @@ export const availableJobs: JobPosition[] = [
   {
     title: "Customer Success Manager",
     department: "Customer Experience",
-    location: "New York, NY",
+    location: "Akure, Nigeria",
     type: "Full-time",
     description: "Help our customers get the most out of DigiBooks and ensure their success.",
     experience: "2+ years"
@@ -77,7 +77,7 @@ export const availableJobs: JobPosition[] = [
   {
     title: "Marketing Specialist",
     department: "Marketing",
-    location: "Remote",
+    location: "Akure, Nigeria",
     type: "Contract",
     description: "Drive growth and awareness for our AI-powered bookkeeping solution.",
     experience: "2+ years"
