@@ -28,6 +28,9 @@ import Budget from "./pages/Budget";
 import Ledger from "./pages/Ledger";
 import FinancialReports from "./pages/FinancialReports";
 import Settings from "./pages/Settings";
+import Auth from "./Auth";
+import Onboarding from "./Onboarding";
+import { RequireAuth } from "./components/auth/RequireAuth";
 
 const queryClient = new QueryClient();
 
@@ -45,22 +48,75 @@ const App = () => (
                     <Sonner />
                     <BrowserRouter>
                       <Routes>
-                        <Route path="/" element={<Dashboard />} />
+                        {/* Public routes */}
+                        <Route path="/" element={<Index />} />
                         <Route path="/features" element={<Features />} />
                         <Route path="/pricing" element={<Pricing />} />
                         <Route path="/about" element={<About />} />
                         <Route path="/help" element={<Help />} />
                         <Route path="/careers" element={<Careers />} />
-                        <Route path="/dashboard" element={<Navigate to="/" replace />} />
-                        <Route path="/invoicing" element={<Invoicing />} />
-                        <Route path="/expenses" element={<Expenses />} />
-                        <Route path="/revenue" element={<Revenue />} />
-                        <Route path="/clients" element={<Clients />} />
-                        <Route path="/budget" element={<Budget />} />
-                        <Route path="/ledger" element={<Ledger />} />
-                        <Route path="/reports" element={<FinancialReports />} />
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="/admin/applications" element={<ApplicationsAdmin />} />
+                        
+                        {/* Auth routes */}
+                        <Route path="/auth" element={<Auth />} />
+                        
+                        {/* Protected routes that require authentication */}
+                        <Route path="/dashboard" element={
+                          <RequireAuth>
+                            <Dashboard />
+                          </RequireAuth>
+                        } />
+                        <Route path="/onboarding" element={
+                          <RequireAuth>
+                            <Onboarding />
+                          </RequireAuth>
+                        } />
+                        <Route path="/invoicing" element={
+                          <RequireAuth>
+                            <Invoicing />
+                          </RequireAuth>
+                        } />
+                        <Route path="/expenses" element={
+                          <RequireAuth>
+                            <Expenses />
+                          </RequireAuth>
+                        } />
+                        <Route path="/revenue" element={
+                          <RequireAuth>
+                            <Revenue />
+                          </RequireAuth>
+                        } />
+                        <Route path="/clients" element={
+                          <RequireAuth>
+                            <Clients />
+                          </RequireAuth>
+                        } />
+                        <Route path="/budget" element={
+                          <RequireAuth>
+                            <Budget />
+                          </RequireAuth>
+                        } />
+                        <Route path="/ledger" element={
+                          <RequireAuth>
+                            <Ledger />
+                          </RequireAuth>
+                        } />
+                        <Route path="/reports" element={
+                          <RequireAuth>
+                            <FinancialReports />
+                          </RequireAuth>
+                        } />
+                        <Route path="/settings" element={
+                          <RequireAuth>
+                            <Settings />
+                          </RequireAuth>
+                        } />
+                        <Route path="/admin/applications" element={
+                          <RequireAuth>
+                            <ApplicationsAdmin />
+                          </RequireAuth>
+                        } />
+                        
+                        {/* Fallback route */}
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </BrowserRouter>
