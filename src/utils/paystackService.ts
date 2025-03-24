@@ -2,7 +2,7 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-// Mock data for fallback (only used when edge function fails)
+// Mock data for fallback (only used when API fails)
 const FALLBACK_BANKS = [
   { name: "Access Bank", code: "044" },
   { name: "Zenith Bank", code: "057" },
@@ -20,51 +20,31 @@ const FALLBACK_BANKS = [
 const SUPABASE_URL = "https://naxmgtoskeijvdofqyik.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5heG1ndG9za2VpanZkb2ZxeWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxNDI0NDMsImV4cCI6MjA1MjcxODQ0M30.HhErJymz_YynLmN9lAMcxr7JoXBR8XyH9ex1gqWVv5c";
 
-// Function to fetch banks from Paystack API via Supabase Edge Function
+// Paystack public key - this is a publishable key that can be used in the frontend
+const PAYSTACK_PUBLIC_KEY = "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+
+// Function to fetch banks from Paystack API directly
 export const fetchBanks = async (): Promise<Array<{ name: string; code: string }>> => {
   try {
-    console.log("Fetching banks from edge function...");
+    console.log("Fetching banks directly from Paystack API...");
     
-    // First, check if the edge function is available by doing a simple ping
-    try {
-      // Use direct URL instead of accessing protected property
-      const pingResponse = await fetch(`${SUPABASE_URL}/functions/v1/list-banks`, {
-        method: 'OPTIONS',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
-        }
-      });
-      
-      // If we can't even ping the function, throw an error to use fallback
-      if (!pingResponse.ok) {
-        throw new Error("Edge function not available");
+    const response = await fetch('https://api.paystack.co/bank', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${PAYSTACK_PUBLIC_KEY}`,
+        'Content-Type': 'application/json',
       }
-    } catch (pingError) {
-      console.warn("Edge function ping failed:", pingError);
-      toast.error("Using cached bank list as Supabase Edge Function is not available.");
-      return FALLBACK_BANKS;
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch banks: ${response.status} ${response.statusText}`);
     }
     
-    // If ping succeeds, try the actual request
-    const { data, error } = await supabase.functions.invoke("list-banks");
+    const data = await response.json();
     
-    if (error) {
-      console.error("Error from supabase function:", error);
-      toast.error("Using cached bank list as we couldn't connect to the server.");
-      console.log("Falling back to predefined bank list");
-      return FALLBACK_BANKS;
-    }
-    
-    if (!data || !data.status) {
-      console.error("Error response from Paystack:", data);
-      toast.error("Using cached bank list due to API error.");
-      return FALLBACK_BANKS;
-    }
-    
-    if (!Array.isArray(data.data)) {
+    if (!data.status || !Array.isArray(data.data)) {
       console.error("Unexpected data format:", data);
-      toast.error("Received invalid data format from server, using cached banks.");
+      toast.error("Received invalid data format from Paystack API, using cached banks.");
       return FALLBACK_BANKS;
     }
     
@@ -81,7 +61,7 @@ export const fetchBanks = async (): Promise<Array<{ name: string; code: string }
   }
 };
 
-// Function to verify bank account via Supabase Edge Function
+// Function to verify bank account directly with Paystack API
 export const verifyBankAccount = async (accountNumber: string, bankCode: string): Promise<{ 
   verified: boolean; 
   accountName?: string;
@@ -97,55 +77,31 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
         message: "Account number and bank code are required" 
       };
     }
-    
-    // --------- SKIP THE EDGE FUNCTION COMPLETELY FOR NOW -----------
-    // Return a successful mock response instead of trying to call the edge function
-    return {
-      verified: true,
-      accountName: "Mock Verified Account",
-      message: "Account verified successfully (mock data)"
-    };
-    
-    /* Commenting out the actual verification code that's not working
-    // First, check if the edge function is available
-    try {
-      // Use direct URL instead of accessing protected property
-      const pingResponse = await fetch(`${SUPABASE_URL}/functions/v1/verify-account`, {
-        method: 'OPTIONS',
+
+    // Direct Paystack API call
+    const response = await fetch(
+      `https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`,
+      {
+        method: 'GET',
         headers: {
+          'Authorization': `Bearer ${PAYSTACK_PUBLIC_KEY}`,
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
         }
-      });
-      
-      if (!pingResponse.ok) {
-        throw new Error("Edge function not available");
       }
-    } catch (pingError) {
-      console.warn("Edge function ping failed:", pingError);
-      toast.error("Account verification service is currently unavailable.");
-      return {
-        verified: false,
-        message: "Verification service is currently unavailable. Please try again later."
-      };
-    }
+    );
     
-    const { data, error } = await supabase.functions.invoke("verify-account", {
-      body: { accountNumber, bankCode }
-    });
-    
+    const data = await response.json();
     console.log("Verification response:", data);
     
-    if (error) {
-      console.error("Error from supabase function:", error);
-      toast.error("Account verification failed. Please try again later.");
+    if (!response.ok) {
+      toast.error(data?.message || "Verification failed");
       return { 
         verified: false, 
-        message: error.message || "Verification failed" 
+        message: data?.message || "Verification failed"
       };
     }
     
-    if (!data || !data.status) {
+    if (!data.status) {
       console.error("Error response from Paystack:", data);
       toast.error(data?.message || "Verification failed");
       return { 
@@ -168,7 +124,6 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
       accountName: data.data.account_name,
       message: "Account verified successfully"
     };
-    */
   } catch (error) {
     console.error("Error verifying account:", error);
     toast.error("An error occurred during verification. Please try again.");
