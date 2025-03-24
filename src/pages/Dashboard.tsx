@@ -45,11 +45,11 @@ const Dashboard = () => {
             {/* Cashflow Analysis */}
             <CashflowSection />
             
-            {/* AI Insights Section */}
-            <AIInsights />
-            
             {/* Financial Charts Section */}
             <FinancialChartsSection />
+            
+            {/* AI Insights Section */}
+            <AIInsights />
 
             {/* Bottom Section */}
             <div className="grid grid-cols-2 gap-5">
