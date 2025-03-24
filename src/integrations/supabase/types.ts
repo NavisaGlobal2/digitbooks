@@ -23,6 +23,7 @@ export type Database = {
           phone: string
           portfolio_link: string | null
           resume_url: string | null
+          status: string
         }
         Insert: {
           availability: string
@@ -37,6 +38,7 @@ export type Database = {
           phone: string
           portfolio_link?: string | null
           resume_url?: string | null
+          status?: string
         }
         Update: {
           availability?: string
@@ -51,6 +53,7 @@ export type Database = {
           phone?: string
           portfolio_link?: string | null
           resume_url?: string | null
+          status?: string
         }
         Relationships: []
       }

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Download, AlertCircle, RefreshCw, Eye } from "lucide-react";
+import { Download, AlertCircle, RefreshCw, Eye, Check, Clock, FileDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 interface JobApplication {
   id: string;
@@ -39,6 +47,7 @@ interface JobApplication {
   portfolio_link: string | null;
   availability: string;
   cover_letter: string | null;
+  status: string;
 }
 
 const ApplicationsAdmin = () => {
@@ -46,6 +55,7 @@ const ApplicationsAdmin = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null);
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   const { toast } = useToast();
 
   const fetchApplications = async () => {
@@ -130,6 +140,104 @@ const ApplicationsAdmin = () => {
     }
   };
 
+  const handleDownloadAllResumes = async () => {
+    const applicationsWithResumes = applications.filter(app => app.resume_url);
+    
+    if (applicationsWithResumes.length === 0) {
+      toast({
+        title: "No Resumes Available",
+        description: "There are no resumes attached to any applications.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsDownloadingAll(true);
+    
+    try {
+      // Create a zip file containing all resumes
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+      
+      // Download each resume and add to zip
+      for (const app of applicationsWithResumes) {
+        if (!app.resume_url) continue;
+        
+        const { data, error } = await supabase.storage
+          .from('resumes')
+          .download(app.resume_url);
+        
+        if (error) {
+          console.error(`Error downloading resume for ${app.full_name}:`, error);
+          continue;
+        }
+        
+        const fileExt = app.resume_url.includes('.') ? app.resume_url.substring(app.resume_url.lastIndexOf('.')) : '.pdf';
+        const fileName = `${app.full_name.replace(/\s+/g, '_')}_${app.job_title.replace(/\s+/g, '_')}${fileExt}`;
+        
+        zip.file(fileName, data);
+      }
+      
+      // Generate the zip file
+      const content = await zip.generateAsync({ type: 'blob' });
+      
+      // Create a download link for the zip
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `all_resumes_${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "All Resumes Downloaded",
+        description: `Successfully downloaded ${applicationsWithResumes.length} resume(s).`,
+      });
+    } catch (err) {
+      console.error("Error downloading all resumes:", err);
+      toast({
+        title: "Error Downloading Resumes",
+        description: err instanceof Error ? err.message : 'An unexpected error occurred',
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloadingAll(false);
+    }
+  };
+
+  const updateApplicationStatus = async (applicationId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('job_applications')
+        .update({ status: newStatus })
+        .eq('id', applicationId);
+      
+      if (error) {
+        console.error("Status update error:", error);
+        throw error;
+      }
+      
+      // Update local state
+      setApplications(applications.map(app => 
+        app.id === applicationId ? { ...app, status: newStatus } : app
+      ));
+      
+      toast({
+        title: "Status Updated",
+        description: `Application status has been updated to ${newStatus}.`,
+      });
+    } catch (err) {
+      console.error("Status update error:", err);
+      toast({
+        title: "Error Updating Status",
+        description: err instanceof Error ? err.message : 'An unexpected error occurred',
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatAvailability = (availability: string) => {
     switch(availability) {
       case 'immediately': return 'Immediately';
@@ -140,6 +248,20 @@ const ApplicationsAdmin = () => {
     }
   };
 
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+      case 'accepted':
+        return <Badge className="bg-green-500">Accepted</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-500">Rejected</Badge>;
+      case 'in-review':
+        return <Badge className="bg-yellow-500">In Review</Badge>;
+      case 'new':
+      default:
+        return <Badge className="bg-blue-500">New</Badge>;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-white to-background">
       <Navigation />
@@ -147,15 +269,25 @@ const ApplicationsAdmin = () => {
       <main className="container mx-auto px-4 py-16">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Job Applications</h1>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={fetchApplications}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fetchApplications}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button 
+              onClick={handleDownloadAllResumes}
+              disabled={isDownloadingAll || isLoading}
+              size="sm"
+            >
+              <FileDown className="h-4 w-4 mr-2" />
+              {isDownloadingAll ? 'Downloading...' : 'Download All CVs'}
+            </Button>
+          </div>
         </div>
         
         {error && (
@@ -180,10 +312,10 @@ const ApplicationsAdmin = () => {
                   <TableHead>Position</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Resume</TableHead>
-                  <TableHead>Details</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -193,8 +325,33 @@ const ApplicationsAdmin = () => {
                     <TableCell>{app.job_title}</TableCell>
                     <TableCell>{app.job_department}</TableCell>
                     <TableCell>{app.email}</TableCell>
-                    <TableCell>{app.phone}</TableCell>
                     <TableCell>{new Date(app.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Select
+                        defaultValue={app.status || 'new'}
+                        onValueChange={(value) => updateApplicationStatus(app.id, value)}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue>
+                            {getStatusBadge(app.status || 'new')}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="new">
+                            <Badge className="bg-blue-500">New</Badge>
+                          </SelectItem>
+                          <SelectItem value="in-review">
+                            <Badge className="bg-yellow-500">In Review</Badge>
+                          </SelectItem>
+                          <SelectItem value="accepted">
+                            <Badge className="bg-green-500">Accepted</Badge>
+                          </SelectItem>
+                          <SelectItem value="rejected">
+                            <Badge className="bg-red-500">Rejected</Badge>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     <TableCell>
                       {app.resume_url ? (
                         <Button 
@@ -248,6 +405,26 @@ const ApplicationsAdmin = () => {
                               <div>
                                 <h3 className="text-sm font-medium">Availability</h3>
                                 <p>{formatAvailability(app.availability)}</p>
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-medium">Status</h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                  {getStatusBadge(app.status || 'new')}
+                                  <Select
+                                    defaultValue={app.status || 'new'}
+                                    onValueChange={(value) => updateApplicationStatus(app.id, value)}
+                                  >
+                                    <SelectTrigger className="w-32 h-8">
+                                      <SelectValue>Change Status</SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="new">New</SelectItem>
+                                      <SelectItem value="in-review">In Review</SelectItem>
+                                      <SelectItem value="accepted">Accepted</SelectItem>
+                                      <SelectItem value="rejected">Rejected</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
                               </div>
                               {app.portfolio_link && (
                                 <div>
