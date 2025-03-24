@@ -11,15 +11,16 @@ export const RequireAuth = ({ children }: RequireAuthProps) => {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
 
-  // Debug logging to identify issues
+  // Enhanced debug logging to identify issues
   useEffect(() => {
     console.log("RequireAuth - Auth state:", { 
       isAuthenticated, 
       user, 
       onboardingCompleted: user?.onboardingCompleted,
-      currentPath: location.pathname 
+      currentPath: location.pathname,
+      component: children?.type?.name || 'Unknown Component'
     });
-  }, [isAuthenticated, user, location]);
+  }, [isAuthenticated, user, location, children]);
 
   // If not authenticated, redirect to auth page
   if (!isAuthenticated) {
@@ -35,6 +36,6 @@ export const RequireAuth = ({ children }: RequireAuthProps) => {
   }
 
   // If authenticated and onboarding completed, render the protected route
-  console.log("User authenticated and authorized, rendering protected route");
+  console.log("User authenticated and authorized, rendering protected route:", children?.type?.name || 'Unknown Component');
   return <>{children}</>;
 };

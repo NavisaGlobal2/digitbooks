@@ -66,11 +66,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       onboardingCompleted: false // Default to false for new logins
     };
     
+    console.log("Setting user in login:", loggedInUser);
     setUser(loggedInUser);
     localStorage.setItem("user", JSON.stringify(loggedInUser));
   };
 
   const logout = () => {
+    console.log("Logging out user");
     setUser(null);
     localStorage.removeItem("user");
   };
@@ -88,6 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       onboardingCompleted: false
     };
     
+    console.log("Setting user in signup:", newUser);
     setUser(newUser);
     localStorage.setItem("user", JSON.stringify(newUser));
   };
@@ -101,6 +104,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log("Completing onboarding, updated user:", updatedUser);
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
+    } else {
+      console.error("Cannot complete onboarding: no user is logged in");
     }
   };
 
