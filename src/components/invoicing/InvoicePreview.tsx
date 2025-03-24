@@ -17,11 +17,19 @@ interface InvoicePreviewProps {
   bankName: string;
   accountNumber: string;
   swiftCode: string;
+  accountName: string;
   calculateSubtotal: () => number;
   calculateTax: () => number;
   calculateTotal: () => number;
-  accountName: string;
+  clientName: string;
 }
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN'
+  }).format(amount);
+};
 
 const InvoicePreview = ({
   logoPreview,
@@ -32,131 +40,108 @@ const InvoicePreview = ({
   bankName,
   accountNumber,
   swiftCode,
+  accountName,
   calculateSubtotal,
   calculateTax,
   calculateTotal,
-  accountName
+  clientName
 }: InvoicePreviewProps) => {
-  // Format numbers to Naira
-  const formatNaira = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
-
   return (
-    <div className="border rounded-lg p-6 bg-white shadow-sm">
-      <h3 className="text-xl font-medium mb-4">Invoice preview</h3>
-      <div className="border rounded-lg p-8 bg-white">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold">INVOICE</h1>
-          <div className="h-20 w-20 rounded-full flex items-center justify-center overflow-hidden">
-            {logoPreview ? (
-              <img src={logoPreview} alt="Company logo" className="h-full w-full object-contain" />
-            ) : (
-              <span className="text-gray-400">Logo</span>
-            )}
-          </div>
+    <div className="bg-white rounded-lg border border-border p-8 shadow-sm">
+      {/* Invoice Header */}
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">INVOICE</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            <span className="font-medium">Invoice No:</span> INV-2023-001
+          </p>
+          <p className="text-sm text-gray-500">
+            <span className="font-medium">Issue Date:</span> {invoiceDate ? format(invoiceDate, "dd MMM yyyy") : "Not set"}
+          </p>
+          <p className="text-sm text-gray-500">
+            <span className="font-medium">Due Date:</span> {dueDate ? format(dueDate, "dd MMM yyyy") : "Not set"}
+          </p>
         </div>
         
-        <div className="flex justify-between mb-10">
-          <div>
-            <h4 className="font-medium mb-2 text-lg">Billed to</h4>
-            <p className="font-medium">Amarachhhlii LTD</p>
-            <p>Amarachhhli@gmail.com</p>
-            <p>Company address</p>
-            <p>City, Nigeria - 00000</p>
-          </div>
-          <div className="text-right">
-            <p className="font-medium text-lg">Business name</p>
-            <p>youremail@example.com</p>
-            <p>Business address</p>
-            <p>City, State, Nigeria</p>
-            <p>TAX ID: 00XXXXX1234XXXX</p>
-          </div>
-        </div>
-
-        <div className="mb-6">
-          <div className="grid grid-cols-5 font-medium text-sm border-b pb-2">
-            <div>Invoice #</div>
-            <div>Description</div>
-            <div className="text-center">Qty</div>
-            <div className="text-right">Price</div>
-            <div className="text-right">Total</div>
-          </div>
-          
-          {invoiceItems.map((item, index) => (
-            <div key={index} className="grid grid-cols-5 py-4 border-b text-sm">
-              <div>{index === 0 ? "AB2324-01" : ""}</div>
-              <div>{item.description || "Item description"}</div>
-              <div className="text-center">{item.quantity}</div>
-              <div className="text-right">₦{item.price.toFixed(2)}</div>
-              <div className="text-right">₦{(item.quantity * item.price).toFixed(2)}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex justify-between mb-8">
-          <div>
-            <p className="font-medium mb-2">Invoice date</p>
-            <p>{invoiceDate ? format(invoiceDate, "dd MMM, yyyy") : "01 Jan, 2023"}</p>
-            
-            <p className="font-medium mt-4 mb-2">Due date</p>
-            <p>{dueDate ? format(dueDate, "dd MMM, yyyy") : "15 Jan, 2023"}</p>
-          </div>
-          
-          <div className="text-right w-1/3">
-            <div className="flex justify-between mb-2">
-              <span>Subtotal</span>
-              <span>₦{calculateSubtotal().toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between mb-2">
-              <span>Tax ({(calculateTax() / calculateSubtotal() * 100).toFixed(1)}%)</span>
-              <span>₦{calculateTax().toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between font-bold pt-2 border-t mt-3 text-lg">
-              <span>Total due</span>
-              <span>₦{calculateTotal().toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t pt-5">
-          <p className="font-medium mb-2">Payment terms</p>
-          <p>100% upon project completion</p>
-          <div className="flex items-start mt-3">
-            <input type="checkbox" className="mt-1 mr-2" defaultChecked />
-            <p className="text-sm">Please pay within 15 days of receiving this invoice.</p>
-          </div>
-        </div>
-
-        <div className="border-t mt-6 pt-5">
-          <p className="font-medium mb-2">Payment details</p>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p>Account name</p>
-              <p>Account number</p>
-              <p>Bank name</p>
-              {swiftCode && <p>Sort code</p>}
-            </div>
-            <div>
-              <p>{accountName || "Company Name Ltd"}</p>
-              <p>{accountNumber || "0123456789"}</p>
-              <p>{bankName || "Nigerian Bank"}</p>
-              {swiftCode && <p>{swiftCode}</p>}
-            </div>
-          </div>
-        </div>
-
-        {additionalInfo && (
-          <div className="border-t mt-6 pt-5">
-            <p className="font-medium mb-2">Additional information</p>
-            <p className="text-sm">{additionalInfo}</p>
+        {logoPreview && (
+          <div className="flex-shrink-0">
+            <img src={logoPreview} alt="Company Logo" className="h-16 w-auto object-contain" />
           </div>
         )}
       </div>
+      
+      {/* Client Info */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold mb-2">Bill To:</h3>
+        <p className="font-medium">{clientName || "Client Name"}</p>
+        <p className="text-gray-600">client@example.com</p>
+        <p className="text-gray-600">Client Address, City</p>
+      </div>
+      
+      {/* Invoice Items */}
+      <div className="mb-8">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="py-2 text-left">Description</th>
+              <th className="py-2 text-right">Qty</th>
+              <th className="py-2 text-right">Price</th>
+              <th className="py-2 text-right">Tax</th>
+              <th className="py-2 text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoiceItems.map((item, index) => (
+              <tr key={index} className="border-b border-gray-100">
+                <td className="py-3">{item.description}</td>
+                <td className="py-3 text-right">{item.quantity}</td>
+                <td className="py-3 text-right">{formatCurrency(item.price)}</td>
+                <td className="py-3 text-right">{item.tax}%</td>
+                <td className="py-3 text-right">
+                  {formatCurrency(item.quantity * item.price)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Invoice Summary */}
+      <div className="flex justify-end mb-8">
+        <div className="w-64">
+          <div className="flex justify-between py-1">
+            <span className="text-gray-600">Subtotal:</span>
+            <span>{formatCurrency(calculateSubtotal())}</span>
+          </div>
+          <div className="flex justify-between py-1">
+            <span className="text-gray-600">Tax:</span>
+            <span>{formatCurrency(calculateTax())}</span>
+          </div>
+          <div className="flex justify-between py-2 font-bold border-t border-gray-200 mt-2">
+            <span>Total:</span>
+            <span>{formatCurrency(calculateTotal())}</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Payment Details */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-2">Bank Details</h3>
+        <div className="text-sm">
+          <p><span className="font-medium">Bank Name:</span> {bankName || "Bank Name"}</p>
+          <p><span className="font-medium">Account Name:</span> {accountName || "Account Name"}</p>
+          <p><span className="font-medium">Account Number:</span> {accountNumber || "Account Number"}</p>
+          {swiftCode && <p><span className="font-medium">Swift Code:</span> {swiftCode}</p>}
+        </div>
+      </div>
+      
+      {/* Additional Info */}
+      {additionalInfo && (
+        <div className="text-sm text-gray-600 border-t border-gray-100 pt-4">
+          <h3 className="text-lg font-semibold mb-2">Additional Information</h3>
+          <p>{additionalInfo}</p>
+        </div>
+      )}
     </div>
   );
 };
