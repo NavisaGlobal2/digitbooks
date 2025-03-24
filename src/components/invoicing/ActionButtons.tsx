@@ -1,4 +1,3 @@
-
 import { Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -15,7 +14,6 @@ interface ActionButtonsProps {
   handleGenerateInvoice: () => void;
   handleShareInvoice: () => void;
   isAccountVerified: boolean;
-  // Add necessary props for invoice generation
   logoPreview: string | null;
   invoiceItems: InvoiceItem[];
   invoiceDate: Date | undefined;
@@ -81,7 +79,7 @@ const ActionButtons = ({
   return (
     <div className="grid grid-cols-2 gap-4 mb-6">
       <Button 
-        className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2"
+        className="bg-[#05D166] hover:bg-[#05D166]/80 text-white flex items-center justify-center gap-2"
         onClick={generateAndDownloadInvoice}
       >
         <Download className="h-5 w-5" />
@@ -89,7 +87,7 @@ const ActionButtons = ({
       </Button>
       <Button 
         variant="outline" 
-        className="border-green-600 text-green-600 hover:bg-green-50 flex items-center justify-center gap-2"
+        className="border-[#05D166] text-[#05D166] hover:bg-[#05D166]/10 flex items-center justify-center gap-2"
         onClick={generateAndShareInvoice}
       >
         <Share2 className="h-5 w-5" />
@@ -105,4 +103,3 @@ const ActionButtons = ({
 };
 
 export default ActionButtons;
-

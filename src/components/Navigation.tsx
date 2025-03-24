@@ -40,7 +40,7 @@ const Navigation = () => {
 
         <div className="flex items-center">
           <Link to="/auth">
-            <Button className="text-white">
+            <Button className="bg-[#05D166] hover:bg-[#05D166]/80 text-white">
               Get Started
             </Button>
           </Link>

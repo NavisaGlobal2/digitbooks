@@ -12,7 +12,7 @@ const ExpenseFormActions = ({ onCancel }: ExpenseFormActionsProps) => {
       <Button type="button" variant="outline" onClick={onCancel}>
         Cancel
       </Button>
-      <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
+      <Button type="submit" className="bg-[#05D166] hover:bg-[#05D166]/80 text-white">
         <Plus className="w-4 h-4 mr-2" />
         Add Expense
       </Button>

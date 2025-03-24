@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -355,7 +354,7 @@ export function JobApplicationForm({ jobTitle, jobDepartment, onSubmitSuccess }:
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="bg-[#F2FCE2] text-primary hover:bg-[#E5F7C7] border border-[#D0E6B1]"
+              className="bg-[#05D166] hover:bg-[#05D166]/80 text-primary border border-[#05D166]/30"
             >
               {isSubmitting ? "Submitting..." : "Submit Application"}
             </Button>

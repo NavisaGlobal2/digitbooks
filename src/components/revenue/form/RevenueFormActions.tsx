@@ -19,7 +19,7 @@ const RevenueFormActions = ({ onCancel, isEdit }: RevenueFormActionsProps) => {
       </Button>
       <Button 
         type="submit" 
-        className="flex-1 h-12 bg-green-500 hover:bg-green-600 text-white"
+        className="flex-1 h-12 bg-[#05D166] hover:bg-[#05D166]/80 text-white"
       >
         {isEdit ? "Update revenue" : "Save revenue"}
       </Button>

@@ -70,7 +70,7 @@ export const ColorPicker = ({ color, onChange }: ColorPickerProps) => {
                 {presetColors.map((presetColor) => (
                   <button
                     key={presetColor}
-                    className="w-8 h-8 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-8 h-8 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#05D166]"
                     style={{ backgroundColor: presetColor }}
                     onClick={() => setSelectedColor(presetColor)}
                   />
@@ -79,7 +79,11 @@ export const ColorPicker = ({ color, onChange }: ColorPickerProps) => {
             </div>
             
             <div className="flex justify-end">
-              <Button size="sm" onClick={handleAccept}>
+              <Button 
+                size="sm" 
+                onClick={handleAccept}
+                className="bg-[#05D166] hover:bg-[#05D166]/80 text-white"
+              >
                 Apply
               </Button>
             </div>
