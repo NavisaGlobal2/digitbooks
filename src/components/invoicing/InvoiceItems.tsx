@@ -56,7 +56,7 @@ const InvoiceItems = ({ invoiceItems, setInvoiceItems, addInvoiceItem }: Invoice
               />
             </div>
             <div>
-              <Label htmlFor={`price-${index}`}>Price</Label>
+              <Label htmlFor={`price-${index}`}>Price (₦)</Label>
               <Input 
                 id={`price-${index}`} 
                 type="number" 
@@ -86,7 +86,7 @@ const InvoiceItems = ({ invoiceItems, setInvoiceItems, addInvoiceItem }: Invoice
             <Input 
               id={`total-${index}`} 
               readOnly 
-              value={`$${(item.quantity * item.price).toFixed(2)}`}
+              value={`₦${(item.quantity * item.price).toFixed(2)}`}
             />
           </div>
         </div>

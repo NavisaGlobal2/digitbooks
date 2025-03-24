@@ -28,10 +28,10 @@ const BankDetails = ({
       
       <div className="space-y-4">
         <div>
-          <Label htmlFor="account-name">Your account name</Label>
+          <Label htmlFor="account-name">Account name</Label>
           <Input 
             id="account-name" 
-            placeholder="Input details" 
+            placeholder="Enter account holder name" 
             value={accountName}
             onChange={(e) => setAccountName(e.target.value)}
           />
@@ -39,19 +39,24 @@ const BankDetails = ({
         
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="account-number">Account number</Label>
+            <Label htmlFor="account-number">NUBAN account number</Label>
             <Input 
               id="account-number" 
-              placeholder="Input details" 
+              placeholder="10-digit NUBAN number" 
+              maxLength={10}
               value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
+              onChange={(e) => {
+                // Only allow numeric input
+                const value = e.target.value.replace(/\D/g, '');
+                setAccountNumber(value);
+              }}
             />
           </div>
           <div>
             <Label htmlFor="bank-name">Bank name</Label>
             <Input 
               id="bank-name" 
-              placeholder="Input details" 
+              placeholder="Enter bank name" 
               value={bankName}
               onChange={(e) => setBankName(e.target.value)}
             />
@@ -60,19 +65,19 @@ const BankDetails = ({
         
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="bank-address">Bank address</Label>
+            <Label htmlFor="bank-address">Bank branch</Label>
             <Input 
               id="bank-address" 
-              placeholder="Input details" 
+              placeholder="Enter bank branch" 
               value={bankAddress}
               onChange={(e) => setBankAddress(e.target.value)}
             />
           </div>
           <div>
-            <Label htmlFor="swift-code">Swift code</Label>
+            <Label htmlFor="swift-code">Sort code (optional)</Label>
             <Input 
               id="swift-code" 
-              placeholder="Input details" 
+              placeholder="Bank sort code" 
               value={swiftCode}
               onChange={(e) => setSwiftCode(e.target.value)}
             />

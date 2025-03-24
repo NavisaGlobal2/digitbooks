@@ -11,14 +11,14 @@ import ActionButtons from "./ActionButtons";
 import InvoicePreview from "./InvoicePreview";
 
 const InvoiceForm = () => {
-  const [invoiceItems, setInvoiceItems] = useState([{ description: 'Website design service', quantity: 1, price: 3000, tax: 2 }]);
+  const [invoiceItems, setInvoiceItems] = useState([{ description: 'Website design service', quantity: 1, price: 50000, tax: 7.5 }]);
   const [selectedTemplate, setSelectedTemplate] = useState("default");
   const [invoiceDate, setInvoiceDate] = useState<Date | undefined>(new Date());
   const [dueDate, setDueDate] = useState<Date | undefined>(
     new Date(new Date().setDate(new Date().getDate() + 14))
   );
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [additionalInfo, setAdditionalInfo] = useState("End of month");
+  const [additionalInfo, setAdditionalInfo] = useState("Payment can be made directly to the bank account provided.");
   
   // Bank details
   const [accountName, setAccountName] = useState("");
@@ -28,7 +28,7 @@ const InvoiceForm = () => {
   const [swiftCode, setSwiftCode] = useState("");
   
   const addInvoiceItem = () => {
-    setInvoiceItems([...invoiceItems, { description: '', quantity: 1, price: 0, tax: 0 }]);
+    setInvoiceItems([...invoiceItems, { description: '', quantity: 1, price: 0, tax: 7.5 }]);
   };
   
   const calculateSubtotal = () => {
@@ -120,6 +120,7 @@ const InvoiceForm = () => {
           bankName={bankName}
           accountNumber={accountNumber}
           swiftCode={swiftCode}
+          accountName={accountName}
           calculateSubtotal={calculateSubtotal}
           calculateTax={calculateTax}
           calculateTotal={calculateTotal}

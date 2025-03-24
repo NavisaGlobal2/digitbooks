@@ -13,7 +13,7 @@ const AdditionalInfo = ({ additionalInfo, setAdditionalInfo }: AdditionalInfoPro
       <Label htmlFor="additional-info">Additional information</Label>
       <Textarea 
         id="additional-info" 
-        placeholder="Enter notes or additional information for your client"
+        placeholder="Enter payment instructions or additional information for your client"
         className="min-h-[100px]"
         value={additionalInfo}
         onChange={(e) => setAdditionalInfo(e.target.value)}

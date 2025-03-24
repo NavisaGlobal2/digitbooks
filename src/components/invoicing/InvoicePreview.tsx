@@ -20,6 +20,7 @@ interface InvoicePreviewProps {
   calculateSubtotal: () => number;
   calculateTax: () => number;
   calculateTotal: () => number;
+  accountName: string;
 }
 
 const InvoicePreview = ({
@@ -33,8 +34,18 @@ const InvoicePreview = ({
   swiftCode,
   calculateSubtotal,
   calculateTax,
-  calculateTotal
+  calculateTotal,
+  accountName
 }: InvoicePreviewProps) => {
+  // Format numbers to Naira
+  const formatNaira = (amount: number) => {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      minimumFractionDigits: 2
+    }).format(amount);
+  };
+
   return (
     <div className="border rounded-lg p-6 bg-white shadow-sm">
       <h3 className="text-xl font-medium mb-4">Invoice preview</h3>
@@ -56,14 +67,14 @@ const InvoicePreview = ({
             <p className="font-medium">Amarachhhlii LTD</p>
             <p>Amarachhhli@gmail.com</p>
             <p>Company address</p>
-            <p>City, Country - 00000</p>
+            <p>City, Nigeria - 00000</p>
           </div>
           <div className="text-right">
             <p className="font-medium text-lg">Business name</p>
             <p>youremail@example.com</p>
             <p>Business address</p>
-            <p>City, State, IN - 000 000</p>
-            <p>TAX ID 00XXXXX1234XXXX</p>
+            <p>City, State, Nigeria</p>
+            <p>TAX ID: 00XXXXX1234XXXX</p>
           </div>
         </div>
 
@@ -81,8 +92,8 @@ const InvoicePreview = ({
               <div>{index === 0 ? "AB2324-01" : ""}</div>
               <div>{item.description || "Item description"}</div>
               <div className="text-center">{item.quantity}</div>
-              <div className="text-right">${item.price.toFixed(2)}</div>
-              <div className="text-right">${(item.quantity * item.price).toFixed(2)}</div>
+              <div className="text-right">₦{item.price.toFixed(2)}</div>
+              <div className="text-right">₦{(item.quantity * item.price).toFixed(2)}</div>
             </div>
           ))}
         </div>
@@ -99,15 +110,15 @@ const InvoicePreview = ({
           <div className="text-right w-1/3">
             <div className="flex justify-between mb-2">
               <span>Subtotal</span>
-              <span>${calculateSubtotal().toFixed(2)}</span>
+              <span>₦{calculateSubtotal().toFixed(2)}</span>
             </div>
             <div className="flex justify-between mb-2">
               <span>Tax ({(calculateTax() / calculateSubtotal() * 100).toFixed(1)}%)</span>
-              <span>${calculateTax().toFixed(2)}</span>
+              <span>₦{calculateTax().toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-bold pt-2 border-t mt-3 text-lg">
               <span>Total due</span>
-              <span>${calculateTotal().toFixed(2)}</span>
+              <span>₦{calculateTotal().toFixed(2)}</span>
             </div>
           </div>
         </div>
@@ -125,14 +136,16 @@ const InvoicePreview = ({
           <p className="font-medium mb-2">Payment details</p>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
+              <p>Account name</p>
+              <p>Account number</p>
               <p>Bank name</p>
-              <p>IBAN/Account #</p>
-              <p>Swift code</p>
+              {swiftCode && <p>Sort code</p>}
             </div>
             <div>
-              <p>{bankName || "ABCD BANK"}</p>
-              <p>{accountNumber || "3747489 2300011"}</p>
-              <p>{swiftCode || "ABCDUSBBXXX"}</p>
+              <p>{accountName || "Company Name Ltd"}</p>
+              <p>{accountNumber || "0123456789"}</p>
+              <p>{bankName || "Nigerian Bank"}</p>
+              {swiftCode && <p>{swiftCode}</p>}
             </div>
           </div>
         </div>

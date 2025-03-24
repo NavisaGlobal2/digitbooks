@@ -12,7 +12,7 @@ const ActionButtons = ({ handleGenerateInvoice, handleShareInvoice }: ActionButt
   return (
     <div className="grid grid-cols-2 gap-4 mb-6">
       <Button 
-        className="bg-green-500 hover:bg-green-600 text-white flex items-center justify-center gap-2"
+        className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2"
         onClick={handleGenerateInvoice}
       >
         <Download className="h-5 w-5" />
@@ -20,7 +20,7 @@ const ActionButtons = ({ handleGenerateInvoice, handleShareInvoice }: ActionButt
       </Button>
       <Button 
         variant="outline" 
-        className="border-green-500 text-green-500 hover:bg-green-50 flex items-center justify-center gap-2"
+        className="border-green-600 text-green-600 hover:bg-green-50 flex items-center justify-center gap-2"
         onClick={handleShareInvoice}
       >
         <Share2 className="h-5 w-5" />
