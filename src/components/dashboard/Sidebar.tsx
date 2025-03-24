@@ -1,4 +1,3 @@
-
 import { 
   LayoutDashboard, 
   FileText, 
@@ -31,10 +30,10 @@ const Sidebar = () => {
       
       <div className="flex-1 px-2">
         <nav className="space-y-1">
-          <Link to="/dashboard">
+          <Link to="/">
             <Button 
               variant="ghost" 
-              className={`w-full justify-start gap-3 ${path === '/dashboard' 
+              className={`w-full justify-start gap-3 ${path === '/' || path === '/dashboard'
                 ? 'text-primary font-medium bg-accent/10 border-r-4 border-primary' 
                 : 'text-secondary'}`}
             >
