@@ -39,20 +39,36 @@ export const addLogo = (doc: jsPDF, logoPreview: string | null, yPos: number): n
  * Returns the updated Y position
  */
 const addDefaultLogo = (doc: jsPDF, x: number, y: number): number => {
-  // Draw the book outline
-  doc.setDrawColor(0, 200, 83); // Green color #00C853
-  doc.setLineWidth(0.5);
-  doc.rect(x, y, 10, 15);
-  
-  // Draw the page divider
-  doc.line(x + 5, y, x + 5, y + 15);
-  
-  // Add company name
-  setupHeaderStyle(doc);
-  doc.setTextColor(51, 51, 51); // Dark gray
-  doc.text("DigitBooks", x + 15, y + 7);
-  
-  return y + 25;
+  try {
+    // Use the new logo
+    const logoUrl = "/lovable-uploads/164ead0a-df60-46aa-bfad-9e3dd948bc33.png";
+    doc.addImage(logoUrl, 'PNG', x, y, 10, 10);
+    
+    // Add company name
+    setupHeaderStyle(doc);
+    doc.setTextColor(51, 51, 51); // Dark gray
+    doc.text("DigitBooks", x + 15, y + 7);
+    
+    return y + 25;
+  } catch (error) {
+    console.error("Error adding default logo to PDF:", error);
+    
+    // Fallback to drawing a simple logo if the image fails to load
+    // Draw the book outline
+    doc.setDrawColor(0, 200, 83); // Green color #00C853
+    doc.setLineWidth(0.5);
+    doc.rect(x, y, 10, 15);
+    
+    // Draw the page divider
+    doc.line(x + 5, y, x + 5, y + 15);
+    
+    // Add company name
+    setupHeaderStyle(doc);
+    doc.setTextColor(51, 51, 51); // Dark gray
+    doc.text("DigitBooks", x + 15, y + 7);
+    
+    return y + 25;
+  }
 };
 
 /**

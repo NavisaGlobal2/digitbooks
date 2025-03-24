@@ -2,6 +2,7 @@
 import { format } from "date-fns";
 import { InvoiceItem } from "@/types/invoice";
 import { formatNaira } from "@/utils/invoice/formatters";
+import { Logo } from "@/components/Logo";
 
 interface InvoicePreviewProps {
   logoPreview: string | null;
@@ -56,12 +57,8 @@ const InvoicePreview = ({
             <img src={logoPreview} alt="Company Logo" className="h-16 w-auto object-contain" />
           </div>
         ) : (
-          <div className="flex-shrink-0">
-            <svg width="64" height="64" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 4H20V28H4V4Z" stroke="#00C853" strokeWidth="2.5" fill="none"/>
-              <path d="M12 4V28" stroke="#00C853" strokeWidth="2.5"/>
-              <path d="M4 4H20V28H4V4Z" fill="#00C853" fillOpacity="0.2"/>
-            </svg>
+          <div className="flex-shrink-0 h-16 w-16">
+            <Logo className="w-full h-full" />
           </div>
         )}
       </div>

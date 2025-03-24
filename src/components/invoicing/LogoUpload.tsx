@@ -3,6 +3,7 @@ import { useRef, ChangeEvent } from "react";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Logo } from "@/components/Logo";
 
 interface LogoUploadProps {
   logoPreview: string | null;
@@ -85,12 +86,8 @@ const LogoUpload = ({ logoPreview, setLogoPreview }: LogoUploadProps) => {
           </div>
         ) : (
           <>
-            <div className="mb-2">
-              <svg width="48" height="48" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 4H20V28H4V4Z" stroke="#00C853" strokeWidth="2.5" fill="none"/>
-                <path d="M12 4V28" stroke="#00C853" strokeWidth="2.5"/>
-                <path d="M4 4H20V28H4V4Z" fill="#00C853" fillOpacity="0.2"/>
-              </svg>
+            <div className="mb-2 h-12 w-12">
+              <Logo className="h-full w-full" />
             </div>
             <p className="text-sm text-gray-500 mb-1">Drag & drop file here</p>
             <p className="text-sm text-gray-500 mb-3">or</p>
