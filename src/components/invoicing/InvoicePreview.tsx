@@ -1,12 +1,6 @@
 
 import { format } from "date-fns";
-
-interface InvoiceItem {
-  description: string;
-  quantity: number;
-  price: number;
-  tax: number;
-}
+import { InvoiceItem } from "@/types/invoice";
 
 interface InvoicePreviewProps {
   logoPreview: string | null;
@@ -18,9 +12,9 @@ interface InvoicePreviewProps {
   accountNumber: string;
   swiftCode: string;
   accountName: string;
-  calculateSubtotal: () => number;
-  calculateTax: () => number;
-  calculateTotal: () => number;
+  calculateSubtotal: (items: InvoiceItem[]) => number;
+  calculateTax: (items: InvoiceItem[]) => number;
+  calculateTotal: (items: InvoiceItem[]) => number;
   clientName: string;
 }
 
@@ -111,15 +105,15 @@ const InvoicePreview = ({
         <div className="w-64">
           <div className="flex justify-between py-1">
             <span className="text-gray-600">Subtotal:</span>
-            <span>{formatCurrency(calculateSubtotal())}</span>
+            <span>{formatCurrency(calculateSubtotal(invoiceItems))}</span>
           </div>
           <div className="flex justify-between py-1">
             <span className="text-gray-600">Tax:</span>
-            <span>{formatCurrency(calculateTax())}</span>
+            <span>{formatCurrency(calculateTax(invoiceItems))}</span>
           </div>
           <div className="flex justify-between py-2 font-bold border-t border-gray-200 mt-2">
             <span>Total:</span>
-            <span>{formatCurrency(calculateTotal())}</span>
+            <span>{formatCurrency(calculateTotal(invoiceItems))}</span>
           </div>
         </div>
       </div>
