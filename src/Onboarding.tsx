@@ -422,7 +422,6 @@ const Onboarding = () => {
             ))}
           </div>
           <div className="text-center mb-8">
-            <p className="text-muted-foreground">{steps[currentStep].description}</p>
           </div>
         </div>
 
