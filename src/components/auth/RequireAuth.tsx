@@ -1,7 +1,7 @@
 
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, isValidElement } from "react";
 
 interface RequireAuthProps {
   children: ReactNode;
@@ -13,12 +13,16 @@ export const RequireAuth = ({ children }: RequireAuthProps) => {
 
   // Enhanced debug logging to identify issues
   useEffect(() => {
+    const componentName = isValidElement(children) 
+      ? (children.type as any)?.name || 'Component' 
+      : 'Unknown Component';
+    
     console.log("RequireAuth - Auth state:", { 
       isAuthenticated, 
       user, 
       onboardingCompleted: user?.onboardingCompleted,
       currentPath: location.pathname,
-      component: children?.type?.name || 'Unknown Component'
+      component: componentName
     });
   }, [isAuthenticated, user, location, children]);
 
@@ -36,6 +40,9 @@ export const RequireAuth = ({ children }: RequireAuthProps) => {
   }
 
   // If authenticated and onboarding completed, render the protected route
-  console.log("User authenticated and authorized, rendering protected route:", children?.type?.name || 'Unknown Component');
+  const componentName = isValidElement(children) 
+    ? (children.type as any)?.name || 'Component' 
+    : 'Unknown Component';
+  console.log("User authenticated and authorized, rendering protected route:", componentName);
   return <>{children}</>;
 };
