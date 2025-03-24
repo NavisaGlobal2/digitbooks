@@ -1,8 +1,8 @@
 
 import { useState } from "react";
 import {
-  Bar,
-  BarChart,
+  Area,
+  AreaChart,
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
@@ -34,7 +34,7 @@ const chartConfig = {
   },
   outflow: {
     label: "Outflow",
-    color: "#FCA5A5" // light red
+    color: "#9b87f5" // purple color for outflow
   }
 };
 
@@ -46,45 +46,62 @@ const CashflowChart = () => {
       config={chartConfig}
       className="w-full aspect-auto h-full"
     >
-      <BarChart data={data}>
-        <XAxis 
-          dataKey="name" 
-          axisLine={false}
-          tickLine={false}
-          tick={{ fill: '#828179' }}
-        />
-        <YAxis 
-          axisLine={false}
-          tickLine={false}
-          tick={{ fill: '#828179' }}
-          tickFormatter={(value) => `$${value}`}
-        />
-        <CartesianGrid vertical={false} stroke="#E6E4DD" />
-        <Tooltip
-          content={({ active, payload }) => {
-            if (!active || !payload?.length) return null;
-            
-            return (
-              <ChartTooltipContent
-                label={payload[0].payload.name}
-                payload={payload}
-              />
-            );
-          }}
-        />
-        <Bar
-          dataKey="inflow"
-          fill={chartConfig.inflow.color}
-          radius={[4, 4, 0, 0]}
-          maxBarSize={50}
-        />
-        <Bar
-          dataKey="outflow"
-          fill={chartConfig.outflow.color}
-          radius={[4, 4, 0, 0]}
-          maxBarSize={50}
-        />
-      </BarChart>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={data}
+          margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+        >
+          <defs>
+            <linearGradient id="inflow" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#10B981" stopOpacity={0.2} />
+              <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="outflow" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#9b87f5" stopOpacity={0.2} />
+              <stop offset="95%" stopColor="#9b87f5" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <XAxis 
+            dataKey="name" 
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: '#828179' }}
+          />
+          <YAxis 
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: '#828179' }}
+            tickFormatter={(value) => `$${value}`}
+          />
+          <CartesianGrid vertical={false} stroke="#E6E4DD" strokeDasharray="3 3" />
+          <Tooltip
+            content={({ active, payload }) => {
+              if (!active || !payload?.length) return null;
+              
+              return (
+                <ChartTooltipContent
+                  label={payload[0].payload.name}
+                  payload={payload}
+                />
+              );
+            }}
+          />
+          <Area 
+            type="monotone" 
+            dataKey="inflow" 
+            stroke="#10B981" 
+            fillOpacity={1}
+            fill="url(#inflow)" 
+          />
+          <Area 
+            type="monotone" 
+            dataKey="outflow" 
+            stroke="#9b87f5" 
+            fillOpacity={1}
+            fill="url(#outflow)" 
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </ChartContainer>
   );
 };
