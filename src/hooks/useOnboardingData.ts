@@ -117,6 +117,14 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
         return false;
       }
       
+      // Validate the user ID is a proper UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(user.id)) {
+        console.error("Invalid UUID format:", user.id);
+        toast.error("Invalid user identifier. Please try logging in again.");
+        return false;
+      }
+      
       setIsSaving(true);
       console.log("Saving profile for user ID:", user.id);
       

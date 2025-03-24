@@ -43,6 +43,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (parsedUser.onboardingCompleted === undefined) {
           parsedUser.onboardingCompleted = false;
         }
+        
+        // Ensure the user has a valid UUID
+        if (!parsedUser.id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parsedUser.id)) {
+          parsedUser.id = generateUUID();
+          console.log("Generated new UUID for invalid user ID:", parsedUser.id);
+        }
+        
         setUser(parsedUser);
       } catch (error) {
         console.error("Error parsing stored user data:", error);
