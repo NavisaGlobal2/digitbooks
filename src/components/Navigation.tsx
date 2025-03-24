@@ -1,3 +1,4 @@
+
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 import { Home, DollarSign, Info, Settings, HelpCircle, Briefcase } from "lucide-react";
@@ -8,7 +9,7 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="text-xl font-semibold flex items-center gap-2">
           <Home className="w-5 h-5" />
-          Digibooks
+          Digitbooks
         </Link>
         
         <div className="hidden md:flex items-center space-x-8">
