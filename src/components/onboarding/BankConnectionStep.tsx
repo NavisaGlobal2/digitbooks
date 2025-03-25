@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Building, Building2, CircleDollarSign } from "lucide-react";
 
 interface BankConnectionStepProps {
   onSkip: () => void;
@@ -26,21 +26,24 @@ const BankConnectionStep: React.FC<BankConnectionStepProps> = ({
       </div>
 
       <div className="grid gap-4">
-        <Button variant="outline" className="h-20 text-left justify-start" onClick={onNext}>
+        <Button variant="outline" className="h-20 text-left justify-start p-4 group hover:bg-green-50 transition-colors duration-300" onClick={onNext}>
+          <CircleDollarSign className="h-10 w-10 mr-4 text-green-500 group-hover:scale-110 transition-transform duration-300" />
           <div>
             <div className="font-medium">Access Bank</div>
             <div className="text-sm text-muted-foreground">Connect with Mono</div>
           </div>
         </Button>
 
-        <Button variant="outline" className="h-20 text-left justify-start" onClick={onNext}>
+        <Button variant="outline" className="h-20 text-left justify-start p-4 group hover:bg-blue-50 transition-colors duration-300" onClick={onNext}>
+          <Building className="h-10 w-10 mr-4 text-blue-500 group-hover:scale-110 transition-transform duration-300" />
           <div>
             <div className="font-medium">Zenith Bank</div>
             <div className="text-sm text-muted-foreground">Connect with Mono</div>
           </div>
         </Button>
 
-        <Button variant="outline" className="h-20 text-left justify-start" onClick={onNext}>
+        <Button variant="outline" className="h-20 text-left justify-start p-4 group hover:bg-orange-50 transition-colors duration-300" onClick={onNext}>
+          <Building2 className="h-10 w-10 mr-4 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
           <div>
             <div className="font-medium">GTBank</div>
             <div className="text-sm text-muted-foreground">Connect with Mono</div>
