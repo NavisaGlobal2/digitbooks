@@ -38,7 +38,7 @@ const FeaturesStep: React.FC<FeaturesStepProps> = ({
             key={feature}
             className={`p-3 cursor-pointer transition-colors ${
               enabled 
-                ? 'border-black' 
+                ? 'border-[#05D166]' 
                 : 'border-gray-200 hover:border-gray-300'
             }`}
             onClick={() => onFeaturesChange({
@@ -49,7 +49,7 @@ const FeaturesStep: React.FC<FeaturesStepProps> = ({
             <div className="flex flex-col h-full">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-sm font-medium capitalize">{feature}</h3>
-                {enabled && <CheckCircle2 className="h-4 w-4 text-black" />}
+                {enabled && <CheckCircle2 className="h-4 w-4 text-[#05D166]" />}
               </div>
               <p className="text-xs text-gray-500 flex-grow">
                 {getFeatureDescription(feature)}
@@ -60,7 +60,7 @@ const FeaturesStep: React.FC<FeaturesStepProps> = ({
       </div>
 
       <Button 
-        className="w-full bg-black hover:bg-gray-800 text-white h-9 mt-4"
+        className="w-full bg-[#05D166] hover:bg-[#05D166]/90 text-white h-9 mt-4"
         onClick={onNext}
       >
         Continue

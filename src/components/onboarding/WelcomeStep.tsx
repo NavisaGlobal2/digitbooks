@@ -17,7 +17,7 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext }) => {
       </p>
       
       <Button 
-        className="px-6 py-2 bg-black hover:bg-gray-800 text-white text-sm rounded-md"
+        className="px-6 py-2 bg-[#05D166] hover:bg-[#05D166]/90 text-white text-sm rounded-md"
         onClick={onNext}
       >
         Get Started

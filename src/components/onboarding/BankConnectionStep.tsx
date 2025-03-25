@@ -61,7 +61,7 @@ const BankConnectionStep: React.FC<BankConnectionStepProps> = ({
           Skip for now
         </Button>
         <Button 
-          className="flex-1 bg-black hover:bg-gray-800 text-white h-9"
+          className="flex-1 bg-[#05D166] hover:bg-[#05D166]/90 text-white h-9"
           onClick={onNext}
           disabled={isSaving}
         >

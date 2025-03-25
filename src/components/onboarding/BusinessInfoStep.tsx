@@ -154,7 +154,7 @@ const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
       </div>
 
       <Button 
-        className="w-full bg-black hover:bg-gray-800 text-white h-9 mt-4"
+        className="w-full bg-[#05D166] hover:bg-[#05D166]/90 text-white h-9 mt-4"
         onClick={handleNext}
       >
         Continue

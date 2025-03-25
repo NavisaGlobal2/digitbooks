@@ -19,7 +19,7 @@ const OnboardingStepIndicator: React.FC<OnboardingStepIndicatorProps> = ({
         
         {/* Progress line */}
         <div 
-          className="absolute h-[1px] bg-black top-1/2"
+          className="absolute h-[1px] bg-[#05D166] top-1/2"
           style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
         ></div>
         
@@ -31,7 +31,7 @@ const OnboardingStepIndicator: React.FC<OnboardingStepIndicatorProps> = ({
           >
             <div className={`
               h-2 w-2 rounded-full 
-              ${index <= currentStep ? 'bg-black' : 'bg-gray-200'}
+              ${index <= currentStep ? 'bg-[#05D166]' : 'bg-gray-200'}
             `}></div>
           </div>
         ))}
