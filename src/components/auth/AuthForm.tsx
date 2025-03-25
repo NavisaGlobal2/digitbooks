@@ -79,19 +79,19 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
   // For verification code step
   if (mode === 'signup' && verificationStep) {
     return (
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+      <div className="w-full max-w-sm px-4">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
             Verify your email
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm sm:text-base">
             We've sent a verification code to {email}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div className="space-y-2">
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-4 overflow-x-auto py-2">
               <InputOTP value={verificationCode} onChange={setVerificationCode} maxLength={6}>
                 <InputOTPGroup>
                   <InputOTPSlot index={0} />
@@ -104,14 +104,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
               </InputOTP>
             </div>
             
-            <p className="text-sm text-center text-muted-foreground mt-4">
+            <p className="text-xs sm:text-sm text-center text-muted-foreground mt-4">
               Didn't receive a code? <button type="button" className="text-green-500 hover:text-green-600 font-medium">Resend</button>
             </p>
           </div>
 
           <Button 
             type="submit" 
-            className="w-full h-12 bg-green-500 hover:bg-green-600 text-white transition-all duration-300 transform hover:translate-y-[-2px] hover:shadow-lg"
+            className="w-full h-10 sm:h-12 bg-green-500 hover:bg-green-600 text-white transition-all duration-300 transform hover:translate-y-[-2px] hover:shadow-lg text-sm sm:text-base"
             disabled={isLoading || verificationCode.length !== 6}
           >
             {isLoading ? 'Verifying...' : 'Verify Email'}
@@ -121,7 +121,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
             type="button"
             variant="ghost"
             onClick={handleBackToSignup}
-            className="w-full"
+            className="w-full text-sm sm:text-base"
             disabled={isLoading}
           >
             Back to signup
@@ -132,43 +132,43 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
   }
 
   return (
-    <div className="w-full max-w-sm">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+    <div className="w-full max-w-sm px-4">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
           {mode === 'signup' ? 'Create your account' : 'Welcome back'}
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-sm sm:text-base">
           {mode === 'signup' ? 'Get started with DigitBooks' : 'Sign in to continue to your account'}
         </p>
       </div>
 
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <Button 
           variant="outline" 
-          className="w-full h-12 relative hover:bg-gray-50 transition-all duration-300"
+          className="w-full h-10 sm:h-12 relative hover:bg-gray-50 transition-all duration-300 text-sm sm:text-base"
           disabled={isLoading}
         >
           <img 
             src="https://www.google.com/favicon.ico" 
             alt="Google" 
-            className="w-5 h-5 absolute left-4"
+            className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-4"
           />
           Continue with Google
         </Button>
       </div>
 
-      <div className="relative mb-8">
+      <div className="relative mb-6 sm:mb-8">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t"></div>
         </div>
-        <div className="relative flex justify-center text-sm">
+        <div className="relative flex justify-center text-xs sm:text-sm">
           <span className="bg-gradient-to-b from-white to-gray-50 px-2 text-muted-foreground">
             or continue with email
           </span>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
         {mode === 'signup' && (
           <div className="space-y-2">
             <Input
@@ -178,7 +178,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
               onChange={(e) => setName(e.target.value)}
               required
               disabled={isLoading}
-              className="h-12 transition-all duration-300 focus:ring-2 focus:ring-green-500/20"
+              className="h-10 sm:h-12 transition-all duration-300 focus:ring-2 focus:ring-green-500/20 text-sm sm:text-base"
             />
           </div>
         )}
@@ -191,7 +191,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={isLoading}
-            className="h-12 transition-all duration-300 focus:ring-2 focus:ring-green-500/20"
+            className="h-10 sm:h-12 transition-all duration-300 focus:ring-2 focus:ring-green-500/20 text-sm sm:text-base"
           />
         </div>
 
@@ -203,15 +203,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={isLoading}
-            className="h-12 transition-all duration-300 focus:ring-2 focus:ring-green-500/20"
+            className="h-10 sm:h-12 transition-all duration-300 focus:ring-2 focus:ring-green-500/20 text-sm sm:text-base"
             minLength={8}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition-colors"
+            className="absolute right-3 top-2.5 sm:top-3.5 text-gray-500 hover:text-gray-700 transition-colors"
           >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
 
@@ -224,29 +224,29 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               disabled={isLoading}
-              className="h-12 transition-all duration-300 focus:ring-2 focus:ring-green-500/20"
+              className="h-10 sm:h-12 transition-all duration-300 focus:ring-2 focus:ring-green-500/20 text-sm sm:text-base"
               minLength={8}
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition-colors"
+              className="absolute right-3 top-2.5 sm:top-3.5 text-gray-500 hover:text-gray-700 transition-colors"
             >
-              {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
         )}
 
         <Button 
           type="submit" 
-          className="w-full h-12 bg-green-500 hover:bg-green-600 text-white transition-all duration-300 transform hover:translate-y-[-2px] hover:shadow-lg"
+          className="w-full h-10 sm:h-12 bg-green-500 hover:bg-green-600 text-white transition-all duration-300 transform hover:translate-y-[-2px] hover:shadow-lg text-sm sm:text-base"
           disabled={isLoading}
         >
           {isLoading ? 'Please wait...' : (mode === 'signup' ? 'Create Account' : 'Sign in')}
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-muted-foreground">
         {mode === 'signup' ? (
           <>
             Already have an account?{' '}

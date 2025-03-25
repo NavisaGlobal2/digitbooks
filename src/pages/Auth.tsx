@@ -24,12 +24,12 @@ const Auth: React.FC = () => {
   }, [isAuthenticated, navigate, location]);
 
   return (
-    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2">
+    <div className="min-h-screen flex flex-col md:grid md:grid-cols-2">
       {/* Left side - Auth form */}
-      <div className="flex flex-col p-8 bg-gradient-to-b from-white to-gray-50">
+      <div className="flex flex-col p-4 sm:p-6 md:p-8 bg-gradient-to-b from-white to-gray-50 min-h-screen md:min-h-0">
         <AuthHeader />
 
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center py-6 md:py-0">
           <AuthForm mode={mode} setMode={setMode} />
         </div>
       </div>
