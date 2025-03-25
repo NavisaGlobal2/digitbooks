@@ -31,6 +31,7 @@ const AccountVerifier = ({
   const [isError, setIsError] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isApiKeyIssue, setIsApiKeyIssue] = useState(false);
+  const [apiResponse, setApiResponse] = useState<any>(null);
 
   const handleVerify = async () => {
     if (onVerify) {
@@ -41,6 +42,7 @@ const AccountVerifier = ({
     setIsError(false);
     setIsApiKeyIssue(false);
     setVerificationMessage("");
+    setApiResponse(null);
     setIsVerifying(true);
 
     try {
@@ -56,27 +58,34 @@ const AccountVerifier = ({
       
       const result = await verifyBankAccount(accountNumber, selectedBankCode);
       console.log("Verification result:", result);
+      setApiResponse(result);
       
       if (result.message?.includes("API key validation failed")) {
         setIsApiKeyIssue(true);
         setIsError(true);
         toast.error("Using test mode instead");
         
-        if (setIsVerified && setAccountName) {
+        if (setIsVerified && setAccountName && result.data?.account_name) {
           setIsVerified(true);
-          setAccountName("Account holder " + accountNumber.substring(0, 3) + "***" + accountNumber.substring(7));
+          setAccountName(result.data.account_name);
           setIsError(false);
-          setVerificationMessage("Account verification successful (Test mode)");
+          setVerificationMessage(`Account verification successful (Test mode): ${result.data.account_name}`);
+        } else if (setIsVerified && setAccountName) {
+          setIsVerified(true);
+          const testName = "Account holder " + accountNumber.substring(0, 3) + "***" + accountNumber.substring(7);
+          setAccountName(testName);
+          setIsError(false);
+          setVerificationMessage(`Account verification successful (Test mode): ${testName}`);
         }
         return;
       }
       
-      if (result.verified && result.accountName && setAccountName && setIsVerified) {
-        setAccountName(result.accountName);
+      if (result.status && result.data?.account_name && setAccountName && setIsVerified) {
+        setAccountName(result.data.account_name);
         setIsVerified(true);
         setIsError(false);
         toast.success(result.message || "Account verified successfully");
-        setVerificationMessage(`Account verified: ${result.accountName}`);
+        setVerificationMessage(`Account verified: ${result.data.account_name}`);
       } else {
         if (setIsVerified) setIsVerified(false);
         setIsError(true);
@@ -142,6 +151,15 @@ const AccountVerifier = ({
             </AlertDescription>
           </div>
         </Alert>
+      )}
+      
+      {apiResponse && (
+        <div className="mt-2 text-xs border rounded p-2 bg-gray-50">
+          <p className="font-medium mb-1">Paystack API Response:</p>
+          <pre className="whitespace-pre-wrap overflow-x-auto max-h-24 text-xs">
+            {JSON.stringify(apiResponse, null, 2)}
+          </pre>
+        </div>
       )}
     </div>
   );

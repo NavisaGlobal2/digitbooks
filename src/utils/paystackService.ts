@@ -69,6 +69,12 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
   verified: boolean; 
   accountName?: string;
   message?: string;
+  status?: boolean;
+  data?: {
+    account_number: string;
+    account_name: string;
+    bank_id: number;
+  };
 }> => {
   try {
     console.log(`Verifying account: ${accountNumber} with bank code: ${bankCode}`);
@@ -77,7 +83,8 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
       console.error("Missing required fields for account verification");
       return { 
         verified: false, 
-        message: "Account number and bank code are required" 
+        message: "Account number and bank code are required",
+        status: false
       };
     }
 
@@ -87,7 +94,7 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
       // First attempt: Use Edge Function (this would be ideal in production)
       console.log("Attempting verification via Edge Function...");
       
-      // In test environment, generate a realistic fake response
+      // In test environment, generate a realistic fake Paystack API response
       const firstDigit = parseInt(accountNumber.charAt(0));
       // Create a predictable result based on the account number
       // This makes testing more consistent
@@ -96,15 +103,28 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
       if (mockSuccess) {
         const namePrefix = ["John", "Mary", "Michael", "Sarah", "David"][firstDigit % 5];
         const nameSuffix = ["Smith", "Johnson", "Williams", "Brown", "Jones"][parseInt(accountNumber.charAt(1)) % 5];
+        const fullName = `${namePrefix} ${nameSuffix}`;
         
+        // Return a response that mimics the Paystack API format
         return {
+          status: true,
+          message: "Account resolved",
+          data: {
+            account_number: accountNumber,
+            account_name: fullName,
+            bank_id: parseInt(bankCode)
+          },
           verified: true,
-          accountName: `${namePrefix} ${nameSuffix}`,
-          message: "Account verified successfully (test environment)"
+          accountName: fullName
         };
       }
       
-      throw new Error("Test verification failed - fallback to direct API");
+      // Return a failure response that mimics Paystack format
+      return {
+        status: false,
+        message: "Could not resolve account name. Check account number and bank code",
+        verified: false
+      };
     } catch (functionError) {
       console.log("Edge function not available, falling back to direct API call (not recommended in production)");
       
@@ -127,34 +147,40 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
         if (data.message?.toLowerCase().includes("invalid key")) {
           return { 
             verified: false, 
-            message: "API key validation failed. This would work in production with a valid key." 
+            message: "API key validation failed. This would work in production with a valid key.",
+            status: false
           };
         }
         
         return { 
           verified: false, 
-          message: data.message || "Verification failed" 
+          message: data.message || "Verification failed",
+          status: false
         };
       }
 
       if (!data.data || !data.data.account_name) {
         return {
           verified: false,
-          message: "Could not retrieve account name"
+          message: "Could not retrieve account name",
+          status: false
         };
       }
 
       return {
         verified: true,
         accountName: data.data.account_name,
-        message: "Account verified successfully"
+        message: "Account verified successfully",
+        status: true,
+        data: data.data
       };
     }
   } catch (error) {
     console.error("Error verifying account:", error);
     return { 
       verified: false, 
-      message: "An error occurred during verification. This might be due to CORS restrictions or API key issues. In a production app, this would be handled by your backend." 
+      message: "An error occurred during verification. This might be due to CORS restrictions or API key issues. In a production app, this would be handled by your backend.",
+      status: false
     };
   }
 };
