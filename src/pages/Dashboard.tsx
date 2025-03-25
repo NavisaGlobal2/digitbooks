@@ -58,17 +58,19 @@ const Dashboard = () => {
 
   return (
     <DashboardContainer>
-      <DashboardHeader />
+      <div className="mt-1 mb-3">
+        <DashboardHeader />
+      </div>
       
-      <div className="mb-6">
+      <div className="mb-4">
         <QuickActions />
       </div>
       
-      <div className="mb-6">
+      <div className="mb-4">
         {isLoading ? (
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-32 rounded-lg" />
+              <Skeleton key={i} className="h-24 sm:h-28 md:h-32 rounded-lg" />
             ))}
           </div>
         ) : (
@@ -76,14 +78,14 @@ const Dashboard = () => {
         )}
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4">
         <MainContentSection 
           leftContent={
             <>
               {isLoading ? (
-                <div className="space-y-6">
-                  <Skeleton className="h-[400px] rounded-lg" />
-                  <Skeleton className="h-[400px] rounded-lg" />
+                <div className="space-y-4">
+                  <Skeleton className="h-[300px] rounded-lg" />
+                  <Skeleton className="h-[300px] rounded-lg" />
                 </div>
               ) : (
                 <>
@@ -95,14 +97,14 @@ const Dashboard = () => {
           }
           rightContent={
             isLoading ? (
-              <Skeleton className="h-[400px] rounded-lg" />
+              <Skeleton className="h-[300px] rounded-lg" />
             ) : (
               <TransactionsSection />
             )
           }
           bottomContent={
             isLoading ? (
-              <Skeleton className="h-[200px] rounded-lg" />
+              <Skeleton className="h-[150px] rounded-lg" />
             ) : (
               <AIInsights />
             )
@@ -110,9 +112,9 @@ const Dashboard = () => {
         />
       </div>
       
-      <div className="mb-6">
+      <div className="mb-4">
         {isLoading ? (
-          <Skeleton className="h-[200px] rounded-lg" />
+          <Skeleton className="h-[150px] rounded-lg" />
         ) : (
           <BillsSection />
         )}

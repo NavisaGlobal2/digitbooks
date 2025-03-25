@@ -15,7 +15,7 @@ const DashboardContainer = ({ children }: DashboardContainerProps) => {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       {/* Mobile Header with menu button */}
-      <div className="md:hidden flex items-center h-16 border-b border-border px-4 bg-white">
+      <div className="md:hidden flex items-center h-14 border-b border-border px-4 bg-white">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -51,8 +51,8 @@ const DashboardContainer = ({ children }: DashboardContainerProps) => {
         </div>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6 bg-background">
-          <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
+        <div className="flex-1 overflow-auto p-2 sm:p-3 md:p-4 bg-background">
+          <div className="max-w-7xl mx-auto space-y-3 md:space-y-4">
             {children}
           </div>
         </div>
