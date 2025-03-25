@@ -12,7 +12,7 @@ export const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ currentS
     <div className="w-full mb-6">
       <div className="h-1 bg-white/30 rounded-full w-full">
         <div 
-          className="h-1 bg-white rounded-full transition-all duration-300 ease-in-out" 
+          className="h-1 bg-white rounded-full" 
           style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
         ></div>
       </div>

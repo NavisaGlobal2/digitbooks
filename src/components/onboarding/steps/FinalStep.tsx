@@ -13,7 +13,7 @@ interface FinalStepProps {
     rcNumber: string;
     [key: string]: any;
   };
-  handleNext: () => boolean;
+  handleNext: () => Promise<boolean>;
   handleBack: () => void;
   industries: { value: string; label: string; }[];
 }

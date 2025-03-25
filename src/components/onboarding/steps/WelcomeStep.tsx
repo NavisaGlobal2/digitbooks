@@ -10,7 +10,7 @@ interface WelcomeStepProps {
     [key: string]: any;
   };
   setBusinessInfo: (info: any) => void;
-  handleNext: () => boolean;
+  handleNext: () => Promise<boolean>;
 }
 
 export const WelcomeStep: React.FC<WelcomeStepProps> = ({ 
@@ -18,12 +18,12 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
   setBusinessInfo, 
   handleNext 
 }) => {
-  const onNext = () => {
+  const onNext = async () => {
     if (!businessInfo.name) {
       toast.error("Please enter your business name");
       return;
     }
-    handleNext();
+    await handleNext();
   };
 
   return (
@@ -38,7 +38,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
         </p>
       </div>
       
-      <div className="transition-all duration-200">
+      <div>
         <label htmlFor="business-name" className="block text-white mb-2">
           Business name
         </label>
@@ -47,7 +47,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
           value={businessInfo.name}
           onChange={(e) => setBusinessInfo({ ...businessInfo, name: e.target.value })}
           placeholder="Enter your business name"
-          className="bg-white text-black focus:ring-2 focus:ring-white transition-all"
+          className="bg-white text-black focus:ring-2 focus:ring-white"
           autoFocus
         />
       </div>
