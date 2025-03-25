@@ -20,6 +20,7 @@ interface ActionButtonsProps {
   accountName: string;
   clientName?: string;
   selectedTemplate?: string;
+  invoiceNumber?: string;
 }
 
 const ActionButtons = ({
@@ -36,7 +37,8 @@ const ActionButtons = ({
   swiftCode,
   accountName,
   clientName = "Client",
-  selectedTemplate = "default"
+  selectedTemplate = "default",
+  invoiceNumber
 }: ActionButtonsProps) => {
   
   const handleDownloadAsPdf = async () => {
@@ -54,7 +56,8 @@ const ActionButtons = ({
         swiftCode,
         accountName,
         clientName,
-        selectedTemplate
+        selectedTemplate,
+        invoiceNumber
       });
       
       if (result) {
@@ -104,7 +107,8 @@ const ActionButtons = ({
         swiftCode,
         accountName,
         clientName,
-        selectedTemplate
+        selectedTemplate,
+        invoiceNumber
       });
       
       if (result) {
@@ -128,14 +132,16 @@ const ActionButtons = ({
         Download as PDF
       </Button>
       
-      <Button
-        onClick={handleCaptureInvoice}
-        className="text-white bg-gray-700 hover:bg-gray-800"
-        disabled={!isAccountVerified}
-      >
-        <Image className="h-4 w-4 mr-2" />
-        Download as Image
-      </Button>
+      {document.querySelector('.invoice-preview') && (
+        <Button
+          onClick={handleCaptureInvoice}
+          className="text-white bg-gray-700 hover:bg-gray-800"
+          disabled={!isAccountVerified}
+        >
+          <Image className="h-4 w-4 mr-2" />
+          Download as Image
+        </Button>
+      )}
       
       <Button
         onClick={handleShare}
