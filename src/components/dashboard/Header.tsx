@@ -110,18 +110,28 @@ const Header = () => {
     }
   };
   
+  // Truncate business name for smaller screens
+  const truncatedBusinessName = businessName && businessName.length > 15 
+    ? `${businessName.substring(0, 15)}...` 
+    : businessName;
+  
   return (
     <header className="h-14 sm:h-16 border-b border-border px-3 sm:px-6 flex items-center justify-between bg-white shadow-sm z-10">
       <h1 className="text-base sm:text-xl font-bold ml-10 md:ml-0 truncate">
         {businessName ? 
-          `Hi ${businessName}, let's get organized` : 
-          "Welcome, let's get organized"}
+          <span className="hidden sm:inline">{`Hi ${businessName}, let's get organized`}</span> :
+          <span className="hidden sm:inline">Welcome, let's get organized</span>
+        }
+        {businessName ? 
+          <span className="sm:hidden">{`Hi ${truncatedBusinessName}`}</span> :
+          <span className="sm:hidden">Welcome</span>
+        }
       </h1>
       
       <div className="flex items-center gap-1 sm:gap-4">
         {/* Search - Collapsible on mobile, expanded on desktop */}
         {isSearchExpanded ? (
-          <form onSubmit={handleSearchSubmit} className="relative w-full max-w-[200px] sm:max-w-[260px]">
+          <form onSubmit={handleSearchSubmit} className="relative w-full max-w-[160px] sm:max-w-[260px]">
             <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <input 
               type="text"
@@ -138,18 +148,12 @@ const Header = () => {
             />
           </form>
         ) : (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full relative hidden sm:flex" onClick={toggleSearch}>
-                  <Search className="h-5 w-5 text-secondary" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Search</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Button variant="ghost" size="icon" className="rounded-full relative" onClick={toggleSearch}>
+            <Search className="h-5 w-5 text-secondary" />
+          </Button>
         )}
 
+        {/* Help button - Hidden on small screens */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -166,6 +170,7 @@ const Header = () => {
           </Tooltip>
         </TooltipProvider>
         
+        {/* Settings button - Hidden on small screens */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -182,6 +187,7 @@ const Header = () => {
           </Tooltip>
         </TooltipProvider>
         
+        {/* Notifications dropdown */}
         <DropdownMenu>
           <TooltipProvider>
             <Tooltip>
@@ -203,7 +209,7 @@ const Header = () => {
             </Tooltip>
           </TooltipProvider>
           
-          <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuContent align="end" className="w-[280px] sm:w-80 bg-white">
             <div className="px-4 py-2 font-medium">Notifications</div>
             <DropdownMenuSeparator />
             {notifications.length === 0 ? (
@@ -238,6 +244,7 @@ const Header = () => {
           </DropdownMenuContent>
         </DropdownMenu>
         
+        {/* Generate Report button - Hidden on small screens */}
         <Button 
           className="bg-primary hover:bg-primary/90 text-white px-2 sm:px-4 py-1 rounded-full text-xs sm:text-sm hidden sm:flex"
           onClick={handleReportGeneration}
