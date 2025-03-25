@@ -58,19 +58,17 @@ const Dashboard = () => {
 
   return (
     <DashboardContainer>
-      <div className="mt-2 mb-4">
-        <DashboardHeader />
-      </div>
+      <DashboardHeader />
       
-      <div className="mb-4">
+      <div className="mb-6">
         <QuickActions />
       </div>
       
-      <div className="mb-5">
+      <div className="mb-6">
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-5">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-24 sm:h-28 md:h-32 rounded-lg" />
+              <Skeleton key={i} className="h-32 rounded-lg" />
             ))}
           </div>
         ) : (
@@ -78,14 +76,14 @@ const Dashboard = () => {
         )}
       </div>
 
-      <div className="mb-5">
+      <div className="mb-6">
         <MainContentSection 
           leftContent={
             <>
               {isLoading ? (
-                <div className="space-y-4 sm:space-y-5">
-                  <Skeleton className="h-[280px] sm:h-[300px] md:h-[320px] rounded-lg" />
-                  <Skeleton className="h-[280px] sm:h-[300px] md:h-[320px] rounded-lg" />
+                <div className="space-y-6">
+                  <Skeleton className="h-[400px] rounded-lg" />
+                  <Skeleton className="h-[400px] rounded-lg" />
                 </div>
               ) : (
                 <>
@@ -97,14 +95,14 @@ const Dashboard = () => {
           }
           rightContent={
             isLoading ? (
-              <Skeleton className="h-[280px] sm:h-[300px] md:h-[320px] rounded-lg" />
+              <Skeleton className="h-[400px] rounded-lg" />
             ) : (
               <TransactionsSection />
             )
           }
           bottomContent={
             isLoading ? (
-              <Skeleton className="h-[150px] rounded-lg" />
+              <Skeleton className="h-[200px] rounded-lg" />
             ) : (
               <AIInsights />
             )
@@ -112,9 +110,9 @@ const Dashboard = () => {
         />
       </div>
       
-      <div className="mb-5">
+      <div className="mb-6">
         {isLoading ? (
-          <Skeleton className="h-[150px] rounded-lg" />
+          <Skeleton className="h-[200px] rounded-lg" />
         ) : (
           <BillsSection />
         )}
