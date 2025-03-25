@@ -5,7 +5,7 @@
 
 import jsPDF from "jspdf";
 import { InvoiceItem } from "@/types/invoice";
-import { formatNaira } from "../formatters";
+import { formatNaira, formatTableCurrency } from "../formatters";
 import { 
   getTableHeaderStyles, 
   getTableColumnStyles,
@@ -28,19 +28,19 @@ export const addInvoiceItems = (doc: jsPDF, invoiceItems: InvoiceItem[], yPos: n
   // Transform the invoice items into a format that jspdf-autotable can use
   const tableHeaders = ["Description", "Qty", "Unit Price", "Tax (%)", "Amount"];
   
-  const tableData = invoiceItems.map(item => [
+  const tableBody = invoiceItems.map(item => [
     item.description,
     item.quantity.toString(),
-    formatNaira(item.price),
+    formatTableCurrency(item.price),
     `${item.tax}%`,
-    formatNaira(item.quantity * item.price)
+    formatTableCurrency(item.quantity * item.price)
   ]);
   
   // Add the table with improved spacing and alignment
   (doc as any).autoTable({
     startY: yPos,
     head: [tableHeaders],
-    body: tableData,
+    body: tableBody,
     theme: 'grid',
     headStyles: getTableHeaderStyles(),
     columnStyles: getTableColumnStyles(),
@@ -66,40 +66,42 @@ export const addInvoiceItems = (doc: jsPDF, invoiceItems: InvoiceItem[], yPos: n
  */
 export const addInvoiceSummary = (doc: jsPDF, subtotal: number, tax: number, total: number, yPos: number): number => {
   const rightMargin = doc.internal.pageSize.width - 15;
-  const rightColumnX = rightMargin - 50;
+  const rightColumnX = rightMargin - 60;
+  const labelColumnX = rightColumnX - 40;
   
   // Add a light background for the summary section with more padding
-  doc.setFillColor(248, 248, 248);
-  doc.rect(rightColumnX - 15, yPos - 5, 75, 40, 'F');
+  doc.setFillColor(245, 245, 245);
+  doc.rect(labelColumnX - 5, yPos - 5, 105, 45, 'F');
   
   // Add a subtle border around the summary box
-  doc.setDrawColor(220, 220, 220);
-  doc.setLineWidth(0.2);
-  doc.rect(rightColumnX - 15, yPos - 5, 75, 40);
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.3);
+  doc.rect(labelColumnX - 5, yPos - 5, 105, 45);
   
   setupNormalTextStyle(doc);
   
-  // Improved spacing between summary items
-  doc.text("Subtotal:", rightColumnX, yPos + 5, { align: "right" });
-  doc.text(formatNaira(subtotal), rightMargin, yPos + 5, { align: "right" });
-  yPos += 10;
+  // Improved spacing between summary items with better alignment
+  doc.setFont('helvetica', 'normal');
+  doc.text("Subtotal:", labelColumnX, yPos + 8);
+  doc.text(formatTableCurrency(subtotal), rightMargin, yPos + 8, { align: "right" });
   
-  doc.text("Tax:", rightColumnX, yPos + 5, { align: "right" });
-  doc.text(formatNaira(tax), rightMargin, yPos + 5, { align: "right" });
-  yPos += 10;
+  doc.text("Tax:", labelColumnX, yPos + 20);
+  doc.text(formatTableCurrency(tax), rightMargin, yPos + 20, { align: "right" });
   
   // Add a separator line above the total
   doc.setDrawColor(180, 180, 180);
-  doc.line(rightColumnX - 15, yPos + 2, rightMargin, yPos + 2);
+  doc.setLineWidth(0.5);
+  doc.line(labelColumnX - 5, yPos + 28, rightMargin, yPos + 28);
   
   // Make the total stand out more
-  setupSubheaderStyle(doc);
-  setupBoldStyle(doc);
-  doc.text("Total:", rightColumnX, yPos + 12, { align: "right" });
-  doc.setTextColor(5, 209, 102); // Brand green for total amount
-  doc.text(formatNaira(total), rightMargin, yPos + 12, { align: "right" });
-  resetFontStyle(doc);
-  doc.setTextColor(44, 62, 80); // Reset text color
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text("Total:", labelColumnX, yPos + 38);
+  doc.setTextColor(3, 74, 46); // Brand darker green for total amount
+  doc.text(formatTableCurrency(total), rightMargin, yPos + 38, { align: "right" });
   
-  return yPos + 25;
+  // Reset text color
+  doc.setTextColor(44, 62, 80); 
+  
+  return yPos + 45;
 };

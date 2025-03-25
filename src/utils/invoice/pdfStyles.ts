@@ -62,9 +62,9 @@ export const getTableColumnStyles = () => {
   return {
     0: { cellWidth: 'auto', fontStyle: 'normal', minCellWidth: 60 }, // Description - wider
     1: { halign: 'center', fontStyle: 'normal', cellWidth: 20 }, // Quantity - fixed width
-    2: { halign: 'right', fontStyle: 'normal', cellWidth: 35 }, // Unit Price - fixed width
+    2: { halign: 'right', fontStyle: 'normal', cellWidth: 35, cellPadding: { right: 8 } }, // Unit Price - fixed width with padding
     3: { halign: 'center', fontStyle: 'normal', cellWidth: 20 }, // Tax - fixed width
-    4: { halign: 'right', fontStyle: 'normal', cellWidth: 35 } // Amount - fixed width
+    4: { halign: 'right', fontStyle: 'normal', cellWidth: 35, cellPadding: { right: 8 } } // Amount - fixed width with padding
   };
 };
 
@@ -73,14 +73,14 @@ export const getTableColumnStyles = () => {
  */
 export const getTableHeaderStyles = () => {
   return {
-    fillColor: [5, 209, 102], // Brand green color
+    fillColor: [3, 74, 46], // Darker green for header
     textColor: [255, 255, 255],
     fontSize: 12,
     fontStyle: 'bold',
     halign: 'center',
     valign: 'middle',
     lineWidth: 0.5,
-    lineColor: [3, 74, 46], // Darker green for border
+    lineColor: [3, 74, 46],
     cellPadding: 8 // Increased padding for headers
   };
 };

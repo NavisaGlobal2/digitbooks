@@ -27,7 +27,7 @@ export const addPaymentInfo = (doc: jsPDF, bankName: string, accountName: string
   yPos += 15;
   
   // Add section header with decorative element
-  doc.setFillColor(5, 209, 102);
+  doc.setFillColor(3, 74, 46); // Darker brand green
   doc.rect(leftMargin, yPos - 5, 5, 20, 'F');
   
   setupSubheaderStyle(doc);
@@ -50,8 +50,9 @@ export const addPaymentInfo = (doc: jsPDF, bankName: string, accountName: string
   
   setupNormalTextStyle(doc);
   
+  let labelWidth = 40; // Fixed width for labels
   let labelX = leftMargin + 10;
-  let valueX = leftMargin + 80;
+  let valueX = leftMargin + labelWidth + 30; // Consistent starting position for values
   let currentY = yPos + 3;
   
   if (bankName) {
@@ -106,7 +107,7 @@ export const addAdditionalInfo = (doc: jsPDF, additionalInfo: string, yPos: numb
   yPos += 15;
   
   // Add section header with decorative element
-  doc.setFillColor(5, 209, 102);
+  doc.setFillColor(3, 74, 46); // Darker brand green
   doc.rect(leftMargin, yPos - 5, 5, 20, 'F');
   
   setupSubheaderStyle(doc);
@@ -122,7 +123,7 @@ export const addAdditionalInfo = (doc: jsPDF, additionalInfo: string, yPos: numb
   const contentWidth = rightMargin - leftMargin - 20; // 10px padding on each side
   const textLines = doc.splitTextToSize(additionalInfo, contentWidth);
   const lineHeight = 6; // Approximate line height
-  const textHeight = textLines.length * lineHeight + 10; // 5px padding top and bottom
+  const textHeight = textLines.length * lineHeight + 15; // 7.5px padding top and bottom
   
   doc.setFillColor(248, 248, 248);
   doc.rect(leftMargin, yPos - 5, rightMargin - leftMargin, textHeight, 'F');
@@ -133,7 +134,7 @@ export const addAdditionalInfo = (doc: jsPDF, additionalInfo: string, yPos: numb
   doc.rect(leftMargin, yPos - 5, rightMargin - leftMargin, textHeight);
   
   // Split long text into multiple lines with proper formatting and padding
-  doc.text(textLines, leftMargin + 10, yPos + 3);
+  doc.text(textLines, leftMargin + 10, yPos + 5);
   
   return yPos + textHeight + 5;
 };
@@ -146,8 +147,8 @@ export const addFooter = (doc: jsPDF) => {
   const pageHeight = doc.internal.pageSize.height;
   
   // Add a decorative footer bar
-  doc.setFillColor(5, 209, 102);
-  doc.rect(pageWidth / 2 - 60, pageHeight - 20, 120, 1, 'F');
+  doc.setFillColor(3, 74, 46); // Darker brand green
+  doc.rect(pageWidth / 2 - 60, pageHeight - 20, 120, 2, 'F');
   
   setupFooterStyle(doc);
   doc.text("Thank you for your business!", pageWidth / 2, pageHeight - 15, { align: "center" });

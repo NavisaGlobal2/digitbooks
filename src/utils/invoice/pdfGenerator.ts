@@ -26,7 +26,7 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
     accountName,
     clientName = "Client",
     invoiceNumber = format(new Date(), "yyyyMMdd"),
-    selectedTemplate = "default"
+    selectedTemplate = "professional" // Change default to professional template
   } = invoiceDetails;
 
   // Create a new PDF document with A4 size and improved precision
