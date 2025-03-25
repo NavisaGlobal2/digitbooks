@@ -41,9 +41,9 @@ const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 w-full">
       <div className="space-y-2">
-        <Label htmlFor="business-name" className={errors.name ? "text-destructive" : ""}>
+        <Label htmlFor="business-name" className={errors.name ? "text-red-500" : "text-gray-700"}>
           Business name *
         </Label>
         <Input
@@ -54,16 +54,16 @@ const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
             if (errors.name) setErrors({ ...errors, name: "" });
           }}
           placeholder="Enter your business name"
-          className={errors.name ? "border-destructive" : ""}
+          className={`${errors.name ? "border-red-500" : "border-gray-200"} h-9`}
           required
         />
         {errors.name && (
-          <p className="text-sm text-destructive">{errors.name}</p>
+          <p className="text-xs text-red-500">{errors.name}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="business-type" className={errors.type ? "text-destructive" : ""}>
+        <Label htmlFor="business-type" className={errors.type ? "text-red-500" : "text-gray-700"}>
           Business type *
         </Label>
         <Select 
@@ -73,7 +73,7 @@ const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
             if (errors.type) setErrors({ ...errors, type: "" });
           }}
         >
-          <SelectTrigger className={errors.type ? "border-destructive" : ""}>
+          <SelectTrigger className={`${errors.type ? "border-red-500" : "border-gray-200"} h-9`}>
             <SelectValue placeholder="Select business type" />
           </SelectTrigger>
           <SelectContent>
@@ -85,12 +85,12 @@ const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
           </SelectContent>
         </Select>
         {errors.type && (
-          <p className="text-sm text-destructive">{errors.type}</p>
+          <p className="text-xs text-red-500">{errors.type}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="industry" className={errors.industry ? "text-destructive" : ""}>
+        <Label htmlFor="industry" className={errors.industry ? "text-red-500" : "text-gray-700"}>
           Industry *
         </Label>
         <Select 
@@ -100,7 +100,7 @@ const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
             if (errors.industry) setErrors({ ...errors, industry: "" });
           }}
         >
-          <SelectTrigger className={errors.industry ? "border-destructive" : ""}>
+          <SelectTrigger className={`${errors.industry ? "border-red-500" : "border-gray-200"} h-9`}>
             <SelectValue placeholder="Select your industry" />
           </SelectTrigger>
           <SelectContent>
@@ -112,46 +112,49 @@ const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
           </SelectContent>
         </Select>
         {errors.industry && (
-          <p className="text-sm text-destructive">{errors.industry}</p>
+          <p className="text-xs text-red-500">{errors.industry}</p>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <Label htmlFor="phone">Business phone</Label>
+          <Label htmlFor="phone" className="text-gray-700">Business phone</Label>
           <Input
             id="phone"
             type="tel"
             value={businessInfo.phone}
             onChange={(e) => onBusinessInfoChange({ ...businessInfo, phone: e.target.value })}
-            placeholder="Enter business phone"
+            placeholder="Enter phone"
+            className="border-gray-200 h-9"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="website">Business website</Label>
+          <Label htmlFor="website" className="text-gray-700">Business website</Label>
           <Input
             id="website"
             type="url"
             value={businessInfo.website}
             onChange={(e) => onBusinessInfoChange({ ...businessInfo, website: e.target.value })}
-            placeholder="Enter website URL"
+            placeholder="Enter website"
+            className="border-gray-200 h-9"
           />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="address">Business address</Label>
+        <Label htmlFor="address" className="text-gray-700">Business address</Label>
         <Input
           id="address"
           value={businessInfo.address}
           onChange={(e) => onBusinessInfoChange({ ...businessInfo, address: e.target.value })}
           placeholder="Enter business address"
+          className="border-gray-200 h-9"
         />
       </div>
 
       <Button 
-        className="w-full bg-green-500 hover:bg-green-600 text-white"
+        className="w-full bg-black hover:bg-gray-800 text-white h-9 mt-4"
         onClick={handleNext}
       >
         Continue

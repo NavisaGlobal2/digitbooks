@@ -36,9 +36,9 @@ const LegalInfoStep: React.FC<LegalInfoStepProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 w-full">
       <div className="space-y-2">
-        <Label htmlFor="rc-number" className={errors.rcNumber ? "text-destructive" : ""}>
+        <Label htmlFor="rc-number" className={errors.rcNumber ? "text-red-500" : "text-gray-700"}>
           RC Number *
         </Label>
         <Input
@@ -49,58 +49,61 @@ const LegalInfoStep: React.FC<LegalInfoStepProps> = ({
             if (errors.rcNumber) setErrors({ ...errors, rcNumber: "" });
           }}
           placeholder="Enter RC Number"
-          className={errors.rcNumber ? "border-destructive" : ""}
+          className={`${errors.rcNumber ? "border-red-500" : "border-gray-200"} h-9`}
           required
         />
         {errors.rcNumber && (
-          <p className="text-sm text-destructive">{errors.rcNumber}</p>
+          <p className="text-xs text-red-500">{errors.rcNumber}</p>
         )}
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-gray-500">
           Your Corporate Affairs Commission (CAC) registration number
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="tax-id">Tax Identification Number (TIN)</Label>
+        <Label htmlFor="tax-id" className="text-gray-700">Tax Identification Number (TIN)</Label>
         <Input
           id="tax-id"
           value={legalInfo.taxId}
           onChange={(e) => onLegalInfoChange({ ...legalInfo, taxId: e.target.value })}
           placeholder="Enter TIN (Optional)"
+          className="border-gray-200 h-9"
         />
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-gray-500">
           Your Federal Inland Revenue Service (FIRS) tax identification number
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="vat-number">VAT Registration Number</Label>
+        <Label htmlFor="vat-number" className="text-gray-700">VAT Registration Number</Label>
         <Input
           id="vat-number"
           value={legalInfo.vatNumber}
           onChange={(e) => onLegalInfoChange({ ...legalInfo, vatNumber: e.target.value })}
           placeholder="Enter VAT number (Optional)"
+          className="border-gray-200 h-9"
         />
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-gray-500">
           Your Value Added Tax registration number if applicable
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="registration-date">Business Registration Date</Label>
+        <Label htmlFor="registration-date" className="text-gray-700">Business Registration Date</Label>
         <Input
           id="registration-date"
           type="date"
           value={legalInfo.registrationDate}
           onChange={(e) => onLegalInfoChange({ ...legalInfo, registrationDate: e.target.value })}
+          className="border-gray-200 h-9"
         />
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-gray-500">
           The date your business was registered with CAC
         </p>
       </div>
 
       <Button 
-        className="w-full bg-green-500 hover:bg-green-600 text-white"
+        className="w-full bg-black hover:bg-gray-800 text-white h-9 mt-4"
         onClick={handleNext}
       >
         Continue

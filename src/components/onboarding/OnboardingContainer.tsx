@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -133,19 +134,19 @@ const OnboardingContainer = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-white flex items-center justify-center p-6">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       {isLoading ? (
         <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
         </div>
       ) : (
-        <div className="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-lg">
+        <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-sm">
           {currentStep > 0 && (
             <button 
               onClick={handleBack}
-              className="flex items-center text-muted-foreground mb-6 hover:text-primary transition-colors"
+              className="flex items-center text-gray-500 mb-4 hover:text-black"
             >
-              <ChevronLeft className="h-5 w-5 mr-1" />
+              <ChevronLeft className="h-4 w-4 mr-1" />
               Back
             </button>
           )}
@@ -155,7 +156,7 @@ const OnboardingContainer = () => {
             currentStep={currentStep}
           />
 
-          <div className="min-h-[450px] flex items-center justify-center">
+          <div className="min-h-[400px] flex items-center justify-center">
             {renderStepContent()}
           </div>
         </div>
