@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Bot, X, ChevronUp, ChevronDown, MessageCircle, Send, User } from "lucide-react";
+import { Bot, X, ChevronUp, ChevronDown, MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -94,10 +94,7 @@ const AIChatBot = () => {
           onClick={toggleOpen}
           className="rounded-full h-14 w-14 bg-[#05D166] hover:bg-[#05D166]/90 shadow-lg"
         >
-          <Avatar className="h-11 w-11">
-            <AvatarFallback className="bg-[#05D166]">AI</AvatarFallback>
-            <AvatarImage src="/lovable-uploads/37efa1ea-49eb-4e89-8928-6e829c9ac5bd.png" alt="AI Assistant" />
-          </Avatar>
+          <Bot className="h-6 w-6 text-white" />
         </Button>
       )}
 
@@ -106,11 +103,11 @@ const AIChatBot = () => {
           "w-80 shadow-lg transition-all duration-300 ease-in-out border border-[#05D166]/20",
           isMinimized ? "h-16" : "h-96"
         )}>
-          <CardHeader className="px-4 py-2 flex flex-row items-center justify-between bg-[#F2FCE2] border-b">
+          <CardHeader className="px-4 py-2 flex flex-row items-center justify-between bg-[#E5DEFF] border-b">
             <div className="flex items-center space-x-2">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-[#05D166]">AI</AvatarFallback>
-                <AvatarImage src="/lovable-uploads/37efa1ea-49eb-4e89-8928-6e829c9ac5bd.png" alt="AI Assistant" />
+              <Avatar className="h-8 w-8 bg-[#05D166]">
+                <AvatarFallback>AI</AvatarFallback>
+                <AvatarImage src="/lovable-uploads/a24925e2-43db-4889-a722-45a1c1440051.png" />
               </Avatar>
               <CardTitle className="text-sm font-medium">DigiBooks AI</CardTitle>
             </div>
@@ -126,7 +123,7 @@ const AIChatBot = () => {
 
           {!isMinimized && (
             <>
-              <CardContent className="p-4 overflow-y-auto h-[calc(100%-8rem)] bg-[#F2FCE2]/50">
+              <CardContent className="p-4 overflow-y-auto h-[calc(100%-8rem)] bg-[#E5DEFF]/20">
                 <div className="space-y-4">
                   {messages.map((msg) => (
                     <div
@@ -156,7 +153,7 @@ const AIChatBot = () => {
                 </div>
               </CardContent>
 
-              <CardFooter className="p-2 border-t bg-[#F2FCE2]/30">
+              <CardFooter className="p-2 border-t bg-[#E5DEFF]/10">
                 <div className="flex items-center w-full space-x-2">
                   <Textarea
                     value={message}
