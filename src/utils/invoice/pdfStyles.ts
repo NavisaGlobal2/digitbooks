@@ -9,7 +9,7 @@ import jsPDF from "jspdf";
  * Set up document styling for headers
  */
 export const setupHeaderStyle = (doc: jsPDF) => {
-  doc.setFontSize(20);
+  doc.setFontSize(22);
   doc.setTextColor(44, 62, 80); // Dark blue-gray for better readability
   doc.setFont('helvetica', 'bold');
 };
@@ -18,7 +18,7 @@ export const setupHeaderStyle = (doc: jsPDF) => {
  * Set up document styling for subheaders
  */
 export const setupSubheaderStyle = (doc: jsPDF) => {
-  doc.setFontSize(14);
+  doc.setFontSize(16);
   doc.setTextColor(44, 62, 80);
   doc.setFont('helvetica', 'normal');
 };
@@ -60,11 +60,11 @@ export const resetFontStyle = (doc: jsPDF) => {
  */
 export const getTableColumnStyles = () => {
   return {
-    0: { cellWidth: 70, fontStyle: 'normal' }, // Description
-    1: { halign: 'center', fontStyle: 'normal' }, // Quantity
-    2: { halign: 'right', fontStyle: 'normal' }, // Unit Price
-    3: { halign: 'center', fontStyle: 'normal' }, // Tax
-    4: { halign: 'right', fontStyle: 'normal' } // Amount
+    0: { cellWidth: 'auto', fontStyle: 'normal', minCellWidth: 60 }, // Description - wider
+    1: { halign: 'center', fontStyle: 'normal', cellWidth: 20 }, // Quantity - fixed width
+    2: { halign: 'right', fontStyle: 'normal', cellWidth: 35 }, // Unit Price - fixed width
+    3: { halign: 'center', fontStyle: 'normal', cellWidth: 20 }, // Tax - fixed width
+    4: { halign: 'right', fontStyle: 'normal', cellWidth: 35 } // Amount - fixed width
   };
 };
 
@@ -75,12 +75,13 @@ export const getTableHeaderStyles = () => {
   return {
     fillColor: [5, 209, 102], // Brand green color
     textColor: [255, 255, 255],
-    fontSize: 11,
+    fontSize: 12,
     fontStyle: 'bold',
     halign: 'center',
     valign: 'middle',
     lineWidth: 0.5,
-    lineColor: [3, 74, 46] // Darker green for border
+    lineColor: [3, 74, 46], // Darker green for border
+    cellPadding: 8 // Increased padding for headers
   };
 };
 
@@ -89,9 +90,10 @@ export const getTableHeaderStyles = () => {
  */
 export const getTableBodyStyles = () => {
   return {
-    fontSize: 10,
+    fontSize: 11, // Slightly larger for better readability
     cellPadding: 6,
-    lineColor: [220, 220, 220]
+    lineColor: [220, 220, 220],
+    lineWidth: 0.2 // Thinner lines for a more elegant look
   };
 };
 

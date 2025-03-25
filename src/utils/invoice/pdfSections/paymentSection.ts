@@ -20,61 +20,73 @@ export const addPaymentInfo = (doc: jsPDF, bankName: string, accountName: string
   const leftMargin = 15;
   const rightMargin = doc.internal.pageSize.width - 15;
   
-  // Add a section separator
+  // Add a section separator with more space
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.5);
   doc.line(leftMargin, yPos, rightMargin, yPos);
-  yPos += 10;
+  yPos += 15;
   
   // Add section header with decorative element
   doc.setFillColor(5, 209, 102);
-  doc.rect(leftMargin, yPos - 5, 3, 15, 'F');
+  doc.rect(leftMargin, yPos - 5, 5, 20, 'F');
   
   setupSubheaderStyle(doc);
   setupBoldStyle(doc);
-  doc.text("Bank Details", leftMargin + 10, yPos);
+  doc.text("Bank Details", leftMargin + 15, yPos + 2);
   resetFontStyle(doc);
-  yPos += 10;
+  yPos += 15;
   
-  // Add a light background for the bank details
+  // Add a light background for the bank details with more padding
+  const detailsHeight = 10 + (bankName ? 10 : 0) + (accountName ? 10 : 0) + 
+                        (accountNumber ? 10 : 0) + (swiftCode ? 10 : 0);
+  
   doc.setFillColor(248, 248, 248);
-  doc.rect(leftMargin, yPos - 5, rightMargin - leftMargin, bankName && accountName && accountNumber ? 35 : 15, 'F');
+  doc.rect(leftMargin, yPos - 5, rightMargin - leftMargin, detailsHeight, 'F');
+  
+  // Add a subtle border around the box
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.2);
+  doc.rect(leftMargin, yPos - 5, rightMargin - leftMargin, detailsHeight);
   
   setupNormalTextStyle(doc);
   
+  let labelX = leftMargin + 10;
+  let valueX = leftMargin + 80;
+  let currentY = yPos + 3;
+  
   if (bankName) {
     setupBoldStyle(doc);
-    doc.text("Bank Name:", leftMargin + 5, yPos);
+    doc.text("Bank Name:", labelX, currentY);
     resetFontStyle(doc);
-    doc.text(bankName, leftMargin + 80, yPos);
-    yPos += 8;
+    doc.text(bankName, valueX, currentY);
+    currentY += 10;
   }
   
   if (accountName) {
     setupBoldStyle(doc);
-    doc.text("Account Name:", leftMargin + 5, yPos);
+    doc.text("Account Name:", labelX, currentY);
     resetFontStyle(doc);
-    doc.text(accountName, leftMargin + 80, yPos);
-    yPos += 8;
+    doc.text(accountName, valueX, currentY);
+    currentY += 10;
   }
   
   if (accountNumber) {
     setupBoldStyle(doc);
-    doc.text("Account Number:", leftMargin + 5, yPos);
+    doc.text("Account Number:", labelX, currentY);
     resetFontStyle(doc);
-    doc.text(accountNumber, leftMargin + 80, yPos);
-    yPos += 8;
+    doc.text(accountNumber, valueX, currentY);
+    currentY += 10;
   }
   
   if (swiftCode) {
     setupBoldStyle(doc);
-    doc.text("Swift Code:", leftMargin + 5, yPos);
+    doc.text("Swift Code:", labelX, currentY);
     resetFontStyle(doc);
-    doc.text(swiftCode, leftMargin + 80, yPos);
-    yPos += 8;
+    doc.text(swiftCode, valueX, currentY);
+    currentY += 10;
   }
   
-  return yPos + 5;
+  return currentY + 5;
 };
 
 /**
@@ -87,33 +99,43 @@ export const addAdditionalInfo = (doc: jsPDF, additionalInfo: string, yPos: numb
   const leftMargin = 15;
   const rightMargin = doc.internal.pageSize.width - 15;
   
-  // Add a section separator
+  // Add a section separator with better spacing
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.5);
   doc.line(leftMargin, yPos, rightMargin, yPos);
-  yPos += 10;
+  yPos += 15;
   
   // Add section header with decorative element
   doc.setFillColor(5, 209, 102);
-  doc.rect(leftMargin, yPos - 5, 3, 15, 'F');
+  doc.rect(leftMargin, yPos - 5, 5, 20, 'F');
   
   setupSubheaderStyle(doc);
   setupBoldStyle(doc);
-  doc.text("Additional Information", leftMargin + 10, yPos);
+  doc.text("Additional Information", leftMargin + 15, yPos + 2);
   resetFontStyle(doc);
-  yPos += 10;
+  yPos += 15;
   
   setupNormalTextStyle(doc);
   
-  // Add a light background for the additional info
+  // Add a light background for the additional info with proper spacing
+  // Calculate height based on text length
+  const contentWidth = rightMargin - leftMargin - 20; // 10px padding on each side
+  const textLines = doc.splitTextToSize(additionalInfo, contentWidth);
+  const lineHeight = 6; // Approximate line height
+  const textHeight = textLines.length * lineHeight + 10; // 5px padding top and bottom
+  
   doc.setFillColor(248, 248, 248);
-  doc.rect(leftMargin, yPos - 5, rightMargin - leftMargin, 20, 'F');
+  doc.rect(leftMargin, yPos - 5, rightMargin - leftMargin, textHeight, 'F');
   
-  // Split long text into multiple lines with proper formatting
-  const textLines = doc.splitTextToSize(additionalInfo, rightMargin - leftMargin - 10);
-  doc.text(textLines, leftMargin + 5, yPos);
+  // Add a subtle border around the box
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.2);
+  doc.rect(leftMargin, yPos - 5, rightMargin - leftMargin, textHeight);
   
-  return yPos + (textLines.length * 7) + 5;
+  // Split long text into multiple lines with proper formatting and padding
+  doc.text(textLines, leftMargin + 10, yPos + 3);
+  
+  return yPos + textHeight + 5;
 };
 
 /**
@@ -125,7 +147,7 @@ export const addFooter = (doc: jsPDF) => {
   
   // Add a decorative footer bar
   doc.setFillColor(5, 209, 102);
-  doc.rect(pageWidth / 2 - 50, pageHeight - 20, 100, 1, 'F');
+  doc.rect(pageWidth / 2 - 60, pageHeight - 20, 120, 1, 'F');
   
   setupFooterStyle(doc);
   doc.text("Thank you for your business!", pageWidth / 2, pageHeight - 15, { align: "center" });

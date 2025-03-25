@@ -29,7 +29,7 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
     selectedTemplate = "default"
   } = invoiceDetails;
 
-  // Create a new PDF document with A4 size
+  // Create a new PDF document with A4 size and improved precision
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -38,9 +38,9 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
     precision: 4
   });
   
-  // Add document metadata
+  // Add document metadata for better organization
   doc.setProperties({
-    title: `Invoice ${invoiceNumber}`,
+    title: `Invoice ${invoiceNumber} - ${clientName}`,
     subject: 'Invoice Document',
     author: 'DigitBooks',
     keywords: 'invoice, billing, payment',
@@ -52,7 +52,10 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
   const tax = calculateTax(invoiceItems);
   const total = calculateTotal(invoiceItems);
   
-  // Render the selected template
+  // Apply document-wide font setting for consistency
+  doc.setFont('helvetica');
+  
+  // Render the selected template with improved spacing
   renderInvoiceTemplate(doc, {
     ...invoiceDetails,
     subtotal,
@@ -60,7 +63,7 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
     total
   });
   
-  // Convert the PDF to a Blob
+  // Convert the PDF to a Blob with proper content type
   const arrayBuffer = doc.output('arraybuffer');
   const pdfBlob = new Blob([arrayBuffer], { type: 'application/pdf' });
   
