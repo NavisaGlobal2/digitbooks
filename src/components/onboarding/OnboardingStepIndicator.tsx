@@ -36,10 +36,6 @@ const OnboardingStepIndicator: React.FC<OnboardingStepIndicatorProps> = ({
           </div>
         ))}
       </div>
-      
-      <div className="text-center mb-4">
-        <p className="text-gray-500 text-xs">{steps[currentStep].description}</p>
-      </div>
     </div>
   );
 };
