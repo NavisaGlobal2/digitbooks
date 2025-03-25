@@ -97,6 +97,12 @@ const Onboarding = () => {
     }
   };
 
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const renderLeftColumn = () => {
     return (
       <div className="hidden md:flex flex-col justify-center items-center p-8 bg-white h-screen w-full">
@@ -144,7 +150,7 @@ const Onboarding = () => {
           </p>
         </div>
         
-        <div>
+        <div className="transition-all duration-200">
           <label htmlFor="business-name" className="block text-white mb-2">
             Business name
           </label>
@@ -153,7 +159,8 @@ const Onboarding = () => {
             value={businessInfo.name}
             onChange={(e) => setBusinessInfo({ ...businessInfo, name: e.target.value })}
             placeholder="Enter your business name"
-            className="bg-white text-black"
+            className="bg-white text-black focus:ring-2 focus:ring-white transition-all"
+            autoFocus
           />
         </div>
 
@@ -174,7 +181,7 @@ const Onboarding = () => {
           <h2 className="text-2xl font-bold mb-2">Great! I need more information about your business</h2>
         </div>
         
-        <div>
+        <div className="transition-all duration-200">
           <label htmlFor="industry" className="block text-white mb-2">
             Business industry
           </label>
@@ -182,7 +189,7 @@ const Onboarding = () => {
             value={businessInfo.industry}
             onValueChange={(value) => setBusinessInfo({ ...businessInfo, industry: value })}
           >
-            <SelectTrigger className="bg-white text-black">
+            <SelectTrigger className="bg-white text-black focus:ring-2 focus:ring-white">
               <SelectValue placeholder="Select your industry" />
             </SelectTrigger>
             <SelectContent>
@@ -195,7 +202,7 @@ const Onboarding = () => {
           </Select>
         </div>
 
-        <div>
+        <div className="transition-all duration-200">
           <label htmlFor="location" className="block text-white mb-2">
             Business location
           </label>
@@ -203,7 +210,7 @@ const Onboarding = () => {
             value={businessInfo.state}
             onValueChange={(value) => setBusinessInfo({ ...businessInfo, state: value })}
           >
-            <SelectTrigger className="bg-white text-black">
+            <SelectTrigger className="bg-white text-black focus:ring-2 focus:ring-white">
               <SelectValue placeholder="Ikorodu Lagos" />
             </SelectTrigger>
             <SelectContent>
@@ -215,12 +222,20 @@ const Onboarding = () => {
           </Select>
         </div>
 
-        <Button 
-          className="w-full bg-black hover:bg-black/90 text-white py-6"
-          onClick={handleNext}
-        >
-          Continue
-        </Button>
+        <div className="flex space-x-4 pt-4">
+          <Button 
+            className="w-1/3 border border-white/20 bg-[#05D166]/20 hover:bg-[#05D166]/30 text-white"
+            onClick={handleBack}
+          >
+            Back
+          </Button>
+          <Button 
+            className="w-2/3 bg-black hover:bg-black/90 text-white"
+            onClick={handleNext}
+          >
+            Continue
+          </Button>
+        </div>
       </div>
     );
   };
@@ -228,7 +243,7 @@ const Onboarding = () => {
   const renderLegalInfoStep = () => {
     return (
       <div className="space-y-6">
-        <div>
+        <div className="transition-all duration-200">
           <label htmlFor="rc-number" className="block text-white mb-2">
             Business registration number
           </label>
@@ -237,7 +252,8 @@ const Onboarding = () => {
             value={legalInfo.rcNumber}
             onChange={(e) => setLegalInfo({ ...legalInfo, rcNumber: e.target.value })}
             placeholder="RC123456"
-            className="bg-white text-black"
+            className="bg-white text-black focus:ring-2 focus:ring-white"
+            autoFocus
           />
         </div>
 
@@ -245,40 +261,40 @@ const Onboarding = () => {
           <label className="block text-white mb-2">
             Business size
           </label>
-          <div className="flex gap-4">
-            <label className="flex items-center space-x-2 bg-white rounded-md px-4 py-2">
+          <div className="grid grid-cols-3 gap-2">
+            <label className={`flex items-center justify-center space-x-2 rounded-md px-4 py-2 cursor-pointer transition-all duration-200 ${businessInfo.size === "1-5" ? "bg-black text-white" : "bg-white text-black"}`}>
               <input
                 type="radio"
                 checked={businessInfo.size === "1-5"}
                 onChange={() => setBusinessInfo({ ...businessInfo, size: "1-5" })}
-                className="text-[#05D166]"
+                className="hidden"
               />
-              <span className="text-black">1-5 staffs</span>
+              <span>1-5 staffs</span>
             </label>
             
-            <label className="flex items-center space-x-2 bg-white rounded-md px-4 py-2">
+            <label className={`flex items-center justify-center space-x-2 rounded-md px-4 py-2 cursor-pointer transition-all duration-200 ${businessInfo.size === "6-20" ? "bg-black text-white" : "bg-white text-black"}`}>
               <input
                 type="radio"
                 checked={businessInfo.size === "6-20"}
                 onChange={() => setBusinessInfo({ ...businessInfo, size: "6-20" })}
-                className="text-[#05D166]"
+                className="hidden"
               />
-              <span className="text-black">6-20 staffs</span>
+              <span>6-20 staffs</span>
             </label>
             
-            <label className="flex items-center space-x-2 bg-white rounded-md px-4 py-2">
+            <label className={`flex items-center justify-center space-x-2 rounded-md px-4 py-2 cursor-pointer transition-all duration-200 ${businessInfo.size === "20+" ? "bg-black text-white" : "bg-white text-black"}`}>
               <input
                 type="radio"
                 checked={businessInfo.size === "20+"}
                 onChange={() => setBusinessInfo({ ...businessInfo, size: "20+" })}
-                className="text-[#05D166]"
+                className="hidden"
               />
-              <span className="text-black">Above 20 staffs</span>
+              <span>20+ staffs</span>
             </label>
           </div>
         </div>
 
-        <div>
+        <div className="transition-all duration-200">
           <label htmlFor="currency" className="block text-white mb-2">
             Preferred currency
           </label>
@@ -286,7 +302,7 @@ const Onboarding = () => {
             value="NGN"
             onValueChange={() => {}}
           >
-            <SelectTrigger className="bg-white text-black">
+            <SelectTrigger className="bg-white text-black focus:ring-2 focus:ring-white">
               <SelectValue placeholder="Naira" />
             </SelectTrigger>
             <SelectContent>
@@ -298,30 +314,81 @@ const Onboarding = () => {
           </Select>
         </div>
 
-        <Button 
-          className="w-full bg-black hover:bg-black/90 text-white py-6"
-          onClick={handleNext}
-        >
-          Let's begin
-        </Button>
+        <div className="flex space-x-4 pt-4">
+          <Button 
+            className="w-1/3 border border-white/20 bg-[#05D166]/20 hover:bg-[#05D166]/30 text-white"
+            onClick={handleBack}
+          >
+            Back
+          </Button>
+          <Button 
+            className="w-2/3 bg-black hover:bg-black/90 text-white"
+            onClick={handleNext}
+          >
+            Continue
+          </Button>
+        </div>
       </div>
     );
   };
 
   const renderFinalStep = () => {
     return (
-      <div className="space-y-6 text-center">
+      <div className="space-y-6">
         <h2 className="text-2xl font-bold mb-4">Ready to start your financial journey!</h2>
         <p className="text-white/80 mb-8">
           Your business profile has been set up. Now let's start managing your finances more efficiently.
         </p>
         
-        <Button 
-          className="w-full bg-black hover:bg-black/90 text-white py-6"
-          onClick={handleNext}
-        >
-          Go to Dashboard
-        </Button>
+        <div className="space-y-4">
+          <div className="bg-white/20 rounded-lg p-4">
+            <h3 className="font-semibold text-white mb-1">Business Name</h3>
+            <p className="text-white/90">{businessInfo.name || "Not provided"}</p>
+          </div>
+          
+          <div className="bg-white/20 rounded-lg p-4">
+            <h3 className="font-semibold text-white mb-1">Industry</h3>
+            <p className="text-white/90">{businessInfo.industry ? INDUSTRIES.find(i => i.value === businessInfo.industry)?.label : "Not selected"}</p>
+          </div>
+          
+          <div className="bg-white/20 rounded-lg p-4">
+            <h3 className="font-semibold text-white mb-1">RC Number</h3>
+            <p className="text-white/90">{legalInfo.rcNumber || "Not provided"}</p>
+          </div>
+        </div>
+        
+        <div className="flex space-x-4 pt-4">
+          <Button 
+            className="w-1/3 border border-white/20 bg-[#05D166]/20 hover:bg-[#05D166]/30 text-white"
+            onClick={handleBack}
+          >
+            Back
+          </Button>
+          <Button 
+            className="w-2/3 bg-black hover:bg-black/90 text-white"
+            onClick={handleNext}
+          >
+            Go to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderProgressBar = () => {
+    const totalSteps = 4;
+    return (
+      <div className="w-full mb-6">
+        <div className="h-1 bg-white/30 rounded-full w-full">
+          <div 
+            className="h-1 bg-white rounded-full transition-all duration-300 ease-in-out" 
+            style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
+          ></div>
+        </div>
+        <div className="flex justify-between mt-2 text-white/70 text-xs">
+          <span>Start</span>
+          <span>Complete</span>
+        </div>
       </div>
     );
   };
@@ -329,6 +396,7 @@ const Onboarding = () => {
   const renderRightColumn = () => {
     return (
       <div className="p-8 md:p-12 w-full h-full flex flex-col justify-center">
+        {renderProgressBar()}
         {currentStep === 0 && renderWelcomeStep()}
         {currentStep === 1 && renderBusinessInfoStep()}
         {currentStep === 2 && renderLegalInfoStep()}
