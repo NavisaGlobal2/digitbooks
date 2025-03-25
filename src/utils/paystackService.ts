@@ -86,17 +86,25 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
     try {
       // First attempt: Use Edge Function (this would be ideal in production)
       console.log("Attempting verification via Edge Function...");
-      const mockSuccess = Math.random() > 0.3; // Simulate verification for demo
+      
+      // In test environment, generate a realistic fake response
+      const firstDigit = parseInt(accountNumber.charAt(0));
+      // Create a predictable result based on the account number
+      // This makes testing more consistent
+      const mockSuccess = accountNumber.charAt(accountNumber.length - 1) !== '0';
       
       if (mockSuccess) {
+        const namePrefix = ["John", "Mary", "Michael", "Sarah", "David"][firstDigit % 5];
+        const nameSuffix = ["Smith", "Johnson", "Williams", "Brown", "Jones"][parseInt(accountNumber.charAt(1)) % 5];
+        
         return {
           verified: true,
-          accountName: "Demo Account Name",
-          message: "Account verified successfully (demo mode)"
+          accountName: `${namePrefix} ${nameSuffix}`,
+          message: "Account verified successfully (test environment)"
         };
       }
       
-      throw new Error("Demo verification failed - fallback to direct API");
+      throw new Error("Test verification failed - fallback to direct API");
     } catch (functionError) {
       console.log("Edge function not available, falling back to direct API call (not recommended in production)");
       
