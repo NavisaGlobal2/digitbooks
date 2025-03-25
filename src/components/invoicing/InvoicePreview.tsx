@@ -36,7 +36,7 @@ const InvoicePreview = ({
   clientName
 }: InvoicePreviewProps) => {
   return (
-    <div className="bg-white rounded-lg border border-border p-8 shadow-sm">
+    <div className="invoice-preview bg-white rounded-lg border border-border p-8 shadow-sm">
       {/* Invoice Header */}
       <div className="flex justify-between items-start mb-8">
         <div>

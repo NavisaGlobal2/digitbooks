@@ -1,11 +1,12 @@
 
-import { Download, Share } from "lucide-react";
+import { Download, Image, Share } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { InvoiceItem } from "@/types/invoice";
 import { generateInvoice } from "@/utils/invoice";
 import { saveAs } from "file-saver";
 import { format } from "date-fns";
+import { downloadInvoice, shareInvoice, captureInvoiceAsImage } from "@/utils/invoice/documentActions";
 
 interface ActionButtonsProps {
   handleGenerateInvoice: () => void;
@@ -75,6 +76,30 @@ const ActionButtons = ({
     }
   };
 
+  const handleCaptureInvoice = async () => {
+    try {
+      // Find the invoice preview element
+      const previewElement = document.querySelector('.invoice-preview');
+      if (!previewElement) {
+        throw new Error("Invoice preview not found");
+      }
+
+      toast.loading("Capturing invoice...");
+      
+      // Capture the preview as an image
+      const result = await captureInvoiceAsImage(previewElement as HTMLElement, clientName);
+      
+      if (result) {
+        toast.success("Invoice image captured successfully!");
+        // Call the parent's handler for analytics/tracking
+        handleGenerateInvoice();
+      }
+    } catch (error) {
+      console.error("Failed to capture invoice:", error);
+      toast.error("Failed to capture invoice. Please try again.");
+    }
+  };
+
   return (
     <div className="flex flex-col space-y-3">
       <Button
@@ -83,7 +108,16 @@ const ActionButtons = ({
         disabled={!isAccountVerified}
       >
         <Download className="h-4 w-4 mr-2" />
-        Download Invoice
+        Download as PDF
+      </Button>
+      
+      <Button
+        onClick={handleCaptureInvoice}
+        className="text-white bg-gray-700 hover:bg-gray-800"
+        disabled={!isAccountVerified}
+      >
+        <Image className="h-4 w-4 mr-2" />
+        Download as Image
       </Button>
       
       <Button
