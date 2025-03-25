@@ -27,10 +27,19 @@ export const AISettings = () => {
     const fetchSettings = async () => {
       setIsLoading(true);
       try {
+        // Get the current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast.error("You must be logged in to view settings");
+          setIsLoading(false);
+          return;
+        }
+
         // Use the correct table name as defined in our schema
         const { data, error } = await supabase
           .from('ai_settings')
           .select('*')
+          .eq('user_id', user.id)
           .maybeSingle();
         
         if (error) {
@@ -65,7 +74,16 @@ export const AISettings = () => {
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to save settings");
+        setIsSaving(false);
+        return;
+      }
+
       const settings = {
+        user_id: user.id, // Add the user ID to link settings to the user
         bot_name: botName,
         bot_prompt: botPrompt,
         auto_open: autoOpen,
@@ -125,7 +143,7 @@ export const AISettings = () => {
             Customize how the DigiBooks AI assistant works for you
           </p>
         </div>
-        <Bot className="h-8 w-8 text-[#9b87f5]" />
+        <Bot className="h-8 w-8 text-[#05D166]" />
       </div>
 
       <AppearanceSettings 
@@ -168,7 +186,7 @@ export const AISettings = () => {
         </Button>
         <Button 
           onClick={handleSaveSettings} 
-          className="flex items-center gap-2 bg-[#9b87f5] hover:bg-[#7E69AB]"
+          className="flex items-center gap-2 bg-[#05D166] hover:bg-[#05D166]/80"
           disabled={isSaving}
         >
           <Save className="h-4 w-4" />
