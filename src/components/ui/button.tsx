@@ -24,11 +24,13 @@ const buttonVariants = cva(
         success: "bg-[#05D166] text-white hover:bg-[#05D166]/80",
         warning: "bg-warning text-white hover:bg-warning/80",
         danger: "bg-error text-white hover:bg-error/80",
+        minimal: "bg-black text-white hover:bg-black/90",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
+        xl: "h-14 rounded-md px-8",
         icon: "h-10 w-10",
       },
     },
