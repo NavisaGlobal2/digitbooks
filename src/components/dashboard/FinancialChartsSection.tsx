@@ -15,19 +15,19 @@ import { format } from "date-fns";
 
 // Sample data for the pie charts
 const expenseData = [
-  { name: "Salaries", value: 35000, percentage: "31.5%", color: "#10B981" },
-  { name: "Rent", value: 25000, percentage: "27.8%", color: "#F87171" },
-  { name: "Utilities", value: 15000, percentage: "16.7%", color: "#1E293B" },
-  { name: "Marketing", value: 10000, percentage: "11.1%", color: "#93C5FD" },
-  { name: "Travel", value: 5000, percentage: "5.6%", color: "#9CA3AF" }
+  { name: "Salaries", value: 55000, percentage: "31.5%", color: "#10B981" },
+  { name: "Rent", value: 55000, percentage: "31.5%", color: "#F87171" },
+  { name: "Utilities", value: 55000, percentage: "31.5%", color: "#1E293B" },
+  { name: "Marketing", value: 55000, percentage: "31.5%", color: "#93C5FD" },
+  { name: "Travel", value: 55000, percentage: "31.5%", color: "#9CA3AF" }
 ];
 
 const revenueData = [
-  { name: "Product Sales", value: 45000, percentage: "39.1%", color: "#10B981" },
-  { name: "Services", value: 25000, percentage: "21.7%", color: "#F87171" },
-  { name: "Subscriptions", value: 20000, percentage: "17.4%", color: "#1E293B" },
-  { name: "Consulting", value: 15000, percentage: "13.0%", color: "#93C5FD" },
-  { name: "Other", value: 10000, percentage: "8.7%", color: "#9CA3AF" }
+  { name: "Salaries", value: 55000, percentage: "31.5%", color: "#10B981" },
+  { name: "Rent", value: 55000, percentage: "31.5%", color: "#F87171" },
+  { name: "Utilities", value: 55000, percentage: "31.5%", color: "#1E293B" },
+  { name: "Marketing", value: 55000, percentage: "31.5%", color: "#93C5FD" },
+  { name: "Travel", value: 55000, percentage: "31.5%", color: "#9CA3AF" }
 ];
 
 const FinancialChartsSection = () => {
