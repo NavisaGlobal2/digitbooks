@@ -7,7 +7,7 @@ import jsPDF from "jspdf";
 import { InvoiceTemplateProps } from "./types";
 import { renderDefaultTemplate } from "./defaultTemplate";
 import { renderProfessionalTemplate } from "./professional";
-import { renderMinimalistTemplate } from "./minimalistTemplate";
+import { renderMinimalistTemplate } from "./minimalist";
 
 /**
  * Renders the appropriate invoice template based on selection
