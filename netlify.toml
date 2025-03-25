@@ -7,3 +7,7 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Add Node.js version to ensure compatibility
+[build.environment]
+  NODE_VERSION = "18"
