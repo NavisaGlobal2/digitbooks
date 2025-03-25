@@ -27,16 +27,15 @@ export const AISettings = () => {
     const fetchSettings = async () => {
       setIsLoading(true);
       try {
+        // Use the correct table name as defined in our schema
         const { data, error } = await supabase
           .from('ai_settings')
           .select('*')
-          .single();
+          .maybeSingle();
         
         if (error) {
-          if (error.code !== 'PGRST116') { // PGRST116 means no rows found
-            console.error('Error fetching AI settings:', error);
-            toast.error('Failed to load AI settings');
-          }
+          console.error('Error fetching AI settings:', error);
+          toast.error('Failed to load AI settings');
           return;
         }
         
@@ -77,11 +76,13 @@ export const AISettings = () => {
         avatar_type: avatarType,
         custom_url: customUrl,
         uploaded_url: uploadedUrl,
+        updated_at: new Date().toISOString(),
       };
 
-      const { data, error } = await supabase
+      // Use the correct table name for the upsert
+      const { error } = await supabase
         .from('ai_settings')
-        .upsert(settings, { onConflict: 'id' });
+        .upsert(settings);
 
       if (error) {
         console.error('Error saving AI settings:', error);

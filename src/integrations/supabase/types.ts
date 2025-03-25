@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_settings: {
+        Row: {
+          auto_open: boolean
+          auto_respond: boolean
+          avatar_type: string
+          bot_name: string
+          bot_prompt: string
+          created_at: string | null
+          custom_url: string | null
+          id: string
+          message_style: string
+          model: string
+          theme: string
+          updated_at: string | null
+          uploaded_url: string | null
+          user_id: string | null
+        }
+        Insert: {
+          auto_open?: boolean
+          auto_respond?: boolean
+          avatar_type?: string
+          bot_name?: string
+          bot_prompt?: string
+          created_at?: string | null
+          custom_url?: string | null
+          id?: string
+          message_style?: string
+          model?: string
+          theme?: string
+          updated_at?: string | null
+          uploaded_url?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          auto_open?: boolean
+          auto_respond?: boolean
+          avatar_type?: string
+          bot_name?: string
+          bot_prompt?: string
+          created_at?: string | null
+          custom_url?: string | null
+          id?: string
+          message_style?: string
+          model?: string
+          theme?: string
+          updated_at?: string | null
+          uploaded_url?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       budgets: {
         Row: {
           created_at: string
