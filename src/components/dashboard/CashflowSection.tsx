@@ -1,12 +1,21 @@
 
 import { useState } from "react";
-import { Filter, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import CashflowChart from "@/components/dashboard/CashflowChart";
+import FilterDropdown from "@/components/ui/FilterDropdown";
 
 const CashflowSection = () => {
-  const [filterPeriod, setFilterPeriod] = useState("Last six month");
+  const [filterPeriod, setFilterPeriod] = useState("sixMonths");
+
+  const filterOptions = [
+    { label: "Last 30 days", value: "thirtyDays" },
+    { label: "Last 3 months", value: "threeMonths" },
+    { label: "Last 6 months", value: "sixMonths" },
+    { label: "Last year", value: "oneYear" },
+    { label: "All time", value: "allTime" }
+  ];
 
   return (
     <Card className="border-none shadow-sm">
@@ -15,11 +24,15 @@ const CashflowSection = () => {
         <div className="flex flex-wrap w-full sm:w-auto items-center gap-2">
           <Button variant="outline" size="sm" className="text-sm h-9 gap-2 w-full sm:w-auto">
             <Calendar className="h-4 w-4" />
-            {filterPeriod}
+            Custom Range
           </Button>
-          <Button variant="outline" size="sm" className="text-sm h-9 w-9 p-0 ml-auto sm:ml-0">
-            <Filter className="h-4 w-4" />
-          </Button>
+          <FilterDropdown
+            options={filterOptions}
+            selectedValue={filterPeriod}
+            onFilterChange={setFilterPeriod}
+            className="text-sm h-9 w-auto"
+            variant="outline"
+          />
         </div>
       </CardHeader>
       <CardContent className="px-4 pb-4">

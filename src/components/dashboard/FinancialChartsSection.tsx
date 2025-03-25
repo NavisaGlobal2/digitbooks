@@ -1,9 +1,9 @@
 
 import { useState } from "react";
-import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PieChartCard from "@/components/dashboard/charts/PieChartCard";
 import SalesTrendsChart from "@/components/dashboard/charts/SalesTrendsChart";
+import FilterDropdown from "@/components/ui/FilterDropdown";
 
 // Sample data for the pie charts
 const expenseData = [
@@ -23,17 +23,27 @@ const revenueData = [
 ];
 
 const FinancialChartsSection = () => {
-  const [filterPeriod, setFilterPeriod] = useState("Last six month");
+  const [filterPeriod, setFilterPeriod] = useState("sixMonths");
+
+  const filterOptions = [
+    { label: "Last 30 days", value: "thirtyDays" },
+    { label: "Last 3 months", value: "threeMonths" },
+    { label: "Last 6 months", value: "sixMonths" },
+    { label: "Last year", value: "oneYear" },
+    { label: "All time", value: "allTime" }
+  ];
 
   return (
     <div className="mb-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6">
         <h2 className="text-xl font-semibold mb-2 sm:mb-0">Financial breakdown</h2>
         <div className="flex items-center w-full sm:w-auto">
-          <Button variant="outline" className="text-sm w-full sm:w-auto">
-            {filterPeriod}
-            <Filter className="h-4 w-4 ml-2 text-muted-foreground" />
-          </Button>
+          <FilterDropdown
+            options={filterOptions}
+            selectedValue={filterPeriod}
+            onFilterChange={setFilterPeriod}
+            className="text-sm w-full sm:w-auto"
+          />
         </div>
       </div>
       

@@ -1,7 +1,9 @@
 
-import { Filter, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import FilterDropdown from "@/components/ui/FilterDropdown";
 
 interface ClientSearchBarProps {
   searchQuery: string;
@@ -14,6 +16,15 @@ const ClientSearchBar = ({
   setSearchQuery, 
   onAddClient 
 }: ClientSearchBarProps) => {
+  const [filterValue, setFilterValue] = useState("all");
+
+  const filterOptions = [
+    { label: "All clients", value: "all" },
+    { label: "Active clients", value: "active" },
+    { label: "Inactive clients", value: "inactive" },
+    { label: "Outstanding balance", value: "outstanding" }
+  ];
+
   return (
     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
       <div className="relative w-full md:w-auto flex-1">
@@ -27,10 +38,11 @@ const ClientSearchBar = ({
       </div>
       
       <div className="flex items-center gap-3 w-full md:w-auto">
-        <Button variant="outline" className="flex items-center gap-2">
-          <Filter className="h-4 w-4" />
-          <span>Filters</span>
-        </Button>
+        <FilterDropdown
+          options={filterOptions}
+          selectedValue={filterValue}
+          onFilterChange={setFilterValue}
+        />
         
         <Button 
           className="bg-green-500 hover:bg-green-600 text-white"
