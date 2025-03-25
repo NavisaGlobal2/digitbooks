@@ -1,199 +1,56 @@
 
-import { useState, useEffect } from "react";
-import { Bot, Save, RefreshCw } from "lucide-react";
-import { CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { AISettingsForm, AISettingsActions, useAISettingsForm } from "./ai/SettingsForm";
 import AppearanceSettings from "./ai/AppearanceSettings";
 import BehaviorSettings from "./ai/BehaviorSettings";
 import InstructionsSettings from "./ai/InstructionsSettings";
-import { supabase } from "@/integrations/supabase/client";
 
 export const AISettings = () => {
-  const [botName, setBotName] = useState("DigitBooks AI");
-  const [botPrompt, setBotPrompt] = useState("You are a helpful finance assistant. Help users with their accounting and financial questions.");
-  const [autoOpen, setAutoOpen] = useState(false);
-  const [theme, setTheme] = useState("purple");
-  const [messageStyle, setMessageStyle] = useState("bubble");
-  const [autoRespond, setAutoRespond] = useState(false);
-  const [model, setModel] = useState("standard");
-  const [avatarType, setAvatarType] = useState("bot");
-  const [customUrl, setCustomUrl] = useState("");
-  const [uploadedUrl, setUploadedUrl] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  useEffect(() => {
-    const fetchSettings = async () => {
-      setIsLoading(true);
-      try {
-        // Get the current user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          toast.error("You must be logged in to view settings");
-          setIsLoading(false);
-          return;
-        }
-
-        // Use the correct table name as defined in our schema
-        const { data, error } = await supabase
-          .from('ai_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        
-        if (error) {
-          console.error('Error fetching AI settings:', error);
-          toast.error('Failed to load AI settings');
-          return;
-        }
-        
-        if (data) {
-          setBotName(data.bot_name || "DigitBooks AI");
-          setBotPrompt(data.bot_prompt || "You are a helpful finance assistant. Help users with their accounting and financial questions.");
-          setAutoOpen(data.auto_open || false);
-          setTheme(data.theme || "purple");
-          setMessageStyle(data.message_style || "bubble");
-          setAutoRespond(data.auto_respond || false);
-          setModel(data.model || "standard");
-          setAvatarType(data.avatar_type || "bot");
-          setCustomUrl(data.custom_url || "");
-          setUploadedUrl(data.uploaded_url || "");
-        }
-      } catch (error) {
-        console.error('Error in fetchSettings:', error);
-        toast.error('Failed to load AI settings');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSettings();
-  }, []);
-
-  const handleSaveSettings = async () => {
-    setIsSaving(true);
-    try {
-      // Get the current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("You must be logged in to save settings");
-        setIsSaving(false);
-        return;
-      }
-
-      const settings = {
-        user_id: user.id, // Add the user ID to link settings to the user
-        bot_name: botName,
-        bot_prompt: botPrompt,
-        auto_open: autoOpen,
-        theme,
-        message_style: messageStyle,
-        auto_respond: autoRespond,
-        model,
-        avatar_type: avatarType,
-        custom_url: customUrl,
-        uploaded_url: uploadedUrl,
-        updated_at: new Date().toISOString(),
-      };
-
-      // Use the correct table name for the upsert
-      const { error } = await supabase
-        .from('ai_settings')
-        .upsert(settings);
-
-      if (error) {
-        console.error('Error saving AI settings:', error);
-        throw error;
-      }
-
-      toast.success("AI settings saved successfully");
-    } catch (error) {
-      console.error('Error in handleSaveSettings:', error);
-      toast.error("Failed to save AI settings");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleResetDefaults = () => {
-    setBotName("DigitBooks AI");
-    setBotPrompt("You are a helpful finance assistant. Help users with their accounting and financial questions.");
-    setAutoOpen(false);
-    setTheme("purple");
-    setMessageStyle("bubble");
-    setAutoRespond(false);
-    setModel("standard");
-    setAvatarType("bot");
-    setCustomUrl("");
-    setUploadedUrl("");
-    toast.info("AI settings reset to defaults");
-  };
-
-  if (isLoading) {
-    return <div className="flex justify-center py-8">Loading AI settings...</div>;
-  }
+  const {
+    formValues,
+    updateFormValue,
+    isLoading,
+    isSaving,
+    handleSaveSettings,
+    handleResetDefaults
+  } = useAISettingsForm();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-medium">AI Assistant Settings</h3>
-          <p className="text-sm text-muted-foreground">
-            Customize how the DigitBooks AI assistant works for you
-          </p>
-        </div>
-        <Bot className="h-8 w-8 text-[#05D166]" />
-      </div>
-
+    <AISettingsForm isLoading={isLoading}>
       <AppearanceSettings 
-        botName={botName}
-        setBotName={setBotName}
-        theme={theme}
-        setTheme={setTheme}
-        messageStyle={messageStyle}
-        setMessageStyle={setMessageStyle}
-        avatarType={avatarType}
-        setAvatarType={setAvatarType}
-        customUrl={customUrl}
-        setCustomUrl={setCustomUrl}
-        uploadedUrl={uploadedUrl}
-        setUploadedUrl={setUploadedUrl}
+        botName={formValues.botName}
+        setBotName={(value) => updateFormValue('botName', value)}
+        theme={formValues.theme}
+        setTheme={(value) => updateFormValue('theme', value)}
+        messageStyle={formValues.messageStyle}
+        setMessageStyle={(value) => updateFormValue('messageStyle', value)}
+        avatarType={formValues.avatarType}
+        setAvatarType={(value) => updateFormValue('avatarType', value)}
+        customUrl={formValues.customUrl}
+        setCustomUrl={(value) => updateFormValue('customUrl', value)}
+        uploadedUrl={formValues.uploadedUrl}
+        setUploadedUrl={(value) => updateFormValue('uploadedUrl', value)}
       />
 
       <BehaviorSettings
-        autoOpen={autoOpen}
-        setAutoOpen={setAutoOpen}
-        autoRespond={autoRespond}
-        setAutoRespond={setAutoRespond}
-        model={model}
-        setModel={setModel}
+        autoOpen={formValues.autoOpen}
+        setAutoOpen={(value) => updateFormValue('autoOpen', value)}
+        autoRespond={formValues.autoRespond}
+        setAutoRespond={(value) => updateFormValue('autoRespond', value)}
+        model={formValues.model}
+        setModel={(value) => updateFormValue('model', value)}
       />
 
       <InstructionsSettings
-        botPrompt={botPrompt}
-        setBotPrompt={setBotPrompt}
+        botPrompt={formValues.botPrompt}
+        setBotPrompt={(value) => updateFormValue('botPrompt', value)}
       />
 
-      <CardFooter className="flex justify-between px-0">
-        <Button 
-          variant="outline" 
-          onClick={handleResetDefaults}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Reset to Defaults
-        </Button>
-        <Button 
-          onClick={handleSaveSettings} 
-          className="flex items-center gap-2 bg-[#05D166] hover:bg-[#05D166]/80"
-          disabled={isSaving}
-        >
-          <Save className="h-4 w-4" />
-          {isSaving ? 'Saving...' : 'Save Settings'}
-        </Button>
-      </CardFooter>
-    </div>
+      <AISettingsActions 
+        isSaving={isSaving}
+        onReset={handleResetDefaults}
+        onSave={handleSaveSettings}
+      />
+    </AISettingsForm>
   );
 };
 
