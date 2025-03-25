@@ -3,9 +3,6 @@ import { Download, Image, Share } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { InvoiceItem } from "@/types/invoice";
-import { generateInvoice } from "@/utils/invoice";
-import { saveAs } from "file-saver";
-import { format } from "date-fns";
 import { downloadInvoice, shareInvoice, captureInvoiceAsImage } from "@/utils/invoice/documentActions";
 
 interface ActionButtonsProps {
@@ -42,10 +39,11 @@ const ActionButtons = ({
   selectedTemplate = "default"
 }: ActionButtonsProps) => {
   
-  const handleDownloadInvoice = async () => {
+  const handleDownloadAsPdf = async () => {
     try {
-      // Generate the invoice PDF
-      const pdfBlob = await generateInvoice({
+      toast.loading("Converting invoice to PDF...");
+      
+      const result = await downloadInvoice({
         logoPreview,
         invoiceItems,
         invoiceDate,
@@ -58,21 +56,14 @@ const ActionButtons = ({
         clientName,
         selectedTemplate
       });
-
-      // Generate a filename with the current date
-      const dateStr = format(new Date(), "yyyy-MM-dd");
-      const fileName = `invoice-${clientName.replace(/\s+/g, '_').toLowerCase()}-${dateStr}.pdf`;
-
-      // Download the file
-      saveAs(pdfBlob, fileName);
       
-      toast.success("Invoice downloaded successfully!");
-      
-      // Call the parent's handler for analytics/tracking
-      handleGenerateInvoice();
+      if (result) {
+        // Call the parent's handler for analytics/tracking
+        handleGenerateInvoice();
+      }
     } catch (error) {
-      console.error("Failed to generate invoice:", error);
-      toast.error("Failed to generate invoice. Please try again.");
+      console.error("Failed to download invoice as PDF:", error);
+      toast.error("Failed to download invoice. Please try again.");
     }
   };
 
@@ -99,11 +90,37 @@ const ActionButtons = ({
       toast.error("Failed to capture invoice. Please try again.");
     }
   };
+  
+  const handleShare = async () => {
+    try {
+      const result = await shareInvoice({
+        logoPreview,
+        invoiceItems,
+        invoiceDate,
+        dueDate,
+        additionalInfo,
+        bankName,
+        accountNumber,
+        swiftCode,
+        accountName,
+        clientName,
+        selectedTemplate
+      });
+      
+      if (result) {
+        // Call the parent's handler for analytics/tracking
+        handleShareInvoice();
+      }
+    } catch (error) {
+      console.error("Failed to share invoice:", error);
+      toast.error("Failed to share invoice. Please try again.");
+    }
+  };
 
   return (
     <div className="flex flex-col space-y-3">
       <Button
-        onClick={handleDownloadInvoice}
+        onClick={handleDownloadAsPdf}
         className="text-white bg-gray-700 hover:bg-gray-800"
         disabled={!isAccountVerified}
       >
@@ -121,7 +138,7 @@ const ActionButtons = ({
       </Button>
       
       <Button
-        onClick={handleShareInvoice}
+        onClick={handleShare}
         variant="outline"
         className="border-gray-300 text-gray-700 hover:bg-gray-50"
         disabled={!isAccountVerified}
