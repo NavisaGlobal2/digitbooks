@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Calendar, Filter, Bot } from "lucide-react";
+import { Calendar, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PieChartCard from "@/components/dashboard/charts/PieChartCard";
 import SalesTrendsChart from "@/components/dashboard/charts/SalesTrendsChart";
@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import AnalyticsAIChat from "@/components/analytics/AnalyticsAIChat";
 
 // Sample data for the pie charts
 const expenseData = [
@@ -35,7 +34,6 @@ const FinancialChartsSection = () => {
   const [filterPeriod, setFilterPeriod] = useState("Last six month");
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   const handleCalendarSelect = (date: Date | undefined) => {
     setDate(date);
@@ -55,11 +53,6 @@ const FinancialChartsSection = () => {
     }
   };
 
-  const openAnalyticsAI = () => {
-    setIsAIChatOpen(true);
-    toast.success("Analytics AI Assistant opened");
-  };
-
   return (
     <div className="mb-8 relative">
       {/* Background decorative element */}
@@ -69,16 +62,6 @@ const FinancialChartsSection = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6">
         <h2 className="text-xl font-semibold mb-2 sm:mb-0 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">Financial breakdown</h2>
         <div className="flex items-center w-full sm:w-auto gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={openAnalyticsAI}
-            className="text-xs sm:text-sm h-8 sm:h-9 gap-2 w-full sm:w-auto border border-gray-200 shadow-sm bg-[#05D166]/10 hover:bg-[#05D166]/20 border-[#05D166]/30"
-          >
-            <Bot className="h-3 w-3 sm:h-4 sm:w-4 text-[#05D166]" />
-            <span className="truncate">Ask AI Analyst</span>
-          </Button>
-          
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 gap-2 w-full sm:w-auto border border-gray-200 shadow-sm">
@@ -143,12 +126,6 @@ const FinancialChartsSection = () => {
       <div className="transform transition-all duration-300 hover:scale-[1.01] hover:shadow-md">
         <SalesTrendsChart />
       </div>
-      
-      {/* Analytics AI Chat Modal */}
-      <AnalyticsAIChat 
-        isOpen={isAIChatOpen} 
-        onClose={() => setIsAIChatOpen(false)} 
-      />
     </div>
   );
 };
