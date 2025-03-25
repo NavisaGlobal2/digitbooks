@@ -1,6 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FilterDropdown from "@/components/ui/FilterDropdown";
+import { toast } from "sonner";
 
 const DashboardHeader = () => {
   const [filterPeriod, setFilterPeriod] = useState("sixMonths");
@@ -13,6 +14,19 @@ const DashboardHeader = () => {
     { label: "Last year", value: "oneYear" },
     { label: "All time", value: "allTime" }
   ];
+  
+  const handleFilterChange = (value: string) => {
+    setFilterPeriod(value);
+    
+    // Get the selected filter label
+    const selectedOption = filterOptions.find(option => option.value === value);
+    if (selectedOption) {
+      toast.success(`Data filtered for ${selectedOption.label}`);
+    }
+    
+    // You would typically fetch data for the selected filter period here
+    console.log(`Filter changed to: ${value}`);
+  };
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-0">
@@ -22,7 +36,7 @@ const DashboardHeader = () => {
         <FilterDropdown 
           options={filterOptions}
           selectedValue={filterPeriod}
-          onFilterChange={setFilterPeriod}
+          onFilterChange={handleFilterChange}
           className="rounded-full w-full sm:w-auto"
         />
       </div>
