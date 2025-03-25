@@ -16,11 +16,15 @@ interface FinancialOverviewProps {
 
 const FinancialOverview = ({ data }: FinancialOverviewProps) => {
   return (
-    <div className="mb-2">
-      <h2 className="text-xl font-semibold mb-4">Financial Overview</h2>
+    <div className="mb-2 relative">
+      {/* Background decorative elements */}
+      <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-green-100 opacity-30 blur-xl -z-10"></div>
+      <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full bg-blue-100 opacity-30 blur-xl -z-10"></div>
+      
+      <h2 className="text-xl font-semibold mb-4 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">Financial Overview</h2>
       <div className="grid grid-cols-3 gap-5">
-        <Card className="overflow-hidden border-none shadow-sm">
-          <div className="h-1 bg-gradient-to-r from-green-400 to-green-500 w-full"></div>
+        <Card className="overflow-hidden border-none shadow-sm transform transition-all duration-300 hover:shadow-md hover:translate-y-[-2px]">
+          <div className="h-1.5 bg-gradient-to-r from-green-400 to-green-500 w-full"></div>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-secondary text-sm font-medium">Total Revenue</span>
@@ -28,15 +32,15 @@ const FinancialOverview = ({ data }: FinancialOverviewProps) => {
                 <ArrowDown className="text-green-500 h-5 w-5" />
               </div>
             </div>
-            <div className="text-3xl font-bold mb-2">{formatNaira(data.totalRevenue)}</div>
+            <div className="text-3xl font-bold mb-2 bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">{formatNaira(data.totalRevenue)}</div>
             <div className="flex items-center text-sm">
               <span className="text-muted-foreground">Cash inflow</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden border-none shadow-sm">
-          <div className="h-1 bg-gradient-to-r from-purple-400 to-purple-500 w-full"></div>
+        <Card className="overflow-hidden border-none shadow-sm transform transition-all duration-300 hover:shadow-md hover:translate-y-[-2px]">
+          <div className="h-1.5 bg-gradient-to-r from-purple-400 to-purple-500 w-full"></div>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-secondary text-sm font-medium">Total Expenses</span>
@@ -44,15 +48,15 @@ const FinancialOverview = ({ data }: FinancialOverviewProps) => {
                 <ArrowUp className="text-purple-500 h-5 w-5" />
               </div>
             </div>
-            <div className="text-3xl font-bold mb-2">{formatNaira(data.totalExpenses)}</div>
+            <div className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-transparent">{formatNaira(data.totalExpenses)}</div>
             <div className="flex items-center text-sm">
               <span className="text-muted-foreground">Cash outflow</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden border-none shadow-sm">
-          <div className="h-1 bg-gradient-to-r from-blue-400 to-blue-500 w-full"></div>
+        <Card className="overflow-hidden border-none shadow-sm transform transition-all duration-300 hover:shadow-md hover:translate-y-[-2px]">
+          <div className="h-1.5 bg-gradient-to-r from-blue-400 to-blue-500 w-full"></div>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-secondary text-sm font-medium">Net Cashflow</span>
@@ -60,7 +64,7 @@ const FinancialOverview = ({ data }: FinancialOverviewProps) => {
                 <TrendingUp className="text-blue-500 h-5 w-5" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-success mb-2">{formatNaira(data.netCashflow)}</div>
+            <div className="text-3xl font-bold text-success mb-2 bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">{formatNaira(data.netCashflow)}</div>
             <div className="flex items-center text-sm">
               <span className="text-success">Positive cashflow</span>
             </div>

@@ -18,6 +18,11 @@ const DashboardContainer = ({ children }: DashboardContainerProps) => {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-background">
+      {/* Background elements */}
+      <div className="fixed top-0 right-0 w-full h-64 bg-gradient-to-r from-blue-50 to-purple-50 opacity-60 -z-10"></div>
+      <div className="fixed top-20 right-20 w-72 h-72 rounded-full bg-gradient-to-br from-green-100 to-blue-100 opacity-20 blur-3xl -z-10"></div>
+      <div className="fixed bottom-0 left-0 w-96 h-96 rounded-full bg-gradient-to-tr from-purple-100 to-pink-100 opacity-20 blur-3xl -z-10"></div>
+      
       {/* Desktop Sidebar - Hidden on mobile, visible on larger screens */}
       <div className="hidden md:block">
         <Sidebar />
@@ -62,7 +67,7 @@ const DashboardContainer = ({ children }: DashboardContainerProps) => {
         </div>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6 bg-background">
+        <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6 bg-background/80 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto space-y-4 md:space-y-6 w-full">
             {children}
           </div>

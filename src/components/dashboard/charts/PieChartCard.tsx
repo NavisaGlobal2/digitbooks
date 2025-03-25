@@ -30,7 +30,10 @@ const PieChartCard: React.FC<PieChartCardProps> = ({ title, data }) => {
   };
   
   return (
-    <Card className="p-6 bg-white rounded-lg border border-gray-100">
+    <Card className="p-6 bg-white rounded-lg border border-gray-100 overflow-hidden relative">
+      {/* Decorative accent */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400"></div>
+      
       <h2 className="text-lg font-semibold mb-4 text-gray-900">{title}</h2>
       
       <div className="relative" style={{ height: "260px" }}>
@@ -55,7 +58,8 @@ const PieChartCard: React.FC<PieChartCardProps> = ({ title, data }) => {
                   onMouseLeave={handleMouseLeave}
                   style={{
                     opacity: activeIndex === undefined || activeIndex === index ? 1 : 0.6,
-                    transition: 'opacity 0.3s',
+                    transition: 'opacity 0.3s, transform 0.3s',
+                    transform: activeIndex === index ? 'scale(1.05)' : 'scale(1)',
                     cursor: 'pointer'
                   }}
                 />
@@ -73,7 +77,7 @@ const PieChartCard: React.FC<PieChartCardProps> = ({ title, data }) => {
                   animation: 'fade-in 0.2s ease-out',
                 }}
               >
-                <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 text-center">
+                <div className="bg-white p-3 rounded-lg shadow-md border border-gray-100 text-center">
                   <p className="font-semibold text-sm">{tooltipContent.name}</p>
                   <p className="text-base font-mono mt-1">₦{tooltipContent.value.toLocaleString()}</p>
                   <p className="text-xs text-gray-500 mt-1">{tooltipContent.percentage}</p>
@@ -84,11 +88,11 @@ const PieChartCard: React.FC<PieChartCardProps> = ({ title, data }) => {
         </ResponsiveContainer>
       </div>
       
-      <div className="mt-6 space-y-1">
+      <div className="mt-6 space-y-1 bg-gray-50 p-3 rounded-lg">
         {data.map((item, index) => (
           <div 
             key={index} 
-            className="flex items-center justify-between py-2"
+            className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-white hover:shadow-sm transition-all duration-200"
             onMouseEnter={() => handleMouseEnter(item, index)}
             onMouseLeave={handleMouseLeave}
           >
