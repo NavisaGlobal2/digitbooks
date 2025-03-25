@@ -56,23 +56,23 @@ const RevenueContent = ({
   
   if (revenues.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[70vh] gap-8">
+      <div className="flex flex-col items-center justify-center h-[70vh] gap-6 md:gap-8 px-3">
         <div className="text-center max-w-md">
-          <h2 className="text-2xl font-semibold mb-2">No revenue entries yet</h2>
-          <p className="text-gray-500 mb-6">Track your income by recording your first revenue entry.</p>
+          <h2 className="text-xl sm:text-2xl font-semibold mb-2">No revenue entries yet</h2>
+          <p className="text-gray-500 mb-4 sm:mb-6">Track your income by recording your first revenue entry.</p>
           
           <div className="flex flex-col gap-3">
             <Button 
-              className="bg-green-500 hover:bg-green-600 text-white w-full py-6 text-base flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg"
+              className="bg-green-500 hover:bg-green-600 text-white w-full py-4 sm:py-6 text-sm sm:text-base flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg"
               onClick={onAddRevenue}
             >
-              <Plus className="h-5 w-5 mr-2" />
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               New revenue
             </Button>
             
             <Button 
               variant="outline"
-              className="border-green-500 text-green-500 hover:bg-green-50 w-full py-6 text-base flex items-center justify-center transition-all duration-300"
+              className="border-green-500 text-green-500 hover:bg-green-50 w-full py-4 sm:py-6 text-sm sm:text-base flex items-center justify-center transition-all duration-300"
               onClick={onImportRevenue}
             >
               Import revenue
@@ -84,15 +84,15 @@ const RevenueContent = ({
   }
   
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-6 md:space-y-8">
       {/* Stats Cards */}
       <RevenueStatsCards />
       
       {/* Revenue Chart */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium">Revenue Trends</h3>
-          <div className="flex items-center space-x-2">
+      <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+          <h3 className="text-base sm:text-lg font-medium">Revenue Trends</h3>
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" className="text-xs h-8">
               Last 30 days
             </Button>
@@ -104,11 +104,13 @@ const RevenueContent = ({
             </Button>
           </div>
         </div>
-        <RevenueChart />
+        <div className="h-[250px] sm:h-[300px] md:h-[350px]">
+          <RevenueChart />
+        </div>
       </div>
       
       {/* Search and Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-between bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
@@ -120,7 +122,7 @@ const RevenueContent = ({
           />
         </div>
         
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Button 
             variant="outline" 
             size="sm" 
@@ -151,11 +153,13 @@ const RevenueContent = ({
       
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-        <RevenueTable 
-          revenues={sortedRevenues} 
-          onUpdateStatus={handleUpdateStatus}
-          onDelete={onDeleteRevenue}
-        />
+        <div className="overflow-x-auto">
+          <RevenueTable 
+            revenues={sortedRevenues} 
+            onUpdateStatus={handleUpdateStatus}
+            onDelete={onDeleteRevenue}
+          />
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Expense, ExpenseCategory } from "@/types/expense";
 import ExpenseStatsCards from "./ExpenseStatsCards";
@@ -35,13 +34,10 @@ const ExpensesContent = ({
     expense.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  // Get category totals
   const categoryTotals = getExpensesByCategory();
   
-  // Get total monthly expenses
   const totalExpenses = getTotalExpenses();
   
-  // Calculate top spending categories
   const topCategories = Object.entries(categoryTotals)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 3)
@@ -50,14 +46,13 @@ const ExpensesContent = ({
       amount 
     }));
     
-  // Count card expenses
   const cardExpensesCount = expenses.filter(e => e.paymentMethod === 'card').length;
 
   return (
     <>
       {isAddingExpense ? (
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-xl font-semibold mb-4">Add New Expense</h2>
+        <div className="w-full max-w-3xl mx-auto px-2 sm:px-0">
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Add New Expense</h2>
           <ExpenseForm onCancel={() => setIsAddingExpense(false)} />
         </div>
       ) : (
@@ -68,8 +63,7 @@ const ExpensesContent = ({
               onConnectBank={onConnectBank} 
             />
           ) : (
-            <div className="space-y-6">
-              {/* Stats cards */}
+            <div className="space-y-3 sm:space-y-4 md:space-y-6">
               <ExpenseStatsCards
                 totalExpenses={totalExpenses}
                 expensesCount={expenses.length}
@@ -84,17 +78,18 @@ const ExpensesContent = ({
                   onAddExpense={onAddExpense}
                 />
                 
-                <ExpensesTable 
-                  expenses={filteredExpenses} 
-                  onDeleteExpense={deleteExpense} 
-                />
+                <div className="overflow-x-auto">
+                  <ExpensesTable 
+                    expenses={filteredExpenses} 
+                    onDeleteExpense={deleteExpense} 
+                  />
+                </div>
               </div>
             </div>
           )}
         </>
       )}
       
-      {/* Add expense dialog */}
       <AddExpenseDialog 
         open={showExpenseDialog} 
         onOpenChange={setShowExpenseDialog} 

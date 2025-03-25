@@ -33,12 +33,14 @@ const InvoiceDashboard = ({
   
   return (
     <div className="flex flex-col h-full">
-      <InvoiceTabs 
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+      <div className="overflow-x-auto">
+        <InvoiceTabs 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      </div>
       
-      <div className="flex-1 py-6">
+      <div className="flex-1 py-3 sm:py-4 md:py-6">
         {activeTab === "invoices" && (
           <InvoiceContent 
             searchQuery={searchQuery}

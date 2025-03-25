@@ -21,7 +21,7 @@ const ExpenseAmountDateFields = ({
   setDate
 }: ExpenseAmountDateFieldsProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
       <div>
         <Label htmlFor="amount">Amount</Label>
         <Input
@@ -44,7 +44,7 @@ const ExpenseAmountDateFields = ({
               className="w-full justify-start text-left font-normal"
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "PPP") : <span>Pick a date</span>}
+              {date ? format(date, "PP") : <span>Pick a date</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0">
