@@ -12,6 +12,7 @@ import BillsSection from "@/components/dashboard/BillsSection";
 import AIInsights from "@/components/dashboard/AIInsights";
 import MainContentSection from "@/components/dashboard/sections/MainContentSection";
 import { Skeleton } from "@/components/ui/skeleton";
+import AIChatBot from "@/components/dashboard/AIChatBot";
 
 const Dashboard = () => {
   const { fetchInvoices } = useInvoices();
@@ -120,6 +121,9 @@ const Dashboard = () => {
           <BillsSection />
         )}
       </div>
+
+      {/* AI Chatbot */}
+      <AIChatBot />
     </DashboardContainer>
   );
 };
