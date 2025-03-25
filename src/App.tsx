@@ -30,6 +30,7 @@ import FinancialReports from "./pages/FinancialReports";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import Onboarding from "./Onboarding";
+import Agent from "./pages/Agent";
 import { RequireAuth } from "./components/auth/RequireAuth";
 
 const queryClient = new QueryClient();
@@ -103,6 +104,11 @@ const App = () => (
                         <Route path="/reports" element={
                           <RequireAuth>
                             <FinancialReports />
+                          </RequireAuth>
+                        } />
+                        <Route path="/agent" element={
+                          <RequireAuth>
+                            <Agent />
                           </RequireAuth>
                         } />
                         <Route path="/settings" element={

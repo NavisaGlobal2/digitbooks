@@ -9,6 +9,7 @@ import SearchBar from "./header/SearchBar";
 import HeaderAction from "./header/HeaderAction";
 import NotificationsDropdown from "./header/NotificationsDropdown";
 import GenerateReportButton from "./header/GenerateReportButton";
+import AgentButton from "./AgentButton";
 
 const Header = () => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -75,6 +76,8 @@ const Header = () => {
           setNotifications={setNotifications}
           setUnreadCount={setUnreadCount}
         />
+        
+        <AgentButton />
         
         <GenerateReportButton onClick={handleReportGeneration} />
       </div>
