@@ -37,7 +37,7 @@ export const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
         <h2 className="text-2xl font-bold mb-2">Great! I need more information about your business</h2>
       </div>
       
-      <div className="transition-all duration-200">
+      <div className="transition-all">
         <label htmlFor="industry" className="block text-white mb-2">
           Business industry
         </label>
@@ -45,8 +45,8 @@ export const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
           value={businessInfo.industry}
           onValueChange={(value) => setBusinessInfo({ ...businessInfo, industry: value })}
         >
-          <SelectTrigger className="bg-white text-black focus:ring-2 focus:ring-white">
-            <SelectValue placeholder="Select your industry" />
+          <SelectTrigger className="bg-white text-black border-transparent focus:ring-0 focus:border-transparent h-12 rounded-md">
+            <SelectValue placeholder="Information technology services" />
           </SelectTrigger>
           <SelectContent>
             {industries.map((industry) => (
@@ -58,7 +58,7 @@ export const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
         </Select>
       </div>
 
-      <div className="transition-all duration-200">
+      <div className="transition-all">
         <label htmlFor="location" className="block text-white mb-2">
           Business location
         </label>
@@ -66,11 +66,25 @@ export const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
           value={businessInfo.state}
           onValueChange={(value) => setBusinessInfo({ ...businessInfo, state: value })}
         >
-          <SelectTrigger className="bg-white text-black focus:ring-2 focus:ring-white">
-            <SelectValue placeholder="Ikorodu Lagos" />
+          <SelectTrigger className="bg-white text-black border-transparent focus:ring-0 focus:border-transparent h-12 rounded-md">
+            <div className="flex items-center">
+              {businessInfo.state === "lagos" && (
+                <div className="w-6 h-6 bg-green-100 rounded-full mr-2 flex items-center justify-center">
+                  <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                </div>
+              )}
+              <SelectValue placeholder="Ikorodu Lagos" />
+            </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="lagos">Lagos</SelectItem>
+            <SelectItem value="lagos">
+              <div className="flex items-center">
+                <div className="w-6 h-6 bg-green-100 rounded-full mr-2 flex items-center justify-center">
+                  <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                </div>
+                <span>Ikorodu Lagos</span>
+              </div>
+            </SelectItem>
             <SelectItem value="abuja">Abuja</SelectItem>
             <SelectItem value="port-harcourt">Port Harcourt</SelectItem>
             <SelectItem value="kano">Kano</SelectItem>
@@ -80,13 +94,13 @@ export const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
 
       <div className="flex space-x-4 pt-4">
         <Button 
-          className="w-1/3 border border-white/20 bg-[#05D166]/20 hover:bg-[#05D166]/30 text-white"
+          className="w-1/3 border border-white/20 bg-transparent hover:bg-white/10 text-white h-12 rounded-md"
           onClick={handleBack}
         >
           Back
         </Button>
         <Button 
-          className="w-2/3 bg-black hover:bg-black/90 text-white"
+          className="w-2/3 bg-black hover:bg-black/90 text-white h-12 rounded-md"
           onClick={onNext}
         >
           Continue

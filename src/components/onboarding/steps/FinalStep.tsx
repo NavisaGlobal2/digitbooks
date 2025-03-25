@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { CheckCircle } from "lucide-react";
 
 interface FinalStepProps {
   businessInfo: {
@@ -23,53 +23,60 @@ export const FinalStep: React.FC<FinalStepProps> = ({
   legalInfo, 
   handleNext, 
   handleBack,
-  industries 
+  industries
 }) => {
+  const getIndustryLabel = (value: string) => {
+    const industry = industries.find(ind => ind.value === value);
+    return industry ? industry.label : value;
+  };
+
   const onNext = async () => {
-    const succeeded = await handleNext();
-    if (succeeded) {
-      toast.success("Setup completed! Welcome to DigiBooks");
-    } else {
-      toast.error("Failed to save business profile");
-    }
+    await handleNext();
   };
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold mb-4">Ready to start your financial journey!</h2>
-      <p className="text-white/80 mb-8">
-        Your business profile has been set up. Now let's start managing your finances more efficiently.
-      </p>
-      
-      <div className="space-y-4">
-        <div className="bg-white/20 rounded-lg p-4">
-          <h3 className="font-semibold text-white mb-1">Business Name</h3>
-          <p className="text-white/90">{businessInfo.name || "Not provided"}</p>
+      <div className="text-center mb-6">
+        <div className="flex justify-center mb-4">
+          <CheckCircle className="w-16 h-16 text-white" />
         </div>
-        
-        <div className="bg-white/20 rounded-lg p-4">
-          <h3 className="font-semibold text-white mb-1">Industry</h3>
-          <p className="text-white/90">{businessInfo.industry ? industries.find(i => i.value === businessInfo.industry)?.label : "Not selected"}</p>
-        </div>
-        
-        <div className="bg-white/20 rounded-lg p-4">
-          <h3 className="font-semibold text-white mb-1">RC Number</h3>
-          <p className="text-white/90">{legalInfo.rcNumber || "Not provided"}</p>
-        </div>
+        <h2 className="text-2xl font-bold mb-2">All set! Let's begin</h2>
+        <p className="text-white/80">
+          Here's a summary of your business information
+        </p>
       </div>
       
+      <div className="space-y-4 bg-white/10 p-4 rounded-lg">
+        <div className="flex justify-between">
+          <span className="text-white/70">Business name</span>
+          <span className="text-white font-medium">{businessInfo.name}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-white/70">Industry</span>
+          <span className="text-white font-medium">{getIndustryLabel(businessInfo.industry)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-white/70">Registration number</span>
+          <span className="text-white font-medium">{legalInfo.rcNumber}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-white/70">Business size</span>
+          <span className="text-white font-medium">{businessInfo.size} employees</span>
+        </div>
+      </div>
+
       <div className="flex space-x-4 pt-4">
         <Button 
-          className="w-1/3 border border-white/20 bg-[#05D166]/20 hover:bg-[#05D166]/30 text-white"
+          className="w-1/3 border border-white/20 bg-transparent hover:bg-white/10 text-white h-12 rounded-md"
           onClick={handleBack}
         >
           Back
         </Button>
         <Button 
-          className="w-2/3 bg-black hover:bg-black/90 text-white"
+          className="w-2/3 bg-black hover:bg-black/90 text-white h-12 rounded-md"
           onClick={onNext}
         >
-          Go to Dashboard
+          Let's begin
         </Button>
       </div>
     </div>
