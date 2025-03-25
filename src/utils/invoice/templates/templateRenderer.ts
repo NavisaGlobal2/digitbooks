@@ -6,7 +6,7 @@
 import jsPDF from "jspdf";
 import { InvoiceTemplateProps } from "./types";
 import { renderDefaultTemplate } from "./defaultTemplate";
-import { renderProfessionalTemplate } from "./professionalTemplate";
+import { renderProfessionalTemplate } from "./professional";
 import { renderMinimalistTemplate } from "./minimalistTemplate";
 
 /**
