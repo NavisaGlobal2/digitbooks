@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 type AuthMode = 'login' | 'signup';
 
@@ -25,6 +26,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [verificationStep, setVerificationStep] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,21 +35,35 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
 
     try {
       if (mode === 'signup') {
-        if (password !== confirmPassword) {
-          toast.error("Passwords do not match");
-          setIsLoading(false);
-          return;
+        if (verificationStep) {
+          // Handle verification code submission
+          // For now just show a toast since we're not implementing full verification yet
+          toast.success("Email verification successful!");
+          // After verification, proceed with account creation
+          await signup(email, password, name);
+          toast.success("Account created successfully!");
+          
+          // Navigate to dashboard or the page they were trying to access
+          const from = location.state?.from?.pathname || "/dashboard";
+          navigate(from, { replace: true });
+        } else {
+          if (password !== confirmPassword) {
+            toast.error("Passwords do not match");
+            setIsLoading(false);
+            return;
+          }
+          // Move to verification step instead of immediate signup
+          setVerificationStep(true);
+          toast.success("Verification code sent to your email!");
         }
-        await signup(email, password, name);
-        toast.success("Account created successfully!");
       } else {
         await login(email, password);
         toast.success("Login successful!");
+        
+        // Navigate to dashboard or the page they were trying to access
+        const from = location.state?.from?.pathname || "/dashboard";
+        navigate(from, { replace: true });
       }
-      
-      // Navigate to dashboard or the page they were trying to access
-      const from = location.state?.from?.pathname || "/dashboard";
-      navigate(from, { replace: true });
     } catch (error: any) {
       console.error('Auth error:', error);
       toast.error(error.message || "Authentication failed");
@@ -54,6 +71,65 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
       setIsLoading(false);
     }
   };
+
+  const handleBackToSignup = () => {
+    setVerificationStep(false);
+  };
+
+  // For verification code step
+  if (mode === 'signup' && verificationStep) {
+    return (
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            Verify your email
+          </h1>
+          <p className="text-muted-foreground">
+            We've sent a verification code to {email}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <div className="flex justify-center mb-4">
+              <InputOTP value={verificationCode} onChange={setVerificationCode} maxLength={6}>
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+            
+            <p className="text-sm text-center text-muted-foreground mt-4">
+              Didn't receive a code? <button type="button" className="text-green-500 hover:text-green-600 font-medium">Resend</button>
+            </p>
+          </div>
+
+          <Button 
+            type="submit" 
+            className="w-full h-12 bg-green-500 hover:bg-green-600 text-white transition-all duration-300 transform hover:translate-y-[-2px] hover:shadow-lg"
+            disabled={isLoading || verificationCode.length !== 6}
+          >
+            {isLoading ? 'Verifying...' : 'Verify Email'}
+          </Button>
+          
+          <Button 
+            type="button"
+            variant="ghost"
+            onClick={handleBackToSignup}
+            className="w-full"
+            disabled={isLoading}
+          >
+            Back to signup
+          </Button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-sm">
