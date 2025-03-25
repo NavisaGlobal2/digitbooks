@@ -13,6 +13,7 @@ import BusinessInfoStep from "@/components/onboarding/BusinessInfoStep";
 import LegalInfoStep from "@/components/onboarding/LegalInfoStep";
 import FeaturesStep from "@/components/onboarding/FeaturesStep";
 import BankConnectionStep from "@/components/onboarding/BankConnectionStep";
+import { OnboardingLeftColumn } from "@/components/onboarding/OnboardingLeftColumn";
 
 // Constants
 import { BUSINESS_TYPES, INDUSTRIES, ONBOARDING_STEPS } from "@/components/onboarding/OnboardingConstants";
@@ -134,33 +135,39 @@ const OnboardingContainer = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      {isLoading ? (
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
-        </div>
-      ) : (
-        <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-sm">
-          {currentStep > 0 && (
-            <button 
-              onClick={handleBack}
-              className="flex items-center text-gray-500 mb-4 hover:text-black"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back
-            </button>
-          )}
-
-          <OnboardingStepIndicator 
-            steps={ONBOARDING_STEPS}
-            currentStep={currentStep}
-          />
-
-          <div className="min-h-[400px] flex items-center justify-center">
-            {renderStepContent()}
+    <div className="min-h-screen bg-white flex">
+      {/* Left Column */}
+      <OnboardingLeftColumn />
+      
+      {/* Right Column */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-4 md:p-8">
+        {isLoading ? (
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#05D166]"></div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="w-full max-w-md">
+            {currentStep > 0 && (
+              <button 
+                onClick={handleBack}
+                className="flex items-center text-gray-500 mb-4 hover:text-black"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Back
+              </button>
+            )}
+
+            <OnboardingStepIndicator 
+              steps={ONBOARDING_STEPS}
+              currentStep={currentStep}
+            />
+
+            <div className="min-h-[400px] flex items-center justify-center">
+              {renderStepContent()}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
