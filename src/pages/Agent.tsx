@@ -20,7 +20,7 @@ type Message = {
 const initialMessages: Message[] = [
   {
     id: "welcome",
-    content: "Hello! I'm your DigiBooks AI Agent. How can I assist you with your financial data and analytics today?",
+    content: "Hello! I'm your DigitBooks AI Agent. How can I assist you with your financial data and analytics today?",
     sender: "agent",
     timestamp: new Date(),
   },
@@ -106,7 +106,7 @@ const Agent = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-2xl font-semibold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-            DigiBooks AI Agent
+            DigitBooks AI Agent
           </h1>
           <Button 
             variant="outline" 

@@ -26,7 +26,7 @@ const Sidebar = () => {
       <div className="px-4 mb-6">
         <div className="flex items-center gap-2">
           <Logo className="h-8 w-8" />
-          <span className="font-semibold text-lg text-gray-800">DigiBooks</span>
+          <span className="font-semibold text-lg text-gray-800">DigitBooks</span>
         </div>
       </div>
       
