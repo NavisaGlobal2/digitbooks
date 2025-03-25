@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Bot, X, ChevronUp, ChevronDown, MessageCircle, Send } from "lucide-react";
+import { Bot, X, ChevronUp, ChevronDown, MessageCircle, Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -94,7 +94,10 @@ const AIChatBot = () => {
           onClick={toggleOpen}
           className="rounded-full h-14 w-14 bg-[#05D166] hover:bg-[#05D166]/90 shadow-lg"
         >
-          <Bot className="h-6 w-6 text-white" />
+          <Avatar className="h-11 w-11">
+            <AvatarFallback className="bg-[#05D166]">AI</AvatarFallback>
+            <AvatarImage src="/lovable-uploads/37efa1ea-49eb-4e89-8928-6e829c9ac5bd.png" alt="AI Assistant" />
+          </Avatar>
         </Button>
       )}
 
@@ -103,11 +106,11 @@ const AIChatBot = () => {
           "w-80 shadow-lg transition-all duration-300 ease-in-out border border-[#05D166]/20",
           isMinimized ? "h-16" : "h-96"
         )}>
-          <CardHeader className="px-4 py-2 flex flex-row items-center justify-between bg-[#05D166]/10 border-b">
+          <CardHeader className="px-4 py-2 flex flex-row items-center justify-between bg-[#F2FCE2] border-b">
             <div className="flex items-center space-x-2">
-              <Avatar className="h-8 w-8 bg-[#05D166]">
-                <AvatarFallback>AI</AvatarFallback>
-                <AvatarImage src="/lovable-uploads/a24925e2-43db-4889-a722-45a1c1440051.png" />
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-[#05D166]">AI</AvatarFallback>
+                <AvatarImage src="/lovable-uploads/37efa1ea-49eb-4e89-8928-6e829c9ac5bd.png" alt="AI Assistant" />
               </Avatar>
               <CardTitle className="text-sm font-medium">DigiBooks AI</CardTitle>
             </div>
@@ -123,7 +126,7 @@ const AIChatBot = () => {
 
           {!isMinimized && (
             <>
-              <CardContent className="p-4 overflow-y-auto h-[calc(100%-8rem)]">
+              <CardContent className="p-4 overflow-y-auto h-[calc(100%-8rem)] bg-[#F2FCE2]/50">
                 <div className="space-y-4">
                   {messages.map((msg) => (
                     <div
@@ -132,7 +135,7 @@ const AIChatBot = () => {
                         "flex flex-col max-w-[80%] rounded-lg p-3",
                         msg.sender === "user"
                           ? "ml-auto bg-[#05D166] text-white"
-                          : "bg-gray-100 text-gray-800"
+                          : "bg-white text-gray-800"
                       )}
                     >
                       <p className="text-sm">{msg.content}</p>
@@ -142,7 +145,7 @@ const AIChatBot = () => {
                     </div>
                   ))}
                   {isTyping && (
-                    <div className="flex flex-col max-w-[80%] rounded-lg p-3 bg-gray-100 text-gray-800">
+                    <div className="flex flex-col max-w-[80%] rounded-lg p-3 bg-white text-gray-800">
                       <div className="flex space-x-1">
                         <div className="h-2 w-2 rounded-full bg-gray-400 animate-bounce"></div>
                         <div className="h-2 w-2 rounded-full bg-gray-400 animate-bounce delay-100"></div>
@@ -153,7 +156,7 @@ const AIChatBot = () => {
                 </div>
               </CardContent>
 
-              <CardFooter className="p-2 border-t">
+              <CardFooter className="p-2 border-t bg-[#F2FCE2]/30">
                 <div className="flex items-center w-full space-x-2">
                   <Textarea
                     value={message}
