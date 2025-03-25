@@ -58,7 +58,7 @@ const Dashboard = () => {
 
   return (
     <DashboardContainer>
-      <div className="mt-1 mb-3">
+      <div className="mt-2 mb-4">
         <DashboardHeader />
       </div>
       
@@ -66,9 +66,9 @@ const Dashboard = () => {
         <QuickActions />
       </div>
       
-      <div className="mb-4">
+      <div className="mb-5">
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-24 sm:h-28 md:h-32 rounded-lg" />
             ))}
@@ -78,14 +78,14 @@ const Dashboard = () => {
         )}
       </div>
 
-      <div className="mb-4">
+      <div className="mb-5">
         <MainContentSection 
           leftContent={
             <>
               {isLoading ? (
-                <div className="space-y-4">
-                  <Skeleton className="h-[300px] rounded-lg" />
-                  <Skeleton className="h-[300px] rounded-lg" />
+                <div className="space-y-4 sm:space-y-5">
+                  <Skeleton className="h-[280px] sm:h-[300px] md:h-[320px] rounded-lg" />
+                  <Skeleton className="h-[280px] sm:h-[300px] md:h-[320px] rounded-lg" />
                 </div>
               ) : (
                 <>
@@ -97,7 +97,7 @@ const Dashboard = () => {
           }
           rightContent={
             isLoading ? (
-              <Skeleton className="h-[300px] rounded-lg" />
+              <Skeleton className="h-[280px] sm:h-[300px] md:h-[320px] rounded-lg" />
             ) : (
               <TransactionsSection />
             )
@@ -112,7 +112,7 @@ const Dashboard = () => {
         />
       </div>
       
-      <div className="mb-4">
+      <div className="mb-5">
         {isLoading ? (
           <Skeleton className="h-[150px] rounded-lg" />
         ) : (

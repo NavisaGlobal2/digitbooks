@@ -52,7 +52,7 @@ const DashboardContainer = ({ children }: DashboardContainerProps) => {
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto p-2 sm:p-3 md:p-4 bg-background">
-          <div className="max-w-7xl mx-auto space-y-3 md:space-y-4">
+          <div className="container mx-auto px-0 sm:px-2 md:px-4">
             {children}
           </div>
         </div>
