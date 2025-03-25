@@ -1,3 +1,4 @@
+
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
@@ -10,7 +11,7 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="space-y-4 text-center animate-fade-in">
             <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-[#8B5CF6] bg-clip-text text-transparent">
-              About Digibooks
+              About DigitBooks
             </h1>
             <p className="text-secondary text-lg max-w-2xl mx-auto mb-16">
               Transforming financial management with AI innovation
@@ -22,7 +23,7 @@ const About = () => {
               <div>
                 <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>
                 <p className="text-secondary">
-                  At Digibooks, we're on a mission to revolutionize how businesses handle their finances. 
+                  At DigitBooks, we're on a mission to revolutionize how businesses handle their finances. 
                   By leveraging cutting-edge AI technology, we're making financial management more 
                   accessible, efficient, and insightful for businesses of all sizes.
                 </p>
@@ -39,7 +40,7 @@ const About = () => {
             </div>
 
             <div className="p-8 rounded-2xl border border-border bg-white/50 backdrop-blur-sm hover:border-accent transition-all duration-300 hover:shadow-lg animate-fade-in [animation-delay:200ms]">
-              <h2 className="text-2xl font-semibold mb-6">Why Choose Digibooks?</h2>
+              <h2 className="text-2xl font-semibold mb-6">Why Choose DigitBooks?</h2>
               <div className="space-y-6">
                 <div>
                   <h3 className="font-semibold mb-2">AI-Powered Innovation</h3>

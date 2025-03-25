@@ -15,7 +15,7 @@ const SidebarHeader = ({ isCollapsed, isMobileView, onToggleCollapse }: SidebarH
       {!isCollapsed ? (
         <div className="flex items-center gap-2">
           <Logo className="h-8 w-8" />
-          <span className="font-semibold text-lg text-gray-800">DigiBooks</span>
+          <span className="font-semibold text-lg text-gray-800">DigitBooks</span>
         </div>
       ) : (
         <Logo className="h-8 w-8 mx-auto" />

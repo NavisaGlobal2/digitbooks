@@ -10,7 +10,7 @@ import InstructionsSettings from "./ai/InstructionsSettings";
 import { supabase } from "@/integrations/supabase/client";
 
 export const AISettings = () => {
-  const [botName, setBotName] = useState("DigiBooks AI");
+  const [botName, setBotName] = useState("DigitBooks AI");
   const [botPrompt, setBotPrompt] = useState("You are a helpful finance assistant. Help users with their accounting and financial questions.");
   const [autoOpen, setAutoOpen] = useState(false);
   const [theme, setTheme] = useState("purple");
@@ -49,7 +49,7 @@ export const AISettings = () => {
         }
         
         if (data) {
-          setBotName(data.bot_name || "DigiBooks AI");
+          setBotName(data.bot_name || "DigitBooks AI");
           setBotPrompt(data.bot_prompt || "You are a helpful finance assistant. Help users with their accounting and financial questions.");
           setAutoOpen(data.auto_open || false);
           setTheme(data.theme || "purple");
@@ -117,7 +117,7 @@ export const AISettings = () => {
   };
 
   const handleResetDefaults = () => {
-    setBotName("DigiBooks AI");
+    setBotName("DigitBooks AI");
     setBotPrompt("You are a helpful finance assistant. Help users with their accounting and financial questions.");
     setAutoOpen(false);
     setTheme("purple");
@@ -140,7 +140,7 @@ export const AISettings = () => {
         <div>
           <h3 className="text-lg font-medium">AI Assistant Settings</h3>
           <p className="text-sm text-muted-foreground">
-            Customize how the DigiBooks AI assistant works for you
+            Customize how the DigitBooks AI assistant works for you
           </p>
         </div>
         <Bot className="h-8 w-8 text-[#05D166]" />

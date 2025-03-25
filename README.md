@@ -1,8 +1,9 @@
-# DigiBooks - Smart AI-Powered Bookkeeping
+
+# DigitBooks - Smart AI-Powered Bookkeeping
 
 ## Product Scope
 
-DigiBooks is an intelligent bookkeeping solution that leverages AI technology to streamline financial management for businesses. The application's scope includes:
+DigitBooks is an intelligent bookkeeping solution that leverages AI technology to streamline financial management for businesses. The application's scope includes:
 
 ### Core Features
 - Automated transaction categorization and reconciliation
@@ -36,7 +37,7 @@ DigiBooks is an intelligent bookkeeping solution that leverages AI technology to
 
 ## Project info
 
-Welcome to DigiBooks, your intelligent bookkeeping solution powered by AI.
+Welcome to DigitBooks, your intelligent bookkeeping solution powered by AI.
 
 ## How can I edit this code?
 

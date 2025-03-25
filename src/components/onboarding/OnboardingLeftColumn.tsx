@@ -35,7 +35,7 @@ export const OnboardingLeftColumn: React.FC = () => {
         <div className="text-center mt-6">
           <h2 className="text-lg font-medium mb-2">Say goodbye to manual bookkeeping.</h2>
           <p className="text-gray-600 text-sm">
-            Digitbooks AI makes expense tracking, invoicing, and reporting effortless.
+            DigitBooks AI makes expense tracking, invoicing, and reporting effortless.
           </p>
         </div>
       </div>

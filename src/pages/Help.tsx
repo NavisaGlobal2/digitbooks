@@ -1,3 +1,4 @@
+
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Mail, MessageCircle, Phone } from "lucide-react";
@@ -15,7 +16,7 @@ const Help = () => {
               How Can We Help?
             </h1>
             <p className="text-secondary text-lg max-w-2xl mx-auto mb-16">
-              Get the support you need to make the most of Digibooks. Our team is here to help you succeed.
+              Get the support you need to make the most of DigitBooks. Our team is here to help you succeed.
             </p>
           </div>
 
@@ -70,7 +71,7 @@ const Help = () => {
             <div className="space-y-6">
               {[
                 {
-                  question: "How do I get started with Digibooks?",
+                  question: "How do I get started with DigitBooks?",
                   answer: "Sign up for a free account, connect your business accounts, and our AI will start organizing your finances automatically.",
                 },
                 {

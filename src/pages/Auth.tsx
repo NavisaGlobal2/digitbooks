@@ -111,7 +111,7 @@ const Auth = () => {
         <div className="flex items-center gap-2 mb-16">
           <Logo className="h-8 w-8" />
           <span className="text-2xl font-semibold bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent">
-            DigiBooks
+            DigitBooks
           </span>
         </div>
 
@@ -122,7 +122,7 @@ const Auth = () => {
                 {mode === 'signup' ? 'Create your account' : 'Welcome back'}
               </h1>
               <p className="text-muted-foreground">
-                {mode === 'signup' ? 'Get started with DigiBooks' : 'Sign in to continue to your account'}
+                {mode === 'signup' ? 'Get started with DigitBooks' : 'Sign in to continue to your account'}
               </p>
             </div>
 

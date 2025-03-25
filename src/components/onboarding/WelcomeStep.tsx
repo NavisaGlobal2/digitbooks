@@ -10,7 +10,7 @@ interface WelcomeStepProps {
 const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext }) => {
   return (
     <div className="text-center space-y-6 py-6">      
-      <h1 className="text-2xl font-bold mb-4 text-gray-900">Welcome to DigiBooks</h1>
+      <h1 className="text-2xl font-bold mb-4 text-gray-900">Welcome to DigitBooks</h1>
       
       <p className="text-gray-500 mb-8 text-sm max-w-md mx-auto">
         Let's get your business set up in just a few steps and unlock the full potential of your financial management
