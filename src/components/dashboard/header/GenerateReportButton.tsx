@@ -8,7 +8,7 @@ interface GenerateReportButtonProps {
 const GenerateReportButton = ({ onClick }: GenerateReportButtonProps) => {
   return (
     <Button 
-      className="bg-primary hover:bg-primary/90 text-white px-2 sm:px-4 py-1 rounded-full text-xs sm:text-sm hidden sm:flex"
+      className="bg-[#05D166] hover:bg-[#05D166]/90 text-white px-2 sm:px-4 py-1 rounded-md text-xs sm:text-sm hidden sm:flex"
       onClick={onClick}
     >
       Generate Report
