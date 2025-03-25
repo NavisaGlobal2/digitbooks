@@ -11,7 +11,7 @@ interface BusinessInfoStepProps {
     [key: string]: any;
   };
   setBusinessInfo: (info: any) => void;
-  handleNext: () => boolean;
+  handleNext: () => Promise<boolean>;
   handleBack: () => void;
   industries: { value: string; label: string; }[];
 }
@@ -23,12 +23,12 @@ export const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
   handleBack,
   industries 
 }) => {
-  const onNext = () => {
+  const onNext = async () => {
     if (!businessInfo.industry) {
       toast.error("Please select your industry");
       return;
     }
-    handleNext();
+    await handleNext();
   };
 
   return (

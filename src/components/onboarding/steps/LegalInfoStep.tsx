@@ -16,7 +16,7 @@ interface LegalInfoStepProps {
     [key: string]: any;
   };
   setBusinessInfo: (info: any) => void;
-  handleNext: () => boolean;
+  handleNext: () => Promise<boolean>;
   handleBack: () => void;
 }
 
@@ -28,12 +28,12 @@ export const LegalInfoStep: React.FC<LegalInfoStepProps> = ({
   handleNext, 
   handleBack 
 }) => {
-  const onNext = () => {
+  const onNext = async () => {
     if (!legalInfo.rcNumber) {
       toast.error("Please provide your RC Number");
       return;
     }
-    handleNext();
+    await handleNext();
   };
 
   return (
