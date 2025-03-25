@@ -30,7 +30,8 @@ const AccountVerifier = ({
   const [verificationMessage, setVerificationMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [isApiKeyIssue, setIsApiKeyIssue] = useState(false);
+  const [isTestMode, setIsTestMode] = useState(false);
+  const [responseDetails, setResponseDetails] = useState<any>(null);
 
   const handleVerify = async () => {
     if (onVerify) {
@@ -39,8 +40,9 @@ const AccountVerifier = ({
     }
 
     setIsError(false);
-    setIsApiKeyIssue(false);
+    setIsTestMode(false);
     setVerificationMessage("");
+    setResponseDetails(null);
     setIsVerifying(true);
 
     try {
@@ -57,17 +59,33 @@ const AccountVerifier = ({
       const result = await verifyBankAccount(accountNumber, selectedBankCode);
       console.log("Verification result:", result);
       
-      if (result.message?.includes("API key validation failed")) {
-        setIsApiKeyIssue(true);
-        setIsError(true);
-        toast.error("Using test mode instead");
-        
-        if (setIsVerified && setAccountName) {
-          setIsVerified(true);
-          setAccountName("Account holder " + accountNumber.substring(0, 3) + "***" + accountNumber.substring(7));
-          setIsError(false);
-          setVerificationMessage("Account verification successful (Test mode)");
+      // Store the complete response data for debugging
+      setResponseDetails(result.data);
+      
+      if (!result.status) {
+        // Using test mode
+        if (result.message?.includes("test environment")) {
+          setIsTestMode(true);
+          
+          if (result.verified && result.accountName && setAccountName && setIsVerified) {
+            setAccountName(result.accountName);
+            setIsVerified(true);
+            setIsError(false);
+            toast.success("Account verification successful (Test mode)");
+            setVerificationMessage(`Account verified: ${result.accountName} (Test mode)`);
+          } else {
+            if (setIsVerified) setIsVerified(false);
+            setIsError(true);
+            toast.error(result.message || "Verification failed (Test mode)");
+            setVerificationMessage(result.message || "Verification failed (Test mode)");
+          }
+          return;
         }
+        
+        if (setIsVerified) setIsVerified(false);
+        setIsError(true);
+        toast.error(result.message || "Verification failed");
+        setVerificationMessage(result.message || "Verification failed");
         return;
       }
       
@@ -122,19 +140,19 @@ const AccountVerifier = ({
       
       {verificationMessage && (
         <Alert 
-          variant={isError && !isApiKeyIssue ? "destructive" : "default"} 
-          className={`py-2 ${isVerified ? 'bg-green-50 border-green-200' : isApiKeyIssue ? 'bg-amber-50 border-amber-200' : ''}`}
+          variant={isError && !isTestMode ? "destructive" : "default"} 
+          className={`py-2 ${isVerified ? 'bg-green-50 border-green-200' : isTestMode ? 'bg-amber-50 border-amber-200' : ''}`}
         >
           <div className="flex items-start">
-            {isError && !isApiKeyIssue ? 
+            {isError && !isTestMode ? 
               <AlertCircle className="h-4 w-4 mr-2 text-red-500" /> : 
-              isApiKeyIssue ? 
+              isTestMode ? 
               <ShieldAlert className="h-4 w-4 mr-2 text-amber-500" /> :
               isVerified ? <Check className="h-4 w-4 mr-2 text-green-500" /> : null
             }
             <AlertDescription className="text-sm">
               {verificationMessage}
-              {isApiKeyIssue && (
+              {isTestMode && (
                 <div className="mt-1 text-xs text-amber-600">
                   Using test verification mode for demonstration
                 </div>
@@ -142,6 +160,15 @@ const AccountVerifier = ({
             </AlertDescription>
           </div>
         </Alert>
+      )}
+      
+      {responseDetails && (
+        <div className="mt-2 text-xs bg-gray-50 p-2 rounded border border-gray-200 overflow-auto max-h-32">
+          <div className="font-semibold mb-1">API Response Details:</div>
+          <pre className="whitespace-pre-wrap break-words">
+            {JSON.stringify(responseDetails, null, 2)}
+          </pre>
+        </div>
       )}
     </div>
   );
