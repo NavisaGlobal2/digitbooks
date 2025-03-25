@@ -20,7 +20,11 @@ serve(async (req) => {
     if (!PAYSTACK_SECRET_KEY) {
       console.error("Paystack API key is not configured");
       return new Response(
-        JSON.stringify({ error: 'Paystack API key is not configured' }),
+        JSON.stringify({ 
+          status: false, 
+          message: 'Paystack API key is not configured',
+          data: []
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -44,7 +48,12 @@ serve(async (req) => {
       const errorText = await response.text();
       console.error(`Paystack API error: ${response.status} - ${errorText}`);
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch banks from Paystack API', details: errorText }),
+        JSON.stringify({ 
+          status: false, 
+          message: 'Failed to fetch banks from Paystack API', 
+          error: errorText,
+          data: []
+        }),
         { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -67,7 +76,12 @@ serve(async (req) => {
     console.error('Error fetching banks:', error);
     
     return new Response(
-      JSON.stringify({ error: 'An error occurred while fetching banks', details: error.message }),
+      JSON.stringify({ 
+        status: false, 
+        message: 'An error occurred while fetching banks', 
+        error: error.message,
+        data: []
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
