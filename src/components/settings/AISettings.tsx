@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Bot, Save, RefreshCw } from "lucide-react";
+import { Bot, Save, RefreshCw, UserCircle, MessageCircle, User, UserRound } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const AISettings = () => {
   const [botName, setBotName] = useState("DigiBooks AI");
@@ -20,7 +21,17 @@ export const AISettings = () => {
   const [messageStyle, setMessageStyle] = useState("bubble");
   const [autoRespond, setAutoRespond] = useState(false);
   const [model, setModel] = useState("standard");
+  const [avatarType, setAvatarType] = useState("bot");
   
+  const avatarOptions = [
+    { id: "bot", label: "Robot", icon: <Bot className="h-4 w-4" /> },
+    { id: "user", label: "Person", icon: <User className="h-4 w-4" /> },
+    { id: "circle", label: "Circle", icon: <UserCircle className="h-4 w-4" /> },
+    { id: "round", label: "Round", icon: <UserRound className="h-4 w-4" /> },
+    { id: "message", label: "Message", icon: <MessageCircle className="h-4 w-4" /> },
+    { id: "custom", label: "Custom", icon: null },
+  ];
+
   const handleSaveSettings = () => {
     // In a real app, this would save the settings to a database or local storage
     toast.success("AI settings saved successfully");
@@ -34,7 +45,36 @@ export const AISettings = () => {
     setMessageStyle("bubble");
     setAutoRespond(false);
     setModel("standard");
+    setAvatarType("bot");
     toast.info("AI settings reset to defaults");
+  };
+
+  const getAvatarPreview = () => {
+    const themeColors = {
+      purple: "#9b87f5",
+      green: "#05D166",
+      blue: "#1EAEDB",
+      black: "#222222"
+    };
+    
+    if (avatarType === "custom") {
+      return (
+        <Avatar className={`h-16 w-16 bg-${theme === "black" ? "gray-800" : themeColors[theme]}`}>
+          <AvatarFallback>AI</AvatarFallback>
+          <AvatarImage src="/lovable-uploads/a24925e2-43db-4889-a722-45a1c1440051.png" />
+        </Avatar>
+      );
+    }
+    
+    const avatarOption = avatarOptions.find(option => option.id === avatarType);
+    
+    return (
+      <Avatar className={`h-16 w-16 bg-${theme === "black" ? "gray-800" : themeColors[theme]}`}>
+        <AvatarFallback className="flex items-center justify-center text-white">
+          {avatarOption?.icon || "AI"}
+        </AvatarFallback>
+      </Avatar>
+    );
   };
 
   return (
@@ -81,6 +121,46 @@ export const AISettings = () => {
                 <ToggleGroupItem value="blue" className="bg-[#1EAEDB] h-8 w-8 rounded-full p-0 border-2 data-[state=on]:border-black" />
                 <ToggleGroupItem value="black" className="bg-[#222222] h-8 w-8 rounded-full p-0 border-2 data-[state=on]:border-white" />
               </ToggleGroup>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Avatar</Label>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex items-center justify-center">
+                {getAvatarPreview()}
+              </div>
+              <div className="flex-1 space-y-2">
+                <RadioGroup 
+                  value={avatarType}
+                  onValueChange={setAvatarType}
+                  className="grid grid-cols-2 gap-2"
+                >
+                  {avatarOptions.map((option) => (
+                    <div key={option.id} className="flex items-center space-x-2">
+                      <RadioGroupItem value={option.id} id={`avatar-${option.id}`} />
+                      <Label htmlFor={`avatar-${option.id}`} className="flex items-center gap-2">
+                        {option.icon && <span>{option.icon}</span>}
+                        <span>{option.label}</span>
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+                
+                {avatarType === "custom" && (
+                  <div className="mt-2">
+                    <Label htmlFor="custom-avatar">Image URL</Label>
+                    <Input
+                      id="custom-avatar"
+                      placeholder="https://example.com/image.png"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      For a custom avatar, an image URL is required
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
