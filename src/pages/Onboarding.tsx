@@ -45,7 +45,7 @@ const Onboarding = () => {
     inventory: false
   });
 
-  const handleNext = async () => {
+  const handleNext = async (): Promise<boolean> => {
     if (currentStep === 0 && !businessInfo.name) {
       return false;
     }
