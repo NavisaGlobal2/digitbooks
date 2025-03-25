@@ -26,7 +26,7 @@ export const OnboardingLeftColumn: React.FC = () => {
               alt="Financial Chart" 
               className="w-80 h-auto" 
             />
-            {/* Removed the gradient overlay div that was here */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/0 to-white opacity-30"></div>
           </div>
         </div>
         
