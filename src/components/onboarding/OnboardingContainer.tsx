@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -35,7 +34,6 @@ const OnboardingContainer = () => {
   } = useOnboardingData();
 
   useEffect(() => {
-    // If loading is finished and the user is already onboarded, redirect to dashboard
     if (!isLoading && user?.onboardingCompleted) {
       console.log("User already completed onboarding, redirecting to dashboard");
       navigate('/dashboard', { replace: true });
@@ -44,7 +42,6 @@ const OnboardingContainer = () => {
 
   const handleNext = async () => {
     if (currentStep === ONBOARDING_STEPS.length - 1) {
-      // If we're on the last step, save the profile and redirect to dashboard
       try {
         console.log("Saving profile from last step");
         const success = await saveProfile();
@@ -70,7 +67,6 @@ const OnboardingContainer = () => {
 
   const handleSkip = async () => {
     try {
-      // Save profile data and redirect to dashboard
       console.log("Saving profile from skip action");
       const success = await saveProfile();
       if (success) {
@@ -137,19 +133,19 @@ const OnboardingContainer = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-background to-white flex items-center justify-center p-6">
       {isLoading ? (
         <div className="flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       ) : (
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-lg">
           {currentStep > 0 && (
             <button 
               onClick={handleBack}
-              className="flex items-center text-muted-foreground mb-4 hover:text-primary transition-colors"
+              className="flex items-center text-muted-foreground mb-6 hover:text-primary transition-colors"
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
+              <ChevronLeft className="h-5 w-5 mr-1" />
               Back
             </button>
           )}
@@ -159,7 +155,9 @@ const OnboardingContainer = () => {
             currentStep={currentStep}
           />
 
-          {renderStepContent()}
+          <div className="min-h-[450px] flex items-center justify-center">
+            {renderStepContent()}
+          </div>
         </div>
       )}
     </div>

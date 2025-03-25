@@ -3,7 +3,15 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FeatureState } from "@/types/onboarding";
-import { FileText, CreditCard, BarChart2, BriefcaseBusiness, PiggyBank, Package } from "lucide-react";
+import { 
+  FileText, 
+  CreditCard, 
+  BarChart2, 
+  BriefcaseBusiness, 
+  PiggyBank, 
+  Package,
+  CheckCircle2 
+} from "lucide-react";
 
 interface FeaturesStepProps {
   features: FeatureState;
@@ -33,30 +41,32 @@ const FeaturesStep: React.FC<FeaturesStepProps> = ({
   const getFeatureIcon = (feature: string) => {
     switch(feature) {
       case 'invoicing':
-        return <FileText className="h-8 w-8 mb-2 text-green-500" />;
+        return <FileText className="h-10 w-10 mb-3 text-green-500" />;
       case 'expenses':
-        return <CreditCard className="h-8 w-8 mb-2 text-orange-500" />;
+        return <CreditCard className="h-10 w-10 mb-3 text-orange-500" />;
       case 'banking':
-        return <BriefcaseBusiness className="h-8 w-8 mb-2 text-blue-500" />;
+        return <BriefcaseBusiness className="h-10 w-10 mb-3 text-blue-500" />;
       case 'reports':
-        return <BarChart2 className="h-8 w-8 mb-2 text-purple-500" />;
+        return <BarChart2 className="h-10 w-10 mb-3 text-purple-500" />;
       case 'budgeting':
-        return <PiggyBank className="h-8 w-8 mb-2 text-pink-500" />;
+        return <PiggyBank className="h-10 w-10 mb-3 text-pink-500" />;
       case 'inventory':
-        return <Package className="h-8 w-8 mb-2 text-indigo-500" />;
+        return <Package className="h-10 w-10 mb-3 text-indigo-500" />;
       default:
         return null;
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-8 py-4 w-full">
+      <div className="grid grid-cols-2 gap-5">
         {Object.entries(features).map(([feature, enabled]) => (
           <Card 
             key={feature}
-            className={`p-4 cursor-pointer transition-all duration-300 ${
-              enabled ? 'border-primary bg-primary/5 shadow-md transform scale-[1.02]' : 'hover:border-gray-300 hover:shadow-sm'
+            className={`p-5 cursor-pointer transition-all duration-300 hover:shadow-md ${
+              enabled 
+                ? 'border-primary bg-primary/5 shadow-md transform scale-[1.02]' 
+                : 'hover:border-gray-300 hover:shadow-sm'
             }`}
             onClick={() => onFeaturesChange({
               ...features, 
@@ -64,9 +74,14 @@ const FeaturesStep: React.FC<FeaturesStepProps> = ({
             })}
           >
             <div className="flex flex-col items-center text-center">
-              {getFeatureIcon(feature)}
-              <h3 className="font-medium capitalize">{feature}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
+              <div className={`relative rounded-full p-3 ${enabled ? 'bg-primary/10' : 'bg-gray-100'}`}>
+                {getFeatureIcon(feature)}
+                {enabled && (
+                  <CheckCircle2 className="absolute -top-2 -right-2 h-6 w-6 text-green-500 bg-white rounded-full" />
+                )}
+              </div>
+              <h3 className="font-medium capitalize text-lg mt-2">{feature}</h3>
+              <p className="text-sm text-muted-foreground mt-2">
                 {getFeatureDescription(feature)}
               </p>
             </div>
@@ -75,7 +90,7 @@ const FeaturesStep: React.FC<FeaturesStepProps> = ({
       </div>
 
       <Button 
-        className="w-full bg-green-500 hover:bg-green-600 text-white"
+        className="w-full bg-green-500 hover:bg-green-600 text-white h-14 text-lg mt-6"
         onClick={onNext}
       >
         Continue
