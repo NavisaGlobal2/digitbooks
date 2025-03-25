@@ -15,15 +15,15 @@ const DashboardHeader = () => {
   ];
 
   return (
-    <div className="flex justify-between items-center mb-8">
-      <p className="text-secondary">Here's what's happening with your finances today.</p>
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-0">
+      <p className="text-secondary text-sm sm:text-base">Here's what's happening with your finances today.</p>
       
-      <div className="flex gap-4">
+      <div className="w-full sm:w-auto">
         <FilterDropdown 
           options={filterOptions}
           selectedValue={filterPeriod}
           onFilterChange={setFilterPeriod}
-          className="rounded-full"
+          className="rounded-full w-full sm:w-auto"
         />
       </div>
     </div>

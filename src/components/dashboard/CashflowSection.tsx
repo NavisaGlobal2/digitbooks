@@ -1,42 +1,29 @@
 
 import { useState } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import CashflowChart from "@/components/dashboard/CashflowChart";
-import FilterDropdown from "@/components/ui/FilterDropdown";
 
 const CashflowSection = () => {
-  const [filterPeriod, setFilterPeriod] = useState("sixMonths");
-
-  const filterOptions = [
-    { label: "Last 30 days", value: "thirtyDays" },
-    { label: "Last 3 months", value: "threeMonths" },
-    { label: "Last 6 months", value: "sixMonths" },
-    { label: "Last year", value: "oneYear" },
-    { label: "All time", value: "allTime" }
-  ];
+  const [filterPeriod, setFilterPeriod] = useState("Last six month");
 
   return (
     <Card className="border-none shadow-sm">
-      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 pt-4 md:pt-6 px-4 md:px-6">
-        <CardTitle className="text-xl font-semibold mb-2 sm:mb-0">Cashflow Analysis</CardTitle>
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 pt-3 sm:pt-4 md:pt-6 px-3 sm:px-4 md:px-6">
+        <CardTitle className="text-lg sm:text-xl font-semibold mb-2 sm:mb-0">Cashflow Analysis</CardTitle>
         <div className="flex flex-wrap w-full sm:w-auto items-center gap-2">
-          <Button variant="outline" size="sm" className="text-sm h-9 gap-2 w-full sm:w-auto">
-            <Calendar className="h-4 w-4" />
-            Custom Range
+          <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 gap-2 w-full sm:w-auto">
+            <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="truncate">{filterPeriod}</span>
           </Button>
-          <FilterDropdown
-            options={filterOptions}
-            selectedValue={filterPeriod}
-            onFilterChange={setFilterPeriod}
-            className="text-sm h-9 w-auto"
-            variant="outline"
-          />
+          <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 w-8 sm:w-9 p-0 ml-auto sm:ml-0">
+            <Filter className="h-3 w-3 sm:h-4 sm:w-4" />
+          </Button>
         </div>
       </CardHeader>
-      <CardContent className="px-4 pb-4">
-        <div className="h-[280px] md:h-[320px]">
+      <CardContent className="px-3 sm:px-4 md:px-6 pb-3 sm:pb-4">
+        <div className="h-[200px] sm:h-[260px] md:h-[320px]">
           <CashflowChart />
         </div>
       </CardContent>

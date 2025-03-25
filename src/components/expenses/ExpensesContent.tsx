@@ -68,7 +68,7 @@ const ExpensesContent = ({
               onConnectBank={onConnectBank} 
             />
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Stats cards */}
               <ExpenseStatsCards
                 totalExpenses={totalExpenses}
@@ -84,10 +84,14 @@ const ExpensesContent = ({
                   onAddExpense={onAddExpense}
                 />
                 
-                <ExpensesTable 
-                  expenses={filteredExpenses} 
-                  onDeleteExpense={deleteExpense} 
-                />
+                <div className="mt-4 overflow-x-auto -mx-4 sm:mx-0">
+                  <div className="min-w-full px-4 sm:px-0">
+                    <ExpensesTable 
+                      expenses={filteredExpenses} 
+                      onDeleteExpense={deleteExpense} 
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}

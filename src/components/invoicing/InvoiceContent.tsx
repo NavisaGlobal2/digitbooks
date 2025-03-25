@@ -44,7 +44,7 @@ const InvoiceContent = ({
   }
   
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-6 md:space-y-8">
       <InvoiceStatCards invoices={invoices} />
       
       <div>
@@ -54,10 +54,14 @@ const InvoiceContent = ({
           onCreateInvoice={() => setIsCreatingInvoice(true)}
         />
         
-        <InvoiceTable 
-          invoices={filteredInvoices}
-          onMarkAsPaid={handleMarkAsPaid}
-        />
+        <div className="mt-4 overflow-x-auto -mx-4 sm:mx-0">
+          <div className="min-w-full px-4 sm:px-0">
+            <InvoiceTable 
+              invoices={filteredInvoices}
+              onMarkAsPaid={handleMarkAsPaid}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
