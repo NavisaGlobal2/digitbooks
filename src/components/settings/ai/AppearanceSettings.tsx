@@ -14,6 +14,10 @@ type AppearanceSettingsProps = {
   setMessageStyle: (style: string) => void;
   avatarType: string;
   setAvatarType: (type: string) => void;
+  customUrl?: string;
+  setCustomUrl?: (url: string) => void;
+  uploadedUrl?: string;
+  setUploadedUrl?: (url: string) => void;
 };
 
 const AppearanceSettings = ({
@@ -24,7 +28,11 @@ const AppearanceSettings = ({
   messageStyle,
   setMessageStyle,
   avatarType,
-  setAvatarType
+  setAvatarType,
+  customUrl = "",
+  setCustomUrl = () => {},
+  uploadedUrl = "",
+  setUploadedUrl = () => {}
 }: AppearanceSettingsProps) => {
   return (
     <Card>
@@ -44,6 +52,10 @@ const AppearanceSettings = ({
           avatarType={avatarType}
           setAvatarType={setAvatarType}
           theme={theme}
+          customUrl={customUrl}
+          setCustomUrl={setCustomUrl}
+          uploadedUrl={uploadedUrl}
+          setUploadedUrl={setUploadedUrl}
         />
 
         <MessageStyleSelector 
