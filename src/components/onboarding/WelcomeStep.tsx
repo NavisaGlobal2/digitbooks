@@ -9,7 +9,7 @@ interface WelcomeStepProps {
 
 const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext }) => {
   return (
-    <div className="text-center space-y-8 py-6">      
+    <div className="text-center space-y-6 py-6">      
       <h1 className="text-2xl font-bold mb-4 text-gray-900">Welcome to DigiBooks</h1>
       
       <p className="text-gray-500 mb-8 text-sm max-w-md mx-auto">
@@ -17,7 +17,7 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext }) => {
       </p>
       
       <Button 
-        className="px-8 py-2.5 bg-[#05D166] hover:bg-[#05D166]/90 text-white rounded-md transition-all duration-300"
+        className="px-6 py-2 bg-[#05D166] hover:bg-[#05D166]/90 text-white text-sm rounded-md"
         onClick={onNext}
       >
         Get Started

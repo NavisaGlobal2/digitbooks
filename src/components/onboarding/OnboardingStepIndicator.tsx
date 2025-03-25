@@ -12,8 +12,8 @@ const OnboardingStepIndicator: React.FC<OnboardingStepIndicatorProps> = ({
   currentStep 
 }) => {
   return (
-    <div className="mb-8">
-      <div className="flex justify-between items-center mb-6 relative">
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-4 relative">
         {/* Background line */}
         <div className="absolute h-[1px] bg-gray-200 w-full top-1/2"></div>
         
@@ -30,17 +30,16 @@ const OnboardingStepIndicator: React.FC<OnboardingStepIndicatorProps> = ({
             className="relative z-10 flex flex-col items-center"
           >
             <div className={`
-              h-3 w-3 rounded-full transition-all duration-300
+              h-2 w-2 rounded-full 
               ${index <= currentStep ? 'bg-[#05D166]' : 'bg-gray-200'}
-              ${index === currentStep ? 'scale-125' : ''}
             `}></div>
           </div>
         ))}
       </div>
       
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-semibold mb-2">{steps[currentStep].title}</h2>
-        <p className="text-gray-500 text-sm">{steps[currentStep].description}</p>
+      <div className="text-center mb-4">
+        <h2 className="text-base font-medium mb-1">{steps[currentStep].title}</h2>
+        <p className="text-gray-500 text-xs">{steps[currentStep].description}</p>
       </div>
     </div>
   );

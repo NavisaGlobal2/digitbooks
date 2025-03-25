@@ -60,7 +60,7 @@ const FeaturesStep: React.FC<FeaturesStepProps> = ({
       </div>
 
       <Button 
-        className="w-full bg-[#05D166] hover:bg-[#05D166]/90 text-white h-10 mt-6 rounded-md transition-all duration-300"
+        className="w-full bg-[#05D166] hover:bg-[#05D166]/90 text-white h-9 mt-4"
         onClick={onNext}
       >
         Continue
