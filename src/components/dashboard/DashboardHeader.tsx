@@ -1,45 +1,43 @@
 
+import { Filter, Bot } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import FilterDropdown from "@/components/ui/FilterDropdown";
+import AnalyticsAIChat from "@/components/analytics/AnalyticsAIChat";
 import { toast } from "sonner";
 
 const DashboardHeader = () => {
-  const [filterPeriod, setFilterPeriod] = useState("sixMonths");
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
-  const filterOptions = [
-    { label: "Last 7 days", value: "sevenDays" },
-    { label: "Last 30 days", value: "thirtyDays" },
-    { label: "Last 3 months", value: "threeMonths" },
-    { label: "Last 6 months", value: "sixMonths" },
-    { label: "Last year", value: "oneYear" },
-    { label: "All time", value: "allTime" }
-  ];
-  
-  const handleFilterChange = (value: string) => {
-    setFilterPeriod(value);
-    
-    // Get the selected filter label
-    const selectedOption = filterOptions.find(option => option.value === value);
-    if (selectedOption) {
-      toast.success(`Data filtered for ${selectedOption.label}`);
-    }
-    
-    // You would typically fetch data for the selected filter period here
-    console.log(`Filter changed to: ${value}`);
+  const openAnalyticsAI = () => {
+    setIsAIChatOpen(true);
+    toast.success("Analytics AI Assistant opened");
   };
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-0">
-      <p className="text-secondary text-sm sm:text-base">Here's what's happening with your finances today.</p>
+    <div className="flex justify-between items-center mb-8">
+      <p className="text-secondary">Here's what's happening with your finances today.</p>
       
-      <div className="w-full sm:w-auto">
-        <FilterDropdown 
-          options={filterOptions}
-          selectedValue={filterPeriod}
-          onFilterChange={handleFilterChange}
-          className="rounded-full w-full sm:w-auto"
-        />
+      <div className="flex gap-2 sm:gap-4">
+        <Button 
+          variant="outline" 
+          onClick={openAnalyticsAI}
+          className="hidden sm:flex items-center gap-2 rounded-full border-[#05D166]/30 bg-[#05D166]/10 hover:bg-[#05D166]/20 text-xs sm:text-sm"
+        >
+          <Bot className="h-4 w-4 text-[#05D166]" />
+          Analytics AI
+        </Button>
+        
+        <Button variant="outline" className="gap-2 rounded-full">
+          <Filter className="h-4 w-4" />
+          Last six month
+        </Button>
       </div>
+      
+      {/* Analytics AI Chat Modal */}
+      <AnalyticsAIChat 
+        isOpen={isAIChatOpen} 
+        onClose={() => setIsAIChatOpen(false)} 
+      />
     </div>
   );
 };
