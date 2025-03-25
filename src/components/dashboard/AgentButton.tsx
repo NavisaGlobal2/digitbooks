@@ -18,7 +18,8 @@ const AgentButton = () => {
       onClick={handleClick}
     >
       <Bot className="h-4 w-4" />
-      Agent
+      <span className="hidden sm:inline">Agent</span>
+      <span className="sm:hidden">AI</span>
     </Button>
   );
 };
