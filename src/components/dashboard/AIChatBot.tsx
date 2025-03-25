@@ -76,7 +76,11 @@ const AIChatBot = () => {
 
       setMessages((prev) => [...prev, botResponse]);
       setIsTyping(false);
-      toast.success("New AI insight available");
+      
+      // Position the toast to not cover the chat
+      toast.success("New AI insight available", {
+        position: "top-center"
+      });
     }, 1500);
   };
 
@@ -123,7 +127,7 @@ const AIChatBot = () => {
 
           {!isMinimized && (
             <>
-              <CardContent className="p-4 overflow-y-auto h-[calc(100%-8rem)] bg-[#E5DEFF]/20">
+              <CardContent className="p-4 overflow-y-auto h-[calc(100%-8rem)] bg-[#E5DEFF]/30">
                 <div className="space-y-4">
                   {messages.map((msg) => (
                     <div
@@ -153,7 +157,7 @@ const AIChatBot = () => {
                 </div>
               </CardContent>
 
-              <CardFooter className="p-2 border-t bg-[#E5DEFF]/10">
+              <CardFooter className="p-2 border-t bg-[#E5DEFF]/20">
                 <div className="flex items-center w-full space-x-2">
                   <Textarea
                     value={message}
