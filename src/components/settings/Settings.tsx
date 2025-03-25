@@ -9,8 +9,9 @@ import { TeamManagementSettings } from "@/components/settings/TeamManagementSett
 import { ConnectedServicesSettings } from "@/components/settings/ConnectedServicesSettings";
 import { InvoiceTemplateSettings } from "@/components/settings/InvoiceTemplateSettings";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
+import { AISettings } from "@/components/settings/AISettings";
 
-type SettingsTab = 'business' | 'team' | 'services' | 'invoice' | 'notifications';
+type SettingsTab = 'business' | 'team' | 'services' | 'invoice' | 'notifications' | 'ai';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('business');
@@ -21,6 +22,7 @@ const Settings = () => {
     { id: 'services', label: 'Connected services', icon: '🔌' },
     { id: 'invoice', label: 'Invoice template', icon: '📄' },
     { id: 'notifications', label: 'Notifications', icon: '🔔' },
+    { id: 'ai', label: 'AI Assistant', icon: '🤖' },
   ] as const;
 
   return (
@@ -39,13 +41,13 @@ const Settings = () => {
 
         <div className="flex-1 overflow-auto">
           <div className="border-b">
-            <div className="flex px-6">
+            <div className="flex px-6 overflow-x-auto">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as SettingsTab)}
                   className={cn(
-                    "flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors",
+                    "flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
                     activeTab === tab.id
                       ? "border-primary text-primary"
                       : "border-transparent text-muted-foreground hover:text-foreground"
@@ -64,6 +66,7 @@ const Settings = () => {
             {activeTab === 'services' && <ConnectedServicesSettings />}
             {activeTab === 'invoice' && <InvoiceTemplateSettings />}
             {activeTab === 'notifications' && <NotificationSettings />}
+            {activeTab === 'ai' && <AISettings />}
           </div>
         </div>
       </div>
