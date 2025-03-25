@@ -7,7 +7,7 @@ interface OnboardingStepsProps {
 
 const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ children }) => {
   return (
-    <div className="bg-white p-8 rounded-xl shadow-lg border border-border/30 transition-all duration-500 max-w-2xl w-full mx-auto">
+    <div className="bg-white p-8 rounded-xl shadow-lg border border-border/30 transition-all duration-500 max-w-3xl w-full mx-auto">
       {children}
     </div>
   );

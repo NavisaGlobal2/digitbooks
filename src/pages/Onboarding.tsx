@@ -145,8 +145,8 @@ const Onboarding = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-b from-background to-white flex items-center justify-center p-6 onboarding-container">
+      <div className="w-full max-w-4xl onboarding-content">
         <OnboardingProgress steps={STEPS} currentStep={currentStep} />
         <OnboardingSteps>
           {renderStepContent()}
