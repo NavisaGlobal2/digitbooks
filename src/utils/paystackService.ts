@@ -57,7 +57,6 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
   accountName?: string;
   message?: string;
   status?: boolean;
-  data?: any;
 }> => {
   try {
     console.log(`Verifying account: ${accountNumber} with bank code: ${bankCode}`);
@@ -103,8 +102,7 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
           verified: true,
           accountName: mockData.data.account_name,
           message: mockData.message,
-          status: mockData.status,
-          data: mockData.data
+          status: mockData.status
         };
       }
       
@@ -115,14 +113,12 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
       };
     }
     
-    console.log("Verification response:", data);
-    
+    // No logging of sensitive response data
     if (!data.status) {
       return { 
         verified: false, 
         message: data.message || "Verification failed",
-        status: data.status,
-        data: data.data
+        status: data.status
       };
     }
 
@@ -130,8 +126,7 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
       return {
         verified: false,
         message: "Could not retrieve account name",
-        status: data.status,
-        data: data.data
+        status: data.status
       };
     }
 
@@ -139,8 +134,7 @@ export const verifyBankAccount = async (accountNumber: string, bankCode: string)
       verified: true,
       accountName: data.data.account_name,
       message: data.message || "Account verified successfully",
-      status: data.status,
-      data: data.data
+      status: data.status
     };
   } catch (error) {
     console.error("Error verifying account:", error);

@@ -31,8 +31,7 @@ const AccountVerifier = ({
   const [isError, setIsError] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isTestMode, setIsTestMode] = useState(false);
-  const [responseDetails, setResponseDetails] = useState<any>(null);
-
+  
   const handleVerify = async () => {
     if (onVerify) {
       await onVerify();
@@ -42,7 +41,6 @@ const AccountVerifier = ({
     setIsError(false);
     setIsTestMode(false);
     setVerificationMessage("");
-    setResponseDetails(null);
     setIsVerifying(true);
 
     try {
@@ -57,10 +55,8 @@ const AccountVerifier = ({
       console.log(`Starting verification for account: ${accountNumber}, bank code: ${selectedBankCode}`);
       
       const result = await verifyBankAccount(accountNumber, selectedBankCode);
-      console.log("Verification result:", result);
       
-      // Store the complete response data for debugging
-      setResponseDetails(result.data);
+      // No longer logging full API response for security
       
       if (!result.status) {
         // Using test mode
@@ -160,15 +156,6 @@ const AccountVerifier = ({
             </AlertDescription>
           </div>
         </Alert>
-      )}
-      
-      {responseDetails && (
-        <div className="mt-2 text-xs bg-gray-50 p-2 rounded border border-gray-200 overflow-auto max-h-32">
-          <div className="font-semibold mb-1">API Response Details:</div>
-          <pre className="whitespace-pre-wrap break-words">
-            {JSON.stringify(responseDetails, null, 2)}
-          </pre>
-        </div>
       )}
     </div>
   );
