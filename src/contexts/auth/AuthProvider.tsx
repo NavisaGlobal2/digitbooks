@@ -1,8 +1,9 @@
+
 import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
 import { AuthContext } from "./AuthContext";
-import { login, logout, signup, completeUserOnboarding as completeUserOnboarding, signInWithGoogle } from "./authActions";
+import { login, logout, signup, completeOnboarding, signInWithGoogle } from "./authActions";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -81,7 +82,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const handleCompleteOnboarding = async () => {
-    const updatedUser = await completeUserOnboarding(user);
+    const updatedUser = await completeOnboarding(user);
     if (updatedUser) {
       setUser(updatedUser);
     }
