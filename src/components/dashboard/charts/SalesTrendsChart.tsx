@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { formatNaira } from "@/utils/invoice/formatters";
 
 // Sample data for the sales trend chart
 const salesTrendData = [
@@ -52,7 +53,7 @@ const SalesTrendsChart = () => {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: '#828179' }}
-                tickFormatter={(value) => `$${(value / 1000)}k`}
+                tickFormatter={(value) => `₦${(value / 1000)}k`}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -61,7 +62,7 @@ const SalesTrendsChart = () => {
                   return (
                     <div className="bg-white p-2 border border-gray-200 rounded shadow-sm">
                       <p className="font-semibold">{payload[0].payload.name}</p>
-                      <p>${payload[0].value.toLocaleString()}</p>
+                      <p className="break-words">{formatNaira(payload[0].value)}</p>
                     </div>
                   );
                 }}
