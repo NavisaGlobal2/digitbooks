@@ -6,3 +6,6 @@ import { InvoiceDetails } from "../pdfSections/types";
  * Types for document actions
  * Note: Calculation functions have been moved to src/utils/invoice/calculations.ts
  */
+
+// Export types used by document actions
+export type { InvoiceItem, InvoiceDetails };
