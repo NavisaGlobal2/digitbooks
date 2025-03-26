@@ -67,6 +67,21 @@
   .responsive-table {
     @apply min-w-full;
   }
+  
+  /* Ensure tables don't overflow */
+  table {
+    @apply w-full whitespace-nowrap;
+  }
+  
+  /* Style for scrollable table containers */
+  .overflow-x-scroll {
+    @apply -mx-3 px-3;
+  }
+  
+  /* Card adjustments for small screens */
+  .card-grid {
+    @apply grid-cols-1 xs:grid-cols-2;
+  }
 }
 
 /* Improved Mobile Touch Targets */
@@ -76,5 +91,82 @@
   [role="button"],
   a {
     @apply min-h-[44px] min-w-[44px];
+  }
+  
+  /* Font size adjustments */
+  h1 {
+    @apply text-xl;
+  }
+  
+  h2 {
+    @apply text-lg;
+  }
+  
+  /* Table cell padding adjustments */
+  td, th {
+    @apply px-2 py-3 text-sm;
+  }
+  
+  /* Make sure dropdowns have proper z-index and background */
+  [data-radix-popper-content-wrapper] {
+    @apply z-50 !important;
+  }
+  
+  /* Better padding for mobile dialogs */
+  [role="dialog"] {
+    @apply p-4;
+  }
+}
+
+/* Make sure dialogs and popovers always have a background */
+.radix-dialog-content,
+.radix-popover-content,
+.radix-dropdown-menu-content {
+  @apply bg-white !important;
+}
+
+/* Fixed position menu handling for iPhone notch/dynamic island */
+.fixed-top-ios {
+  top: env(safe-area-inset-top, 0);
+}
+
+/* Fixed bottom navigation handling for iPhone home indicator */
+.fixed-bottom-ios {
+  bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Enhanced support for mobile tables */
+.mobile-table {
+  @apply w-full;
+}
+
+.mobile-table th {
+  @apply hidden sm:table-cell;
+}
+
+.mobile-table td:before {
+  @apply font-medium text-xs text-gray-500 block sm:hidden mb-1;
+}
+
+/* Define specific variants for mobile labels in responsive tables */
+@media (max-width: 640px) {
+  .mobile-table td.date:before {
+    content: "Date";
+  }
+  
+  .mobile-table td.description:before {
+    content: "Description";
+  }
+  
+  .mobile-table td.amount:before {
+    content: "Amount";
+  }
+  
+  .mobile-table td.category:before {
+    content: "Category";
+  }
+  
+  .mobile-table td.actions:before {
+    content: "Actions";
   }
 }

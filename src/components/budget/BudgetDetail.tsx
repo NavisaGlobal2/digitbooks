@@ -75,7 +75,7 @@ const BudgetDetail = ({ budgetId, onBack }: BudgetDetailProps) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
         <Button 
           variant="outline" 
@@ -94,21 +94,21 @@ const BudgetDetail = ({ budgetId, onBack }: BudgetDetailProps) => {
             onClick={handleDeleteBudget}
           >
             <Trash className="h-4 w-4 mr-1" />
-            Delete
+            <span className="hidden xs:inline">Delete</span>
           </Button>
         </div>
       </div>
       
       <div>
-        <h1 className="text-2xl font-bold">{budget.name}</h1>
-        <p className="text-muted-foreground">
-          {format(new Date(budget.startDate), "MMMM d, yyyy")} - {format(new Date(budget.endDate), "MMMM d, yyyy")}
+        <h1 className="text-xl sm:text-2xl font-bold">{budget.name}</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
+          {format(new Date(budget.startDate), "MMM d, yyyy")} - {format(new Date(budget.endDate), "MMM d, yyyy")}
         </p>
       </div>
       
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle>Budget Overview</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">Budget Overview</CardTitle>
           <CardDescription>
             Total budget: ${budget.totalBudget.toFixed(2)}
           </CardDescription>
@@ -116,7 +116,7 @@ const BudgetDetail = ({ budgetId, onBack }: BudgetDetailProps) => {
         <CardContent>
           <div className="space-y-4">
             <div>
-              <div className="flex justify-between mb-1 text-sm">
+              <div className="flex justify-between mb-1 text-xs sm:text-sm">
                 <span>Overall Spending</span>
                 <span>
                   ${totalSpent.toFixed(2)} / ${budget.totalBudget.toFixed(2)} ({percentUsed}%)
@@ -128,14 +128,14 @@ const BudgetDetail = ({ budgetId, onBack }: BudgetDetailProps) => {
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-blue-700">Allocated</h3>
-                <p className="text-xl font-bold">${totalAllocated.toFixed(2)}</p>
+            <div className="grid grid-cols-2 gap-2 sm:gap-4 mt-4">
+              <div className="bg-blue-50 p-3 sm:p-4 rounded-lg">
+                <h3 className="text-xs sm:text-sm font-medium text-blue-700">Allocated</h3>
+                <p className="text-lg sm:text-xl font-bold">${totalAllocated.toFixed(2)}</p>
               </div>
-              <div className="bg-emerald-50 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-emerald-700">Unallocated</h3>
-                <p className="text-xl font-bold">${unallocatedAmount.toFixed(2)}</p>
+              <div className="bg-emerald-50 p-3 sm:p-4 rounded-lg">
+                <h3 className="text-xs sm:text-sm font-medium text-emerald-700">Unallocated</h3>
+                <p className="text-lg sm:text-xl font-bold">${unallocatedAmount.toFixed(2)}</p>
               </div>
             </div>
           </div>
@@ -144,32 +144,33 @@ const BudgetDetail = ({ budgetId, onBack }: BudgetDetailProps) => {
       
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Categories</h2>
+          <h2 className="text-lg sm:text-xl font-semibold">Categories</h2>
           <Button 
             onClick={() => setShowAddCategoryDialog(true)} 
             size="sm"
-            className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-1"
+            className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-1 text-xs sm:text-sm"
           >
-            <PlusCircle className="h-4 w-4" />
-            Add Category
+            <PlusCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Add Category</span>
+            <span className="xs:hidden">Add</span>
           </Button>
         </div>
         
         {budget.categories.length === 0 ? (
           <Card className="border-dashed border-2">
-            <CardContent className="p-6 text-center">
-              <p className="text-muted-foreground mb-4">No categories defined yet</p>
+            <CardContent className="p-4 sm:p-6 text-center">
+              <p className="text-muted-foreground mb-3 sm:mb-4 text-sm sm:text-base">No categories defined yet</p>
               <Button 
                 variant="outline" 
                 onClick={() => setShowAddCategoryDialog(true)}
-                className="border-green-500 text-green-500 hover:bg-green-50"
+                className="border-green-500 text-green-500 hover:bg-green-50 text-xs sm:text-sm"
               >
                 Add your first category
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {budget.categories.map((category) => {
               const percentCategoryUsed = Math.min(
                 Math.round((category.spent / category.amount) * 100),
@@ -178,11 +179,11 @@ const BudgetDetail = ({ budgetId, onBack }: BudgetDetailProps) => {
               
               return (
                 <Card key={category.id}>
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 sm:p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-medium">{category.name}</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="font-medium text-sm sm:text-base">{category.name}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           ${category.spent.toFixed(2)} / ${category.amount.toFixed(2)}
                         </p>
                       </div>
@@ -190,7 +191,7 @@ const BudgetDetail = ({ budgetId, onBack }: BudgetDetailProps) => {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-6 w-6 sm:h-8 sm:w-8 p-0"
                           onClick={() => {
                             const newSpent = parseFloat(
                               prompt("Enter new spent amount:", category.spent.toString()) || "0"
@@ -200,7 +201,7 @@ const BudgetDetail = ({ budgetId, onBack }: BudgetDetailProps) => {
                             }
                           }}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       </div>
                     </div>
