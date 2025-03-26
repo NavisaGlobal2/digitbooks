@@ -26,12 +26,12 @@ const Settings = () => {
 
   return (
     <div className="flex flex-col h-full bg-background">
-      <header className="bg-white border-b px-4 sm:px-6 py-4 flex items-center">
-        <div className="flex items-center gap-3">
+      <header className="bg-white border-b px-3 sm:px-6 py-3 sm:py-4 flex items-center">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link to="/dashboard" className="text-muted-foreground hover:text-primary transition-colors">
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </Link>
-          <h1 className="text-lg sm:text-xl font-semibold">User Profile and Settings</h1>
+          <h1 className="text-base sm:text-xl font-semibold">User Profile and Settings</h1>
         </div>
       </header>
 
