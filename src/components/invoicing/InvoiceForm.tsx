@@ -37,9 +37,7 @@ const InvoiceForm = () => {
     bankName,
     setBankName,
     addInvoiceItem,
-    handleSaveInvoice,
-    handleGenerateInvoice,
-    handleShareInvoice
+    handleSaveInvoice
   } = useInvoiceForm();
 
   const formContent = (
@@ -96,9 +94,6 @@ const InvoiceForm = () => {
         <SaveInvoiceButton onSave={handleSaveInvoice} />
         
         <ActionButtons 
-          handleGenerateInvoice={handleGenerateInvoice}
-          handleShareInvoice={handleShareInvoice}
-          isAccountVerified={isAccountVerified}
           logoPreview={logoPreview}
           invoiceItems={invoiceItems}
           invoiceDate={invoiceDate}
