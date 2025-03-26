@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { User } from "./types";
@@ -124,6 +123,30 @@ export const completeOnboarding = async (user: User | null) => {
   } else {
     console.error("Cannot complete onboarding: no user is logged in");
     return null;
+  }
+};
+
+export const signInWithGoogle = async () => {
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + "/auth"
+      }
+    });
+
+    if (error) {
+      console.error("Google login error:", error);
+      toast.error(error.message || "Failed to login with Google");
+      throw error;
+    }
+
+    console.log("Google login initiated:", data);
+    return data;
+  } catch (error: any) {
+    console.error("Google login error:", error);
+    toast.error(error.message || "Failed to login with Google");
+    throw error;
   }
 };
 

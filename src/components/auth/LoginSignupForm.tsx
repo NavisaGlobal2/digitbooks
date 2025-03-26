@@ -7,6 +7,7 @@ import EmailField from "./EmailField";
 import NameField from "./NameField";
 import FormDivider from "./FormDivider";
 import AuthFormFooter from "./AuthFormFooter";
+import { useAuth } from "@/contexts/auth";
 
 type AuthMode = 'login' | 'signup';
 
@@ -39,9 +40,14 @@ const LoginSignupForm: React.FC<LoginSignupFormProps> = ({
   setConfirmPassword,
   isLoading
 }) => {
-  const handleSocialLogin = () => {
-    // Social login implementation will go here
-    console.log("Social login clicked");
+  const { signInWithGoogle } = useAuth();
+
+  const handleSocialLogin = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error("Social login error:", error);
+    }
   };
 
   return (

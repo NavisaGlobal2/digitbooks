@@ -1,9 +1,8 @@
-
 import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
 import { AuthContext } from "./AuthContext";
-import { login, logout, signup, completeOnboarding as completeUserOnboarding } from "./authActions";
+import { login, logout, signup, completeUserOnboarding as completeUserOnboarding, signInWithGoogle } from "./authActions";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -14,7 +13,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check active session on load
     const getInitialSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -40,7 +38,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     getInitialSession();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state change:", event, session?.user?.id);
@@ -108,7 +105,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Don't render until we have checked for a session
+  const handleSignInWithGoogle = async () => {
+    await signInWithGoogle();
+  };
+
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -124,7 +124,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         logout: handleLogout, 
         signup: handleSignup, 
         completeOnboarding: handleCompleteOnboarding,
-        verifyOtp
+        verifyOtp,
+        signInWithGoogle: handleSignInWithGoogle
       }}
     >
       {children}
