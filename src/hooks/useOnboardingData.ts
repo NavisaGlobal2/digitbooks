@@ -41,8 +41,7 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
   const [legalInfo, setLegalInfo] = useState<LegalInfo>({
     rcNumber: "", 
     taxId: "", 
-    vatNumber: "", 
-    registrationDate: "" 
+    vatNumber: ""
   });
 
   const [selectedFeatures, setSelectedFeatures] = useState<FeatureState>({
@@ -92,8 +91,7 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
           setLegalInfo({
             rcNumber: data.rc_number || "",
             taxId: data.tax_number || "",
-            vatNumber: data.vat_number || "",
-            registrationDate: data.registration_date ? new Date(data.registration_date).toISOString().split('T')[0] : ""
+            vatNumber: data.vat_number || ""
           });
           
           if (user.onboardingCompleted) {
@@ -134,7 +132,6 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
         tax_number: legalInfo.taxId || null,
         rc_number: legalInfo.rcNumber,
         business_type: businessInfo.type,
-        registration_date: legalInfo.registrationDate || null,
         vat_number: legalInfo.vatNumber || null,
         phone: businessInfo.phone,
         website: businessInfo.website,
@@ -150,7 +147,6 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
           tax_number: legalInfo.taxId || null,
           rc_number: legalInfo.rcNumber,
           business_type: businessInfo.type,
-          registration_date: legalInfo.registrationDate || null,
           vat_number: legalInfo.vatNumber || null,
           phone: businessInfo.phone,
           website: businessInfo.website,
