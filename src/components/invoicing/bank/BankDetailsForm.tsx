@@ -15,10 +15,6 @@ interface BankDetailsFormProps {
   setAccountNumber: (value: string) => void;
   bankName: string;
   setBankName: (value: string) => void;
-  bankAddress: string;
-  setBankAddress: (value: string) => void;
-  swiftCode: string;
-  setSwiftCode: (value: string) => void;
   isVerified: boolean;
   setIsVerified: (value: boolean) => void;
 }
@@ -27,8 +23,6 @@ const BankDetailsForm = ({
   accountName, setAccountName,
   accountNumber, setAccountNumber,
   bankName, setBankName,
-  bankAddress, setBankAddress,
-  swiftCode, setSwiftCode,
   isVerified, setIsVerified
 }: BankDetailsFormProps) => {
   const [banks, setBanks] = useState<Array<{ name: string; code: string }>>([]);
@@ -135,29 +129,6 @@ const BankDetailsForm = ({
           disabled={!accountNumber || accountNumber.length !== 10 || !selectedBankCode || isVerifying || isLoadingBanks}
           isVerifying={isVerifying}
         />
-      </div>
-
-      {/* Additional bank details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="w-full">
-          <Label htmlFor="bank-address">Bank Address</Label>
-          <Input
-            id="bank-address"
-            value={bankAddress}
-            onChange={(e) => setBankAddress(e.target.value)}
-            placeholder="Enter bank address"
-          />
-        </div>
-
-        <div className="w-full">
-          <Label htmlFor="swift-code">SWIFT/BIC Code</Label>
-          <Input
-            id="swift-code"
-            value={swiftCode}
-            onChange={(e) => setSwiftCode(e.target.value)}
-            placeholder="Enter SWIFT/BIC code"
-          />
-        </div>
       </div>
     </div>
   );

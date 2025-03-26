@@ -12,7 +12,6 @@ interface InvoicePreviewProps {
   additionalInfo: string;
   bankName: string;
   accountNumber: string;
-  swiftCode: string;
   accountName: string;
   calculateSubtotal: (items: InvoiceItem[]) => number;
   calculateTax: (items: InvoiceItem[]) => number;
@@ -28,7 +27,6 @@ const InvoicePreview = ({
   additionalInfo,
   bankName,
   accountNumber,
-  swiftCode,
   accountName,
   calculateSubtotal,
   calculateTax,
@@ -124,7 +122,6 @@ const InvoicePreview = ({
           <p><span className="font-medium">Bank Name:</span> {bankName || "Bank Name"}</p>
           <p><span className="font-medium">Account Name:</span> {accountName || "Account Name"}</p>
           <p><span className="font-medium">Account Number:</span> {accountNumber || "Account Number"}</p>
-          {swiftCode && <p><span className="font-medium">Swift Code:</span> {swiftCode}</p>}
         </div>
       </div>
       

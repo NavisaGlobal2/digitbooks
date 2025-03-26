@@ -8,10 +8,6 @@ interface BankDetailsProps {
   setAccountNumber: (value: string) => void;
   bankName: string;
   setBankName: (value: string) => void;
-  bankAddress: string;
-  setBankAddress: (value: string) => void;
-  swiftCode: string;
-  setSwiftCode: (value: string) => void;
   isVerified: boolean;
   setIsVerified: (value: boolean) => void;
 }
@@ -20,8 +16,6 @@ const BankDetails = ({
   accountName, setAccountName,
   accountNumber, setAccountNumber,
   bankName, setBankName,
-  bankAddress, setBankAddress,
-  swiftCode, setSwiftCode,
   isVerified, setIsVerified
 }: BankDetailsProps) => {
   return (
@@ -35,10 +29,6 @@ const BankDetails = ({
         setAccountNumber={setAccountNumber}
         bankName={bankName}
         setBankName={setBankName}
-        bankAddress={bankAddress}
-        setBankAddress={setBankAddress}
-        swiftCode={swiftCode}
-        setSwiftCode={setSwiftCode}
         isVerified={isVerified}
         setIsVerified={setIsVerified}
       />

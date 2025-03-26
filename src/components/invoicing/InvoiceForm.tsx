@@ -36,10 +36,6 @@ const InvoiceForm = () => {
     setAccountNumber,
     bankName,
     setBankName,
-    bankAddress,
-    setBankAddress,
-    swiftCode,
-    setSwiftCode,
     addInvoiceItem,
     handleSaveInvoice,
     handleGenerateInvoice,
@@ -91,10 +87,6 @@ const InvoiceForm = () => {
         setAccountNumber={setAccountNumber}
         bankName={bankName}
         setBankName={setBankName}
-        bankAddress={bankAddress}
-        setBankAddress={setBankAddress}
-        swiftCode={swiftCode}
-        setSwiftCode={setSwiftCode}
         isVerified={isAccountVerified}
         setIsVerified={setIsAccountVerified}
       />
@@ -114,7 +106,6 @@ const InvoiceForm = () => {
           additionalInfo={additionalInfo}
           bankName={bankName}
           accountNumber={accountNumber}
-          swiftCode={swiftCode}
           accountName={accountName}
           clientName={clientName}
           selectedTemplate={selectedTemplate}
@@ -132,7 +123,6 @@ const InvoiceForm = () => {
       additionalInfo={additionalInfo}
       bankName={bankName}
       accountNumber={accountNumber}
-      swiftCode={swiftCode}
       accountName={accountName}
       calculateSubtotal={calculateSubtotal}
       calculateTax={calculateTax}

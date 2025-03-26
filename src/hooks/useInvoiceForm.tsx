@@ -24,8 +24,6 @@ export const useInvoiceForm = () => {
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [bankName, setBankName] = useState("");
-  const [bankAddress, setBankAddress] = useState("");
-  const [swiftCode, setSwiftCode] = useState("");
   
   const addInvoiceItem = () => {
     setInvoiceItems([...invoiceItems, { description: '', quantity: 1, price: 0, tax: 7.5 }]);
@@ -66,8 +64,7 @@ export const useInvoiceForm = () => {
       bankDetails: {
         accountName,
         accountNumber,
-        bankName,
-        swiftCode
+        bankName
       }
     });
 
@@ -119,10 +116,6 @@ export const useInvoiceForm = () => {
     setAccountNumber,
     bankName,
     setBankName,
-    bankAddress,
-    setBankAddress,
-    swiftCode,
-    setSwiftCode,
     addInvoiceItem,
     handleSaveInvoice,
     handleGenerateInvoice,
