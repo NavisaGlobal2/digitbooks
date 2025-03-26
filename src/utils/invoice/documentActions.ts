@@ -129,7 +129,6 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
             <p style="font-size: 14px;"><span style="font-weight: 500;">Bank Name:</span> ${invoiceDetails.bankName || ""}</p>
             <p style="font-size: 14px;"><span style="font-weight: 500;">Account Name:</span> ${invoiceDetails.accountName || ""}</p>
             <p style="font-size: 14px;"><span style="font-weight: 500;">Account Number:</span> ${invoiceDetails.accountNumber || ""}</p>
-            ${invoiceDetails.swiftCode ? `<p style="font-size: 14px;"><span style="font-weight: 500;">Swift Code:</span> ${invoiceDetails.swiftCode}</p>` : ""}
           </div>
           
           ${invoiceDetails.additionalInfo ? `
@@ -337,7 +336,6 @@ export const shareInvoice = async (invoiceDetails: InvoiceDetails) => {
             <p style="font-size: 14px;"><span style="font-weight: 500;">Bank Name:</span> ${invoiceDetails.bankName || ""}</p>
             <p style="font-size: 14px;"><span style="font-weight: 500;">Account Name:</span> ${invoiceDetails.accountName || ""}</p>
             <p style="font-size: 14px;"><span style="font-weight: 500;">Account Number:</span> ${invoiceDetails.accountNumber || ""}</p>
-            ${invoiceDetails.swiftCode ? `<p style="font-size: 14px;"><span style="font-weight: 500;">Swift Code:</span> ${invoiceDetails.swiftCode}</p>` : ""}
           </div>
           
           ${invoiceDetails.additionalInfo ? `

@@ -22,7 +22,6 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
     additionalInfo,
     bankName,
     accountNumber,
-    swiftCode,
     accountName,
     clientName = "Client",
     invoiceNumber = format(new Date(), "yyyyMMdd"),

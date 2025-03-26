@@ -12,7 +12,6 @@ export const renderPaymentInfo = (
   bankName: string,
   accountName: string,
   accountNumber: string,
-  swiftCode: string,
   yPos: number,
   colors: any,
   margins: any
@@ -45,11 +44,6 @@ export const renderPaymentInfo = (
   
   if (accountNumber) {
     doc.text(`Account Number: ${accountNumber}`, margins.left, detailYPos);
-    detailYPos += 7;
-  }
-  
-  if (swiftCode) {
-    doc.text(`Swift Code: ${swiftCode}`, margins.left, detailYPos);
     detailYPos += 7;
   }
   

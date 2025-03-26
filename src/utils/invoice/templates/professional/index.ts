@@ -26,7 +26,6 @@ export const renderProfessionalTemplate = (doc: jsPDF, props: InvoiceTemplatePro
     additionalInfo,
     bankName,
     accountNumber,
-    swiftCode,
     accountName,
     clientName,
     invoiceNumber,
@@ -59,7 +58,7 @@ export const renderProfessionalTemplate = (doc: jsPDF, props: InvoiceTemplatePro
   
   // Payment information in highlighted box
   if (bankName || accountName || accountNumber) {
-    yPos = renderPaymentInfo(doc, bankName, accountName, accountNumber, swiftCode, yPos + 10, config.colors, config.margins, pageWidth);
+    yPos = renderPaymentInfo(doc, bankName, accountName, accountNumber, yPos + 10, config.colors, config.margins, pageWidth);
   }
   
   // Additional information in light container

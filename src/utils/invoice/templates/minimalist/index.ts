@@ -22,7 +22,6 @@ export const renderMinimalistTemplate = (doc: jsPDF, props: InvoiceTemplateProps
     additionalInfo,
     bankName,
     accountNumber,
-    swiftCode,
     accountName,
     clientName,
     invoiceNumber,
@@ -68,7 +67,7 @@ export const renderMinimalistTemplate = (doc: jsPDF, props: InvoiceTemplateProps
   
   // Add payment details if provided
   if (bankName || accountName || accountNumber) {
-    yPos = renderPaymentInfo(doc, bankName, accountName, accountNumber, swiftCode, yPos, colors, margins);
+    yPos = renderPaymentInfo(doc, bankName, accountName, accountNumber, yPos, colors, margins);
     yPos += 15;
   }
   

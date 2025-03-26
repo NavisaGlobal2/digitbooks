@@ -12,7 +12,6 @@ export const renderPaymentInfo = (
   bankName: string,
   accountName: string,
   accountNumber: string,
-  swiftCode: string,
   yPos: number,
   colors: any,
   margins: any,
@@ -60,13 +59,6 @@ export const renderPaymentInfo = (
     doc.text("Account Number:", labelX, detailYPos + 20);
     doc.setFont('helvetica', 'normal');
     doc.text(accountNumber, valueX, detailYPos + 20);
-  }
-  
-  if (swiftCode) {
-    doc.setFont('helvetica', 'bold');
-    doc.text("Swift Code:", labelX, detailYPos + 30);
-    doc.setFont('helvetica', 'normal');
-    doc.text(swiftCode, valueX, detailYPos + 30);
   }
   
   return yPos + 65;

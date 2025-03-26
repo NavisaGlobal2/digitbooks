@@ -1,4 +1,3 @@
-
 /**
  * Default invoice template with modern, clean design
  */
@@ -18,7 +17,6 @@ export const renderDefaultTemplate = (doc: jsPDF, props: InvoiceTemplateProps): 
     additionalInfo,
     bankName,
     accountNumber,
-    swiftCode,
     accountName,
     clientName,
     invoiceNumber,
@@ -54,7 +52,7 @@ export const renderDefaultTemplate = (doc: jsPDF, props: InvoiceTemplateProps): 
   
   // Payment information
   if (bankName || accountName || accountNumber) {
-    yPos = renderPaymentInfo(doc, bankName, accountName, accountNumber, swiftCode, yPos, colors, margins);
+    yPos = renderPaymentInfo(doc, bankName, accountName, accountNumber, yPos, colors, margins);
     yPos += 15;
   }
   
@@ -291,7 +289,6 @@ const renderPaymentInfo = (
   bankName: string,
   accountName: string,
   accountNumber: string,
-  swiftCode: string,
   yPos: number,
   colors: any,
   margins: any
@@ -315,10 +312,10 @@ const renderPaymentInfo = (
   let detailYPos = yPos + 20;
   
   // Background for payment details
-  if (bankName || accountName || accountNumber || swiftCode) {
+  if (bankName || accountName || accountNumber) {
     doc.setFillColor(248, 248, 248);
     const backgroundHeight = 10 + (bankName ? 10 : 0) + (accountName ? 10 : 0) + 
-                             (accountNumber ? 10 : 0) + (swiftCode ? 10 : 0);
+                             (accountNumber ? 10 : 0);
     doc.rect(margins.left, detailYPos - 5, 170, backgroundHeight, 'F');
   }
   
@@ -346,15 +343,6 @@ const renderPaymentInfo = (
     doc.text("Account Number:", margins.left + 5, detailYPos);
     doc.setFont('helvetica', 'normal');
     doc.text(accountNumber, margins.left + 80, detailYPos);
-    detailYPos += 10;
-  }
-  
-  // Swift code
-  if (swiftCode) {
-    doc.setFont('helvetica', 'bold');
-    doc.text("Swift Code:", margins.left + 5, detailYPos);
-    doc.setFont('helvetica', 'normal');
-    doc.text(swiftCode, margins.left + 80, detailYPos);
     detailYPos += 10;
   }
   
