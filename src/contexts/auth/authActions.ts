@@ -57,7 +57,9 @@ export const signup = async (email: string, password: string, name: string) => {
           name,
           avatar: "",
           onboardingCompleted: false
-        }
+        },
+        // Ensure email confirmation is enabled
+        emailRedirectTo: window.location.origin + "/auth" 
       }
     });
 
@@ -66,7 +68,13 @@ export const signup = async (email: string, password: string, name: string) => {
       throw error;
     }
 
+    console.log("Signup response:", data);
+    
     if (data.user) {
+      if (data.user.identities && data.user.identities.length === 0) {
+        throw new Error("Email already in use. Please login instead.");
+      }
+      
       const userData = {
         id: data.user.id,
         email: data.user.email,
@@ -76,11 +84,18 @@ export const signup = async (email: string, password: string, name: string) => {
       };
       
       console.log("Signup successful:", userData);
-      toast.success("Account created successfully! You can now log in.");
+      toast.success("Verification email sent! Please check your inbox.");
+      return { newUser: true, email: data.user.email };
+    } else {
+      throw new Error("Signup failed");
     }
   } catch (error: any) {
     console.error("Signup error:", error);
-    toast.error(error.message || "Failed to create account");
+    if (error.message.includes("already in use")) {
+      toast.error("Email already in use. Please login instead.");
+    } else {
+      toast.error(error.message || "Failed to create account");
+    }
     throw error;
   }
 };
@@ -109,5 +124,24 @@ export const completeOnboarding = async (user: User | null) => {
   } else {
     console.error("Cannot complete onboarding: no user is logged in");
     return null;
+  }
+};
+
+export const resendVerificationEmail = async (email: string) => {
+  try {
+    const { data, error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    });
+    
+    if (error) throw error;
+    
+    console.log("Verification email resent:", data);
+    toast.success("Verification email resent successfully!");
+    return true;
+  } catch (error: any) {
+    console.error("Error resending verification email:", error);
+    toast.error(error.message || "Failed to resend verification email");
+    return false;
   }
 };

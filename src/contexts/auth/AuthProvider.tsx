@@ -90,6 +90,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const verifyOtp = async (email: string, token: string) => {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'signup'
+      });
+      
+      if (error) throw error;
+      
+      console.log("OTP verification successful:", data);
+      return data;
+    } catch (error: any) {
+      console.error("OTP verification error:", error);
+      throw error;
+    }
+  };
+
   // Don't render until we have checked for a session
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center">
@@ -105,7 +123,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         login: handleLogin, 
         logout: handleLogout, 
         signup: handleSignup, 
-        completeOnboarding: handleCompleteOnboarding 
+        completeOnboarding: handleCompleteOnboarding,
+        verifyOtp
       }}
     >
       {children}

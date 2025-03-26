@@ -3,21 +3,25 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "sonner";
+import { resendVerificationEmail } from "@/contexts/auth/authActions";
+import { useAuth } from "@/contexts/auth";
+import { useNavigate } from "react-router-dom";
+import { AlertCircle } from "lucide-react";
 
 interface VerificationFormProps {
   email: string;
   onBack: () => void;
-  onSubmit: () => Promise<void>;
-  isLoading: boolean;
 }
 
 const VerificationForm: React.FC<VerificationFormProps> = ({
   email,
   onBack,
-  onSubmit,
-  isLoading
 }) => {
   const [verificationCode, setVerificationCode] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const { verifyOtp } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,11 +29,27 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
       toast.error("Please enter a valid verification code");
       return;
     }
-    await onSubmit();
+    
+    setIsLoading(true);
+    try {
+      await verifyOtp(email, verificationCode);
+      toast.success("Email verified successfully!");
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Verification error:", error);
+      toast.error(error.message || "Invalid verification code");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleResendCode = () => {
-    toast.success("Verification code resent to your email");
+  const handleResendCode = async () => {
+    setIsResending(true);
+    try {
+      await resendVerificationEmail(email);
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (
@@ -39,8 +59,21 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
           Verify your email
         </h1>
         <p className="text-muted-foreground text-sm sm:text-base">
-          We've sent a verification code to {email}
+          We've sent a verification email to {email}
         </p>
+      </div>
+
+      <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-6">
+        <div className="flex gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-amber-800">
+            <p className="font-medium">Two options to verify:</p>
+            <ol className="list-decimal ml-5 mt-1 space-y-1">
+              <li>Click the link in the verification email we sent you</li>
+              <li>Or enter the 6-digit code from the email below</li>
+            </ol>
+          </div>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
@@ -59,7 +92,9 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
           </div>
           
           <p className="text-xs sm:text-sm text-center text-muted-foreground mt-4">
-            Didn't receive a code? <button type="button" onClick={handleResendCode} className="text-green-500 hover:text-green-600 font-medium">Resend</button>
+            Didn't receive a code? <button type="button" onClick={handleResendCode} disabled={isResending} className="text-green-500 hover:text-green-600 font-medium">
+              {isResending ? "Sending..." : "Resend"}
+            </button>
           </p>
         </div>
 
@@ -78,7 +113,7 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
           className="w-full text-sm sm:text-base"
           disabled={isLoading}
         >
-          Back to signup
+          Back to login
         </Button>
       </form>
     </div>

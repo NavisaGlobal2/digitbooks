@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -24,6 +24,18 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [verificationStep, setVerificationStep] = useState(false);
 
+  // Check for password reset or verification parameters in URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const type = params.get('type');
+    
+    if (type === 'recovery' || type === 'signup') {
+      // Handle password reset or email verification redirects from Supabase
+      // This happens automatically with Supabase Auth
+      console.log("Auth redirect detected:", type);
+    }
+  }, [location.search]);
+
   const handleLoginSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -35,9 +47,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
           setIsLoading(false);
           return;
         }
-        // Move to verification step
+        
+        await signup(email, password, name);
+        // Move to verification step after signup
         setVerificationStep(true);
-        toast.success("Verification code sent to your email!");
       } else {
         await login(email, password);
         toast.success("Login successful!");
@@ -48,46 +61,23 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
       }
     } catch (error: any) {
       console.error('Auth error:', error);
-      toast.error(error.message || "Authentication failed");
+      // Error message is handled by the auth functions
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerification = async () => {
-    setIsLoading(true);
-    try {
-      // Handle verification code submission
-      // For now just show a toast since we're not implementing full verification yet
-      toast.success("Email verification successful!");
-      
-      // After verification, proceed with account creation
-      await signup(email, password, name);
-      toast.success("Account created successfully!");
-      
-      // Navigate to dashboard or the page they were trying to access
-      const from = location.state?.from?.pathname || "/dashboard";
-      navigate(from, { replace: true });
-    } catch (error: any) {
-      console.error('Verification error:', error);
-      toast.error(error.message || "Verification failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleBackToSignup = () => {
+  const handleBackToLogin = () => {
     setVerificationStep(false);
+    setMode('login');
   };
 
   // For verification code step
-  if (mode === 'signup' && verificationStep) {
+  if (verificationStep) {
     return (
       <VerificationForm
         email={email}
-        onBack={handleBackToSignup}
-        onSubmit={handleVerification}
-        isLoading={isLoading}
+        onBack={handleBackToLogin}
       />
     );
   }

@@ -6,6 +6,7 @@ import AuthForm from "@/components/auth/AuthForm";
 import FeatureDisplay from "@/components/auth/FeatureDisplay";
 import AuthHeader from "@/components/auth/AuthHeader";
 import DecorativeBackground from "@/components/auth/DecorativeBackground";
+import { toast } from "sonner";
 
 type AuthMode = 'login' | 'signup';
 
@@ -14,6 +15,22 @@ const Auth: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mode, setMode] = useState<AuthMode>('login'); // Default to login mode
+
+  // Check URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const error = params.get('error');
+    const errorDescription = params.get('error_description');
+    
+    if (error) {
+      toast.error(errorDescription || "Authentication error");
+    }
+    
+    // Set to signup mode if redirected from signup flow
+    if (params.get('type') === 'signup') {
+      setMode('signup');
+    }
+  }, [location]);
 
   // Redirect if already authenticated
   useEffect(() => {
