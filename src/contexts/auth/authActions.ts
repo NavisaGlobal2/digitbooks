@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { User } from "./types";
@@ -130,12 +131,20 @@ export const signInWithGoogle = async () => {
     console.log("Starting Google authentication flow...");
     
     // Get the canonical URL (in case we're on a custom domain or subdomain)
-    // Remove query parameters from redirect URL to avoid issues
-    const baseUrl = window.location.origin;
-    const redirectUrl = `${baseUrl}/auth`;
+    // Add detailed logging of the window location
+    console.log("Current window location details:", {
+      origin: window.location.origin,
+      pathname: window.location.pathname,
+      href: window.location.href,
+      host: window.location.host
+    });
+    
+    // For Supabase Google auth, the redirect must go to a URL that's
+    // allowed in both the Google console and Supabase settings
+    // Use just the origin without the pathname to avoid issues
+    const redirectUrl = window.location.origin + "/auth";
     
     console.log("Using redirect URL for Google auth:", redirectUrl);
-    console.log("Current window.location:", window.location);
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -161,7 +170,7 @@ export const signInWithGoogle = async () => {
       throw noUrlError;
     }
 
-    console.log("Google login initiated successfully:", data);
+    console.log("Google login initiated successfully. Redirecting to:", data.url);
     
     // Redirect manually to avoid potential issues
     window.location.href = data.url;

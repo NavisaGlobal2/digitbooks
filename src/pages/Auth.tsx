@@ -19,13 +19,26 @@ const Auth: React.FC = () => {
   const [mode, setMode] = useState<AuthMode>('login'); // Default to login mode
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Log the current URL information for debugging
+  // Enhanced logging for debugging
   useEffect(() => {
     console.log("Auth page loaded");
     console.log("Current URL:", window.location.href);
     console.log("Origin:", window.location.origin);
     console.log("Search params:", location.search);
     console.log("Hash:", location.hash);
+    
+    // Additional debug info for Google auth
+    if (navigator.userAgent) {
+      console.log("User agent:", navigator.userAgent);
+    }
+    
+    // Test if we can access Google domains (for CORS diagnostics)
+    fetch('https://accounts.google.com/gsi/status', { 
+      mode: 'no-cors',
+      method: 'HEAD'
+    })
+    .then(() => console.log("Google domains seem accessible"))
+    .catch(err => console.error("Cannot access Google domains:", err));
   }, [location]);
 
   // Check URL parameters and handle auth redirects
@@ -46,6 +59,11 @@ const Auth: React.FC = () => {
     // Handle successful auth callbacks
     if (location.hash) {
       console.log("Detected auth callback with hash:", location.hash);
+      
+      // Try to parse the hash for access_token (common in OAuth flows)
+      if (location.hash.includes("access_token")) {
+        console.log("Access token detected in URL hash");
+      }
     }
     
     // Set to signup mode if redirected from signup flow
@@ -62,6 +80,11 @@ const Auth: React.FC = () => {
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
+
+  // Clear auth errors when mode changes
+  useEffect(() => {
+    setAuthError(null);
+  }, [mode]);
 
   return (
     <div className="min-h-screen flex flex-col md:grid md:grid-cols-2">

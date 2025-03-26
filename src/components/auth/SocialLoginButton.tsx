@@ -19,37 +19,54 @@ const SocialLoginButton: React.FC<SocialLoginButtonProps> = ({
   onClick
 }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
+  const [buttonError, setButtonError] = useState<string | null>(null);
   
   const handleClick = async () => {
     if (onClick) {
+      setButtonError(null);
       setIsButtonLoading(true);
+      
       try {
+        console.log(`${provider} login button clicked, initiating login flow...`);
+        
+        // Check if network is available
+        if (!navigator.onLine) {
+          throw new Error("You appear to be offline. Please check your internet connection.");
+        }
+        
         await onClick();
-      } catch (error) {
+      } catch (error: any) {
         console.error(`${provider} authentication error:`, error);
+        setButtonError(error.message || `Failed to connect to ${provider}`);
         setIsButtonLoading(false);
       }
     }
   };
 
   return (
-    <Button 
-      variant="outline" 
-      className="w-full h-10 sm:h-12 relative hover:bg-gray-50 transition-all duration-300 text-sm sm:text-base"
-      disabled={isLoading || isButtonLoading}
-      onClick={handleClick}
-    >
-      {(isLoading || isButtonLoading) ? (
-        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-      ) : (
-        <img 
-          src={icon} 
-          alt={altText} 
-          className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-4"
-        />
+    <div className="w-full">
+      <Button 
+        variant="outline" 
+        className="w-full h-10 sm:h-12 relative hover:bg-gray-50 transition-all duration-300 text-sm sm:text-base"
+        disabled={isLoading || isButtonLoading}
+        onClick={handleClick}
+      >
+        {(isLoading || isButtonLoading) ? (
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        ) : (
+          <img 
+            src={icon} 
+            alt={altText} 
+            className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-4"
+          />
+        )}
+        {isButtonLoading ? "Connecting..." : `Continue with ${provider}`}
+      </Button>
+      
+      {buttonError && (
+        <p className="text-xs text-red-500 mt-1 px-1">{buttonError}</p>
       )}
-      {isButtonLoading ? "Connecting..." : `Continue with ${provider}`}
-    </Button>
+    </div>
   );
 };
 
