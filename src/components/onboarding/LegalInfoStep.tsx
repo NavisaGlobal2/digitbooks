@@ -88,20 +88,6 @@ const LegalInfoStep: React.FC<LegalInfoStepProps> = ({
         </p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="registration-date" className="text-gray-700">Business Registration Date</Label>
-        <Input
-          id="registration-date"
-          type="date"
-          value={legalInfo.registrationDate}
-          onChange={(e) => onLegalInfoChange({ ...legalInfo, registrationDate: e.target.value })}
-          className="border-gray-200 h-9"
-        />
-        <p className="text-xs text-gray-500">
-          The date your business was registered with CAC
-        </p>
-      </div>
-
       <Button 
         className="w-full bg-[#05D166] hover:bg-[#05D166]/90 text-white h-9 mt-4"
         onClick={handleNext}

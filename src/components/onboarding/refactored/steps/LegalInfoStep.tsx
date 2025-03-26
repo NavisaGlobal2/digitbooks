@@ -9,7 +9,6 @@ interface LegalInfo {
   rcNumber: string;
   taxId: string;
   vatNumber: string;
-  registrationDate: string;
 }
 
 interface LegalInfoStepProps {
@@ -77,19 +76,6 @@ const LegalInfoStep: React.FC<LegalInfoStepProps> = ({
         />
         <p className="text-sm text-muted-foreground">
           Your Value Added Tax registration number if applicable
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="registration-date">Business Registration Date</Label>
-        <Input
-          id="registration-date"
-          type="date"
-          value={legalInfo.registrationDate}
-          onChange={(e) => onLegalInfoChange({ ...legalInfo, registrationDate: e.target.value })}
-        />
-        <p className="text-sm text-muted-foreground">
-          The date your business was registered with CAC
         </p>
       </div>
 
