@@ -50,15 +50,20 @@ const InvoicePreview = ({
           </p>
         </div>
         
-        {logoPreview ? (
-          <div className="flex-shrink-0">
-            <img src={logoPreview} alt="Company Logo" className="h-16 w-auto object-contain" />
-          </div>
-        ) : (
-          <div className="flex-shrink-0 h-16 w-16">
-            <Logo className="w-full h-full" />
-          </div>
-        )}
+        <div className="flex-shrink-0">
+          {logoPreview ? (
+            <img 
+              src={logoPreview} 
+              alt="Company Logo" 
+              className="h-16 w-auto object-contain" 
+              crossOrigin="anonymous"
+            />
+          ) : (
+            <div className="h-16 w-16">
+              <Logo className="w-full h-full" />
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Client Info */}

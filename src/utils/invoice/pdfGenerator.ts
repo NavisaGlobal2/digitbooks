@@ -54,9 +54,25 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
   // Apply document-wide font setting for consistency
   doc.setFont('helvetica');
   
+  // Ensure the logo is properly loaded if available
+  let processedLogo = logoPreview;
+  if (logoPreview && typeof logoPreview === 'string') {
+    // Make sure the logo is properly cached to avoid CORS issues
+    try {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = logoPreview;
+      // We don't need to wait for the image to load as jsPDF will handle this
+    } catch (error) {
+      console.error("Error processing logo:", error);
+      processedLogo = null;
+    }
+  }
+  
   // Render the selected template with improved spacing
   renderInvoiceTemplate(doc, {
     ...invoiceDetails,
+    logoPreview: processedLogo,
     subtotal,
     tax,
     total

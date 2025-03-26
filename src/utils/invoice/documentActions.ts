@@ -1,4 +1,8 @@
 
+/**
+ * Functions for invoice document actions like download and sharing
+ */
+
 import { saveAs } from "file-saver";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -74,7 +78,7 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
                 <span style="font-weight: 500;">Due Date:</span> ${invoiceDetails.dueDate ? format(invoiceDetails.dueDate, "dd MMM yyyy") : ""}
               </p>
             </div>
-            ${invoiceDetails.logoPreview ? `<img src="${invoiceDetails.logoPreview}" style="height: 60px; object-fit: contain;" />` : ''}
+            ${invoiceDetails.logoPreview ? `<img src="${invoiceDetails.logoPreview}" style="height: 60px; object-fit: contain;" crossorigin="anonymous" />` : ''}
           </div>
           
           <div style="margin-bottom: 20px;">
@@ -281,7 +285,7 @@ export const shareInvoice = async (invoiceDetails: InvoiceDetails) => {
                 <span style="font-weight: 500;">Due Date:</span> ${invoiceDetails.dueDate ? format(invoiceDetails.dueDate, "dd MMM yyyy") : ""}
               </p>
             </div>
-            ${invoiceDetails.logoPreview ? `<img src="${invoiceDetails.logoPreview}" style="height: 60px; object-fit: contain;" />` : ''}
+            ${invoiceDetails.logoPreview ? `<img src="${invoiceDetails.logoPreview}" style="height: 60px; object-fit: contain;" crossorigin="anonymous" />` : ''}
           </div>
           
           <div style="margin-bottom: 20px;">
