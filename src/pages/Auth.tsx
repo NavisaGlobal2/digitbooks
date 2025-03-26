@@ -16,14 +16,22 @@ const Auth: React.FC = () => {
   const location = useLocation();
   const [mode, setMode] = useState<AuthMode>('login'); // Default to login mode
 
-  // Check URL parameters
+  // Check URL parameters and handle auth redirects
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const error = params.get('error');
     const errorDescription = params.get('error_description');
+    const provider = params.get('provider');
     
+    // Handle errors
     if (error) {
+      console.error("Auth redirect error:", error, errorDescription);
       toast.error(errorDescription || "Authentication error");
+    }
+    
+    // Handle successful OAuth redirects
+    if (provider === 'google') {
+      console.log("Detected redirect from Google OAuth");
     }
     
     // Set to signup mode if redirected from signup flow
@@ -36,6 +44,7 @@ const Auth: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated) {
       const from = location.state?.from?.pathname || "/dashboard";
+      console.log("User is authenticated, redirecting to:", from);
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
@@ -53,7 +62,6 @@ const Auth: React.FC = () => {
 
       {/* Right side - Marketing content */}
       <div className="hidden md:block bg-gradient-to-br from-green-500 via-green-400 to-green-600 p-8 flex items-center justify-center overflow-hidden relative">
-        {/* Animated background shapes */}
         <DecorativeBackground />
         <FeatureDisplay />
       </div>

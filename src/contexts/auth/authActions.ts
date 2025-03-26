@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { User } from "./types";
@@ -128,10 +129,16 @@ export const completeOnboarding = async (user: User | null) => {
 
 export const signInWithGoogle = async () => {
   try {
+    console.log("Starting Google authentication flow...");
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + "/auth"
+        redirectTo: `${window.location.origin}/auth`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        }
       }
     });
 
@@ -141,7 +148,7 @@ export const signInWithGoogle = async () => {
       throw error;
     }
 
-    console.log("Google login initiated:", data);
+    console.log("Google login initiated successfully:", data);
     return data;
   } catch (error: any) {
     console.error("Google login error:", error);

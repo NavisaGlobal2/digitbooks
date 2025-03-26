@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import SocialLoginButton from "./SocialLoginButton";
@@ -8,6 +7,7 @@ import NameField from "./NameField";
 import FormDivider from "./FormDivider";
 import AuthFormFooter from "./AuthFormFooter";
 import { useAuth } from "@/contexts/auth";
+import { toast } from "sonner";
 
 type AuthMode = 'login' | 'signup';
 
@@ -44,6 +44,8 @@ const LoginSignupForm: React.FC<LoginSignupFormProps> = ({
 
   const handleSocialLogin = async () => {
     try {
+      toast.info("Redirecting to Google login...");
+      console.log("Google login button clicked, initiating login flow...");
       await signInWithGoogle();
     } catch (error) {
       console.error("Social login error:", error);
