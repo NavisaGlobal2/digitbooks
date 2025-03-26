@@ -1,5 +1,6 @@
 
 import React, { createContext, useState, useContext } from "react";
+import { toast } from "sonner";
 
 export interface BusinessAddress {
   line1: string;
@@ -71,9 +72,12 @@ export const BusinessProfileProvider: React.FC<{ children: React.ReactNode }> = 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
     // Save profile data to database or context
     console.log("Profile saved:", profile);
-    // Show success message
+    
+    // Show success message using toast
+    toast.success("Business profile updated successfully");
   };
 
   return (

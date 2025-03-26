@@ -8,7 +8,7 @@ import { MapPin } from "lucide-react";
 import { useBusinessProfile } from "./BusinessProfileContext";
 
 export const AddressCard: React.FC = () => {
-  const { profile, handleChange, handleSubmit } = useBusinessProfile();
+  const { profile, handleChange } = useBusinessProfile();
 
   return (
     <Card>
@@ -94,8 +94,8 @@ export const AddressCard: React.FC = () => {
       </CardContent>
       <CardFooter className="border-t px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex flex-col xs:flex-row xs:justify-end gap-2 w-full">
-          <Button variant="outline" size="sm" className="text-xs">Cancel</Button>
-          <Button type="submit" size="sm" className="text-xs" onClick={handleSubmit}>Save Changes</Button>
+          <Button variant="outline" size="sm" className="text-xs" type="reset">Cancel</Button>
+          <Button type="submit" size="sm" className="text-xs">Save Changes</Button>
         </div>
       </CardFooter>
     </Card>
