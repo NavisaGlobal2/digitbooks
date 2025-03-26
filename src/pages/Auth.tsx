@@ -18,20 +18,20 @@ const Auth: React.FC = () => {
 
   // Check URL parameters and handle auth redirects
   useEffect(() => {
+    // Parse URL parameters
     const params = new URLSearchParams(location.search);
     const error = params.get('error');
     const errorDescription = params.get('error_description');
-    const provider = params.get('provider');
     
-    // Handle errors
+    // Handle auth errors
     if (error) {
       console.error("Auth redirect error:", error, errorDescription);
       toast.error(errorDescription || "Authentication error");
     }
     
-    // Handle successful OAuth redirects
-    if (provider === 'google') {
-      console.log("Detected redirect from Google OAuth");
+    // Handle successful auth callbacks
+    if (location.hash) {
+      console.log("Detected auth callback with hash:", location.hash);
     }
     
     // Set to signup mode if redirected from signup flow

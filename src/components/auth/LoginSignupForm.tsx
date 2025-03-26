@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import SocialLoginButton from "./SocialLoginButton";
@@ -49,6 +50,7 @@ const LoginSignupForm: React.FC<LoginSignupFormProps> = ({
       await signInWithGoogle();
     } catch (error) {
       console.error("Social login error:", error);
+      // No need to show error toast here as it's already handled in signInWithGoogle
     }
   };
 
