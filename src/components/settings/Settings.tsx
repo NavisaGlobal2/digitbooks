@@ -37,20 +37,20 @@ const Settings = () => {
 
       <div className="flex-1 overflow-auto">
         <div className="border-b">
-          <div className="flex overflow-x-auto scrollbar-hide pb-1">
+          <div className="grid grid-cols-3 sm:flex overflow-x-auto sm:overflow-visible p-1 gap-1 sm:gap-0 sm:p-0">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as SettingsTab)}
                 className={cn(
-                  "flex items-center gap-2 px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                  "flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
                   activeTab === tab.id
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 )}
               >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
+                <span className="text-base sm:text-sm">{tab.icon}</span>
+                <span className="line-clamp-1">{tab.label}</span>
               </button>
             ))}
           </div>
