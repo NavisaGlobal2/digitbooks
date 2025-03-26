@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
-import { Check, ChevronDown, User } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { Check, ChevronDown, User, Plus } from "lucide-react";
 import { useClients } from '@/contexts/ClientContext';
 import { 
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -22,9 +24,21 @@ const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorPr
   const [isCustomClient, setIsCustomClient] = useState(!clients.some(client => client.name === selectedClientName) && selectedClientName !== '');
   const [customClientName, setCustomClientName] = useState(isCustomClient ? selectedClientName : '');
 
+  // Update state when the selected client changes externally
+  useEffect(() => {
+    if (selectedClientName && !isCustomClient) {
+      const clientExists = clients.some(client => client.name === selectedClientName);
+      if (!clientExists) {
+        setIsCustomClient(true);
+        setCustomClientName(selectedClientName);
+      }
+    }
+  }, [selectedClientName, clients, isCustomClient]);
+
   const handleClientSelect = (value: string) => {
     if (value === "custom") {
       setIsCustomClient(true);
+      setCustomClientName('');
     } else {
       setIsCustomClient(false);
       onClientSelect(value);
@@ -32,38 +46,48 @@ const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorPr
   };
 
   const handleCustomClientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCustomClientName(e.target.value);
-    onClientSelect(e.target.value);
+    const value = e.target.value;
+    setCustomClientName(value);
+    onClientSelect(value);
   };
 
   const handleAddCustomClient = () => {
     setIsCustomClient(true);
+    setCustomClientName('');
   };
 
   return (
     <div className="space-y-3">
       {!isCustomClient ? (
         <>
-          <Select onValueChange={handleClientSelect} value={selectedClientName || undefined}>
+          <Select 
+            onValueChange={handleClientSelect} 
+            value={selectedClientName || undefined}
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a client" />
             </SelectTrigger>
             <SelectContent>
-              {clients.map((client) => (
-                <SelectItem key={client.id} value={client.name}>
-                  <div className="flex items-center">
-                    <User className="mr-2 h-4 w-4" />
-                    {client.name}
-                  </div>
-                </SelectItem>
-              ))}
+              <SelectGroup>
+                <SelectLabel>Existing Clients</SelectLabel>
+                {clients.map((client) => (
+                  <SelectItem key={client.id} value={client.name}>
+                    <div className="flex items-center">
+                      <User className="mr-2 h-4 w-4" />
+                      {client.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectGroup>
               <SelectItem value="custom">
                 <div className="flex items-center text-blue-600">
-                  + Add a custom client
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add a custom client
                 </div>
               </SelectItem>
             </SelectContent>
           </Select>
+          
           {clients.length === 0 && (
             <Button 
               type="button" 
@@ -72,7 +96,8 @@ const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorPr
               className="mt-2 text-sm"
               onClick={handleAddCustomClient}
             >
-              + Add custom client
+              <Plus className="h-4 w-4 mr-2" />
+              Add custom client
             </Button>
           )}
         </>

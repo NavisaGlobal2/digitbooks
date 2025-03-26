@@ -1,9 +1,10 @@
 
-import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import ClientSelector from "./ClientSelector";
 
@@ -25,34 +26,32 @@ const BusinessDetails = ({
   setClientName
 }: BusinessDetailsProps) => {
   return (
-    <div className="rounded-lg border border-border p-4">
-      <h3 className="text-lg font-medium mb-4">Invoice Details</h3>
+    <div className="bg-white p-6 rounded-lg border border-border">
+      <h3 className="text-lg font-medium mb-4">Business Details</h3>
       
-      <div className="grid grid-cols-1 gap-4">
-        <div>
-          <label htmlFor="clientName" className="text-sm font-medium mb-1 block">
-            Client
-          </label>
+      <div className="space-y-4">
+        {/* Client Name */}
+        <div className="space-y-2">
+          <Label htmlFor="clientName">Client</Label>
           <ClientSelector 
             selectedClientName={clientName}
             onClientSelect={setClientName}
           />
         </div>
-        
+
+        {/* Invoice Date */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex flex-col space-y-1">
-            <label htmlFor="invoiceDate" className="text-sm font-medium">Invoice Date</label>
+          <div className="space-y-2">
+            <Label htmlFor="invoiceDate">Invoice Date</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !invoiceDate && "text-muted-foreground"
-                  )}
+                  variant={"outline"}
+                  className="w-full justify-start text-left font-normal"
+                  id="invoiceDate"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {invoiceDate ? format(invoiceDate, "PPP") : <span>Pick a date</span>}
+                  {invoiceDate ? format(invoiceDate, "PPP") : "Select date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -65,20 +64,19 @@ const BusinessDetails = ({
               </PopoverContent>
             </Popover>
           </div>
-          
-          <div className="flex flex-col space-y-1">
-            <label htmlFor="dueDate" className="text-sm font-medium">Due Date</label>
+
+          {/* Due Date */}
+          <div className="space-y-2">
+            <Label htmlFor="dueDate">Due Date</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dueDate && "text-muted-foreground"
-                  )}
+                  variant={"outline"}
+                  className="w-full justify-start text-left font-normal"
+                  id="dueDate"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
+                  {dueDate ? format(dueDate, "PPP") : "Select date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
