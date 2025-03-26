@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { useNavigate, useLocation } from "react-router-dom";
 import LoginSignupForm from "./LoginSignupForm";

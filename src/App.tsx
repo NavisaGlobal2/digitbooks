@@ -10,7 +10,7 @@ import { ExpenseProvider } from "@/contexts/ExpenseContext";
 import { RevenueProvider } from "@/contexts/RevenueContext";
 import { BudgetProvider } from "@/contexts/BudgetContext";
 import { LedgerProvider } from "@/contexts/LedgerContext";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/contexts/auth";
 import Index from "./pages/Index";
 import Features from "./pages/Features";
 import Pricing from "./pages/Pricing";
