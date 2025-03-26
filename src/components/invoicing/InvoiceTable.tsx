@@ -24,7 +24,6 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
       additionalInfo: invoice.additionalInfo || "",
       bankName: invoice.bankDetails.bankName,
       accountNumber: invoice.bankDetails.accountNumber,
-      swiftCode: invoice.bankDetails.swiftCode,
       accountName: invoice.bankDetails.accountName,
       clientName: invoice.clientName,
       invoiceNumber: invoice.invoiceNumber
@@ -40,7 +39,6 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
       additionalInfo: invoice.additionalInfo || "",
       bankName: invoice.bankDetails.bankName,
       accountNumber: invoice.bankDetails.accountNumber,
-      swiftCode: invoice.bankDetails.swiftCode,
       accountName: invoice.bankDetails.accountName,
       clientName: invoice.clientName,
       invoiceNumber: invoice.invoiceNumber

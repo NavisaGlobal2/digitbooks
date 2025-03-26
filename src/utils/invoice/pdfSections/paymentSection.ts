@@ -1,4 +1,3 @@
-
 /**
  * Functions for adding payment information to PDF invoices
  */
@@ -16,7 +15,7 @@ import {
  * Add payment information with improved formatting
  * Returns the updated Y position
  */
-export const addPaymentInfo = (doc: jsPDF, bankName: string, accountName: string, accountNumber: string, swiftCode: string, yPos: number): number => {
+export const addPaymentInfo = (doc: jsPDF, bankName: string, accountName: string, accountNumber: string, yPos: number): number => {
   const leftMargin = 15;
   const rightMargin = doc.internal.pageSize.width - 15;
   
@@ -38,7 +37,7 @@ export const addPaymentInfo = (doc: jsPDF, bankName: string, accountName: string
   
   // Add a light background for the bank details with more padding
   const detailsHeight = 10 + (bankName ? 10 : 0) + (accountName ? 10 : 0) + 
-                        (accountNumber ? 10 : 0) + (swiftCode ? 10 : 0);
+                        (accountNumber ? 10 : 0);
   
   doc.setFillColor(248, 248, 248);
   doc.rect(leftMargin, yPos - 5, rightMargin - leftMargin, detailsHeight, 'F');
@@ -76,14 +75,6 @@ export const addPaymentInfo = (doc: jsPDF, bankName: string, accountName: string
     doc.text("Account Number:", labelX, currentY);
     resetFontStyle(doc);
     doc.text(accountNumber, valueX, currentY);
-    currentY += 10;
-  }
-  
-  if (swiftCode) {
-    setupBoldStyle(doc);
-    doc.text("Swift Code:", labelX, currentY);
-    resetFontStyle(doc);
-    doc.text(swiftCode, valueX, currentY);
     currentY += 10;
   }
   

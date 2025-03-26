@@ -13,7 +13,6 @@ export interface InvoiceDetails {
   additionalInfo: string;
   bankName: string;
   accountNumber: string;
-  swiftCode: string;
   accountName: string;
   clientName?: string;
   invoiceNumber?: string;
