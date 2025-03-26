@@ -59,10 +59,15 @@ const SalesTrendsChart = () => {
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   
+                  // Ensure value is treated as a number
+                  const value = typeof payload[0].value === 'number' 
+                    ? payload[0].value 
+                    : parseFloat(String(payload[0].value)) || 0;
+                  
                   return (
                     <div className="bg-white p-2 border border-gray-200 rounded shadow-sm">
                       <p className="font-semibold">{payload[0].payload.name}</p>
-                      <p className="break-words">{formatNaira(payload[0].value)}</p>
+                      <p className="break-words">{formatNaira(value)}</p>
                     </div>
                   );
                 }}
