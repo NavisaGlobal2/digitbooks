@@ -5,7 +5,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { InvoiceDetails } from "../pdfSections/types";
 import { createTemporaryInvoiceElement } from "./invoiceElementFactory";
-import { calculateSubtotal, calculateTax, calculateTotal } from "../calculations";
+import { calculateSubtotal, calculateTax, calculateTotal } from "./types";
 
 /**
  * Function to download the invoice using image capture and PDF conversion
@@ -95,4 +95,3 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
     return false;
   }
 };
-

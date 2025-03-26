@@ -1,7 +1,7 @@
 
 import { format } from "date-fns";
 import { InvoiceDetails } from "../pdfSections/types";
-import { calculateSubtotal, calculateTax, calculateTotal } from "../calculations";
+import { calculateSubtotal, calculateTax, calculateTotal } from "./types";
 
 /**
  * Creates a temporary invoice HTML element for rendering to PDF/image
@@ -99,4 +99,3 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
   
   return tempDiv;
 };
-
