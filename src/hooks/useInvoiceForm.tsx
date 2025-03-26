@@ -18,7 +18,7 @@ export const useInvoiceForm = () => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [additionalInfo, setAdditionalInfo] = useState("Payment can be made directly to the bank account provided.");
   const [isAccountVerified, setIsAccountVerified] = useState(false);
-  const [clientName, setClientName] = useState("Tech Solutions");
+  const [clientName, setClientName] = useState("");
   
   // Bank details
   const [accountName, setAccountName] = useState("");
@@ -32,7 +32,7 @@ export const useInvoiceForm = () => {
   const handleSaveInvoice = () => {
     // Validate required fields
     if (!clientName.trim()) {
-      toast.error("Please enter a client name");
+      toast.error("Please select or enter a client name");
       return;
     }
 
@@ -84,15 +84,6 @@ export const useInvoiceForm = () => {
     return 'pending';
   };
 
-  // Handler functions for action buttons
-  const handleGenerateInvoice = () => {
-    toast.success("Invoice generated successfully");
-  };
-
-  const handleShareInvoice = () => {
-    toast.success("Invoice sharing link copied to clipboard");
-  };
-
   return {
     invoiceItems,
     setInvoiceItems,
@@ -117,8 +108,6 @@ export const useInvoiceForm = () => {
     bankName,
     setBankName,
     addInvoiceItem,
-    handleSaveInvoice,
-    handleGenerateInvoice,
-    handleShareInvoice
+    handleSaveInvoice
   };
 };

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
+import ClientSelector from "./ClientSelector";
 
 interface BusinessDetailsProps {
   invoiceDate: Date | undefined;
@@ -31,14 +31,11 @@ const BusinessDetails = ({
       <div className="grid grid-cols-1 gap-4">
         <div>
           <label htmlFor="clientName" className="text-sm font-medium mb-1 block">
-            Client Name
+            Client
           </label>
-          <Input
-            id="clientName"
-            placeholder="Client or Company Name"
-            value={clientName}
-            onChange={(e) => setClientName(e.target.value)}
-            className="w-full"
+          <ClientSelector 
+            selectedClientName={clientName}
+            onClientSelect={setClientName}
           />
         </div>
         

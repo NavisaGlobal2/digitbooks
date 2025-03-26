@@ -6,9 +6,6 @@ import { downloadInvoice, shareInvoice } from "@/utils/invoice/documentActions";
 import { toast } from "sonner";
 
 interface ActionButtonsProps {
-  handleGenerateInvoice: () => void;
-  handleShareInvoice: () => void;
-  isAccountVerified: boolean;
   logoPreview: string | null;
   invoiceItems: InvoiceItem[];
   invoiceDate: Date | undefined;
