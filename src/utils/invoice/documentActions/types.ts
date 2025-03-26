@@ -3,9 +3,16 @@ import { InvoiceItem } from "@/types/invoice";
 import { InvoiceDetails } from "../pdfSections/types";
 
 /**
- * Types for document actions
- * Note: Calculation functions have been moved to src/utils/invoice/calculations.ts
+ * Common calculation functions used across document actions
  */
+export const calculateSubtotal = (items: { quantity: number; price: number }[]) => {
+  return items.reduce((total, item) => total + (item.quantity * item.price), 0);
+};
 
-// Export types used by document actions
-export type { InvoiceItem, InvoiceDetails };
+export const calculateTax = (items: { quantity: number; price: number; tax: number }[]) => {
+  return items.reduce((total, item) => total + (item.quantity * item.price * (item.tax / 100)), 0);
+};
+
+export const calculateTotal = (items: { quantity: number; price: number; tax: number }[]) => {
+  return calculateSubtotal(items) + calculateTax(items);
+};
