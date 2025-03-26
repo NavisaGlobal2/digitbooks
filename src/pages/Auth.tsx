@@ -7,6 +7,8 @@ import FeatureDisplay from "@/components/auth/FeatureDisplay";
 import AuthHeader from "@/components/auth/AuthHeader";
 import DecorativeBackground from "@/components/auth/DecorativeBackground";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 type AuthMode = 'login' | 'signup';
 
@@ -15,6 +17,7 @@ const Auth: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mode, setMode] = useState<AuthMode>('login'); // Default to login mode
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Log the current URL information for debugging
   useEffect(() => {
@@ -35,7 +38,9 @@ const Auth: React.FC = () => {
     // Handle auth errors
     if (error) {
       console.error("Auth redirect error:", error, errorDescription);
-      toast.error(errorDescription || "Authentication error");
+      const errorMessage = errorDescription || "Authentication error";
+      setAuthError(errorMessage);
+      toast.error(errorMessage);
     }
     
     // Handle successful auth callbacks
@@ -64,7 +69,13 @@ const Auth: React.FC = () => {
       <div className="flex flex-col p-4 sm:p-6 md:p-8 bg-gradient-to-b from-white to-gray-50 min-h-screen md:min-h-0">
         <AuthHeader />
 
-        <div className="flex-1 flex items-center justify-center py-6 md:py-0">
+        <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-0">
+          {authError && (
+            <Alert variant="destructive" className="mb-6 max-w-sm">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{authError}</AlertDescription>
+            </Alert>
+          )}
           <AuthForm mode={mode} setMode={setMode} />
         </div>
       </div>

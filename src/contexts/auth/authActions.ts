@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { User } from "./types";
@@ -58,7 +57,6 @@ export const signup = async (email: string, password: string, name: string) => {
           avatar: "",
           onboardingCompleted: false
         },
-        // Ensure email confirmation is enabled
         emailRedirectTo: window.location.origin + "/auth" 
       }
     });
@@ -132,7 +130,10 @@ export const signInWithGoogle = async () => {
     console.log("Starting Google authentication flow...");
     
     // Get the canonical URL (in case we're on a custom domain or subdomain)
-    const redirectUrl = `${window.location.origin}/auth`;
+    // Remove query parameters from redirect URL to avoid issues
+    const baseUrl = window.location.origin;
+    const redirectUrl = `${baseUrl}/auth`;
+    
     console.log("Using redirect URL for Google auth:", redirectUrl);
     console.log("Current window.location:", window.location);
     
@@ -149,15 +150,26 @@ export const signInWithGoogle = async () => {
 
     if (error) {
       console.error("Google login error:", error);
-      toast.error(error.message || "Failed to login with Google");
+      toast.error(error.message || "Failed to connect to Google authentication");
       throw error;
     }
 
+    if (!data || !data.url) {
+      const noUrlError = new Error("Failed to get authentication URL from Supabase");
+      console.error("Google login error:", noUrlError);
+      toast.error("Unable to connect to authentication service. Please try again later.");
+      throw noUrlError;
+    }
+
     console.log("Google login initiated successfully:", data);
+    
+    // Redirect manually to avoid potential issues
+    window.location.href = data.url;
+    
     return data;
   } catch (error: any) {
     console.error("Google login error:", error);
-    toast.error(error.message || "Failed to login with Google");
+    toast.error(error.message || "Failed to login with Google. Please check your internet connection and try again.");
     throw error;
   }
 };
