@@ -142,7 +142,7 @@ const OnboardingContainer = () => {
       ) : (
         <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-sm">
           <h2 className="text-center text-lg font-medium text-gray-800 mb-4">
-            What would you like to do on DigiBooks?
+            What would you like to do on DigitBooks?
           </h2>
           
           {currentStep > 0 && (

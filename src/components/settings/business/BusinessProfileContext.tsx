@@ -29,12 +29,12 @@ interface BusinessProfileContextType {
 }
 
 const defaultProfile: BusinessProfile = {
-  name: "DigiBooks Solutions",
+  name: "DigitBooks Solutions",
   description: "Financial software and bookkeeping services",
   logo: "",
-  email: "contact@digibooks.example.com",
+  email: "contact@digitbooks.example.com",
   phone: "+1 (555) 123-4567",
-  website: "https://digibooks.example.com",
+  website: "https://digitbooks.example.com",
   address: {
     line1: "123 Business Avenue",
     line2: "Suite 405",
