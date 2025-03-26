@@ -56,16 +56,16 @@ const LoginSignupForm: React.FC<LoginSignupFormProps> = ({
 
   return (
     <div className="w-full max-w-sm px-4">
-      <div className="text-center mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+      <div className="text-center mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
           {mode === 'signup' ? 'Create your account' : 'Welcome back'}
         </h1>
-        <p className="text-muted-foreground text-sm sm:text-base">
+        <p className="text-sm sm:text-base text-muted-foreground">
           {mode === 'signup' ? 'Get started with DigitBooks' : 'Sign in to continue to your account'}
         </p>
       </div>
 
-      <div className="mb-6 sm:mb-8">
+      <div className="mb-4 sm:mb-6">
         <SocialLoginButton 
           icon="https://www.google.com/favicon.ico"
           altText="Google"
@@ -77,7 +77,7 @@ const LoginSignupForm: React.FC<LoginSignupFormProps> = ({
 
       <FormDivider text="or continue with email" />
 
-      <form onSubmit={onSubmit} className="space-y-3 sm:space-y-4">
+      <form onSubmit={onSubmit} className="space-y-3">
         {mode === 'signup' && (
           <NameField 
             value={name} 
@@ -110,7 +110,7 @@ const LoginSignupForm: React.FC<LoginSignupFormProps> = ({
 
         <Button 
           type="submit" 
-          className="w-full h-10 sm:h-12 bg-green-500 hover:bg-green-600 text-white transition-all duration-300 transform hover:translate-y-[-2px] hover:shadow-lg text-sm sm:text-base"
+          className="w-full h-10 sm:h-11 bg-green-500 hover:bg-green-600 text-white transition-all duration-300 transform hover:translate-y-[-2px] hover:shadow-lg text-sm sm:text-base"
           disabled={isLoading}
         >
           {isLoading ? 'Please wait...' : (mode === 'signup' ? 'Create Account' : 'Sign in')}

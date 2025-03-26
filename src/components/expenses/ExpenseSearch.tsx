@@ -24,8 +24,8 @@ const ExpenseSearch = ({ searchQuery, setSearchQuery, onAddExpense }: ExpenseSea
   ];
 
   return (
-    <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-      <div className="relative w-full md:w-auto flex-1">
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
+      <div className="relative w-full md:w-auto md:flex-1">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
         <Input
           placeholder="Search expenses..."
@@ -40,14 +40,16 @@ const ExpenseSearch = ({ searchQuery, setSearchQuery, onAddExpense }: ExpenseSea
           options={filterOptions}
           selectedValue={filterValue}
           onFilterChange={setFilterValue}
+          className="w-full md:w-auto"
         />
         
         <Button 
-          className="bg-green-500 hover:bg-green-600 text-white"
+          className="bg-green-500 hover:bg-green-600 text-white ml-auto md:ml-0"
           onClick={onAddExpense}
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Expense
+          <span className="hidden xs:inline">Add Expense</span>
+          <span className="xs:hidden">Add</span>
         </Button>
       </div>
     </div>

@@ -69,7 +69,7 @@ const Auth: React.FC = () => {
         </div>
       </div>
 
-      {/* Right side - Marketing content */}
+      {/* Right side - Marketing content - Hidden on mobile */}
       <div className="hidden md:block bg-gradient-to-br from-green-500 via-green-400 to-green-600 p-8 flex items-center justify-center overflow-hidden relative">
         <DecorativeBackground />
         <FeatureDisplay />

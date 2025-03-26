@@ -16,30 +16,30 @@ interface ExpensesTableProps {
 
 const ExpensesTable = ({ expenses, onDeleteExpense }: ExpensesTableProps) => {
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Date</TableHead>
+            <TableHead className="w-[100px]">Date</TableHead>
             <TableHead>Description</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Vendor</TableHead>
-            <TableHead>Payment Method</TableHead>
+            <TableHead className="hidden sm:table-cell">Category</TableHead>
+            <TableHead className="hidden md:table-cell">Vendor</TableHead>
+            <TableHead className="hidden lg:table-cell">Payment Method</TableHead>
             <TableHead className="text-right">Amount</TableHead>
-            <TableHead className="w-[80px]"></TableHead>
+            <TableHead className="w-[60px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {expenses.map((expense) => (
             <TableRow key={expense.id}>
-              <TableCell>{format(new Date(expense.date), "dd/MM/yyyy")}</TableCell>
-              <TableCell className="font-medium">
+              <TableCell className="whitespace-nowrap">{format(new Date(expense.date), "dd/MM/yyyy")}</TableCell>
+              <TableCell className="font-medium max-w-[180px] sm:max-w-none truncate">
                 <div className="flex items-center gap-2">
                   {expense.fromStatement && (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <FileText className="h-4 w-4 text-green-500" />
+                          <FileText className="h-4 w-4 text-green-500 flex-shrink-0" />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>From bank statement</p>
@@ -47,13 +47,13 @@ const ExpensesTable = ({ expenses, onDeleteExpense }: ExpensesTableProps) => {
                       </Tooltip>
                     </TooltipProvider>
                   )}
-                  {expense.description}
+                  <span className="truncate">{expense.description}</span>
                 </div>
               </TableCell>
-              <TableCell>{getCategoryLabel(expense.category)}</TableCell>
-              <TableCell>{expense.vendor}</TableCell>
-              <TableCell className="capitalize">{expense.paymentMethod}</TableCell>
-              <TableCell className="text-right">{formatNaira(expense.amount)}</TableCell>
+              <TableCell className="hidden sm:table-cell">{getCategoryLabel(expense.category)}</TableCell>
+              <TableCell className="hidden md:table-cell">{expense.vendor}</TableCell>
+              <TableCell className="hidden lg:table-cell capitalize">{expense.paymentMethod}</TableCell>
+              <TableCell className="text-right font-medium">{formatNaira(expense.amount)}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

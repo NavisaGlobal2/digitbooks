@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -30,6 +31,10 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01" on, "ss02" on, "cv01" on, "cv02" on;
@@ -38,8 +43,38 @@
   .glass {
     @apply bg-white/10 backdrop-blur-lg border border-white/20;
   }
+  
+  /* Safe Area Padding for Mobile Devices */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0);
+  }
 }
 
 .animate-float {
   animation: float 6s ease-in-out infinite;
+}
+
+/* Responsive Table Tweaks */
+@media (max-width: 640px) {
+  .table-container {
+    @apply -mx-4 px-4 overflow-x-auto;
+  }
+  
+  .responsive-table {
+    @apply min-w-full;
+  }
+}
+
+/* Improved Mobile Touch Targets */
+@media (max-width: 640px) {
+  button, 
+  .button, 
+  [role="button"],
+  a {
+    @apply min-h-[44px] min-w-[44px];
+  }
 }
