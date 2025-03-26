@@ -36,7 +36,7 @@ const InvoiceStatCards = ({ invoices }: InvoiceStatCardsProps) => {
             <Clock className="h-4 w-4" />
             <span className="text-sm font-medium">Overdue invoices</span>
           </div>
-          <h3 className="text-3xl font-bold">{formatNaira(overdueTotal)}</h3>
+          <h3 className="text-2xl font-bold break-words">{formatNaira(overdueTotal)}</h3>
           <p className="text-sm text-gray-500 mt-1">{overdueInvoices.length} invoice(s)</p>
         </CardContent>
       </Card>
@@ -47,7 +47,7 @@ const InvoiceStatCards = ({ invoices }: InvoiceStatCardsProps) => {
             <ArrowRight className="h-4 w-4" />
             <span className="text-sm font-medium">Outstanding invoices</span>
           </div>
-          <h3 className="text-3xl font-bold">{formatNaira(pendingTotal)}</h3>
+          <h3 className="text-2xl font-bold break-words">{formatNaira(pendingTotal)}</h3>
           <p className="text-sm text-gray-500 mt-1">{pendingInvoices.length} invoice(s)</p>
         </CardContent>
       </Card>
@@ -58,7 +58,7 @@ const InvoiceStatCards = ({ invoices }: InvoiceStatCardsProps) => {
             <ArrowDown className="h-4 w-4" />
             <span className="text-sm font-medium">Paid invoices</span>
           </div>
-          <h3 className="text-3xl font-bold">{formatNaira(paidTotal)}</h3>
+          <h3 className="text-2xl font-bold break-words">{formatNaira(paidTotal)}</h3>
           <p className="text-sm text-gray-500 mt-1">{paidInvoices.length} invoice(s)</p>
         </CardContent>
       </Card>
@@ -69,7 +69,7 @@ const InvoiceStatCards = ({ invoices }: InvoiceStatCardsProps) => {
             <CalendarRange className="h-4 w-4" />
             <span className="text-sm font-medium">Expected this month</span>
           </div>
-          <h3 className="text-3xl font-bold">{formatNaira(expectedTotal)}</h3>
+          <h3 className="text-2xl font-bold break-words">{formatNaira(expectedTotal)}</h3>
           <p className="text-sm text-gray-500 mt-1">{expectedThisMonth.length} invoice(s)</p>
         </CardContent>
       </Card>

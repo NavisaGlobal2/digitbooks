@@ -23,7 +23,7 @@ const QuickActions = () => {
               className="w-full h-full flex flex-col items-center justify-center py-3 px-2 space-y-1.5"
             >
               <action.icon className="h-4 w-4 text-primary mb-1" />
-              <span className="text-xs font-medium">{action.label}</span>
+              <span className="text-xs font-medium break-words">{action.label}</span>
             </Button>
           </Card>
         ))}

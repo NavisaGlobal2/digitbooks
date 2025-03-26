@@ -1,4 +1,3 @@
-
 import { CreditCard, Calendar, Zap, Building, ShoppingBag, Plus, Filter, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,7 +57,7 @@ const BillsSection = () => {
                 </div>
                 <p className="font-medium text-sm mb-1">{bill.title}</p>
                 <p className="text-xs text-muted-foreground mb-2">Due in {bill.daysLeft} days</p>
-                <p className="font-bold text-base">{formatNaira(bill.amount)}</p>
+                <p className="font-bold text-base break-words">{formatNaira(bill.amount)}</p>
                 <Button variant="ghost" size="sm" className="mt-2 text-green-500 text-xs">Pay bill</Button>
               </div>
             </CardContent>
@@ -127,7 +126,7 @@ const BillsSection = () => {
                     <TableCell className="capitalize">{bill.category}</TableCell>
                     <TableCell>{bill.dueDate}</TableCell>
                     <TableCell>{bill.daysLeft} days</TableCell>
-                    <TableCell className="text-right font-medium">{formatNaira(bill.amount)}</TableCell>
+                    <TableCell className="text-right font-medium break-words">{formatNaira(bill.amount)}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm" className="text-green-500">
                         Pay bill

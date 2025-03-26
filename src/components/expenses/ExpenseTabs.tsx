@@ -10,11 +10,11 @@ interface ExpenseTabsProps {
 const ExpenseTabs = ({ activeTab, setActiveTab }: ExpenseTabsProps) => {
   return (
     <div className="border-b mb-6">
-      <div className="flex space-x-2">
+      <div className="flex space-x-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab("expenses")}
           className={cn(
-            "py-2 px-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
+            "py-2 px-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap",
             activeTab === "expenses"
               ? "border-green-500 text-green-600"
               : "border-transparent text-gray-500 hover:text-gray-700"
@@ -26,7 +26,7 @@ const ExpenseTabs = ({ activeTab, setActiveTab }: ExpenseTabsProps) => {
         <button
           onClick={() => setActiveTab("bills")}
           className={cn(
-            "py-2 px-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
+            "py-2 px-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap",
             activeTab === "bills"
               ? "border-green-500 text-green-600"
               : "border-transparent text-gray-500 hover:text-gray-700"
@@ -38,7 +38,7 @@ const ExpenseTabs = ({ activeTab, setActiveTab }: ExpenseTabsProps) => {
         <button
           onClick={() => setActiveTab("vendors")}
           className={cn(
-            "py-2 px-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
+            "py-2 px-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap",
             activeTab === "vendors"
               ? "border-green-500 text-green-600"
               : "border-transparent text-gray-500 hover:text-gray-700"
