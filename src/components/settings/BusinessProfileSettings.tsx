@@ -72,48 +72,50 @@ export const BusinessProfileSettings = () => {
   
   return (
     <form onSubmit={handleSubmit}>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Company Profile</CardTitle>
-            <CardDescription>
+          <CardHeader className="pb-2 px-4 sm:px-6">
+            <CardTitle className="text-base sm:text-lg">Company Profile</CardTitle>
+            <CardDescription className="text-xs">
               Update your business information and branding
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex flex-col items-center space-y-3">
-                <Avatar className="h-24 w-24">
+          <CardContent className="px-4 sm:px-6">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+              <div className="flex flex-col items-center space-y-3 mb-4 sm:mb-0">
+                <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
                   <AvatarImage src={profile.logo} />
                   <AvatarFallback className="text-lg bg-blue-100 text-blue-600">
                     {profile.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
-                  <Camera className="h-4 w-4" />
+                <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs">
+                  <Camera className="h-3 w-3 sm:h-4 sm:w-4" />
                   Change Logo
                 </Button>
               </div>
               
-              <div className="flex-1 grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Business Name</Label>
+              <div className="flex-1 grid gap-3 sm:gap-4">
+                <div className="grid gap-1 sm:gap-2">
+                  <Label htmlFor="name" className="text-xs">Business Name</Label>
                   <Input 
                     id="name" 
                     name="name" 
                     value={profile.name} 
                     onChange={handleChange} 
+                    className="text-sm"
                   />
                 </div>
                 
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Business Description</Label>
+                <div className="grid gap-1 sm:gap-2">
+                  <Label htmlFor="description" className="text-xs">Business Description</Label>
                   <Textarea 
                     id="description" 
                     name="description" 
                     value={profile.description} 
                     onChange={handleChange} 
                     rows={3} 
+                    className="text-sm"
                   />
                 </div>
               </div>
@@ -122,42 +124,45 @@ export const BusinessProfileSettings = () => {
         </Card>
         
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Contact Information</CardTitle>
-            <CardDescription>
+          <CardHeader className="pb-2 px-4 sm:px-6">
+            <CardTitle className="text-base sm:text-lg">Contact Information</CardTitle>
+            <CardDescription className="text-xs">
               How clients and partners can reach your business
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email Address</Label>
+          <CardContent className="grid gap-4 px-4 sm:px-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid gap-1 sm:gap-2">
+                <Label htmlFor="email" className="text-xs">Email Address</Label>
                 <Input 
                   id="email" 
                   name="email" 
                   type="email" 
                   value={profile.email} 
                   onChange={handleChange} 
+                  className="text-sm"
                 />
               </div>
               
-              <div className="grid gap-2">
-                <Label htmlFor="phone">Phone Number</Label>
+              <div className="grid gap-1 sm:gap-2">
+                <Label htmlFor="phone" className="text-xs">Phone Number</Label>
                 <Input 
                   id="phone" 
                   name="phone" 
                   value={profile.phone} 
                   onChange={handleChange} 
+                  className="text-sm"
                 />
               </div>
               
-              <div className="grid gap-2">
-                <Label htmlFor="website">Website</Label>
+              <div className="grid gap-1 sm:gap-2">
+                <Label htmlFor="website" className="text-xs">Website</Label>
                 <Input 
                   id="website" 
                   name="website" 
                   value={profile.website} 
                   onChange={handleChange} 
+                  className="text-sm"
                 />
               </div>
             </div>
@@ -165,84 +170,90 @@ export const BusinessProfileSettings = () => {
         </Card>
         
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2 px-4 sm:px-6">
             <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-muted-foreground" />
-              <CardTitle>Business Address</CardTitle>
+              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+              <CardTitle className="text-base sm:text-lg">Business Address</CardTitle>
             </div>
-            <CardDescription>
+            <CardDescription className="text-xs">
               Your official business address for invoices and communications
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-6">
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="address.line1">Address Line 1</Label>
+          <CardContent className="grid gap-3 sm:gap-6 px-4 sm:px-6">
+            <div className="grid gap-3 sm:gap-4">
+              <div className="grid gap-1 sm:gap-2">
+                <Label htmlFor="address.line1" className="text-xs">Address Line 1</Label>
                 <Input 
                   id="address.line1" 
                   name="address.line1" 
                   value={profile.address.line1} 
                   onChange={handleChange} 
+                  className="text-sm"
                 />
               </div>
               
-              <div className="grid gap-2">
-                <Label htmlFor="address.line2">Address Line 2</Label>
+              <div className="grid gap-1 sm:gap-2">
+                <Label htmlFor="address.line2" className="text-xs">Address Line 2</Label>
                 <Input 
                   id="address.line2" 
                   name="address.line2" 
                   value={profile.address.line2} 
                   onChange={handleChange} 
+                  className="text-sm"
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="address.city">City</Label>
+              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid gap-1 sm:gap-2">
+                  <Label htmlFor="address.city" className="text-xs">City</Label>
                   <Input 
                     id="address.city" 
                     name="address.city" 
                     value={profile.address.city} 
                     onChange={handleChange} 
+                    className="text-sm"
                   />
                 </div>
                 
-                <div className="grid gap-2">
-                  <Label htmlFor="address.state">State/Province</Label>
+                <div className="grid gap-1 sm:gap-2">
+                  <Label htmlFor="address.state" className="text-xs">State/Province</Label>
                   <Input 
                     id="address.state" 
                     name="address.state" 
                     value={profile.address.state} 
                     onChange={handleChange} 
+                    className="text-sm"
                   />
                 </div>
                 
-                <div className="grid gap-2">
-                  <Label htmlFor="address.postalCode">Postal Code</Label>
+                <div className="grid gap-1 sm:gap-2">
+                  <Label htmlFor="address.postalCode" className="text-xs">Postal Code</Label>
                   <Input 
                     id="address.postalCode" 
                     name="address.postalCode" 
                     value={profile.address.postalCode} 
                     onChange={handleChange} 
+                    className="text-sm"
                   />
                 </div>
                 
-                <div className="grid gap-2">
-                  <Label htmlFor="address.country">Country</Label>
+                <div className="grid gap-1 sm:gap-2">
+                  <Label htmlFor="address.country" className="text-xs">Country</Label>
                   <Input 
                     id="address.country" 
                     name="address.country" 
                     value={profile.address.country} 
                     onChange={handleChange} 
+                    className="text-sm"
                   />
                 </div>
               </div>
             </div>
           </CardContent>
-          <CardFooter className="border-t px-6 py-4">
-            <div className="flex justify-end gap-4 w-full">
-              <Button variant="outline">Cancel</Button>
-              <Button type="submit">Save Changes</Button>
+          <CardFooter className="border-t px-4 sm:px-6 py-3 sm:py-4">
+            <div className="flex flex-col xs:flex-row xs:justify-end gap-2 w-full">
+              <Button variant="outline" size="sm" className="text-xs">Cancel</Button>
+              <Button type="submit" size="sm" className="text-xs">Save Changes</Button>
             </div>
           </CardFooter>
         </Card>

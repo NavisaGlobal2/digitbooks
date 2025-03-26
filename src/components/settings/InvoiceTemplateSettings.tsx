@@ -23,26 +23,26 @@ export const InvoiceTemplateSettings = () => {
   const [font, setFont] = useState("inter");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-2 px-4 sm:px-6">
           <CardTitle className="text-base sm:text-lg">Invoice Template</CardTitle>
-          <CardDescription className="text-xs sm:text-sm">
+          <CardDescription className="text-xs">
             Customize how your invoices look to clients
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           <Tabs defaultValue="design" className="w-full">
             <TabsList className="mb-4 grid w-full grid-cols-3 h-auto">
-              <TabsTrigger value="design" className="text-xs sm:text-sm py-1.5 px-2 sm:py-2 sm:px-3">Design</TabsTrigger>
-              <TabsTrigger value="templates" className="text-xs sm:text-sm py-1.5 px-2 sm:py-2 sm:px-3">Templates</TabsTrigger>
-              <TabsTrigger value="content" className="text-xs sm:text-sm py-1.5 px-2 sm:py-2 sm:px-3">Content</TabsTrigger>
+              <TabsTrigger value="design" className="text-xs py-1.5 px-1 sm:py-2 sm:px-3">Design</TabsTrigger>
+              <TabsTrigger value="templates" className="text-xs py-1.5 px-1 sm:py-2 sm:px-3">Templates</TabsTrigger>
+              <TabsTrigger value="content" className="text-xs py-1.5 px-1 sm:py-2 sm:px-3">Content</TabsTrigger>
             </TabsList>
             
             <TabsContent value="design" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label className="mb-1 sm:mb-2 block text-xs sm:text-sm">Primary Color</Label>
+                  <Label className="mb-1 block text-xs">Primary Color</Label>
                   <ColorPicker 
                     color={primaryColor} 
                     onChange={setPrimaryColor}
@@ -50,7 +50,7 @@ export const InvoiceTemplateSettings = () => {
                 </div>
                 
                 <div>
-                  <Label className="mb-1 sm:mb-2 block text-xs sm:text-sm">Accent Color</Label>
+                  <Label className="mb-1 block text-xs">Accent Color</Label>
                   <ColorPicker 
                     color={accentColor} 
                     onChange={setAccentColor}
@@ -58,24 +58,24 @@ export const InvoiceTemplateSettings = () => {
                 </div>
                 
                 <div>
-                  <Label className="mb-1 sm:mb-2 block text-xs sm:text-sm">Font Family</Label>
+                  <Label className="mb-1 block text-xs">Font Family</Label>
                   <Select value={font} onValueChange={setFont}>
-                    <SelectTrigger className="text-xs sm:text-sm">
+                    <SelectTrigger className="text-xs">
                       <SelectValue placeholder="Select font" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="inter" className="text-xs sm:text-sm">Inter</SelectItem>
-                      <SelectItem value="roboto" className="text-xs sm:text-sm">Roboto</SelectItem>
-                      <SelectItem value="montserrat" className="text-xs sm:text-sm">Montserrat</SelectItem>
-                      <SelectItem value="opensans" className="text-xs sm:text-sm">Open Sans</SelectItem>
-                      <SelectItem value="lato" className="text-xs sm:text-sm">Lato</SelectItem>
+                      <SelectItem value="inter" className="text-xs">Inter</SelectItem>
+                      <SelectItem value="roboto" className="text-xs">Roboto</SelectItem>
+                      <SelectItem value="montserrat" className="text-xs">Montserrat</SelectItem>
+                      <SelectItem value="opensans" className="text-xs">Open Sans</SelectItem>
+                      <SelectItem value="lato" className="text-xs">Lato</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 
                 <div>
-                  <Label className="mb-1 sm:mb-2 block text-xs sm:text-sm">Font Size</Label>
-                  <div className="pt-4">
+                  <Label className="mb-1 block text-xs">Font Size</Label>
+                  <div className="pt-2 sm:pt-4">
                     <Slider
                       value={fontSize}
                       min={10}
@@ -92,15 +92,15 @@ export const InvoiceTemplateSettings = () => {
                 </div>
                 
                 <div>
-                  <Label className="mb-1 sm:mb-2 block text-xs sm:text-sm">Logo Position</Label>
+                  <Label className="mb-1 block text-xs">Logo Position</Label>
                   <Select value={logoPosition} onValueChange={setLogoPosition}>
-                    <SelectTrigger className="text-xs sm:text-sm">
+                    <SelectTrigger className="text-xs">
                       <SelectValue placeholder="Select position" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="left" className="text-xs sm:text-sm">Left</SelectItem>
-                      <SelectItem value="center" className="text-xs sm:text-sm">Center</SelectItem>
-                      <SelectItem value="right" className="text-xs sm:text-sm">Right</SelectItem>
+                      <SelectItem value="left" className="text-xs">Left</SelectItem>
+                      <SelectItem value="center" className="text-xs">Center</SelectItem>
+                      <SelectItem value="right" className="text-xs">Right</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -108,18 +108,18 @@ export const InvoiceTemplateSettings = () => {
             </TabsContent>
             
             <TabsContent value="templates" className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
                 {["classic", "modern", "minimal", "professional", "creative"].map(template => (
                   <div 
                     key={template}
-                    className={`border rounded-lg p-2 sm:p-3 cursor-pointer transition-all hover:border-primary ${activeTemplate === template ? 'border-primary ring-2 ring-primary ring-opacity-20' : ''}`}
+                    className={`border rounded-lg p-2 cursor-pointer transition-all hover:border-primary ${activeTemplate === template ? 'border-primary ring-2 ring-primary ring-opacity-20' : ''}`}
                     onClick={() => setActiveTemplate(template)}
                   >
-                    <div className="aspect-[11/8] bg-gray-100 rounded mb-2 sm:mb-3 flex items-center justify-center">
-                      <span className="capitalize text-xs sm:text-sm text-gray-500">{template}</span>
+                    <div className="aspect-[11/8] bg-gray-100 rounded mb-2 flex items-center justify-center">
+                      <span className="capitalize text-xs text-gray-500">{template}</span>
                     </div>
-                    <h3 className="capitalize font-medium text-xs sm:text-sm">{template}</h3>
-                    <p className="text-xs sm:text-xs text-muted-foreground">
+                    <h3 className="capitalize font-medium text-xs">{template}</h3>
+                    <p className="text-xs text-muted-foreground">
                       {template === "classic" && "Traditional invoice layout"}
                       {template === "modern" && "Clean and contemporary design"}
                       {template === "minimal" && "Simplified, elegant format"}
@@ -131,22 +131,22 @@ export const InvoiceTemplateSettings = () => {
               </div>
             </TabsContent>
             
-            <TabsContent value="content" className="space-y-4 sm:space-y-6">
+            <TabsContent value="content" className="space-y-4">
               <div>
-                <Label htmlFor="footer-text" className="text-xs sm:text-sm">Custom Footer Message</Label>
+                <Label htmlFor="footer-text" className="text-xs">Custom Footer Message</Label>
                 <Input 
                   id="footer-text" 
                   value={footerText}
                   onChange={(e) => setFooterText(e.target.value)}
                   placeholder="Enter a message to display at the bottom of invoices"
-                  className="mt-1 sm:mt-1.5 text-xs sm:text-sm"
+                  className="mt-1 text-xs"
                 />
               </div>
               
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="show-payment-qr" className="font-medium text-xs sm:text-sm">Payment QR Code</Label>
+                    <Label htmlFor="show-payment-qr" className="font-medium text-xs">Payment QR Code</Label>
                     <p className="text-xs text-muted-foreground">Show scannable payment QR code</p>
                   </div>
                   <Switch 
@@ -158,7 +158,7 @@ export const InvoiceTemplateSettings = () => {
                 
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="show-due-date" className="font-medium text-xs sm:text-sm">Due Date Emphasis</Label>
+                    <Label htmlFor="show-due-date" className="font-medium text-xs">Due Date Emphasis</Label>
                     <p className="text-xs text-muted-foreground">Highlight payment due date</p>
                   </div>
                   <Switch 
@@ -170,7 +170,7 @@ export const InvoiceTemplateSettings = () => {
                 
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="show-bank-details" className="font-medium text-xs sm:text-sm">Bank Details</Label>
+                    <Label htmlFor="show-bank-details" className="font-medium text-xs">Bank Details</Label>
                     <p className="text-xs text-muted-foreground">Display bank account information</p>
                   </div>
                   <Switch 
@@ -183,9 +183,9 @@ export const InvoiceTemplateSettings = () => {
             </TabsContent>
           </Tabs>
           
-          <div className="mt-6 border-t pt-4 sm:pt-6 flex flex-col sm:flex-row gap-2 sm:justify-between">
-            <Button variant="outline" size="sm" className="text-xs sm:text-sm">Reset to Default</Button>
-            <Button size="sm" className="text-xs sm:text-sm">Save Changes</Button>
+          <div className="mt-6 border-t pt-4 flex flex-col xs:flex-row gap-2 xs:justify-between">
+            <Button variant="outline" size="sm" className="text-xs">Reset to Default</Button>
+            <Button size="sm" className="text-xs">Save Changes</Button>
           </div>
         </CardContent>
       </Card>

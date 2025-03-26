@@ -95,16 +95,16 @@ export const ConnectedServicesSettings = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <h2 className="text-lg font-medium">Connected Services</h2>
-        <Button variant="outline" size="sm" className="flex items-center gap-1">
+        <Button variant="outline" size="sm" className="flex items-center gap-1 self-start">
           <HelpCircle className="h-4 w-4" />
           Integration Guide
         </Button>
       </div>
 
-      <p className="text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Connect third-party services to enhance your DigiBooks experience. Integrations sync automatically to keep your data up-to-date.
       </p>
 
@@ -112,10 +112,10 @@ export const ConnectedServicesSettings = () => {
         const categoryServices = services.filter(service => service.category === category.id);
         
         return (
-          <Card key={category.id}>
-            <CardHeader className="pb-3">
-              <CardTitle>{category.label}</CardTitle>
-              <CardDescription>
+          <Card key={category.id} className="overflow-hidden">
+            <CardHeader className="pb-2 px-4 sm:px-6">
+              <CardTitle className="text-base sm:text-lg">{category.label}</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 {category.id === "accounting" && "Connect your accounting software to sync financial data"}
                 {category.id === "payment" && "Process payments directly through DigiBooks"}
                 {category.id === "storage" && "Securely store and access your documents"}
@@ -123,30 +123,30 @@ export const ConnectedServicesSettings = () => {
                 {category.id === "security" && "Enhance your account security"}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="px-4 sm:px-6">
+              <div className="space-y-3">
                 {categoryServices.map(service => (
-                  <div key={service.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={service.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:p-3 border rounded-lg gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 flex items-center justify-center bg-gray-100 rounded-lg">
+                      <div className="h-10 w-10 flex-shrink-0 flex items-center justify-center bg-gray-100 rounded-lg">
                         {service.icon}
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{service.name}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium text-sm">{service.name}</p>
                           {service.connected && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
                               Connected
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground">{service.description}</p>
+                        <p className="text-xs text-muted-foreground">{service.description}</p>
                         {service.connected && service.lastSync && (
                           <p className="text-xs text-muted-foreground mt-1">Last synced: {service.lastSync}</p>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 mt-2 sm:mt-0">
                       <Switch 
                         checked={service.connected}
                         onCheckedChange={() => toggleConnection(service.id)}

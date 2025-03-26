@@ -37,13 +37,13 @@ const Settings = () => {
 
       <div className="flex-1 overflow-auto">
         <div className="border-b">
-          <div className="flex overflow-x-auto scrollbar-hide">
+          <div className="flex overflow-x-auto scrollbar-hide pb-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as SettingsTab)}
                 className={cn(
-                  "flex items-center gap-2 px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                  "flex items-center gap-2 px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
                   activeTab === tab.id
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
@@ -56,7 +56,7 @@ const Settings = () => {
           </div>
         </div>
 
-        <div className="p-4 sm:p-6">
+        <div className="p-3 sm:p-6">
           {activeTab === 'business' && <BusinessProfileSettings />}
           {activeTab === 'team' && <TeamManagementSettings />}
           {activeTab === 'services' && <ConnectedServicesSettings />}
