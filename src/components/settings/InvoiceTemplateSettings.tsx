@@ -26,23 +26,23 @@ export const InvoiceTemplateSettings = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>Invoice Template</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-base sm:text-lg">Invoice Template</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Customize how your invoices look to clients
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="design" className="w-full">
-            <TabsList className="mb-4 grid w-full grid-cols-3">
-              <TabsTrigger value="design">Design</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
-              <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsList className="mb-4 grid w-full grid-cols-3 h-auto">
+              <TabsTrigger value="design" className="text-xs sm:text-sm py-1.5 px-2 sm:py-2 sm:px-3">Design</TabsTrigger>
+              <TabsTrigger value="templates" className="text-xs sm:text-sm py-1.5 px-2 sm:py-2 sm:px-3">Templates</TabsTrigger>
+              <TabsTrigger value="content" className="text-xs sm:text-sm py-1.5 px-2 sm:py-2 sm:px-3">Content</TabsTrigger>
             </TabsList>
             
             <TabsContent value="design" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <Label className="mb-2 block">Primary Color</Label>
+                  <Label className="mb-1 sm:mb-2 block text-xs sm:text-sm">Primary Color</Label>
                   <ColorPicker 
                     color={primaryColor} 
                     onChange={setPrimaryColor}
@@ -50,7 +50,7 @@ export const InvoiceTemplateSettings = () => {
                 </div>
                 
                 <div>
-                  <Label className="mb-2 block">Accent Color</Label>
+                  <Label className="mb-1 sm:mb-2 block text-xs sm:text-sm">Accent Color</Label>
                   <ColorPicker 
                     color={accentColor} 
                     onChange={setAccentColor}
@@ -58,23 +58,23 @@ export const InvoiceTemplateSettings = () => {
                 </div>
                 
                 <div>
-                  <Label className="mb-2 block">Font Family</Label>
+                  <Label className="mb-1 sm:mb-2 block text-xs sm:text-sm">Font Family</Label>
                   <Select value={font} onValueChange={setFont}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-xs sm:text-sm">
                       <SelectValue placeholder="Select font" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="inter">Inter</SelectItem>
-                      <SelectItem value="roboto">Roboto</SelectItem>
-                      <SelectItem value="montserrat">Montserrat</SelectItem>
-                      <SelectItem value="opensans">Open Sans</SelectItem>
-                      <SelectItem value="lato">Lato</SelectItem>
+                      <SelectItem value="inter" className="text-xs sm:text-sm">Inter</SelectItem>
+                      <SelectItem value="roboto" className="text-xs sm:text-sm">Roboto</SelectItem>
+                      <SelectItem value="montserrat" className="text-xs sm:text-sm">Montserrat</SelectItem>
+                      <SelectItem value="opensans" className="text-xs sm:text-sm">Open Sans</SelectItem>
+                      <SelectItem value="lato" className="text-xs sm:text-sm">Lato</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 
                 <div>
-                  <Label className="mb-2 block">Font Size</Label>
+                  <Label className="mb-1 sm:mb-2 block text-xs sm:text-sm">Font Size</Label>
                   <div className="pt-4">
                     <Slider
                       value={fontSize}
@@ -92,15 +92,15 @@ export const InvoiceTemplateSettings = () => {
                 </div>
                 
                 <div>
-                  <Label className="mb-2 block">Logo Position</Label>
+                  <Label className="mb-1 sm:mb-2 block text-xs sm:text-sm">Logo Position</Label>
                   <Select value={logoPosition} onValueChange={setLogoPosition}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-xs sm:text-sm">
                       <SelectValue placeholder="Select position" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="left">Left</SelectItem>
-                      <SelectItem value="center">Center</SelectItem>
-                      <SelectItem value="right">Right</SelectItem>
+                      <SelectItem value="left" className="text-xs sm:text-sm">Left</SelectItem>
+                      <SelectItem value="center" className="text-xs sm:text-sm">Center</SelectItem>
+                      <SelectItem value="right" className="text-xs sm:text-sm">Right</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -108,18 +108,18 @@ export const InvoiceTemplateSettings = () => {
             </TabsContent>
             
             <TabsContent value="templates" className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {["classic", "modern", "minimal", "professional", "creative"].map(template => (
                   <div 
                     key={template}
-                    className={`border rounded-lg p-3 cursor-pointer transition-all hover:border-primary ${activeTemplate === template ? 'border-primary ring-2 ring-primary ring-opacity-20' : ''}`}
+                    className={`border rounded-lg p-2 sm:p-3 cursor-pointer transition-all hover:border-primary ${activeTemplate === template ? 'border-primary ring-2 ring-primary ring-opacity-20' : ''}`}
                     onClick={() => setActiveTemplate(template)}
                   >
-                    <div className="aspect-[11/8] bg-gray-100 rounded mb-3 flex items-center justify-center">
-                      <span className="capitalize text-gray-500">{template}</span>
+                    <div className="aspect-[11/8] bg-gray-100 rounded mb-2 sm:mb-3 flex items-center justify-center">
+                      <span className="capitalize text-xs sm:text-sm text-gray-500">{template}</span>
                     </div>
-                    <h3 className="capitalize font-medium">{template}</h3>
-                    <p className="text-xs text-muted-foreground">
+                    <h3 className="capitalize font-medium text-xs sm:text-sm">{template}</h3>
+                    <p className="text-xs sm:text-xs text-muted-foreground">
                       {template === "classic" && "Traditional invoice layout"}
                       {template === "modern" && "Clean and contemporary design"}
                       {template === "minimal" && "Simplified, elegant format"}
@@ -131,23 +131,23 @@ export const InvoiceTemplateSettings = () => {
               </div>
             </TabsContent>
             
-            <TabsContent value="content" className="space-y-6">
+            <TabsContent value="content" className="space-y-4 sm:space-y-6">
               <div>
-                <Label htmlFor="footer-text">Custom Footer Message</Label>
+                <Label htmlFor="footer-text" className="text-xs sm:text-sm">Custom Footer Message</Label>
                 <Input 
                   id="footer-text" 
                   value={footerText}
                   onChange={(e) => setFooterText(e.target.value)}
                   placeholder="Enter a message to display at the bottom of invoices"
-                  className="mt-1.5"
+                  className="mt-1 sm:mt-1.5 text-xs sm:text-sm"
                 />
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="show-payment-qr" className="font-medium">Payment QR Code</Label>
-                    <p className="text-sm text-muted-foreground">Show scannable payment QR code</p>
+                    <Label htmlFor="show-payment-qr" className="font-medium text-xs sm:text-sm">Payment QR Code</Label>
+                    <p className="text-xs text-muted-foreground">Show scannable payment QR code</p>
                   </div>
                   <Switch 
                     id="show-payment-qr"
@@ -158,8 +158,8 @@ export const InvoiceTemplateSettings = () => {
                 
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="show-due-date" className="font-medium">Due Date Emphasis</Label>
-                    <p className="text-sm text-muted-foreground">Highlight payment due date</p>
+                    <Label htmlFor="show-due-date" className="font-medium text-xs sm:text-sm">Due Date Emphasis</Label>
+                    <p className="text-xs text-muted-foreground">Highlight payment due date</p>
                   </div>
                   <Switch 
                     id="show-due-date"
@@ -170,8 +170,8 @@ export const InvoiceTemplateSettings = () => {
                 
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="show-bank-details" className="font-medium">Bank Details</Label>
-                    <p className="text-sm text-muted-foreground">Display bank account information</p>
+                    <Label htmlFor="show-bank-details" className="font-medium text-xs sm:text-sm">Bank Details</Label>
+                    <p className="text-xs text-muted-foreground">Display bank account information</p>
                   </div>
                   <Switch 
                     id="show-bank-details"
@@ -183,9 +183,9 @@ export const InvoiceTemplateSettings = () => {
             </TabsContent>
           </Tabs>
           
-          <div className="mt-6 border-t pt-6 flex justify-between">
-            <Button variant="outline">Reset to Default</Button>
-            <Button>Save Changes</Button>
+          <div className="mt-6 border-t pt-4 sm:pt-6 flex flex-col sm:flex-row gap-2 sm:justify-between">
+            <Button variant="outline" size="sm" className="text-xs sm:text-sm">Reset to Default</Button>
+            <Button size="sm" className="text-xs sm:text-sm">Save Changes</Button>
           </div>
         </CardContent>
       </Card>

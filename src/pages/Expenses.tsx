@@ -1,13 +1,13 @@
 
 import { useState } from "react";
 import { useExpenses } from "@/contexts/ExpenseContext";
-import Sidebar from "@/components/dashboard/Sidebar";
 import { toast } from "sonner";
 import { Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ExpensesContent from "@/components/expenses/ExpensesContent";
 import BankStatementUploadDialog from "@/components/expenses/BankStatementUploadDialog";
 import AddExpenseDialog from "@/components/expenses/AddExpenseDialog";
+import DashboardContainer from "@/components/dashboard/layout/DashboardContainer";
 
 const ExpensesPage = () => {
   const { expenses, deleteExpense, getTotalExpenses, getExpensesByCategory } = useExpenses();
@@ -28,52 +28,51 @@ const ExpensesPage = () => {
   };
 
   const handleStatementProcessed = () => {
-    // This function would be called after successful statement processing
     toast.success("Bank statement processed successfully! Transactions have been added to your expenses.");
   };
   
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
+    <DashboardContainer>
+      <header className="bg-white border-b px-4 sm:px-6 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h1 className="text-xl sm:text-2xl font-semibold">Expenses</h1>
+          
+          {expenses.length > 0 && (
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                className="border-green-500 text-green-500 hover:bg-green-50"
+                onClick={handleConnectBank}
+                size="sm"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Connect Bank</span>
+                <span className="sm:hidden">Bank</span>
+              </Button>
+              <Button 
+                className="bg-green-500 hover:bg-green-600 text-white"
+                onClick={handleAddExpense}
+                size="sm"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Add Expense</span>
+                <span className="sm:hidden">Add</span>
+              </Button>
+            </div>
+          )}
+        </div>
+      </header>
       
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b px-6 py-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h1 className="text-2xl font-semibold">Expenses</h1>
-            
-            {expenses.length > 0 && (
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline"
-                  className="border-green-500 text-green-500 hover:bg-green-50"
-                  onClick={handleConnectBank}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Connect Bank
-                </Button>
-                <Button 
-                  className="bg-green-500 hover:bg-green-600 text-white"
-                  onClick={handleAddExpense}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Expense
-                </Button>
-              </div>
-            )}
-          </div>
-        </header>
-        
-        <main className="flex-1 overflow-auto p-6">
-          <ExpensesContent
-            expenses={expenses}
-            deleteExpense={handleDeleteExpense}
-            getTotalExpenses={getTotalExpenses}
-            getExpensesByCategory={getExpensesByCategory}
-            onConnectBank={handleConnectBank}
-            onAddExpense={handleAddExpense}
-          />
-        </main>
-      </div>
+      <main className="p-4 sm:p-6">
+        <ExpensesContent
+          expenses={expenses}
+          deleteExpense={handleDeleteExpense}
+          getTotalExpenses={getTotalExpenses}
+          getExpensesByCategory={getExpensesByCategory}
+          onConnectBank={handleConnectBank}
+          onAddExpense={handleAddExpense}
+        />
+      </main>
 
       {/* Bank Statement Upload Dialog */}
       <BankStatementUploadDialog
@@ -87,7 +86,7 @@ const ExpensesPage = () => {
         open={showExpenseDialog}
         onOpenChange={setShowExpenseDialog}
       />
-    </div>
+    </DashboardContainer>
   );
 };
 

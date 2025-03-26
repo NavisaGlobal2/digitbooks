@@ -14,11 +14,11 @@ const InvoiceTabs = ({ activeTab, onTabChange }: InvoiceTabsProps) => {
   };
 
   return (
-    <div className="border-b border-gray-200 overflow-x-auto whitespace-nowrap">
+    <div className="border-b border-gray-200 overflow-x-auto scrollbar-hide">
       <div className="flex">
         <button
           onClick={(e) => handleTabClick(e, "invoices")}
-          className={`flex items-center px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base ${
+          className={`flex items-center px-3 sm:px-6 py-3 text-sm sm:text-base ${
             activeTab === "invoices"
               ? "text-green-500 border-b-2 border-green-500 font-medium"
               : "text-gray-500 hover:text-gray-700"
@@ -30,7 +30,7 @@ const InvoiceTabs = ({ activeTab, onTabChange }: InvoiceTabsProps) => {
         
         <button
           onClick={(e) => handleTabClick(e, "clients")}
-          className={`flex items-center px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base ${
+          className={`flex items-center px-3 sm:px-6 py-3 text-sm sm:text-base ${
             activeTab === "clients"
               ? "text-green-500 border-b-2 border-green-500 font-medium"
               : "text-gray-500 hover:text-gray-700"

@@ -38,7 +38,7 @@ const InvoiceDashboard = ({
         onTabChange={setActiveTab}
       />
       
-      <div className="flex-1 py-4 sm:py-6">
+      <div className="flex-1 py-3 sm:py-4 px-4 sm:px-6">
         {activeTab === "invoices" && (
           <InvoiceContent 
             searchQuery={searchQuery}

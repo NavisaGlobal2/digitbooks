@@ -21,7 +21,7 @@ const BudgetHeader = ({ budget, onBack, onDelete }: BudgetHeaderProps) => {
           className="flex items-center gap-1"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          <span className="hidden xs:inline">Back</span>
         </Button>
         <div className="flex gap-2">
           <Button 
@@ -37,8 +37,8 @@ const BudgetHeader = ({ budget, onBack, onDelete }: BudgetHeaderProps) => {
       </div>
       
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold">{budget.name}</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">
+        <h1 className="text-lg sm:text-2xl font-bold">{budget.name}</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">
           {format(new Date(budget.startDate), "MMM d, yyyy")} - {format(new Date(budget.endDate), "MMM d, yyyy")}
         </p>
       </div>
