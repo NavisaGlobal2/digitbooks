@@ -12,6 +12,8 @@ import ExpenseVsBudgetChart from "./charts/ExpenseVsBudgetChart";
 import ExpenseBreakdownChart from "./charts/ExpenseBreakdownChart";
 import ExpenseFilters from "./ExpenseFilters";
 import ConnectBankBanner from "./ConnectBankBanner";
+import BillsSection from "@/components/dashboard/BillsSection";
+import VendorsSection from "./VendorsSection";
 
 interface ExpensesContentProps {
   expenses: Expense[];
@@ -66,6 +68,57 @@ const ExpensesContent = ({
   // Count card expenses
   const cardExpensesCount = expenses.filter(e => e.paymentMethod === 'card').length;
 
+  // Get unique vendors from expenses
+  const uniqueVendors = Array.from(new Set(expenses.map(e => e.vendor)));
+
+  // Render content based on active tab
+  const renderActiveTabContent = () => {
+    switch (activeTab) {
+      case "bills":
+        return <BillsSection />;
+      case "vendors":
+        return <VendorsSection vendors={uniqueVendors} expenses={expenses} />;
+      case "expenses":
+      default:
+        return (
+          <>
+            {/* Stats cards */}
+            <ExpenseStatsCards
+              totalExpenses={totalExpenses}
+              expensesCount={expenses.length}
+              topCategories={topCategories}
+              cardExpensesCount={cardExpensesCount}
+            />
+            
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+              <ExpenseVsBudgetChart />
+              <ExpenseBreakdownChart data={topCategories} />
+            </div>
+            
+            {/* Connect Bank Banner */}
+            <ConnectBankBanner onConnectBank={onConnectBank} />
+            
+            {/* Filters and Search */}
+            <ExpenseFilters 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery} 
+            />
+            
+            {/* Table */}
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="min-w-full px-4 sm:px-0">
+                <ExpensesTable 
+                  expenses={filteredExpenses} 
+                  onDeleteExpense={deleteExpense} 
+                />
+              </div>
+            </div>
+          </>
+        );
+    }
+  };
+
   return (
     <>
       {isAddingExpense ? (
@@ -85,38 +138,8 @@ const ExpensesContent = ({
               {/* Expense Tabs */}
               <ExpenseTabs activeTab={activeTab} setActiveTab={setActiveTab} />
               
-              {/* Stats cards */}
-              <ExpenseStatsCards
-                totalExpenses={totalExpenses}
-                expensesCount={expenses.length}
-                topCategories={topCategories}
-                cardExpensesCount={cardExpensesCount}
-              />
-              
-              {/* Charts Section */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-                <ExpenseVsBudgetChart />
-                <ExpenseBreakdownChart data={topCategories} />
-              </div>
-              
-              {/* Connect Bank Banner */}
-              <ConnectBankBanner onConnectBank={onConnectBank} />
-              
-              {/* Filters and Search */}
-              <ExpenseFilters 
-                searchQuery={searchQuery} 
-                setSearchQuery={setSearchQuery} 
-              />
-              
-              {/* Table */}
-              <div className="overflow-x-auto -mx-4 sm:mx-0">
-                <div className="min-w-full px-4 sm:px-0">
-                  <ExpensesTable 
-                    expenses={filteredExpenses} 
-                    onDeleteExpense={deleteExpense} 
-                  />
-                </div>
-              </div>
+              {/* Render content based on active tab */}
+              {renderActiveTabContent()}
             </div>
           )}
         </>
