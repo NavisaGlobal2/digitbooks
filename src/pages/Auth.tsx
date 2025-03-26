@@ -16,6 +16,15 @@ const Auth: React.FC = () => {
   const location = useLocation();
   const [mode, setMode] = useState<AuthMode>('login'); // Default to login mode
 
+  // Log the current URL information for debugging
+  useEffect(() => {
+    console.log("Auth page loaded");
+    console.log("Current URL:", window.location.href);
+    console.log("Origin:", window.location.origin);
+    console.log("Search params:", location.search);
+    console.log("Hash:", location.hash);
+  }, [location]);
+
   // Check URL parameters and handle auth redirects
   useEffect(() => {
     // Parse URL parameters

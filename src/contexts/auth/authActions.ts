@@ -131,8 +131,10 @@ export const signInWithGoogle = async () => {
   try {
     console.log("Starting Google authentication flow...");
     
+    // Get the canonical URL (in case we're on a custom domain or subdomain)
     const redirectUrl = `${window.location.origin}/auth`;
-    console.log("Using redirect URL:", redirectUrl);
+    console.log("Using redirect URL for Google auth:", redirectUrl);
+    console.log("Current window.location:", window.location);
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
