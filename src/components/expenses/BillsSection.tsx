@@ -5,15 +5,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatNaira } from "@/utils/invoice/formatters";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const BillsSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAllBills, setShowAllBills] = useState(false);
   
   const bills = [
-    { icon: Zap, title: "Electricity Bill", daysLeft: 3, amount: 85000, category: "utilities" },
-    { icon: Building, title: "Office Rent", daysLeft: 5, amount: 1200000, category: "rent" },
-    { icon: CreditCard, title: "SaaS Subscription", daysLeft: 7, amount: 49000, category: "software" },
-    { icon: ShoppingBag, title: "Equipment Lease", daysLeft: 12, amount: 299000, category: "office" }
+    { icon: Zap, title: "Electricity Bill", daysLeft: 3, amount: 85000, category: "utilities", dueDate: "2023-11-15" },
+    { icon: Building, title: "Office Rent", daysLeft: 5, amount: 1200000, category: "rent", dueDate: "2023-11-17" },
+    { icon: CreditCard, title: "SaaS Subscription", daysLeft: 7, amount: 49000, category: "software", dueDate: "2023-11-19" },
+    { icon: ShoppingBag, title: "Equipment Lease", daysLeft: 12, amount: 299000, category: "office", dueDate: "2023-11-24" },
+    { icon: Zap, title: "Internet Bill", daysLeft: 15, amount: 65000, category: "utilities", dueDate: "2023-11-27" },
+    { icon: CreditCard, title: "Cloud Services", daysLeft: 18, amount: 120000, category: "software", dueDate: "2023-11-30" },
+    { icon: ShoppingBag, title: "Office Supplies", daysLeft: 20, amount: 85000, category: "office", dueDate: "2023-12-02" }
   ];
   
   const filteredBills = bills.filter(bill => 
@@ -43,7 +49,7 @@ const BillsSection = () => {
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {filteredBills.map((bill, index) => (
+        {filteredBills.slice(0, 4).map((bill, index) => (
           <Card key={index} className="border border-border hover:border-primary/20 transition-all">
             <CardContent className="p-4">
               <div className="flex flex-col items-center text-center">
@@ -66,7 +72,11 @@ const BillsSection = () => {
         </div>
       )}
       
-      <Button variant="ghost" className="w-full mt-4 text-primary text-sm flex items-center justify-center gap-1">
+      <Button 
+        variant="ghost" 
+        className="w-full mt-4 text-primary text-sm flex items-center justify-center gap-1"
+        onClick={() => setShowAllBills(true)}
+      >
         <span>View all bills</span>
         <ChevronRight className="h-4 w-4" />
       </Button>
@@ -84,6 +94,52 @@ const BillsSection = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* All Bills Dialog */}
+      <Dialog open={showAllBills} onOpenChange={setShowAllBills}>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>All Upcoming Bills</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Bill</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Due In</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredBills.map((bill, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                          <bill.icon className="h-4 w-4 text-purple-600" />
+                        </div>
+                        <span className="font-medium">{bill.title}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="capitalize">{bill.category}</TableCell>
+                    <TableCell>{bill.dueDate}</TableCell>
+                    <TableCell>{bill.daysLeft} days</TableCell>
+                    <TableCell className="text-right font-medium">{formatNaira(bill.amount)}</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm" className="text-green-500">
+                        Pay bill
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
