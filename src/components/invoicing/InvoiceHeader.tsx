@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Users } from "lucide-react";
+import { ArrowLeft, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface InvoiceHeaderProps {
@@ -60,16 +60,6 @@ const InvoiceHeader = ({
               >
                 <Users className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Clients</span>
-              </Button>
-              
-              <Button 
-                onClick={handleCreateInvoice}
-                className="bg-[#05D166] hover:bg-[#05D166]/90 text-white"
-                size="sm"
-              >
-                <Plus className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Create Invoice</span>
-                <span className="sm:hidden">Create</span>
               </Button>
             </>
           )}
