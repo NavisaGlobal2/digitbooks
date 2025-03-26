@@ -7,4 +7,5 @@
 export { downloadInvoice } from './downloadInvoice';
 export { shareInvoice } from './shareInvoice';
 export { captureInvoiceAsImage } from './captureInvoice';
-export { calculateSubtotal, calculateTax, calculateTotal } from './types';
+
+// Don't export calculation functions from here, as they're already exported from calculations.ts
