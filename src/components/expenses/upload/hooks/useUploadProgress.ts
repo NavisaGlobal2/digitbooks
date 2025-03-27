@@ -1,14 +1,21 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 
+/**
+ * Custom hook to manage file upload progress state and animations
+ */
 export const useUploadProgress = () => {
+  // Progress state variables
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState("");
   const [isCancelled, setIsCancelled] = useState(false);
   const [isWaitingForServer, setIsWaitingForServer] = useState(false);
   const animationFrame = useRef<number | null>(null);
 
-  const resetProgress = () => {
+  /**
+   * Reset all progress state and cancel animations
+   */
+  const resetProgress = useCallback(() => {
     if (animationFrame.current) {
       cancelAnimationFrame(animationFrame.current);
       animationFrame.current = null;
@@ -17,9 +24,12 @@ export const useUploadProgress = () => {
     setStep("");
     setIsCancelled(false);
     setIsWaitingForServer(false);
-  };
+  }, []);
 
-  const cancelProgress = () => {
+  /**
+   * Cancel ongoing progress and animations
+   */
+  const cancelProgress = useCallback(() => {
     setIsCancelled(true);
     if (animationFrame.current) {
       cancelAnimationFrame(animationFrame.current);
@@ -28,9 +38,12 @@ export const useUploadProgress = () => {
     setProgress(0);
     setStep("");
     setIsWaitingForServer(false);
-  };
+  }, []);
 
-  const completeProgress = () => {
+  /**
+   * Complete the progress animation
+   */
+  const completeProgress = useCallback(() => {
     if (animationFrame.current) {
       cancelAnimationFrame(animationFrame.current);
       animationFrame.current = null;
@@ -38,67 +51,77 @@ export const useUploadProgress = () => {
     setProgress(100);
     setStep("Complete");
     setIsWaitingForServer(false);
-  };
+  }, []);
 
-  const updateProgress = (newProgress: number, newStep: string) => {
+  /**
+   * Update progress with a new value and step description
+   */
+  const updateProgress = useCallback((newProgress: number, newStep: string) => {
     setProgress(newProgress);
     setStep(newStep);
-  };
+  }, []);
 
-  // Run the progress animation
-  const startProgress = () => {
-    let currentProgress = 0;
-    const totalSteps = 90; // Only go up to 90%, leave 90-100% for server response
-    const timePerStep = 50; // milliseconds
+  /**
+   * Get a specific step description based on progress percentage
+   */
+  const getStepDescription = useCallback((currentProgress: number): string => {
+    if (currentProgress < 20) return "Reading file...";
+    if (currentProgress < 40) return "Validating file...";
+    if (currentProgress < 60) return "Extracting data...";
+    if (currentProgress < 80) return "Processing transactions...";
+    if (currentProgress < 90) return "Finalizing...";
+    return "Waiting for server...";
+  }, []);
+
+  /**
+   * Animate progress from 0 to 90% (leaving the last 10% for server response)
+   */
+  const animateProgress = useCallback((currentProgress: number, timePerStep: number) => {
+    if (isCancelled) {
+      if (animationFrame.current) {
+        cancelAnimationFrame(animationFrame.current);
+        animationFrame.current = null;
+      }
+      return;
+    }
+
+    const newProgress = currentProgress + 1;
+    const newStep = getStepDescription(newProgress);
     
-    // Start with file reading
+    setProgress(newProgress);
+    setStep(newStep);
+    
+    if (newProgress === 90) {
+      setIsWaitingForServer(true);
+      
+      if (animationFrame.current) {
+        cancelAnimationFrame(animationFrame.current);
+        animationFrame.current = null;
+      }
+      return;
+    }
+    
+    if (newProgress < 90) {
+      const nextUpdate = () => {
+        animationFrame.current = requestAnimationFrame(() => 
+          animateProgress(newProgress, timePerStep)
+        );
+      };
+      setTimeout(nextUpdate, timePerStep);
+    }
+  }, [isCancelled, getStepDescription]);
+
+  /**
+   * Start the progress animation from 0 to 90%
+   */
+  const startProgress = useCallback(() => {
+    const timePerStep = 50; // milliseconds
     setStep("Reading file...");
     
-    const animateProgress = () => {
-      if (isCancelled) {
-        if (animationFrame.current) {
-          cancelAnimationFrame(animationFrame.current);
-          animationFrame.current = null;
-        }
-        return;
-      }
-      
-      currentProgress += 1;
-      
-      // Change step description at different stages
-      if (currentProgress === 20) {
-        setStep("Validating file...");
-      } else if (currentProgress === 40) {
-        setStep("Extracting data...");
-      } else if (currentProgress === 60) {
-        setStep("Processing transactions...");
-      } else if (currentProgress === 80) {
-        setStep("Finalizing...");
-      } else if (currentProgress === 90) {
-        setStep("Waiting for server...");
-        setIsWaitingForServer(true);
-        
-        // Stop at 90% and wait for server response
-        if (animationFrame.current) {
-          cancelAnimationFrame(animationFrame.current);
-          animationFrame.current = null;
-        }
-        return;
-      }
-      
-      setProgress(currentProgress);
-      
-      if (currentProgress < totalSteps) {
-        // Schedule next frame based on timePerStep
-        const nextUpdate = () => {
-          animationFrame.current = requestAnimationFrame(animateProgress);
-        };
-        setTimeout(nextUpdate, timePerStep);
-      }
-    };
-    
     // Start animation
-    animationFrame.current = requestAnimationFrame(animateProgress);
+    animationFrame.current = requestAnimationFrame(() => 
+      animateProgress(0, timePerStep)
+    );
     
     // Return function to stop animation
     return () => {
@@ -107,14 +130,17 @@ export const useUploadProgress = () => {
         animationFrame.current = null;
       }
     };
-  };
+  }, [animateProgress]);
 
   return {
+    // State variables
     progress,
     step,
     isCancelled,
     isWaitingForServer,
     setIsWaitingForServer,
+    
+    // Control functions
     startProgress,
     resetProgress,
     completeProgress,
