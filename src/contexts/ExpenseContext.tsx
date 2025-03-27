@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Expense, ExpenseStatus } from '@/types/expense';
 import { toast } from 'sonner';
@@ -32,10 +33,10 @@ const safelyStoreExpenses = (expenses: Expense[]): boolean => {
         expenseCopy.hasReceipt = true;
       }
       
-      // Store date as string for localStorage
+      // Store date as string for localStorage - ensure we have a proper serializable object
       return {
         ...expenseCopy,
-        date: expense.date instanceof Date ? expense.date.toISOString() : expense.date
+        date: expense.date instanceof Date ? expense.date.toISOString() : expense.date.toString()
       };
     });
     
@@ -50,7 +51,7 @@ const safelyStoreExpenses = (expenses: Expense[]): boolean => {
           id: expense.id,
           description: expense.description,
           amount: expense.amount,
-          date: expense.date instanceof Date ? expense.date.toISOString() : expense.date,
+          date: expense.date instanceof Date ? expense.date.toISOString() : expense.date.toString(),
           category: expense.category,
           status: expense.status,
           paymentMethod: expense.paymentMethod,
@@ -82,6 +83,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         
         const processedExpenses = parsedExpenses.map((expense: any) => ({
           ...expense,
+          // Ensure we always create a new Date object from the stored string
           date: new Date(expense.date),
         }));
         
