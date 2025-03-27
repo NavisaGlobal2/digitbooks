@@ -1,7 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import { parse as csvParse } from 'https://deno.land/std@0.177.0/encoding/csv.ts'
-import { FetchError } from 'https://deno.land/x/fetch_error@1.0.0/mod.ts'
 import * as XLSX from 'https://deno.land/x/excel@v1.1.2/mod.ts'
 
 // CORS headers for browser requests
@@ -125,7 +124,7 @@ Deno.serve(async (req) => {
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: error instanceof FetchError ? error.status : 500
+        status: 500
       }
     )
   }
