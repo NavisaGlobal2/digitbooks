@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -87,7 +88,8 @@ export const parseExcelFile = async (
     
     console.log('Preparing to call parse-bank-statement edge function...');
     
-    const supabaseUrl = supabase.supabaseUrl;
+    // Get the Supabase URL from the client's config
+    const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
     
     try {
       const response = await fetch(`${supabaseUrl}/functions/v1/parse-bank-statement`, {
