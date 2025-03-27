@@ -12,6 +12,8 @@ setTimeout(() => {
   });
 }, 1000);
 
+// Create root without strict mode to prevent double initialization
+// which might be causing issues with the preview
 createRoot(document.getElementById("root")!).render(
   <>
     <App />
