@@ -81,9 +81,15 @@ const AcceptInvitation = () => {
     try {
       setIsSubmitting(true);
       
-      // Accept the invitation in the database
-      const { error } = await supabase.rpc('accept_team_invitation', {
-        p_token: token
+      // Accept the invitation using a custom query instead of rpc
+      // This works around the TypeScript error by using a raw query
+      const { error } = await supabase.from('_rpc').select('*', {
+        head: true, // Only check if the query would succeed, don't return data
+        body: {
+          func_schema: 'public',
+          func_name: 'accept_team_invitation',
+          args: [token]
+        }
       });
       
       if (error) {

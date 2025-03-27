@@ -728,6 +728,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_team_invitation: {
+        Args: {
+          p_token: string
+        }
+        Returns: undefined
+      }
       create_team_invite: {
         Args: {
           p_name: string
