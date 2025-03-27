@@ -83,20 +83,21 @@ const parseExcelWithLib = (XLSX: any, file: File, onComplete: (transactions: Par
       console.log('Detected headers:', headers);
       
       // Enhanced column name detection with wider pattern matching
-      const dateColIndex = findColumnIndexImproved(headers, [
+      // Changed from const to let since we need to reassign these values later
+      let dateColIndex = findColumnIndexImproved(headers, [
         'date', 'transaction date', 'txn date', 'value date', 'posting date', 'trans date', 'entry date',
         'transaction time', 'post date', 'effective date', 'date posted', 'booking date', 'trade date',
         'settlement date', 'transaction day', 'day', 'time', 'datetime'
       ]);
       
-      const descColIndex = findColumnIndexImproved(headers, [
+      let descColIndex = findColumnIndexImproved(headers, [
         'description', 'desc', 'narrative', 'details', 'transaction description', 'particulars', 
         'narration', 'transaction narration', 'remarks', 'trans desc', 'note', 'notes', 'memo', 
         'reference', 'payee', 'transaction details', 'transaction information', 'payment details',
         'merchant', 'merchant name', 'beneficiary', 'transaction note', 'sender', 'payment reference'
       ]);
       
-      const amountColIndex = findColumnIndexImproved(headers, [
+      let amountColIndex = findColumnIndexImproved(headers, [
         'amount', 'transaction amount', 'sum', 'value', 'debit/credit', 'naira value', 
         'ngn', 'ngn amount', 'debit', 'credit', 'deposit', 'withdrawal', 'payment amount',
         'transaction value', 'money', 'cash', 'total', 'net amount', 'gross amount',
