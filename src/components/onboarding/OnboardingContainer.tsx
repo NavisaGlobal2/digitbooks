@@ -49,6 +49,7 @@ const OnboardingContainer = () => {
         if (success) {
           console.log("Profile saved successfully, marking onboarding as complete");
           await completeOnboarding(user);
+          toast.success("Setup completed! Welcome to DigitBooks");
           navigate('/dashboard', { replace: true });
         }
       } catch (error) {
@@ -73,6 +74,7 @@ const OnboardingContainer = () => {
       if (success) {
         console.log("Profile saved successfully from skip, marking onboarding as complete");
         await completeOnboarding(user);
+        toast.success("Setup completed! Welcome to DigitBooks");
         navigate('/dashboard', { replace: true });
       }
     } catch (error: any) {
@@ -142,7 +144,7 @@ const OnboardingContainer = () => {
       ) : (
         <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-sm">
           <h2 className="text-center text-lg font-medium text-gray-800 mb-4">
-            What would you like to do on DigitBooks?
+            Complete your DigiBooks setup
           </h2>
           
           {currentStep > 0 && (
