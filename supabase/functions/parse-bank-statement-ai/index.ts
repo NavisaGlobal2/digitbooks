@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
+// CORS headers for cross-origin requests
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -12,22 +13,17 @@ async function extractTextFromFile(file: File): Promise<string> {
   const fileType = file.name.split('.').pop()?.toLowerCase();
   
   if (fileType === 'pdf') {
-    // For PDFs, we need to convert them to text
-    // This would use a PDF parsing library in a production setting
-    // For now, we'll just note that it's a PDF and ask Claude to be smart about it
     return `[THIS IS A PDF FILE: ${file.name}]\n\nPlease extract financial transactions from this PDF bank statement.`;
   } else if (fileType === 'csv') {
-    // For CSV, we can read the text directly
     return await file.text();
   } else if (fileType === 'xlsx' || fileType === 'xls') {
-    // For Excel files, we would use a library to extract data
-    // Again, for now we'll just note it's an Excel file
     return `[THIS IS AN EXCEL FILE: ${file.name}]\n\nPlease extract financial transactions from this Excel bank statement.`;
   } else {
     throw new Error(`Unsupported file type: ${fileType}`);
   }
 }
 
+// Process the extracted text with Anthropic API
 async function processWithAnthropic(text: string): Promise<any> {
   const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
   if (!ANTHROPIC_API_KEY) {
@@ -81,19 +77,7 @@ async function processWithAnthropic(text: string): Promise<any> {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error("Anthropic API error:", error);
-      
-      // Handle quota exceeded error specifically
-      if (error.error?.type === "authentication_error") {
-        throw new Error("Anthropic API authentication error: Please check your API key.");
-      }
-      
-      if (error.error?.type === "rate_limit_error") {
-        throw new Error("Anthropic API rate limit exceeded. Please try again later.");
-      }
-      
-      throw new Error(`Anthropic API error: ${error.error?.message || "Unknown error"}`);
+      return handleAnthropicError(response);
     }
 
     const data = await response.json();
@@ -116,38 +100,62 @@ async function processWithAnthropic(text: string): Promise<any> {
   }
 }
 
-// Get authenticated user from request
-async function getUserFromRequest(req: Request): Promise<any> {
-  try {
-    // Extract the token from the Authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error("Missing authorization header");
-    }
-    
-    return true; // Simplified for this example
-  } catch (error) {
-    console.error("Auth error getting user:", error);
-    throw new Error("Authentication failed: " + error.message);
+// Handle specific Anthropic API errors
+async function handleAnthropicError(response: Response): Promise<never> {
+  const error = await response.json();
+  console.error("Anthropic API error:", error);
+  
+  // Handle quota exceeded error specifically
+  if (error.error?.type === "authentication_error") {
+    throw new Error("Anthropic API authentication error: Please check your API key.");
+  }
+  
+  if (error.error?.type === "rate_limit_error") {
+    throw new Error("Anthropic API rate limit exceeded. Please try again later.");
+  }
+  
+  throw new Error(`Anthropic API error: ${error.error?.message || "Unknown error"}`);
+}
+
+// Validate the received file
+function validateFile(file: File | null): void {
+  if (!file) {
+    throw new Error("No file uploaded");
+  }
+  
+  // Check file type
+  const fileExt = file.name.split('.').pop()?.toLowerCase();
+  if (!['csv', 'xlsx', 'xls', 'pdf'].includes(fileExt || '')) {
+    throw new Error("Unsupported file format. Please upload CSV, Excel, or PDF files only.");
+  }
+  
+  // Check file size
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error("File is too large. Maximum file size is 10MB.");
   }
 }
 
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders, status: 204 });
-  }
+// Generate a response with proper headers
+function createResponse(data: any, status = 200): Response {
+  return new Response(
+    JSON.stringify(data),
+    { 
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status 
+    }
+  );
+}
 
+// Main request handler
+async function handleRequest(req: Request): Promise<Response> {
   try {
     // Validate that Anthropic API key exists
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) {
-      return new Response(
-        JSON.stringify({ 
-          error: "ANTHROPIC_API_KEY is not configured. Please set up your Anthropic API key in Supabase." 
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
+      return createResponse({ 
+        error: "ANTHROPIC_API_KEY is not configured. Please set up your Anthropic API key in Supabase." 
+      }, 500);
     }
 
     // Parse the request body - this will contain our file
@@ -155,35 +163,32 @@ serve(async (req) => {
     const file = formData.get("file");
     
     if (!file || !(file instanceof File)) {
-      return new Response(
-        JSON.stringify({ error: "No file uploaded" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      return createResponse({ error: "No file uploaded" }, 400);
     }
     
     console.log(`Processing file: ${file.name}, size: ${file.size} bytes`);
     
-    // Generate batch ID for tracking
-    const batchId = crypto.randomUUID();
-    
     try {
-      // 1. Extract text from the file
+      // Validate the file
+      validateFile(file);
+      
+      // Generate batch ID for tracking
+      const batchId = crypto.randomUUID();
+      
+      // Extract text from the file
       const fileText = await extractTextFromFile(file);
       
-      // 2. Process with Anthropic
+      // Process with Anthropic
       const transactions = await processWithAnthropic(fileText);
       
       console.log(`Parsed ${transactions.length} transactions from file`);
       
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          transactions,
-          message: `Successfully processed ${transactions.length} transactions`, 
-          batchId
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createResponse({ 
+        success: true, 
+        transactions,
+        message: `Successfully processed ${transactions.length} transactions`, 
+        batchId
+      });
     } catch (processingError) {
       console.error("Processing error:", processingError);
       
@@ -194,24 +199,27 @@ serve(async (req) => {
         errorMessage.includes("Anthropic") && 
         errorMessage.includes("API key")
       ) {
-        return new Response(
-          JSON.stringify({ 
-            error: "Anthropic API key issue: " + errorMessage
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-        );
+        return createResponse({ 
+          error: "Anthropic API key issue: " + errorMessage
+        }, 500);
       }
       
-      return new Response(
-        JSON.stringify({ error: errorMessage }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
+      return createResponse({ error: errorMessage }, 500);
     }
   } catch (error) {
     console.error("Server error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message || "Unknown server error" }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-    );
+    return createResponse({ 
+      error: error.message || "Unknown server error" 
+    }, 500);
   }
+}
+
+// Main server entry point
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders, status: 204 });
+  }
+
+  return handleRequest(req);
 });
