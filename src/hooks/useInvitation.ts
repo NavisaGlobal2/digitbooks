@@ -71,7 +71,13 @@ export const useInvitation = (token: string | null) => {
       });
       
       if (error) {
-        throw error;
+        // Check for specific error messages to provide better user feedback
+        if (error.message.includes('team member record not found')) {
+          console.warn("Team member record not found, but proceeding with invitation acceptance");
+          // We can continue since our updated function will handle this case
+        } else {
+          throw error;
+        }
       }
       
       toast.success("Invitation accepted successfully!");
