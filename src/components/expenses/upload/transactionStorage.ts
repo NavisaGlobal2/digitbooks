@@ -15,6 +15,14 @@ export const saveTransactionsToDatabase = async (
       return false;
     }
     
+    // Use the edge function to parse and save the bank statement
+    // This is for future use - the current implementation still directly inserts to the DB
+    const fileUpload = false;
+    if (fileUpload) {
+      // This approach would use the edge function for file parsing
+      // For now we're doing the parsing client-side
+    }
+    
     // Save each transaction to the uploaded_bank_lines table
     for (const transaction of transactions) {
       if (!transaction.selected) continue;
@@ -29,13 +37,22 @@ export const saveTransactionsToDatabase = async (
           amount: transaction.amount,
           type: transaction.type,
           category: transaction.category,
-          status: 'processed'
+          status: 'unprocessed'
         });
         
       if (error) {
         console.error("Error saving bank transaction:", error);
         toast.error("Failed to save some transaction data");
       }
+    }
+    
+    // Once all transactions are saved, use the database function to convert them to expenses
+    const { error: savingError } = await supabase.rpc('save_tagged_expenses', { p_batch_id: batchId });
+    
+    if (savingError) {
+      console.error("Error saving expenses:", savingError);
+      toast.error("There was an issue converting transactions to expenses");
+      return false;
     }
     
     return true;

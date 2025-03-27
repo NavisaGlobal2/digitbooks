@@ -816,6 +816,12 @@ export type Database = {
         }
         Returns: Json
       }
+      save_tagged_expenses: {
+        Args: {
+          p_batch_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       invitation_status: "pending" | "accepted" | "revoked"
