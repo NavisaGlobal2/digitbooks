@@ -12,8 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus } from "lucide-react";
-import { useTeamMembers } from "@/lib/team/useTeamMembers";
-import { TeamMember, TeamMemberRole } from "@/types/teamMember";
+import { TeamMemberRole } from "@/types/teamMember";
+import { toast } from "sonner";
 
 const inviteFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -24,12 +24,12 @@ const inviteFormSchema = z.object({
 type InviteFormValues = z.infer<typeof inviteFormSchema>;
 
 interface InviteTeamMemberDialogProps {
-  onInvite: (member: TeamMember) => void;
+  onInvite: (member: any) => void;
 }
 
 export const InviteTeamMemberDialog = ({ onInvite }: InviteTeamMemberDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { inviteTeamMember } = useTeamMembers();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(inviteFormSchema),
@@ -41,20 +41,25 @@ export const InviteTeamMemberDialog = ({ onInvite }: InviteTeamMemberDialogProps
   });
 
   const handleInviteMember = async (data: InviteFormValues) => {
-    // Define the new member without the id, user_id, created_at, updated_at fields
-    // as those will be added by the server
-    const newMember = {
-      name: data.name,
-      email: data.email,
-      role: data.role as TeamMemberRole,
-      status: 'pending' as const
-    };
+    setIsSubmitting(true);
+    try {
+      // Define the new member without the id, user_id, created_at, updated_at fields
+      // as those will be added by the server
+      const newMember = {
+        name: data.name,
+        email: data.email,
+        role: data.role as TeamMemberRole,
+        status: 'pending' as const
+      };
 
-    const result = await inviteTeamMember(newMember);
-    if (result) {
-      onInvite(result);
+      await onInvite(newMember);
       setIsOpen(false);
       form.reset();
+    } catch (error) {
+      console.error("Failed to invite team member:", error);
+      toast.error("Failed to send invitation. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -127,10 +132,19 @@ export const InviteTeamMemberDialog = ({ onInvite }: InviteTeamMemberDialogProps
               )}
             />
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit">Send Invitation</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-current"></span>
+                    Sending...
+                  </>
+                ) : (
+                  "Send Invitation"
+                )}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
