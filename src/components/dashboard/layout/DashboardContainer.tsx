@@ -1,5 +1,5 @@
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect, Suspense } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Header from "@/components/dashboard/Header";
 import BackgroundElements from "./BackgroundElements";
@@ -13,15 +13,36 @@ interface DashboardContainerProps {
 
 const DashboardContainer = ({ children }: DashboardContainerProps) => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Add loading optimization 
+  useEffect(() => {
+    // Defer intensive rendering
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col md:flex-row min-h-screen bg-background items-center justify-center">
+        <div className="animate-pulse text-primary text-lg">Loading dashboard...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-background">
-      {/* Background elements */}
-      <BackgroundElements />
+      {/* Background elements with deferred rendering */}
+      <Suspense fallback={null}>
+        <BackgroundElements />
+      </Suspense>
       
       {/* Desktop Sidebar - Hidden on mobile, visible on larger screens */}
       <div className="hidden md:block">

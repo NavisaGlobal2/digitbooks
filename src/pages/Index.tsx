@@ -1,6 +1,5 @@
-
-import { ArrowRight, Check, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { WaitlistForm } from "@/components/WaitlistForm";
@@ -8,6 +7,23 @@ import { WaitlistForm } from "@/components/WaitlistForm";
 const Index = () => {
   const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
   const [showWaitlistForm, setShowWaitlistForm] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-primary text-lg">Loading DigitBooks...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-white to-background">
@@ -59,7 +75,7 @@ const Index = () => {
             )}
           </div>
 
-          {/* Hero Image with Animation */}
+          {/* Hero Image with lazy loading */}
           <div className="relative mt-16 sm:mt-20 animate-fade-in [animation-delay:600ms]">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/80 pointer-events-none" />
             <div className="flex justify-center px-4">
@@ -67,10 +83,10 @@ const Index = () => {
                 src="https://antimetal.com/images/hero/preview.png"
                 alt="DigitBooks Dashboard Preview"
                 className="rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-[90%] h-auto hover:shadow-accent/20 transition-shadow duration-300"
+                loading="lazy"
               />
             </div>
           </div>
-
         </section>
 
         {/* Features Section */}

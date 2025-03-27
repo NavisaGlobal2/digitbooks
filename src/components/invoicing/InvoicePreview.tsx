@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { InvoiceItem } from "@/types/invoice";
 import { formatNaira } from "@/utils/invoice/formatters";
 import { Logo } from "@/components/Logo";
+import { memo } from "react";
 
 interface InvoicePreviewProps {
   logoPreview: string | null;
@@ -19,7 +20,8 @@ interface InvoicePreviewProps {
   clientName: string;
 }
 
-const InvoicePreview = ({
+// Memoize the component to prevent unnecessary re-renders
+const InvoicePreview = memo(({
   logoPreview,
   invoiceItems,
   invoiceDate,
@@ -57,6 +59,7 @@ const InvoicePreview = ({
               alt="Company Logo" 
               className="h-16 w-auto object-contain" 
               crossOrigin="anonymous"
+              loading="lazy"
             />
           ) : (
             <div className="h-16 w-16">
@@ -147,6 +150,8 @@ const InvoicePreview = ({
       )}
     </div>
   );
-};
+});
+
+InvoicePreview.displayName = "InvoicePreview";
 
 export default InvoicePreview;

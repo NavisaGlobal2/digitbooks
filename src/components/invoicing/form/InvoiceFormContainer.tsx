@@ -1,9 +1,9 @@
 
-import { InvoiceItem } from "@/types/invoice";
+import { Suspense, lazy, ReactNode } from "react";
 
 interface InvoiceFormContainerProps {
-  children: React.ReactNode;
-  preview: React.ReactNode;
+  children: ReactNode;
+  preview: ReactNode;
 }
 
 const InvoiceFormContainer = ({ children, preview }: InvoiceFormContainerProps) => {
@@ -14,9 +14,15 @@ const InvoiceFormContainer = ({ children, preview }: InvoiceFormContainerProps) 
         {children}
       </div>
 
-      {/* Invoice Preview - Made larger and sticky */}
+      {/* Invoice Preview - Made larger and sticky with deferred loading */}
       <div className="w-full lg:w-3/5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto mb-6 lg:mb-0 order-1 lg:order-2">
-        {preview}
+        <Suspense fallback={
+          <div className="bg-white rounded-lg border border-border p-8 shadow-sm h-[500px] flex items-center justify-center">
+            <div className="animate-pulse text-primary">Loading preview...</div>
+          </div>
+        }>
+          {preview}
+        </Suspense>
       </div>
     </div>
   );

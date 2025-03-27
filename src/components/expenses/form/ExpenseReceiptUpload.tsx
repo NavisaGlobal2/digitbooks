@@ -16,14 +16,20 @@ const ExpenseReceiptUpload = ({
   receiptPreview,
   setReceiptPreview
 }: ExpenseReceiptUploadProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setReceiptFile(file);
       
+      // Add loading state
+      setIsLoading(true);
+      
       const reader = new FileReader();
       reader.onloadend = () => {
         setReceiptPreview(reader.result as string);
+        setIsLoading(false);
       };
       reader.readAsDataURL(file);
     }
@@ -35,12 +41,15 @@ const ExpenseReceiptUpload = ({
       <div className="mt-1 flex items-center">
         <label className="block w-full">
           <div className="flex items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-md appearance-none cursor-pointer hover:border-gray-400 focus:outline-none">
-            {receiptPreview ? (
+            {isLoading ? (
+              <div className="animate-pulse text-gray-400">Processing image...</div>
+            ) : receiptPreview ? (
               <img
                 src={receiptPreview}
                 alt="Receipt preview"
                 className="h-full max-h-28 object-contain"
                 crossOrigin="anonymous"
+                loading="lazy"
               />
             ) : (
               <span className="flex flex-col items-center space-y-2">
