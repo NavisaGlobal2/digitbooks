@@ -26,6 +26,8 @@ export const inviteTeamMember = async (teamMember: Omit<TeamMember, 'id' | 'user
   }
 
   try {
+    console.log("Attempting to invite team member:", teamMember);
+    
     // Use the database function we created
     const { supabase } = await import("@/integrations/supabase/client");
     const { data, error } = await supabase.rpc('create_team_invite', {
@@ -39,9 +41,15 @@ export const inviteTeamMember = async (teamMember: Omit<TeamMember, 'id' | 'user
       throw error;
     }
     
-    // Fix: Properly type the data and extract the id
-    // The data returned from create_team_invite is a jsonb object with id and token
-    const responseData = data as { id: string, token: string };
+    console.log("Invitation created successfully, response:", data);
+    
+    // Properly handle the response, which should be a JSONB object
+    const responseData = data as { id: string; token: string };
+    
+    if (!responseData || typeof responseData !== 'object' || !responseData.id) {
+      console.error("Unexpected response format:", responseData);
+      throw new Error("Invalid response format from server");
+    }
     
     // Create a properly typed response that matches what we'd expect
     const typedData = {
@@ -55,7 +63,30 @@ export const inviteTeamMember = async (teamMember: Omit<TeamMember, 'id' | 'user
       updated_at: new Date().toISOString()
     } as TeamMember;
     
-    toast.success(`Invitation sent to ${teamMember.email}`);
+    console.log("Calling edge function to send invitation email...");
+    
+    // Call the edge function to send the invitation email
+    const inviterName = (await supabase.auth.getUser()).data.user?.user_metadata?.name || "Team Admin";
+    
+    const { error: emailError } = await supabase.functions.invoke("send-team-invitation", {
+      body: {
+        token: responseData.token,
+        email: teamMember.email,
+        inviterName,
+        role: teamMember.role,
+        name: teamMember.name
+      }
+    });
+    
+    if (emailError) {
+      console.warn("Error sending invitation email:", emailError);
+      toast.warning("Invitation created but email could not be sent", {
+        description: "The user has been invited, but they may not receive an email notification."
+      });
+    } else {
+      toast.success(`Invitation sent to ${teamMember.email}`);
+    }
+    
     return typedData;
   } catch (error: any) {
     handleTeamError(error, "Failed to invite team member");

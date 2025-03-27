@@ -49,6 +49,7 @@ export const TeamManagementContainer = () => {
           
           const { supabase } = await import("@/integrations/supabase/client");
           
+          // First, let's directly create the team_member record with owner role
           const { data: newMember, error } = await supabase
             .from('team_members')
             .insert({
@@ -63,8 +64,29 @@ export const TeamManagementContainer = () => {
           
           if (error) {
             console.error("Error creating owner team member:", error);
-            toast.error("Failed to set up team ownership");
-            setMembers([]);
+            
+            // Fallback approach if the direct insert fails
+            const { data: fallbackMember, error: fallbackError } = await supabase
+              .rpc('insert_team_member', {
+                p_name: user.name || user.email?.split('@')[0] || "Account Owner",
+                p_email: user.email || "",
+                p_role: "Owner",
+                p_status: "active",
+                p_user_id: user.id
+              });
+            
+            if (fallbackError) {
+              console.error("Fallback also failed:", fallbackError);
+              toast.error("Failed to set up team ownership");
+              setMembers([]);
+            } else {
+              console.log("Created owner team member via RPC:", fallbackMember);
+              
+              // Refresh the team members list to include the newly created member
+              const updatedData = await fetchTeamMembers();
+              setMembers(updatedData);
+              toast.success("You've been set as the team owner");
+            }
           } else {
             console.log("Created owner team member:", newMember);
             toast.success("You've been set as the team owner");
