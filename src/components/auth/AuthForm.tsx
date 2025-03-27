@@ -14,7 +14,7 @@ interface AuthFormProps {
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
-  const { login, signup } = useAuth();
+  const { login, signup, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
@@ -67,6 +67,19 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
     }
   };
 
+  const handleSocialLogin = async () => {
+    try {
+      setIsLoading(true);
+      console.log("Starting social login process");
+      await signInWithGoogle();
+      // Note: The actual navigation happens in the Auth page when the redirect happens
+    } catch (error: any) {
+      console.error('Social login error:', error);
+      setIsLoading(false);
+      // Error message is handled by the signInWithGoogle function
+    }
+  };
+
   const handleBackToLogin = () => {
     setVerificationStep(false);
     setMode('login');
@@ -87,6 +100,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
       mode={mode}
       setMode={setMode}
       onSubmit={handleLoginSignup}
+      onSocialLogin={handleSocialLogin}
       email={email}
       setEmail={setEmail}
       password={password}

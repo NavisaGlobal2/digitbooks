@@ -7,8 +7,6 @@ import EmailField from "./EmailField";
 import NameField from "./NameField";
 import FormDivider from "./FormDivider";
 import AuthFormFooter from "./AuthFormFooter";
-import { useAuth } from "@/contexts/auth";
-import { toast } from "sonner";
 
 type AuthMode = 'login' | 'signup';
 
@@ -16,6 +14,7 @@ interface LoginSignupFormProps {
   mode: AuthMode;
   setMode: React.Dispatch<React.SetStateAction<AuthMode>>;
   onSubmit: (e: React.FormEvent) => Promise<void>;
+  onSocialLogin: () => Promise<void>;
   email: string;
   setEmail: React.Dispatch<React.SetStateAction<string>>;
   password: string;
@@ -31,6 +30,7 @@ const LoginSignupForm: React.FC<LoginSignupFormProps> = ({
   mode,
   setMode,
   onSubmit,
+  onSocialLogin,
   email,
   setEmail,
   password,
@@ -41,19 +41,6 @@ const LoginSignupForm: React.FC<LoginSignupFormProps> = ({
   setConfirmPassword,
   isLoading
 }) => {
-  const { signInWithGoogle } = useAuth();
-
-  const handleSocialLogin = async () => {
-    try {
-      toast.info("Redirecting to Google login...");
-      console.log("Google login button clicked, initiating login flow...");
-      await signInWithGoogle();
-    } catch (error) {
-      console.error("Social login error:", error);
-      // No need to show error toast here as it's already handled in signInWithGoogle
-    }
-  };
-
   return (
     <div className="w-full max-w-sm px-4">
       <div className="text-center mb-4 sm:mb-6">
@@ -71,7 +58,7 @@ const LoginSignupForm: React.FC<LoginSignupFormProps> = ({
           altText="Google"
           provider="Google"
           isLoading={isLoading}
-          onClick={handleSocialLogin}
+          onClick={onSocialLogin}
         />
       </div>
 
