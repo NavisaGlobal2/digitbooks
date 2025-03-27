@@ -131,6 +131,15 @@ const BankStatementUploadDialog = ({
               </Label>
             </div>
             
+            <div className="text-xs text-muted-foreground mt-2">
+              <p>Supported formats:</p>
+              <ul className="list-disc list-inside ml-2">
+                <li>CSV files from most Nigerian banks</li>
+                <li>Excel files (.xlsx, .xls) with transaction data</li>
+                <li>Files should include date, description, and amount columns</li>
+              </ul>
+            </div>
+            
             <UploadDialogFooter
               onCancel={handleClose}
               onParse={parseFile}

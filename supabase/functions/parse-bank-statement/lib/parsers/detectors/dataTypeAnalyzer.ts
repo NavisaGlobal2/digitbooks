@@ -1,192 +1,192 @@
 
-import { parseAmount } from '../helpers.ts';
+// Helper functions to analyze data types and guess column roles
 
-// New function to guess columns by analyzing data types in the rows
+// Analyze column data types to improve detection
 export function guessColumnsByDataType(rows: any[], headerRowIndex: number): { 
   dateIndex: number, 
   descIndex: number, 
   amountIndex: number,
-  creditIndex: number,
-  debitIndex: number
+  creditIndex: number, 
+  debitIndex: number 
 } {
-  const startRow = headerRowIndex + 1;
   const result = { 
     dateIndex: -1, 
     descIndex: -1, 
-    amountIndex: -1,
-    creditIndex: -1,
-    debitIndex: -1
+    amountIndex: -1, 
+    creditIndex: -1, 
+    debitIndex: -1 
   };
   
-  if (startRow >= rows.length || rows.length < startRow + 3) {
-    return result;
-  }
+  const startRow = headerRowIndex + 1;
   
-  const columnTypes: { [key: number]: { 
-    isDate: number, 
-    isText: number, 
-    isNumber: number,
-    textLength: number,
-    numValues: number[]
-  } } = {};
+  if (startRow >= rows.length) return result;
   
-  // Analyze rows to determine column types
-  const rowsToCheck = Math.min(10, rows.length - startRow);
+  // Try to recognize columns by their data types
+  const maxRows = Math.min(5, rows.length - startRow);
   
-  for (let i = 0; i < rowsToCheck; i++) {
-    const row = rows[startRow + i];
+  // These will track characteristics of each column
+  const datePatterns: number[] = [];
+  const stringLengths: { [key: number]: number } = {};
+  const numericCounts: { [key: number]: number } = {};
+  const positiveCounts: { [key: number]: number } = {};
+  const negativeCounts: { [key: number]: number } = {};
+  
+  // Scan sample rows to identify patterns
+  for (let i = 0; i < maxRows; i++) {
+    const rowIdx = startRow + i;
+    const row = rows[rowIdx];
+    
     if (!row || !Array.isArray(row)) continue;
     
     for (let colIdx = 0; colIdx < row.length; colIdx++) {
-      if (!columnTypes[colIdx]) {
-        columnTypes[colIdx] = { 
-          isDate: 0, 
-          isText: 0, 
-          isNumber: 0,
-          textLength: 0,
-          numValues: []
-        };
-      }
-      
       const value = row[colIdx];
-      const strValue = String(value || '');
+      const valueStr = String(value || '');
       
-      // Check if value looks like a date
-      const dateObj = parseDate(strValue);
-      if (dateObj && !isNaN(dateObj.getTime())) {
-        columnTypes[colIdx].isDate++;
+      // Check for date patterns
+      if (isDateLike(value)) {
+        if (!datePatterns.includes(colIdx)) {
+          datePatterns.push(colIdx);
+        }
+      } 
+      
+      // Check for description patterns - usually longer text strings
+      else if (typeof value === 'string' && !looksLikeNumber(valueStr)) {
+        stringLengths[colIdx] = (stringLengths[colIdx] || 0) + valueStr.length;
       }
       
-      // Check if value is numeric
-      const numValue = parseAmount(value);
-      if (!isNaN(numValue)) {
-        columnTypes[colIdx].isNumber++;
-        columnTypes[colIdx].numValues.push(numValue);
-      }
-      
-      // Check if value is text
-      if (isNaN(Number(strValue)) && strValue.length > 0) {
-        columnTypes[colIdx].isText++;
-        columnTypes[colIdx].textLength += strValue.length;
+      // Check for amount patterns - usually numbers
+      else if (looksLikeNumber(valueStr)) {
+        numericCounts[colIdx] = (numericCounts[colIdx] || 0) + 1;
+        
+        const numValue = parseFloat(valueStr.replace(/[^\d.-]/g, ''));
+        if (!isNaN(numValue)) {
+          if (numValue > 0) {
+            positiveCounts[colIdx] = (positiveCounts[colIdx] || 0) + 1;
+          } else if (numValue < 0) {
+            negativeCounts[colIdx] = (negativeCounts[colIdx] || 0) + 1;
+          }
+        }
       }
     }
   }
   
-  // Find the most likely date column
-  let bestDateScore = 0;
-  for (const colIdx in columnTypes) {
-    const col = columnTypes[colIdx];
-    const dateScore = col.isDate / rowsToCheck;
-    
-    if (dateScore > 0.5 && dateScore > bestDateScore) {
-      bestDateScore = dateScore;
-      result.dateIndex = parseInt(colIdx);
-    }
+  // Decide on date column
+  if (datePatterns.length > 0) {
+    result.dateIndex = datePatterns[0]; // First detected date column
   }
   
-  // Find the most likely description column (text with highest average length)
-  let bestTextLength = 0;
-  for (const colIdx in columnTypes) {
-    if (parseInt(colIdx) === result.dateIndex) continue;
-    
-    const col = columnTypes[colIdx];
-    const textScore = col.isText / rowsToCheck;
-    const avgLength = col.textLength / (col.isText || 1);
-    
-    if (textScore > 0.5 && avgLength > bestTextLength) {
-      bestTextLength = avgLength;
+  // Decide on description column - look for longest text strings
+  let maxLength = 0;
+  for (const colIdx in stringLengths) {
+    if (stringLengths[colIdx] > maxLength) {
+      maxLength = stringLengths[colIdx];
       result.descIndex = parseInt(colIdx);
     }
   }
   
-  // Find numeric columns for amount/credit/debit
-  const numericColumns: number[] = [];
-  for (const colIdx in columnTypes) {
-    if (
-      parseInt(colIdx) === result.dateIndex || 
-      parseInt(colIdx) === result.descIndex
-    ) continue;
+  // Decide on amount columns
+  // First, check for columns with both positive and negative values (likely the main amount column)
+  for (const colIdx in numericCounts) {
+    const positive = positiveCounts[colIdx] || 0;
+    const negative = negativeCounts[colIdx] || 0;
     
-    const col = columnTypes[colIdx];
-    const numScore = col.isNumber / rowsToCheck;
+    const colIdxNum = parseInt(colIdx);
     
-    if (numScore > 0.5) {
-      numericColumns.push(parseInt(colIdx));
+    // Skip columns we've already identified as date or description
+    if (colIdxNum === result.dateIndex || colIdxNum === result.descIndex) {
+      continue;
+    }
+    
+    // Column with both positive and negative is likely the main amount column
+    if (positive > 0 && negative > 0) {
+      result.amountIndex = colIdxNum;
+      break;
     }
   }
   
-  if (numericColumns.length === 1) {
-    result.amountIndex = numericColumns[0];
-  } else if (numericColumns.length >= 2) {
-    // Try to distinguish between amount, credit, and debit columns
-    const columnProperties: { 
-      colIdx: number, 
-      positiveCount: number, 
-      negativeCount: number, 
-      zeroCount: number,
-      totalValue: number 
-    }[] = [];
+  // If we didn't find a mixed amount column, look for separate credit and debit columns
+  if (result.amountIndex === -1) {
+    // Look for predominantly positive and negative columns
+    let bestPositiveCol = -1;
+    let bestNegativeCol = -1;
+    let maxPositive = 0;
+    let maxNegative = 0;
     
-    for (const colIdx of numericColumns) {
-      const values = columnTypes[colIdx].numValues;
-      const positiveCount = values.filter(v => v > 0).length;
-      const negativeCount = values.filter(v => v < 0).length;
-      const zeroCount = values.filter(v => v === 0).length;
-      const totalValue = values.reduce((sum, val) => sum + Math.abs(val), 0);
+    for (const colIdx in numericCounts) {
+      const colIdxNum = parseInt(colIdx);
       
-      columnProperties.push({
-        colIdx,
-        positiveCount,
-        negativeCount,
-        zeroCount,
-        totalValue
-      });
+      // Skip columns we've already identified as date or description
+      if (colIdxNum === result.dateIndex || colIdxNum === result.descIndex) {
+        continue;
+      }
+      
+      const positive = positiveCounts[colIdx] || 0;
+      const negative = negativeCounts[colIdx] || 0;
+      
+      // Good candidate for credit column (mostly positive values)
+      if (positive > maxPositive && positive > negative) {
+        maxPositive = positive;
+        bestPositiveCol = colIdxNum;
+      }
+      
+      // Good candidate for debit column (mostly negative values)
+      if (negative > maxNegative && negative > positive) {
+        maxNegative = negative;
+        bestNegativeCol = colIdxNum;
+      }
     }
     
-    // Sort by total absolute value (higher first)
-    columnProperties.sort((a, b) => b.totalValue - a.totalValue);
-    
-    if (columnProperties.length > 0) {
-      const firstCol = columnProperties[0];
+    if (bestPositiveCol !== -1) result.creditIndex = bestPositiveCol;
+    if (bestNegativeCol !== -1) result.debitIndex = bestNegativeCol;
+  }
+  
+  // If we still don't have any amount columns, just pick the first numeric column
+  if (result.amountIndex === -1 && result.creditIndex === -1 && result.debitIndex === -1) {
+    for (const colIdx in numericCounts) {
+      const colIdxNum = parseInt(colIdx);
       
-      if (firstCol.positiveCount > 0 && firstCol.negativeCount > 0) {
-        // Column has both positive and negative values, likely the main amount column
-        result.amountIndex = firstCol.colIdx;
-      } else if (columnProperties.length >= 2) {
-        // Look for separate credit and debit columns
-        let creditCol = -1;
-        let debitCol = -1;
-        
-        for (const prop of columnProperties) {
-          if (prop.positiveCount > prop.negativeCount && creditCol === -1) {
-            creditCol = prop.colIdx;
-          } else if (prop.negativeCount > 0 || prop.totalValue > 0) {
-            // Either has negative values or has positive values but not assigned as credit yet
-            debitCol = prop.colIdx;
-            break;
-          }
-        }
-        
-        if (creditCol !== -1 && debitCol !== -1) {
-          result.creditIndex = creditCol;
-          result.debitIndex = debitCol;
-        } else {
-          // Just use the first column as amount
-          result.amountIndex = firstCol.colIdx;
-        }
-      } else {
-        // Just one numeric column with either all positive or all negative values
-        result.amountIndex = firstCol.colIdx;
+      // Skip columns we've already identified as date or description
+      if (colIdxNum === result.dateIndex || colIdxNum === result.descIndex) {
+        continue;
       }
+      
+      result.amountIndex = colIdxNum;
+      break;
     }
   }
   
   return result;
 }
 
-// Simple function to ensure we have date parsing functionality
-// We'll import the full version, but need this for TypeScript checking
-function parseDate(dateStr: string): Date | null {
-  // This is just a placeholder - we'll import the real parseDate from helpers.ts
-  return new Date(dateStr);
+// Helper function to check if a value looks like a date
+function isDateLike(value: any): boolean {
+  if (value === null || value === undefined) return false;
+  
+  // Check for numbers that could be Excel dates
+  if (typeof value === 'number' && value > 30000 && value < 50000) return true;
+  
+  // Check if it's already a Date
+  if (value instanceof Date) return true;
+  
+  // Check for date strings
+  if (typeof value === 'string') {
+    // Date patterns: yyyy-mm-dd, mm/dd/yyyy, etc.
+    if (/\d{1,4}[-\/\.]\d{1,2}[-\/\.]\d{1,4}/.test(value)) return true;
+    
+    // Try Date.parse
+    if (!isNaN(Date.parse(value))) return true;
+  }
+  
+  return false;
+}
+
+// Helper function to check if a value looks like a number
+function looksLikeNumber(value: string): boolean {
+  if (!value) return false;
+  
+  // Remove currency symbols, commas, parentheses
+  const cleaned = value.replace(/[$€£₦,\(\)]/g, '').trim();
+  
+  // Check if it's a number
+  return !isNaN(parseFloat(cleaned));
 }
