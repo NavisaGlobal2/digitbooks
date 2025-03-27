@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress"; 
 import { useExpenses } from "@/contexts/ExpenseContext";
 import TransactionTaggingDialog from "./TransactionTaggingDialog";
 import FileUploadArea from "./upload/FileUploadArea";
@@ -34,9 +35,13 @@ const BankStatementUploadDialog = ({
   const { addExpenses } = useExpenses();
   const [showTaggingDialog, setShowTaggingDialog] = useState(false);
   const [parsedTransactions, setParsedTransactions] = useState<ParsedTransaction[]>([]);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingStep, setProcessingStep] = useState<string>("");
 
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
     setParsedTransactions(transactions);
+    setProcessingProgress(100);
+    setProcessingStep("");
     setShowTaggingDialog(true);
   };
 
@@ -57,12 +62,55 @@ const BankStatementUploadDialog = ({
     handleColumnMappingComplete
   } = useStatementUpload(handleTransactionsParsed);
 
+  const simulateProgressForLongOperation = () => {
+    // Simulate progress for long-running operations
+    setProcessingProgress(0);
+    setProcessingStep("Preparing file...");
+    
+    const interval = setInterval(() => {
+      setProcessingProgress((prev) => {
+        // Increment progress, but never reach 100% until the actual process completes
+        if (prev < 90) {
+          // Update the processing step based on progress
+          if (prev === 15) setProcessingStep("Uploading file...");
+          if (prev === 35) setProcessingStep("Parsing transactions...");
+          if (prev === 60) setProcessingStep("Processing data...");
+          if (prev === 80) setProcessingStep("Finalizing...");
+          
+          return prev + 5;
+        }
+        return prev;
+      });
+    }, 800);
+    
+    // Clear the interval when component unmounts or parsing completes
+    return () => clearInterval(interval);
+  };
+
+  const handleParseFile = () => {
+    const stopProgressSimulation = simulateProgressForLongOperation();
+    parseFile().finally(() => {
+      stopProgressSimulation();
+      // If process completed without showing tagging dialog, reset progress
+      if (!showTaggingDialog) {
+        setProcessingProgress(0);
+        setProcessingStep("");
+      }
+    });
+  };
+
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
+    // Reset progress for the save operation
+    setProcessingProgress(10);
+    setProcessingStep("Saving transactions...");
+    
     // Generate a unique batch ID for this import
     const batchId = `batch-${Date.now()}`;
     
     // Save transactions to database first
     const dbSaveSuccess = await saveTransactionsToDatabase(taggedTransactions, batchId);
+    setProcessingProgress(50);
+    setProcessingStep("Preparing expenses...");
     
     if (!dbSaveSuccess) {
       toast.warning("There was an issue storing the bank transaction data");
@@ -75,30 +123,46 @@ const BankStatementUploadDialog = ({
       file?.name || 'unknown'
     );
     
+    setProcessingProgress(75);
+    setProcessingStep("Adding expenses...");
+    
     if (expensesToSave.length === 0) {
       toast.warning("No expenses to save. Please tag at least one transaction.");
+      setProcessingProgress(0);
+      setProcessingStep("");
       return;
     }
     
     // Save the expenses
     addExpenses(expensesToSave);
+    setProcessingProgress(100);
+    setProcessingStep("Complete!");
+    
     toast.success(`${expensesToSave.length} expenses imported successfully!`);
     
-    // Reset state
-    clearFile();
-    setParsedTransactions([]);
-    setShowTaggingDialog(false);
-    onOpenChange(false);
-    onStatementProcessed();
+    // Reset state after a brief delay to show completion
+    setTimeout(() => {
+      clearFile();
+      setParsedTransactions([]);
+      setShowTaggingDialog(false);
+      setProcessingProgress(0);
+      setProcessingStep("");
+      onOpenChange(false);
+      onStatementProcessed();
+    }, 1000);
   };
 
   const closeTaggingDialog = () => {
     setShowTaggingDialog(false);
+    setProcessingProgress(0);
+    setProcessingStep("");
   };
 
   const handleClose = () => {
     clearFile();
     setParsedTransactions([]);
+    setProcessingProgress(0);
+    setProcessingStep("");
     onOpenChange(false);
   };
 
@@ -122,7 +186,7 @@ const BankStatementUploadDialog = ({
                 id="server-processing" 
                 checked={useEdgeFunction} 
                 onCheckedChange={toggleEdgeFunction}
-                disabled={!edgeFunctionAvailable}
+                disabled={!edgeFunctionAvailable || uploading}
               />
               <Label htmlFor="server-processing" className="flex flex-col">
                 <span>
@@ -137,6 +201,17 @@ const BankStatementUploadDialog = ({
               </Label>
             </div>
             
+            {/* Progress indicator */}
+            {uploading && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{processingStep}</span>
+                  <span>{processingProgress}%</span>
+                </div>
+                <Progress value={processingProgress} className="h-2" />
+              </div>
+            )}
+            
             <div className="text-xs text-muted-foreground mt-2">
               <p>Supported formats:</p>
               <ul className="list-disc list-inside ml-2">
@@ -148,7 +223,7 @@ const BankStatementUploadDialog = ({
             
             <UploadDialogFooter
               onCancel={handleClose}
-              onParse={parseFile}
+              onParse={handleParseFile}
               uploading={uploading}
               disabled={!file}
             />

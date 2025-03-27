@@ -20,24 +20,29 @@ export const parseStatementFile = (
     return;
   }
   
-  if (file.name.endsWith('.csv')) {
-    parseCSVFile(
-      file, 
-      (result: CSVParseResult) => {
-        // Pass the full result object
-        onSuccess(result);
-      }, 
-      onError
-    );
-  } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-    parseExcelFile(file, (transactions: ParsedTransaction[]) => {
-      onSuccess(transactions);
-    }, onError);
-  } else if (file.name.endsWith('.pdf')) {
-    parsePDFFile(file, (transactions: ParsedTransaction[]) => {
-      onSuccess(transactions);
-    }, onError);
-  } else {
-    onError('Unsupported file format');
+  try {
+    if (file.name.endsWith('.csv')) {
+      parseCSVFile(
+        file, 
+        (result: CSVParseResult) => {
+          // Pass the full result object
+          onSuccess(result);
+        }, 
+        onError
+      );
+    } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      parseExcelFile(file, (transactions: ParsedTransaction[]) => {
+        onSuccess(transactions);
+      }, onError);
+    } else if (file.name.endsWith('.pdf')) {
+      parsePDFFile(file, (transactions: ParsedTransaction[]) => {
+        onSuccess(transactions);
+      }, onError);
+    } else {
+      onError('Unsupported file format');
+    }
+  } catch (error) {
+    console.error("Error in parseStatementFile:", error);
+    onError(`Unexpected error while parsing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
