@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { ParsedTransaction } from "../parsers/types";
+import { ParsedTransaction } from "./parsers/types";
 
 export const useTagSelection = (initialTransactions: ParsedTransaction[]) => {
   const [taggedTransactions, setTaggedTransactions] = useState<ParsedTransaction[]>(initialTransactions);
