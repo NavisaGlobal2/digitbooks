@@ -1,30 +1,26 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Upload, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { useExpenses } from "@/contexts/ExpenseContext";
-import { ExpenseCategory } from "@/types/expense";
-import { supabase } from "@/integrations/supabase/client";
 import TransactionTaggingDialog from "./TransactionTaggingDialog";
+import FileUploadArea from "./upload/FileUploadArea";
+import ErrorDisplay from "./upload/ErrorDisplay";
+import { 
+  ParsedTransaction, 
+  parseStatementFile 
+} from "./upload/statementParsers";
+import { 
+  saveTransactionsToDatabase,
+  prepareExpensesFromTransactions 
+} from "./upload/transactionStorage";
 
 interface BankStatementUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStatementProcessed: () => void;
 }
-
-type ParsedTransaction = {
-  id: string;
-  date: Date;
-  description: string;
-  amount: number;
-  type: 'credit' | 'debit';
-  category?: ExpenseCategory;
-  selected: boolean;
-};
 
 const BankStatementUploadDialog = ({
   open,
@@ -53,44 +49,6 @@ const BankStatementUploadDialog = ({
     }
   };
 
-  const saveTransactionsToDatabase = async (transactions: ParsedTransaction[], batchId: string) => {
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        console.error("No authenticated user found");
-        return false;
-      }
-      
-      // Save each transaction to the uploaded_bank_lines table
-      for (const transaction of transactions) {
-        if (!transaction.selected) continue;
-        
-        const { error } = await supabase
-          .from('uploaded_bank_lines')
-          .insert({
-            user_id: userData.user.id,
-            upload_batch_id: batchId,
-            date: transaction.date.toISOString(),
-            description: transaction.description,
-            amount: transaction.amount,
-            type: transaction.type,
-            category: transaction.category,
-            status: 'processed'
-          });
-          
-        if (error) {
-          console.error("Error saving bank transaction:", error);
-          toast.error("Failed to save some transaction data");
-        }
-      }
-      
-      return true;
-    } catch (error) {
-      console.error("Error saving transaction data:", error);
-      return false;
-    }
-  };
-
   const parseFile = () => {
     if (!file) {
       toast.error("Please select a bank statement file");
@@ -99,124 +57,18 @@ const BankStatementUploadDialog = ({
 
     setUploading(true);
     
-    // Parse CSV file (in a real implementation, we'd have different parsers for different file types)
-    if (file.name.endsWith('.csv')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const contents = e.target?.result as string;
-          const lines = contents.split('\n');
-          
-          // Skip header row and parse each line
-          const transactions: ParsedTransaction[] = [];
-          for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-            
-            const columns = line.split(',');
-            if (columns.length < 3) continue;
-            
-            // For this example, assuming CSV format: date, description, amount
-            const date = new Date(columns[0]);
-            const description = columns[1].replace(/"/g, '');
-            const amount = Math.abs(parseFloat(columns[2].replace(/"/g, '')));
-            
-            // Determine if credit or debit
-            const type = parseFloat(columns[2]) < 0 ? 'debit' : 'credit';
-            
-            transactions.push({
-              id: `trans-${i}`,
-              date,
-              description,
-              amount,
-              type,
-              selected: type === 'debit', // Auto-select debit transactions
-            });
-          }
-          
-          setParsedTransactions(transactions);
-          setUploading(false);
-          
-          if (transactions.length === 0) {
-            setError('No valid transactions found in the file');
-          } else {
-            setShowTaggingDialog(true);
-          }
-        } catch (err) {
-          console.error('Error parsing CSV:', err);
-          setError('Failed to parse the file. Please check the format and try again.');
-          setUploading(false);
-        }
-      };
-      
-      reader.onerror = () => {
-        setError('Failed to read the file');
-        setUploading(false);
-      };
-      
-      reader.readAsText(file);
-    } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-      // Mock Excel parsing for this example
-      // In a real app, use a library like xlsx or exceljs
-      setTimeout(() => {
-        // Generate mock data for demonstration
-        const transactions: ParsedTransaction[] = [];
-        const now = new Date();
-        
-        for (let i = 0; i < 10; i++) {
-          const date = new Date(now);
-          date.setDate(date.getDate() - i);
-          
-          const amount = Math.round(Math.random() * 10000) / 100;
-          const type = i % 3 === 0 ? 'credit' : 'debit';
-          
-          transactions.push({
-            id: `trans-${i}`,
-            date,
-            description: `Transaction #${i+1} from Excel`,
-            amount,
-            type,
-            selected: type === 'debit', // Auto-select debit transactions
-          });
-        }
-        
+    parseStatementFile(
+      file,
+      (transactions) => {
         setParsedTransactions(transactions);
         setUploading(false);
         setShowTaggingDialog(true);
-      }, 1000);
-    } else if (file.name.endsWith('.pdf')) {
-      // Mock PDF parsing for this example
-      // In a real app, use a PDF parsing library or service
-      setTimeout(() => {
-        // Generate mock data for demonstration
-        const transactions: ParsedTransaction[] = [];
-        const now = new Date();
-        
-        for (let i = 0; i < 8; i++) {
-          const date = new Date(now);
-          date.setDate(date.getDate() - i - 5);
-          
-          const amount = Math.round(Math.random() * 20000) / 100;
-          const type = i % 4 === 0 ? 'credit' : 'debit';
-          
-          transactions.push({
-            id: `trans-${i}`,
-            date,
-            description: `PDF Statement Item #${i+1}`,
-            amount,
-            type,
-            selected: type === 'debit', // Auto-select debit transactions
-          });
-        }
-        
-        setParsedTransactions(transactions);
+      },
+      (errorMessage) => {
+        setError(errorMessage);
         setUploading(false);
-        setShowTaggingDialog(true);
-      }, 1500);
-    } else {
-      setError('Unsupported file format');
-      setUploading(false);
-    }
+      }
+    );
   };
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
@@ -230,21 +82,12 @@ const BankStatementUploadDialog = ({
       toast.warning("There was an issue storing the bank transaction data");
     }
     
-    // Filter only the selected transactions that have been categorized
-    const expensesToSave = taggedTransactions
-      .filter(t => t.selected && t.category) 
-      .map(transaction => ({
-        description: transaction.description,
-        amount: transaction.amount,
-        date: transaction.date,
-        category: transaction.category as ExpenseCategory,
-        status: "pending" as const,
-        paymentMethod: "bank transfer" as const,
-        vendor: "Bank Statement Import",
-        notes: `Imported from bank statement: ${file?.name}`,
-        fromStatement: true,
-        batchId: batchId  // Using the generated batch ID
-      }));
+    // Prepare expenses to save
+    const expensesToSave = prepareExpensesFromTransactions(
+      taggedTransactions, 
+      batchId, 
+      file?.name || 'unknown'
+    );
     
     if (expensesToSave.length === 0) {
       toast.warning("No expenses to save. Please tag at least one transaction.");
@@ -283,47 +126,12 @@ const BankStatementUploadDialog = ({
           </DialogTitle>
           
           <div className="space-y-4">
-            {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-md flex items-start space-x-2">
-                <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                <p className="text-sm">{error}</p>
-              </div>
-            )}
+            <ErrorDisplay error={error} />
             
-            <div>
-              <Label htmlFor="bank-statement" className="mb-2 block">
-                Select statement file
-              </Label>
-              <div className="mt-1">
-                <label className="block w-full">
-                  <div className="flex items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-md appearance-none cursor-pointer hover:border-gray-400 focus:outline-none">
-                    {file ? (
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600">{file.name}</p>
-                        <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(2)} KB</p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center space-y-2">
-                        <Upload className="w-8 h-8 text-gray-400" />
-                        <span className="text-sm text-gray-500">
-                          Drop your bank statement here or click to browse
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          Supports CSV, Excel, PDF
-                        </span>
-                      </div>
-                    )}
-                    <input
-                      id="bank-statement"
-                      type="file"
-                      className="hidden"
-                      accept=".csv,.xlsx,.xls,.pdf"
-                      onChange={handleFileChange}
-                    />
-                  </div>
-                </label>
-              </div>
-            </div>
+            <FileUploadArea 
+              file={file} 
+              onFileChange={handleFileChange} 
+            />
             
             <div className="flex justify-end space-x-2 pt-2">
               <Button 

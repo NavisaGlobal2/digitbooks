@@ -7,13 +7,23 @@ import { toast } from 'sonner';
 export const useExpenseSync = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Check for current user on initial load
   useEffect(() => {
     const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        setCurrentUserId(data.user.id);
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (error) {
+          console.error("Error fetching user:", error);
+          return;
+        }
+        
+        if (data?.user) {
+          setCurrentUserId(data.user.id);
+        }
+      } catch (err) {
+        console.error("Error in user check:", err);
       }
     };
     
@@ -22,6 +32,8 @@ export const useExpenseSync = () => {
 
   const syncExpenseToDatabase = async (expense: Expense) => {
     try {
+      setIsSyncing(true);
+      
       // Make sure we have a current user ID
       if (!currentUserId) {
         console.warn("No current user ID available, cannot sync to database");
@@ -40,7 +52,7 @@ export const useExpenseSync = () => {
         receipt_url: expense.receiptUrl || null,
         notes: expense.notes || null,
         from_statement: expense.fromStatement || false,
-        batch_id: expense.batchId || null,  // Ensure this is included
+        batch_id: expense.batchId || null,
         user_id: currentUserId
       };
       
@@ -60,11 +72,15 @@ export const useExpenseSync = () => {
     } catch (error) {
       console.error("Error syncing expense to database:", error);
       return false;
+    } finally {
+      setIsSyncing(false);
     }
   };
 
   const loadExpensesFromSupabase = async () => {
     try {
+      setIsLoading(true);
+      
       const { data: dbExpenses, error } = await supabase
         .from('expenses')
         .select('*')
@@ -83,7 +99,7 @@ export const useExpenseSync = () => {
           receiptUrl: expense.receipt_url || null,
           paymentMethod: expense.payment_method,
           fromStatement: expense.from_statement,
-          batchId: expense.batch_id || null  // Map the batch_id
+          batchId: expense.batch_id || null
         }));
         
         return formattedExpenses;
@@ -93,6 +109,8 @@ export const useExpenseSync = () => {
     } catch (error) {
       console.error("Error loading expenses from Supabase:", error);
       return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -120,6 +138,7 @@ export const useExpenseSync = () => {
   return {
     currentUserId,
     isLoading,
+    isSyncing,
     setIsLoading,
     syncExpenseToDatabase,
     loadExpensesFromSupabase,
