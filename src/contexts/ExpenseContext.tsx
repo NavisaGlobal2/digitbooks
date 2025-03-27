@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Expense, ExpenseStatus } from '@/types/expense';
 import { toast } from 'sonner';
@@ -34,9 +33,10 @@ const safelyStoreExpenses = (expenses: Expense[]): boolean => {
       }
       
       // Store date as string for localStorage
-      expenseCopy.date = expense.date instanceof Date ? expense.date.toISOString() : expense.date;
-      
-      return expenseCopy;
+      return {
+        ...expenseCopy,
+        date: expense.date instanceof Date ? expense.date.toISOString() : expense.date
+      };
     });
     
     localStorage.setItem('expenses', JSON.stringify(storableExpenses));

@@ -1,15 +1,10 @@
 
 import { useState } from "react";
-import { Search, Filter, Calendar, CreditCard } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import FilterDropdown, { FilterOption } from "@/components/ui/FilterDropdown";
-import { ExpenseCategory } from "@/types/expense";
-import { getCategoryLabel } from "@/utils/expenseCategories";
 import { DateRange } from "react-day-picker";
-import { format } from "date-fns";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import FilterDropdown from "@/components/ui/FilterDropdown";
+import { getCategoryLabel } from "@/utils/expenseCategories";
+import SearchInput from "./filters/SearchInput";
+import DateRangeFilter from "./filters/DateRangeFilter";
 
 interface ExpenseFiltersProps {
   searchQuery: string;
@@ -35,7 +30,7 @@ const ExpenseFilters = ({
   const [dateRange, setDateRange] = useState<DateRange | undefined>(selectedDateRange);
   
   // Category filter options
-  const categoryOptions: FilterOption[] = [
+  const categoryOptions = [
     { label: "All Categories", value: "all" },
     { label: getCategoryLabel("office"), value: "office" },
     { label: getCategoryLabel("travel"), value: "travel" },
@@ -51,7 +46,7 @@ const ExpenseFilters = ({
   ];
   
   // Payment method filter options
-  const paymentMethodOptions: FilterOption[] = [
+  const paymentMethodOptions = [
     { label: "All Methods", value: "all" },
     { label: "Cash", value: "cash" },
     { label: "Card", value: "card" },
@@ -68,16 +63,10 @@ const ExpenseFilters = ({
   
   return (
     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 items-start sm:items-center justify-between mb-4 gap-2">
-      <div className="relative w-full sm:w-auto flex-grow max-w-md">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-        <Input
-          type="search"
-          placeholder="Search expenses..."
-          className="pl-8 w-full"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+      <SearchInput 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+      />
       
       <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
         <FilterDropdown
@@ -96,34 +85,10 @@ const ExpenseFilters = ({
           className="w-full sm:w-auto"
         />
         
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="w-full sm:w-auto">
-              <Calendar className="h-4 w-4 mr-2" />
-              {dateRange?.from ? (
-                dateRange.to ? (
-                  <>
-                    {format(dateRange.from, "LLL dd")} - {format(dateRange.to, "LLL dd")}
-                  </>
-                ) : (
-                  format(dateRange.from, "LLL dd")
-                )
-              ) : (
-                "Date Range"
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <CalendarComponent
-              initialFocus
-              mode="range"
-              defaultMonth={dateRange?.from}
-              selected={dateRange}
-              onSelect={handleDateRangeChange}
-              numberOfMonths={2}
-            />
-          </PopoverContent>
-        </Popover>
+        <DateRangeFilter 
+          dateRange={dateRange}
+          onDateRangeChange={handleDateRangeChange}
+        />
       </div>
     </div>
   );
