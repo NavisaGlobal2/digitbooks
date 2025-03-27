@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const userData = {
             id: session.user.id,
             email: session.user.email,
-            name: session.user.user_metadata?.name || "User",
+            name: session.user.user_metadata?.name || session.user.user_metadata?.full_name || "User",
             avatar: session.user.user_metadata?.avatar || "",
             onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
           };
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const userData = {
             id: session.user.id,
             email: session.user.email,
-            name: session.user.user_metadata?.name || "User",
+            name: session.user.user_metadata?.name || session.user.user_metadata?.full_name || "User",
             avatar: session.user.user_metadata?.avatar || "",
             onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
           };

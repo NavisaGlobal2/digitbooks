@@ -14,7 +14,7 @@ interface AuthFormProps {
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
-  const { login, signup } = useAuth();
+  const { login, signup, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
@@ -36,6 +36,23 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
     }
   }, [location.search]);
 
+  // Handle successful social login
+  useEffect(() => {
+    // If user is authenticated but not from this form submission
+    // and we're not already handling verification, they likely logged in with social
+    if (user && !isLoading && !verificationStep) {
+      console.log("Social login detected, checking onboarding status");
+      
+      if (!user.onboardingCompleted) {
+        console.log("Social login successful, redirecting to onboarding");
+        navigate("/onboarding", { replace: true });
+      } else {
+        console.log("Social login successful, onboarding already completed");
+        navigate("/dashboard", { replace: true });
+      }
+    }
+  }, [user, isLoading, verificationStep, navigate]);
+
   const handleLoginSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -55,9 +72,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
         await login(email, password);
         toast.success("Login successful!");
         
-        // Navigate to dashboard or the page they were trying to access
-        const from = location.state?.from?.pathname || "/dashboard";
-        navigate(from, { replace: true });
+        if (user && !user.onboardingCompleted) {
+          // New user, redirect to onboarding
+          navigate("/onboarding", { replace: true });
+        } else {
+          // Returning user, redirect to dashboard or requested page
+          const from = location.state?.from?.pathname || "/dashboard";
+          navigate(from, { replace: true });
+        }
       }
     } catch (error: any) {
       console.error('Auth error:', error);
