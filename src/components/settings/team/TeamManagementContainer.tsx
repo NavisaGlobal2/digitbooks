@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTeamMembers } from "@/lib/teamMembers";
@@ -52,7 +53,7 @@ export const TeamManagementContainer = () => {
             .from('team_members')
             .insert({
               user_id: user.id,
-              name: user.user_metadata?.name || user.email?.split('@')[0] || "Account Owner",
+              name: user.name || user.email?.split('@')[0] || "Account Owner",
               email: user.email,
               role: "Owner",
               status: "active"
@@ -74,7 +75,7 @@ export const TeamManagementContainer = () => {
           const ownerMember: TeamMember = {
             id: "owner-temp",
             user_id: user.id || "",
-            name: user.user_metadata?.name || "Account Owner",
+            name: user.name || "Account Owner",
             email: user.email || "",
             role: "Owner",
             status: "active",
