@@ -66,7 +66,7 @@ const InvoiceForm = () => {
 
       {/* Itemized Products/Services */}
       <InvoiceItems 
-        invoiceItems={invoiceItems || []}
+        invoiceItems={invoiceItems}
         setInvoiceItems={setInvoiceItems}
         addInvoiceItem={addInvoiceItem}
       />
@@ -95,7 +95,7 @@ const InvoiceForm = () => {
         
         <ActionButtons 
           logoPreview={logoPreview}
-          invoiceItems={invoiceItems || []}
+          invoiceItems={invoiceItems}
           invoiceDate={invoiceDate}
           dueDate={dueDate}
           additionalInfo={additionalInfo}
@@ -112,17 +112,17 @@ const InvoiceForm = () => {
   const previewContent = (
     <InvoicePreview 
       logoPreview={logoPreview}
-      invoiceItems={invoiceItems || []}
+      invoiceItems={invoiceItems}
       invoiceDate={invoiceDate}
       dueDate={dueDate}
-      additionalInfo={additionalInfo || ""}
-      bankName={bankName || ""}
-      accountNumber={accountNumber || ""}
-      accountName={accountName || ""}
+      additionalInfo={additionalInfo}
+      bankName={bankName}
+      accountNumber={accountNumber}
+      accountName={accountName}
       calculateSubtotal={calculateSubtotal}
       calculateTax={calculateTax}
       calculateTotal={calculateTotal}
-      clientName={clientName || ""}
+      clientName={clientName}
     />
   );
 

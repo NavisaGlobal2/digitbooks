@@ -1,119 +1,127 @@
 
-import { Button } from "@/components/ui/button";
+import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
+import { Home, DollarSign, Info, Settings, HelpCircle, Briefcase, Menu, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
 
 const Navigation = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 w-full z-50 backdrop-blur-md bg-white/80 border-b border-gray-200">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <Link to="/" className="text-xl font-semibold flex items-center gap-2">
+          <div className="h-8 w-8 flex items-center justify-center">
             <Logo className="h-8 w-8" />
-            <span className="text-xl font-semibold bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent hidden sm:inline-block">
-              DigitBooks
-            </span>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            <Link
-              to="/features"
-              className="text-sm font-medium text-gray-700 hover:text-primary transition-colors"
-            >
-              Features
-            </Link>
-            <Link
-              to="/pricing"
-              className="text-sm font-medium text-gray-700 hover:text-primary transition-colors"
-            >
-              Pricing
-            </Link>
-            <Link
-              to="/about"
-              className="text-sm font-medium text-gray-700 hover:text-primary transition-colors"
-            >
-              About
-            </Link>
-          </nav>
-
-          {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-4">
-            <Link to="/auth" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">
-              Login
-            </Link>
-            <Link to="/auth">
-              <Button className="bg-green-500 hover:bg-green-600 text-white">
-                Get Started
-              </Button>
-            </Link>
           </div>
+          <span className="text-gray-800">DigitBooks</span>
+        </Link>
+        
+        {/* Desktop navigation */}
+        <div className="hidden md:flex items-center space-x-8">
+          <Link to="/features" className="text-secondary hover:text-primary transition-colors flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Features
+          </Link>
+          <Link to="/pricing" className="text-secondary hover:text-primary transition-colors flex items-center gap-2">
+            <DollarSign className="w-4 h-4" />
+            Pricing
+          </Link>
+          <Link to="/about" className="text-secondary hover:text-primary transition-colors flex items-center gap-2">
+            <Info className="w-4 h-4" />
+            About
+          </Link>
+          <Link to="/careers" className="text-secondary hover:text-primary transition-colors flex items-center gap-2">
+            <Briefcase className="w-4 h-4" />
+            Careers
+          </Link>
+          <Link to="/help" className="text-secondary hover:text-primary transition-colors flex items-center gap-2">
+            <HelpCircle className="w-4 h-4" />
+            Help
+          </Link>
+        </div>
 
+        <div className="flex items-center">
           {/* Mobile menu button */}
-          <button
-            className="md:hidden p-2"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 ml-2 md:hidden"
+            aria-label="Toggle menu"
           >
-            {isMenuOpen ? (
-              <X className="h-6 w-6 text-gray-700" />
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5 text-gray-700" />
             ) : (
-              <Menu className="h-6 w-6 text-gray-700" />
+              <Menu className="h-5 w-5 text-gray-700" />
             )}
           </button>
+          
+          <Link to="/auth" className="ml-4">
+            <Button className="bg-[#05D166] hover:bg-[#05D166]/80 text-white">
+              Get Started
+            </Button>
+          </Link>
         </div>
       </div>
-
+      
       {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="md:hidden py-4 px-4 bg-white border-t border-gray-100">
-          <nav className="flex flex-col gap-4">
-            <Link
-              to="/features"
-              className="text-base font-medium text-gray-700 hover:text-primary transition-colors py-2"
-              onClick={() => setIsMenuOpen(false)}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white border-b border-gray-200">
+          <div className="px-4 py-3 space-y-2">
+            <Link 
+              to="/features" 
+              className="block py-2 text-secondary hover:text-primary transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
             >
-              Features
-            </Link>
-            <Link
-              to="/pricing"
-              className="text-base font-medium text-gray-700 hover:text-primary transition-colors py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Pricing
-            </Link>
-            <Link
-              to="/about"
-              className="text-base font-medium text-gray-700 hover:text-primary transition-colors py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              About
-            </Link>
-            <Link
-              to="/auth"
-              className="text-base font-medium text-gray-700 hover:text-primary transition-colors py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Login
+              <div className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Features
+              </div>
             </Link>
             <Link 
-              to="/auth" 
-              className="w-full"
-              onClick={() => setIsMenuOpen(false)}
+              to="/pricing" 
+              className="block py-2 text-secondary hover:text-primary transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
             >
-              <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
-                Get Started
-              </Button>
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                Pricing
+              </div>
             </Link>
-          </nav>
+            <Link 
+              to="/about" 
+              className="block py-2 text-secondary hover:text-primary transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="flex items-center gap-2">
+                <Info className="w-4 h-4" />
+                About
+              </div>
+            </Link>
+            <Link 
+              to="/careers" 
+              className="block py-2 text-secondary hover:text-primary transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="flex items-center gap-2">
+                <Briefcase className="w-4 h-4" />
+                Careers
+              </div>
+            </Link>
+            <Link 
+              to="/help" 
+              className="block py-2 text-secondary hover:text-primary transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-4 h-4" />
+                Help
+              </div>
+            </Link>
+          </div>
         </div>
       )}
-    </header>
+    </nav>
   );
 };
 

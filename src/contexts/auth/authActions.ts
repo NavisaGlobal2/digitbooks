@@ -131,6 +131,7 @@ export const signInWithGoogle = async () => {
     console.log("Starting Google authentication flow...");
     
     // Get the canonical URL (in case we're on a custom domain or subdomain)
+    // Add detailed logging of the window location
     console.log("Current window location details:", {
       origin: window.location.origin,
       pathname: window.location.pathname,
@@ -140,6 +141,7 @@ export const signInWithGoogle = async () => {
     
     // For Supabase Google auth, the redirect must go to a URL that's
     // allowed in both the Google console and Supabase settings
+    // Use just the origin without the pathname to avoid issues
     const redirectUrl = window.location.origin + "/auth";
     
     console.log("Using redirect URL for Google auth:", redirectUrl);

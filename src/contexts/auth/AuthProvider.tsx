@@ -1,3 +1,4 @@
+
 import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
@@ -13,73 +14,53 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-
-    // Handle initial session and auth state changes
-    const initializeAuth = async () => {
+    const getInitialSession = async () => {
       try {
-        console.log("Setting up auth state change listener");
-        // First set up the listener before checking session
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            console.log("Auth state change:", event, session?.user?.id);
-            
-            if (!mounted) return;
-            
-            if (session) {
-              const userData = {
-                id: session.user.id,
-                email: session.user.email,
-                name: session.user.user_metadata?.name || "User",
-                avatar: session.user.user_metadata?.avatar || "",
-                onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
-              };
-              
-              setUser(userData);
-              console.log("User metadata:", session.user.user_metadata);
-            } else {
-              setUser(null);
-            }
-          }
-        );
-
-        // Now check for existing session
-        console.log("Checking for initial session...");
         const { data: { session } } = await supabase.auth.getSession();
         
-        if (mounted) {
-          if (session) {
-            const userData = {
-              id: session.user.id,
-              email: session.user.email,
-              name: session.user.user_metadata?.name || "User",
-              avatar: session.user.user_metadata?.avatar || "",
-              onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
-            };
-            
-            console.log("Initial session found:", userData);
-            setUser(userData);
-            console.log("User metadata:", session.user.user_metadata);
-          } else {
-            console.log("No initial session found");
-            setUser(null);
-          }
+        if (session) {
+          const userData = {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.name || "User",
+            avatar: session.user.user_metadata?.avatar || "",
+            onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
+          };
           
-          setIsLoading(false);
+          console.log("Initial session found:", userData);
+          setUser(userData);
         }
       } catch (error) {
-        console.error("Error initializing auth:", error);
-        if (mounted) {
-          setIsLoading(false);
-        }
+        console.error("Error getting initial session:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    initializeAuth();
+    getInitialSession();
 
-    // Cleanup function
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth state change:", event, session?.user?.id);
+        
+        if (session) {
+          const userData = {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.name || "User",
+            avatar: session.user.user_metadata?.avatar || "",
+            onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
+          };
+          
+          setUser(userData);
+        } else {
+          setUser(null);
+        }
+      }
+    );
+
     return () => {
-      mounted = false;
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -116,7 +97,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       };
       
       setUser(updatedUser);
-      console.log("Onboarding completed successfully:", updatedUser);
       return updatedUser;
     } catch (error: any) {
       console.error("Error completing onboarding:", error);

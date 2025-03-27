@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { TeamManagementHeader } from "./team/TeamManagementHeader";
 import { TeamManagementContent } from "./team/TeamManagementContent";
 import { useTeamMembersData } from "./team/hooks/useTeamMembersData";
-import { useEffect } from "react";
 
 export const TeamManagementSettings = () => {
   const {
@@ -14,14 +13,12 @@ export const TeamManagementSettings = () => {
     setSearchQuery,
     handleAddMember,
     handleUpdateMember,
-    handleDeleteMember,
-    refreshTeamMembers
+    handleDeleteMember
   } = useTeamMembersData();
 
-  // Refresh team members when the component mounts
-  useEffect(() => {
-    refreshTeamMembers();
-  }, []);
+  const openInviteDialog = () => {
+    // When using InviteTeamMemberDialog directly as button
+  };
 
   return (
     <Card>
@@ -40,7 +37,7 @@ export const TeamManagementSettings = () => {
           isError={isError}
           onEdit={handleUpdateMember}
           onDelete={handleDeleteMember}
-          onRefresh={refreshTeamMembers}
+          onInvite={openInviteDialog}
         />
       </CardContent>
     </Card>

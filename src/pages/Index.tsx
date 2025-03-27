@@ -4,7 +4,6 @@ import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { WaitlistForm } from "@/components/WaitlistForm";
-import { Link } from "react-router-dom";
 
 const Index = () => {
   const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
@@ -29,13 +28,13 @@ const Index = () => {
               Save 10+ hours every week with automated bookkeeping. Perfect for small businesses, freelancers, and startups.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in [animation-delay:400ms]">
-              <Link 
-                to="/auth"
+              <a 
+                href="https://digitbookwise.lovable.app/auth"
                 className="group px-8 py-4 bg-primary text-white rounded-full hover:bg-primary/90 transition-all duration-300 transform hover:-translate-y-1"
               >
                 Try Free for 14 Days
                 <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              </a>
               {!showWaitlistForm ? (
                 <button 
                   onClick={() => setShowWaitlistForm(true)}
@@ -66,7 +65,7 @@ const Index = () => {
             <div className="flex justify-center px-4">
               <img
                 src="https://antimetal.com/images/hero/preview.png"
-                alt="Digibooks Dashboard Preview"
+                alt="DigitBooks Dashboard Preview"
                 className="rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-[90%] h-auto hover:shadow-accent/20 transition-shadow duration-300"
               />
             </div>
@@ -78,7 +77,7 @@ const Index = () => {
         <section className="py-24 sm:py-32 bg-surface/50 backdrop-blur-sm px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <h2 className="text-3xl sm:text-4xl font-bold text-center mb-16 sm:mb-20 bg-gradient-to-r from-primary to-[#8B5CF6] bg-clip-text text-transparent">
-              How Digibooks Makes Your Life Easier
+              How DigitBooks Makes Your Life Easier
             </h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
               {[
@@ -171,13 +170,13 @@ const Index = () => {
             <p className="text-white/80 mb-10 sm:mb-12 max-w-2xl mx-auto text-lg sm:text-xl animate-fade-in [animation-delay:200ms]">
               Join thousands of businesses saving 10+ hours every week with automated bookkeeping.
             </p>
-            <Link 
-              to="/auth"
+            <a 
+              href="https://digitbookwise.lovable.app/auth"
               className="inline-block group px-8 py-4 bg-accent text-primary rounded-full font-semibold hover:bg-accent/90 transition-all duration-300 transform hover:-translate-y-1 animate-fade-in [animation-delay:400ms]"
             >
               Start Your Free Trial
               <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            </a>
           </div>
         </section>
       </main>
