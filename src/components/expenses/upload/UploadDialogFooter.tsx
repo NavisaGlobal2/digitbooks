@@ -1,0 +1,36 @@
+
+import { Button } from "@/components/ui/button";
+
+interface UploadDialogFooterProps {
+  onCancel: () => void;
+  onParse: () => void;
+  uploading: boolean;
+  disabled: boolean;
+}
+
+const UploadDialogFooter = ({ 
+  onCancel, 
+  onParse, 
+  uploading, 
+  disabled 
+}: UploadDialogFooterProps) => {
+  return (
+    <div className="flex justify-end space-x-2 pt-2">
+      <Button 
+        variant="outline" 
+        onClick={onCancel}
+      >
+        Cancel
+      </Button>
+      <Button 
+        onClick={onParse} 
+        disabled={disabled || uploading}
+        className="bg-green-500 hover:bg-green-600 text-white"
+      >
+        {uploading ? "Processing..." : "Parse Statement"}
+      </Button>
+    </div>
+  );
+};
+
+export default UploadDialogFooter;
