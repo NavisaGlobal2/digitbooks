@@ -33,14 +33,14 @@ export const parseViaEdgeFunction = async (
       console.log('Using supabase.functions.invoke to call the edge function');
       
       // Call the edge function with an increased timeout
+      // Removed the responseType property as it's not supported in FunctionInvokeOptions
       const { data, error: functionError } = await supabase.functions.invoke(
         'parse-bank-statement',
         {
           body: formData,
           headers: {
             Authorization: `Bearer ${accessToken}`
-          },
-          responseType: 'json',
+          }
         }
       );
       
