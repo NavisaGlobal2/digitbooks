@@ -4,7 +4,8 @@ import { TeamMemberList } from "./TeamMemberList";
 import { EditTeamMemberDialog } from "./EditTeamMemberDialog";
 import { DeleteTeamMemberDialog } from "./DeleteTeamMemberDialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { UserPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, UserPlus } from "lucide-react";
 import { TeamMember } from "@/types/teamMember";
 
 interface TeamManagementContentProps {
@@ -14,7 +15,8 @@ interface TeamManagementContentProps {
   isError: boolean;
   onEdit: (member: TeamMember) => void;
   onDelete: (memberId: string) => void;
-  onInvite: () => void;
+  onInvite?: () => void;
+  onRefresh?: () => void;
 }
 
 export const TeamManagementContent = ({
@@ -24,7 +26,8 @@ export const TeamManagementContent = ({
   isError,
   onEdit,
   onDelete,
-  onInvite
+  onInvite,
+  onRefresh
 }: TeamManagementContentProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -56,23 +59,8 @@ export const TeamManagementContent = ({
         description="There was a problem loading your team members. Please try again later."
         primaryAction={{
           label: "Try Again",
-          onClick: () => window.location.reload(),
+          onClick: onRefresh || (() => window.location.reload()),
           icon: <div className="mr-2">↻</div>
-        }}
-      />
-    );
-  }
-
-  if (members.length === 0) {
-    return (
-      <EmptyState
-        icon={<UserPlus className="h-8 w-8 text-gray-400" />}
-        title="No team members yet"
-        description="Invite your colleagues to collaborate with you"
-        primaryAction={{
-          label: "Invite Team Member",
-          onClick: onInvite,
-          icon: <UserPlus className="h-4 w-4 mr-2" />
         }}
       />
     );
@@ -80,12 +68,34 @@ export const TeamManagementContent = ({
 
   return (
     <>
-      <TeamMemberList
-        members={members}
-        searchQuery={searchQuery}
-        onEdit={openEditDialog}
-        onDelete={openDeleteDialog}
-      />
+      <div className="mb-4 flex justify-end">
+        {onRefresh && (
+          <Button variant="outline" size="sm" onClick={onRefresh} className="mr-2">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        )}
+      </div>
+      
+      {members.length === 0 ? (
+        <EmptyState
+          icon={<UserPlus className="h-8 w-8 text-gray-400" />}
+          title="No team members yet"
+          description="Invite your colleagues to collaborate with you"
+          primaryAction={{
+            label: "Invite Team Member",
+            onClick: onInvite,
+            icon: <UserPlus className="h-4 w-4 mr-2" />
+          }}
+        />
+      ) : (
+        <TeamMemberList
+          members={members}
+          searchQuery={searchQuery}
+          onEdit={openEditDialog}
+          onDelete={openDeleteDialog}
+        />
+      )}
 
       <EditTeamMemberDialog
         isOpen={isEditDialogOpen}
@@ -98,7 +108,7 @@ export const TeamManagementContent = ({
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         teamMember={currentMember}
-        onDelete={onDelete}
+        onDelete={() => currentMember && onDelete(currentMember.id)}
       />
     </>
   );

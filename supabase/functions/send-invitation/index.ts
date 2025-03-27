@@ -76,6 +76,7 @@ serve(async (req) => {
 
     if (error) {
       console.error("Error updating team member status:", error);
+      throw error;
     }
 
     return new Response(
