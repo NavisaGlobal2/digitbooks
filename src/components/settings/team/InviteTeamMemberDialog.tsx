@@ -41,6 +41,8 @@ export const InviteTeamMemberDialog = ({ onInvite }: InviteTeamMemberDialogProps
   });
 
   const handleInviteMember = async (data: InviteFormValues) => {
+    // Define the new member without the id, user_id, created_at, updated_at fields
+    // as those will be added by the server
     const newMember = {
       name: data.name,
       email: data.email,
