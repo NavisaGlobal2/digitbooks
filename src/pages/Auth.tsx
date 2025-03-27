@@ -13,7 +13,7 @@ import { AlertCircle } from "lucide-react";
 type AuthMode = 'login' | 'signup';
 
 const Auth: React.FC = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mode, setMode] = useState<AuthMode>('login'); // Default to login mode
@@ -26,8 +26,6 @@ const Auth: React.FC = () => {
     console.log("Origin:", window.location.origin);
     console.log("Search params:", location.search);
     console.log("Hash:", location.hash);
-    console.log("User authenticated:", isAuthenticated);
-    console.log("User onboarding completed:", user?.onboardingCompleted);
     
     // Additional debug info for Google auth
     if (navigator.userAgent) {
@@ -41,7 +39,7 @@ const Auth: React.FC = () => {
     })
     .then(() => console.log("Google domains seem accessible"))
     .catch(err => console.error("Cannot access Google domains:", err));
-  }, [location, isAuthenticated, user]);
+  }, [location]);
 
   // Check URL parameters and handle auth redirects
   useEffect(() => {
@@ -77,17 +75,11 @@ const Auth: React.FC = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      if (!user?.onboardingCompleted) {
-        console.log("User is authenticated but onboarding not completed, redirecting to onboarding");
-        navigate("/onboarding", { replace: true });
-        return;
-      }
-      
       const from = location.state?.from?.pathname || "/dashboard";
-      console.log("User is authenticated and onboarding completed, redirecting to:", from);
+      console.log("User is authenticated, redirecting to:", from);
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, location, user]);
+  }, [isAuthenticated, navigate, location]);
 
   // Clear auth errors when mode changes
   useEffect(() => {

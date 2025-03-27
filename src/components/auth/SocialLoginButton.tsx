@@ -35,9 +35,6 @@ const SocialLoginButton: React.FC<SocialLoginButtonProps> = ({
         }
         
         await onClick();
-        
-        // The redirect will happen automatically via Supabase
-        // Don't reset button loading state as we're about to navigate away
       } catch (error: any) {
         console.error(`${provider} authentication error:`, error);
         setButtonError(error.message || `Failed to connect to ${provider}`);
