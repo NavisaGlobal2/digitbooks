@@ -76,6 +76,19 @@ const safelyStoreExpenses = (expenses: Expense[]): boolean => {
 export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Check for current user on initial load
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setCurrentUserId(data.user.id);
+      }
+    };
+    
+    checkUser();
+  }, []);
 
   // Load expenses from database and localStorage on initial load
   useEffect(() => {
@@ -119,9 +132,11 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
             setExpenses(processedExpenses);
             
             // If we loaded from localStorage, sync them to Supabase
-            processedExpenses.forEach(async (expense: Expense) => {
-              await syncExpenseToDatabase(expense);
-            });
+            if (currentUserId) {
+              processedExpenses.forEach(async (expense: Expense) => {
+                await syncExpenseToDatabase(expense);
+              });
+            }
           }
         }
       } catch (error) {
@@ -151,11 +166,17 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
     
     loadExpenses();
-  }, []);
+  }, [currentUserId]);
 
   // Sync expense to database
   const syncExpenseToDatabase = async (expense: Expense) => {
     try {
+      // Make sure we have a current user ID
+      if (!currentUserId) {
+        console.warn("No current user ID available, cannot sync to database");
+        return false;
+      }
+
       const expenseForDb = {
         id: expense.id,
         description: expense.description,
@@ -167,7 +188,8 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         vendor: expense.vendor,
         receipt_url: expense.receiptUrl || null,
         notes: expense.notes || null,
-        from_statement: expense.fromStatement || false
+        from_statement: expense.fromStatement || false,
+        user_id: currentUserId
       };
       
       const { error } = await supabase
