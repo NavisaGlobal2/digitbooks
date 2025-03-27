@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { parseStatementFile } from "./statementParsers";
 import { ParsedTransaction } from "./statementParsers";
 import { supabase } from "@/integrations/supabase/client";
+import { ExpenseCategory } from "@/types/expense"; // Add this import
 
 export const useStatementUpload = (
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void

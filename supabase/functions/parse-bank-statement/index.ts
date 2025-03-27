@@ -1,8 +1,8 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import { parse as csvParse } from 'https://deno.land/std@0.177.0/encoding/csv.ts'
-import * as XLSX from 'https://deno.land/x/xlsx@v0.7.0/mod.ts'
 import { FetchError } from 'https://deno.land/x/fetch_error@1.0.0/mod.ts'
+import * as XLSX from 'https://deno.land/x/excel@v1.1.2/mod.ts'
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -143,14 +143,37 @@ async function processCSV(file: File): Promise<Transaction[]> {
 // Process Excel file
 async function processExcel(file: File): Promise<Transaction[]> {
   const arrayBuffer = await file.arrayBuffer()
-  const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+  const workbook = new XLSX.Workbook()
+  
+  // Load workbook from array buffer
+  await workbook.read(new Uint8Array(arrayBuffer))
   
   // Get the first sheet
-  const sheetName = workbook.SheetNames[0]
-  const worksheet = workbook.Sheets[sheetName]
+  const worksheet = workbook.getWorksheet(1)
+  if (!worksheet) {
+    throw new Error('No worksheet found in Excel file')
+  }
   
-  // Convert to JSON
-  const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
+  // Convert to rows
+  const rows: any[] = []
+  
+  // Add header row
+  const headerRow: any[] = []
+  worksheet.getRow(1).eachCell((cell) => {
+    headerRow.push(cell.value)
+  })
+  rows.push(headerRow)
+  
+  // Add data rows
+  for (let i = 2; i <= worksheet.rowCount; i++) {
+    const row: any[] = []
+    worksheet.getRow(i).eachCell((cell) => {
+      row.push(cell.value)
+    })
+    if (row.length > 0) {
+      rows.push(row)
+    }
+  }
   
   // Try to detect columns by header or position
   return detectAndParseTransactions(rows)
@@ -317,7 +340,7 @@ async function saveTransactions(
   for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
     const batch = transactions.slice(i, i + BATCH_SIZE)
     
-    const { count, error } = await supabase
+    const { error } = await supabase
       .from('uploaded_bank_lines')
       .insert(batch.map(t => ({
         user_id: userId,
@@ -328,7 +351,6 @@ async function saveTransactions(
         type: t.type,
         status: 'unprocessed'
       })))
-      .select('count')
     
     if (error) {
       console.error('Error saving transactions:', error)
