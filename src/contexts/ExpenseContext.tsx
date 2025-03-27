@@ -36,7 +36,8 @@ const safelyStoreExpenses = (expenses: Expense[]): boolean => {
       // Store date as string for localStorage - ensure we have a proper serializable object
       return {
         ...expenseCopy,
-        date: expense.date instanceof Date ? expense.date.toISOString() : expense.date.toString()
+        // Fix: avoid calling toString() on a potentially 'never' type
+        date: expense.date instanceof Date ? expense.date.toISOString() : String(expense.date)
       };
     });
     
@@ -51,7 +52,8 @@ const safelyStoreExpenses = (expenses: Expense[]): boolean => {
           id: expense.id,
           description: expense.description,
           amount: expense.amount,
-          date: expense.date instanceof Date ? expense.date.toISOString() : expense.date.toString(),
+          // Fix: avoid calling toString() on a potentially 'never' type
+          date: expense.date instanceof Date ? expense.date.toISOString() : String(expense.date),
           category: expense.category,
           status: expense.status,
           paymentMethod: expense.paymentMethod,
