@@ -10,6 +10,7 @@ import FileUploadArea from "./upload/FileUploadArea";
 import ErrorDisplay from "./upload/ErrorDisplay";
 import DialogHeader from "./upload/DialogHeader";
 import UploadDialogFooter from "./upload/UploadDialogFooter";
+import ColumnMappingDialog from "./upload/columnMapping/ColumnMappingDialog";
 import { useStatementUpload } from "./upload/useStatementUpload";
 import { 
   ParsedTransaction
@@ -48,7 +49,12 @@ const BankStatementUploadDialog = ({
     edgeFunctionAvailable,
     handleFileChange,
     parseFile,
-    clearFile
+    clearFile,
+    // Column mapping related
+    showColumnMapping,
+    setShowColumnMapping,
+    csvParseResult,
+    handleColumnMappingComplete
   } = useStatementUpload(handleTransactionsParsed);
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
@@ -120,13 +126,13 @@ const BankStatementUploadDialog = ({
               />
               <Label htmlFor="server-processing" className="flex flex-col">
                 <span>
-                  {useEdgeFunction ? "Server-side processing" : "Client-side processing"}
+                  {useEdgeFunction ? "Server-side processing" : "Client-side processing with column mapping"}
                   {!edgeFunctionAvailable && " (server unavailable)"}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {useEdgeFunction 
                     ? "Processes your statement on the server for better accuracy" 
-                    : "Processes your statement in the browser"}
+                    : "Process and customize column mapping in the browser"}
                 </span>
               </Label>
             </div>
@@ -149,6 +155,17 @@ const BankStatementUploadDialog = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Column Mapping Dialog */}
+      {showColumnMapping && csvParseResult && (
+        <ColumnMappingDialog
+          open={showColumnMapping}
+          onOpenChange={setShowColumnMapping}
+          headers={csvParseResult.headers}
+          sampleData={csvParseResult.rows.slice(csvParseResult.hasHeader ? 1 : 0)}
+          onMappingComplete={handleColumnMappingComplete}
+        />
+      )}
 
       {/* Transaction Tagging Dialog */}
       {showTaggingDialog && (
