@@ -11,52 +11,83 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Set to false since we're not connecting
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Since we're disconnected, we'll skip the actual auth checks
-  const isAuthenticated = false;
+  // Setup auth state listener and check for existing session
+  useEffect(() => {
+    // First set up the auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("Auth state changed:", event);
+        setIsLoading(false);
+        
+        if (session?.user) {
+          const userData: User = {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.name || "User",
+            avatar: session.user.user_metadata?.avatar || "",
+            onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
+          };
+          setUser(userData);
+        } else {
+          setUser(null);
+        }
+      }
+    );
 
-  const handleLogin = async (email: string, password: string) => {
-    console.log("Database disconnected: Login function disabled");
-    return null;
-  };
+    // Then check for existing session
+    const initializeAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        const userData: User = {
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.user_metadata?.name || "User",
+          avatar: session.user.user_metadata?.avatar || "",
+          onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
+        };
+        setUser(userData);
+      }
+      
+      setIsLoading(false);
+    };
 
-  const handleLogout = async () => {
-    console.log("Database disconnected: Logout function disabled");
-    return true;
-  };
+    initializeAuth();
 
-  const handleSignup = async (email: string, password: string, name: string) => {
-    console.log("Database disconnected: Signup function disabled");
-    return null;
-  };
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
-  const handleCompleteOnboarding = async () => {
-    console.log("Database disconnected: Complete onboarding function disabled");
-    return null;
-  };
-
-  const verifyOtp = async (email: string, token: string) => {
-    console.log("Database disconnected: Verify OTP function disabled");
-    return null;
-  };
-
-  const handleSignInWithGoogle = async () => {
-    console.log("Database disconnected: Sign in with Google function disabled");
-    return null;
-  };
+  const isAuthenticated = !!user;
 
   return (
     <AuthContext.Provider
       value={{ 
         user, 
         isAuthenticated, 
-        login: handleLogin, 
-        logout: handleLogout, 
-        signup: handleSignup, 
-        completeOnboarding: handleCompleteOnboarding,
-        verifyOtp,
-        signInWithGoogle: handleSignInWithGoogle
+        login, 
+        logout, 
+        signup, 
+        completeOnboarding,
+        verifyOtp: async (email, token) => {
+          try {
+            const { data, error } = await supabase.auth.verifyOtp({
+              email,
+              token,
+              type: 'signup'
+            });
+            
+            if (error) throw error;
+            return data;
+          } catch (error) {
+            console.error("Error verifying OTP:", error);
+            throw error;
+          }
+        },
+        signInWithGoogle
       }}
     >
       {children}

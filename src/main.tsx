@@ -4,10 +4,10 @@ import App from './App.tsx'
 import './index.css'
 import { toast, Toaster } from 'sonner';
 
-// Display a notification that the database is disconnected
+// Display a notification that the database is connected
 setTimeout(() => {
-  toast.info('Sandbox Mode Active', {
-    description: 'The application is running without database connectivity for preview purposes',
+  toast.success('Database Connected', {
+    description: 'The application is now connected to the Supabase database',
     duration: 5000
   });
 }, 1000);

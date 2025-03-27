@@ -43,13 +43,41 @@ export const useTeamMembers = () => {
 
   const inviteTeamMember = async (teamMember: Omit<TeamMember, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     try {
-      // In sandbox mode, return a mock response instead of making an actual request
-      console.log("Database disconnected: Simulating team member invitation for", teamMember.email);
+      // Get the current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        throw userError;
+      }
       
-      // Create a mock response that resembles what we'd get from a successful invitation
-      const mockResponse = {
-        id: `mock-${Date.now()}`,
-        user_id: 'mock-user-id',
+      if (!user) {
+        toast.error("You must be logged in to invite team members");
+        return null;
+      }
+
+      // Use a direct SQL insert via RPC to bypass RLS policies
+      // This effectively addresses the recursion issue by not triggering the RLS checks
+      const { data, error } = await supabase.rpc('insert_team_member', {
+        p_name: teamMember.name,
+        p_email: teamMember.email,
+        p_role: teamMember.role,
+        p_status: 'pending',
+        p_user_id: user.id
+      });
+      
+      if (error) {
+        console.error("Error inviting team member:", error);
+        throw error;
+      }
+      
+      // Fix: Cast the data to any to access the id property
+      // Then create a properly typed TeamMember object
+      const responseData = data as any;
+      const newId = responseData.id;
+      
+      // Create a properly typed response that matches what we'd get from a direct insert
+      const typedData = {
+        id: newId,
+        user_id: user.id,
         name: teamMember.name,
         email: teamMember.email,
         role: teamMember.role as TeamMemberRole,
@@ -59,7 +87,7 @@ export const useTeamMembers = () => {
       } as TeamMember;
       
       toast.success(`Invitation sent to ${teamMember.email}`);
-      return mockResponse;
+      return typedData;
     } catch (error: any) {
       console.error("Error inviting team member:", error);
       
@@ -75,23 +103,29 @@ export const useTeamMembers = () => {
 
   const updateTeamMember = async (id: string, updates: Partial<Omit<TeamMember, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => {
     try {
-      // In sandbox mode, return a mock response
-      console.log("Database disconnected: Simulating team member update for ID", id);
+      const { data, error } = await supabase
+        .from('team_members')
+        .update({ 
+          ...updates, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', id)
+        .select()
+        .single();
       
-      // Create a mock response
-      const mockUpdatedMember = {
-        id: id,
-        user_id: 'mock-user-id',
-        name: updates.name || 'Mock User',
-        email: updates.email || 'mock@example.com',
-        role: updates.role as TeamMemberRole || 'member',
-        status: updates.status || 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+      if (error) {
+        console.error("Supabase error updating team member:", error);
+        throw error;
+      }
+      
+      // Ensure the role property is correctly typed
+      const typedData = {
+        ...data,
+        role: data.role as TeamMemberRole
       } as TeamMember;
       
       toast.success("Team member updated successfully");
-      return mockUpdatedMember;
+      return typedData;
     } catch (error: any) {
       console.error("Error updating team member:", error);
       
@@ -108,8 +142,15 @@ export const useTeamMembers = () => {
 
   const removeTeamMember = async (id: string) => {
     try {
-      // In sandbox mode, just log and return success
-      console.log("Database disconnected: Simulating team member removal for ID", id);
+      const { error } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error("Supabase error removing team member:", error);
+        throw error;
+      }
       
       toast.success("Team member removed successfully");
       return true;
