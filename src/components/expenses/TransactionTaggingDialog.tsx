@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -76,7 +75,7 @@ const TransactionTaggingDialog = ({
   const taggedCount = taggedTransactions.filter(t => t.selected && t.category).length;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} className="w-full">
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-5xl p-0 gap-0 max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b">
           <DialogTitle className="text-xl font-semibold">
