@@ -1,81 +1,65 @@
 
-import { ExpenseCategory } from "@/types/expense";
-import { ParsedTransaction } from "../parsers/types";
 import { useCallback, useState, useEffect } from "react";
+import { ParsedTransaction } from "../parsers/types";
+import { ExpenseCategory } from "@/types/expense";
 
 export const useCategoryAssignment = (
-  taggedTransactions: ParsedTransaction[],
-  setTaggedTransactions: React.Dispatch<React.SetStateAction<ParsedTransaction[]>>
+  transactions: ParsedTransaction[], 
+  setTransactions: React.Dispatch<React.SetStateAction<ParsedTransaction[]>>
 ) => {
-  // Derived state
-  const taggedCount = taggedTransactions.filter(t => t.selected && t.category).length;
-
-  // Set category for a single transaction
+  // Track the count of tagged transactions
+  const [taggedCount, setTaggedCount] = useState(0);
+  
+  // Update tagged count when transactions change
+  useEffect(() => {
+    const count = transactions.filter(t => t.selected && t.category).length;
+    setTaggedCount(count);
+    console.log(`Tagged count updated: ${count} transactions have categories`);
+  }, [transactions]);
+  
   const handleSetCategory = useCallback((id: string, category: ExpenseCategory) => {
+    console.log(`Setting category ${category} for transaction ${id}`);
+    
     if (!id) {
-      console.error("Attempted to set category with undefined transaction ID");
+      console.error("Attempted to set category for transaction with undefined ID");
       return;
     }
     
-    console.log(`Setting category ${category} for transaction ${id}`);
-    
-    setTaggedTransactions(prevTransactions => {
-      // Find the transaction to update (for debugging)
-      const transactionToUpdate = prevTransactions.find(t => t.id === id);
-      if (!transactionToUpdate) {
-        console.error(`Transaction with ID ${id} not found in useCategoryAssignment`);
+    setTransactions(prevTransactions => {
+      // Verify the transaction exists first
+      const transaction = prevTransactions.find(t => t.id === id);
+      if (!transaction) {
+        console.error(`Transaction with ID ${id} not found when setting category`);
         console.log("Available transaction IDs:", prevTransactions.map(t => t.id).join(", "));
         return prevTransactions;
       }
       
-      console.log(`Before update: Transaction ${id} has category ${transactionToUpdate.category || 'none'}, selected=${transactionToUpdate.selected}`);
-      
-      // Create new array with the updated transaction
-      const updatedTransactions = prevTransactions.map(t => 
+      // Update the category
+      const updated = prevTransactions.map(t => 
         t.id === id ? { ...t, category } : t
       );
       
-      // Verify the update (for debugging)
-      const updatedTransaction = updatedTransactions.find(t => t.id === id);
-      console.log(`After update: Transaction ${id} has category ${updatedTransaction?.category || 'none'}, selected=${updatedTransaction?.selected}`);
+      console.log(`After setting category for ${id}: ${updated.filter(t => t.selected && t.category).length} transactions are tagged`);
       
-      return updatedTransactions;
+      return updated;
     });
-  }, [setTaggedTransactions]);
-
-  // Set category for selected transactions
+  }, [setTransactions]);
+  
   const handleSetCategoryForAll = useCallback((category: ExpenseCategory) => {
-    console.log(`Setting category ${category} for ALL SELECTED transactions`);
+    console.log(`Setting category ${category} for all selected transactions`);
     
-    setTaggedTransactions(prevTransactions => {
-      const selectedIds = prevTransactions.filter(t => t.selected).map(t => t.id);
-      console.log(`Applying category to ${selectedIds.length} selected transactions: ${selectedIds.join(', ')}`);
-      
-      // Create new array with updated transactions
-      const updatedTransactions = prevTransactions.map(t => 
+    setTransactions(prevTransactions => {
+      const updated = prevTransactions.map(t => 
         t.selected ? { ...t, category } : t
       );
       
-      // Verify updates for debugging
-      const updatedCount = updatedTransactions.filter(t => t.selected && t.category === category).length;
-      console.log(`After bulk update: ${updatedCount} transactions have category ${category}`);
+      const taggedCount = updated.filter(t => t.selected && t.category).length;
+      console.log(`After bulk category assignment: ${taggedCount} transactions are tagged`);
       
-      return updatedTransactions;
+      return updated;
     });
-  }, [setTaggedTransactions]);
-
-  // Add effect to log category stats
-  useEffect(() => {
-    const categoryCounts = taggedTransactions.reduce((acc: Record<string, number>, t) => {
-      if (t.category && t.selected) {
-        acc[t.category] = (acc[t.category] || 0) + 1;
-      }
-      return acc;
-    }, {});
-    
-    console.log("Category distribution:", categoryCounts);
-  }, [taggedTransactions]);
-
+  }, [setTransactions]);
+  
   return {
     taggedCount,
     handleSetCategory,

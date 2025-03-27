@@ -3,3 +3,4 @@
 export * from './dateUtils.ts';
 export * from './amountUtils.ts';
 export * from './typeDetectionUtils.ts';
+export * from './transactionUtils.ts';

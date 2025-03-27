@@ -7,21 +7,28 @@ export const useTagSelection = (initialTransactions: ParsedTransaction[]) => {
   const [taggedTransactions, setTaggedTransactions] = useState<ParsedTransaction[]>([]);
   const [selectAll, setSelectAll] = useState(false);
 
-  // Effect to initialize transactions with selected=false
+  // Effect to initialize transactions with selected=false and ensure IDs exist
   useEffect(() => {
-    console.log("Initializing transactions with selected=false");
-    // Ensure each transaction has a unique ID before storing
-    const updatedTransactions = initialTransactions.map(t => ({
-      ...t,
-      selected: false, // Start with all transactions unselected
-      id: t.id || uuidv4() // Ensure ID exists using uuid
-    }));
+    // Create a new array with guaranteed IDs for all transactions
+    const transactionsWithIds = initialTransactions.map(transaction => {
+      if (!transaction.id) {
+        console.log("Found transaction without ID, generating one");
+      }
+      
+      // Always generate a new ID to ensure uniqueness
+      const id = uuidv4();
+      
+      return {
+        ...transaction,
+        id,
+        selected: false // Start with all transactions unselected
+      };
+    });
     
-    setTaggedTransactions(updatedTransactions);
+    console.log(`Generated IDs for ${transactionsWithIds.length} transactions`);
+    transactionsWithIds.forEach(t => console.log(`Transaction [${t.id}]: Type=${t.type}, Amount=${t.amount}, Description=${t.description.substring(0, 20)}`));
     
-    // Log IDs for debugging
-    console.log(`Initialized ${updatedTransactions.length} transactions with IDs:`);
-    updatedTransactions.forEach(t => console.log(`Transaction ID=${t.id}, Type=${t.type}, Selected=${t.selected}`));
+    setTaggedTransactions(transactionsWithIds);
   }, [initialTransactions]);
 
   // Derived state
@@ -46,30 +53,38 @@ export const useTagSelection = (initialTransactions: ParsedTransaction[]) => {
   }, []);
 
   const handleSelectTransaction = useCallback((id: string, checked: boolean) => {
+    console.log(`Selecting transaction: ID=${id}, Checked=${checked}`);
+    
     if (!id) {
-      console.error("Attempted to select transaction with undefined ID");
+      console.error("ERROR: Attempted to select transaction with undefined ID");
       return;
     }
     
-    console.log(`Transaction ${id} selection changed to: ${checked}`);
-    
     setTaggedTransactions(prevTransactions => {
       // Find the transaction being updated to verify it exists
-      const transaction = prevTransactions.find(t => t.id === id);
-      if (!transaction) {
-        console.error(`Transaction with ID ${id} not found in current state`);
-        console.log("Current transaction IDs:", prevTransactions.map(t => t.id).join(", "));
+      const targetTransaction = prevTransactions.find(t => t.id === id);
+      
+      if (!targetTransaction) {
+        console.error(`ERROR: Transaction with ID ${id} not found`);
+        console.log("Available IDs:", prevTransactions.map(t => t.id).join(", "));
         return prevTransactions;
       }
       
+      // Log the transaction being updated
+      console.log(`Found transaction to update:`, targetTransaction);
+      
       // Create a new array with the updated transaction
-      const updated = prevTransactions.map(t => 
-        t.id === id ? { ...t, selected: checked } : t
-      );
+      const updatedTransactions = prevTransactions.map(transaction => {
+        if (transaction.id === id) {
+          return { ...transaction, selected: checked };
+        }
+        return transaction;
+      });
       
-      console.log(`After selection change for ${id}, selected count: ${updated.filter(t => t.selected).length}`);
+      const newSelectedCount = updatedTransactions.filter(t => t.selected).length;
+      console.log(`After selection, ${newSelectedCount} transactions are selected`);
       
-      return updated;
+      return updatedTransactions;
     });
   }, []);
 

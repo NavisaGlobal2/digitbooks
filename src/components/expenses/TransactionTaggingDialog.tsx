@@ -6,6 +6,7 @@ import TransactionBulkActions from "./upload/TransactionBulkActions";
 import TransactionTable from "./upload/TransactionTable";
 import TaggingDialogFooter from "./upload/TaggingDialogFooter";
 import { useTransactionTagging } from "./upload/useTransactionTagging";
+import { useEffect } from "react";
 
 interface TransactionTaggingDialogProps {
   open: boolean;
@@ -20,6 +21,14 @@ const TransactionTaggingDialog = ({
   transactions,
   onTaggingComplete,
 }: TransactionTaggingDialogProps) => {
+  // Log received transactions for debugging
+  useEffect(() => {
+    if (open) {
+      console.log(`TransactionTaggingDialog opened with ${transactions.length} transactions`);
+      console.log("First few transaction IDs:", transactions.slice(0, 3).map(t => t.id).join(", "));
+    }
+  }, [open, transactions]);
+
   const {
     taggedTransactions,
     selectAll,
@@ -34,6 +43,7 @@ const TransactionTaggingDialog = ({
   } = useTransactionTagging(transactions);
 
   const handleSave = () => {
+    console.log(`Saving ${taggedCount} tagged transactions`);
     onTaggingComplete(taggedTransactions);
   };
 

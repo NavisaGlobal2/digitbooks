@@ -31,7 +31,12 @@ const TransactionTable = ({
   const creditCount = transactions.filter(t => t.type === 'credit').length;
   const selectedCount = transactions.filter(t => t.selected).length;
   
-  console.log(`TransactionTable: ${transactions.length} total (${debitCount} debits, ${creditCount} credits, ${selectedCount} selected)`);
+  console.log(`TransactionTable received ${transactions.length} transactions (${debitCount} debits, ${creditCount} credits, ${selectedCount} selected)`);
+  
+  const handleCheckboxChange = (id: string, checked: boolean) => {
+    console.log(`[TransactionTable] Checkbox change: Transaction ID=${id}, Checked=${checked}`);
+    onSelectTransaction(id, checked);
+  };
   
   return (
     <div className="flex-1 overflow-auto p-0 max-h-[calc(90vh-210px)]">
@@ -64,7 +69,7 @@ const TransactionTable = ({
                       // Convert checked to boolean
                       const isChecked = checked === true;
                       console.log(`Checkbox for transaction ${transaction.id} changed to ${isChecked}`);
-                      onSelectTransaction(transaction.id, isChecked);
+                      handleCheckboxChange(transaction.id, isChecked);
                     }}
                     disabled={transaction.type === 'credit'} // Can't select credit transactions
                   />
