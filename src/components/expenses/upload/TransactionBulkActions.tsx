@@ -14,7 +14,7 @@ interface TransactionBulkActionsProps {
   selectAll: boolean;
   onSelectAllChange: (checked: boolean) => void;
   onCategoryForAllChange: (category: ExpenseCategory) => void;
-  selectedCount: number; // Added to show number of selected transactions
+  selectedCount: number;
 }
 
 const TransactionBulkActions = ({

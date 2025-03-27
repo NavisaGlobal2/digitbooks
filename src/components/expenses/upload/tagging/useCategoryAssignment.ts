@@ -9,18 +9,22 @@ export const useCategoryAssignment = (
   // Derived state
   const taggedCount = taggedTransactions.filter(t => t.selected && t.category).length;
 
-  // Set category for a single transaction
+  // Set category for a single transaction - ensuring it only affects the specified transaction
   const handleSetCategory = (id: string, category: ExpenseCategory) => {
-    setTaggedTransactions(taggedTransactions.map(t => 
-      t.id === id ? { ...t, category } : t
-    ));
+    setTaggedTransactions(prevTransactions => 
+      prevTransactions.map(t => 
+        t.id === id ? { ...t, category } : t
+      )
+    );
   };
 
   // Set category only for selected transactions
   const handleSetCategoryForAll = (category: ExpenseCategory) => {
-    setTaggedTransactions(taggedTransactions.map(t => 
-      t.selected ? { ...t, category } : t
-    ));
+    setTaggedTransactions(prevTransactions => 
+      prevTransactions.map(t => 
+        t.selected ? { ...t, category } : t
+      )
+    );
   };
 
   return {

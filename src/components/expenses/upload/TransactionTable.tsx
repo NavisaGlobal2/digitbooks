@@ -75,10 +75,11 @@ const TransactionTable = ({
               <TableCell>
                 {transaction.type === 'debit' ? (
                   <Select
-                    value={transaction.category}
-                    onValueChange={(value) => 
-                      onSetCategory(transaction.id, value as ExpenseCategory)
-                    }
+                    value={transaction.category || ""}
+                    onValueChange={(value) => {
+                      // Ensure we're only updating THIS transaction
+                      onSetCategory(transaction.id, value as ExpenseCategory);
+                    }}
                     disabled={!transaction.selected}
                   >
                     <SelectTrigger className={`w-full ${!transaction.category && transaction.selected ? "border-red-300" : ""}`}>
