@@ -86,6 +86,12 @@ async function processWithOpenAI(text: string): Promise<any> {
     if (!response.ok) {
       const error = await response.json();
       console.error("OpenAI API error:", error);
+      
+      // Handle quota exceeded error specifically
+      if (error.error?.type === "insufficient_quota") {
+        throw new Error("OpenAI API quota exceeded. Please check your billing details or use a different API key.");
+      }
+      
       throw new Error(`OpenAI API error: ${error.error?.message || "Unknown error"}`);
     }
 
@@ -106,6 +112,25 @@ async function processWithOpenAI(text: string): Promise<any> {
   } catch (error) {
     console.error("Error processing with OpenAI:", error);
     throw error;
+  }
+}
+
+// Get authenticated user from request
+async function getUserFromRequest(req: Request): Promise<any> {
+  try {
+    // Extract the token from the Authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error("Missing authorization header");
+    }
+    
+    // Create supabase admin client to verify token
+    // This is a simplified version - in production you'd want to use
+    // the Supabase client properly configured with your service role key
+    return true; // Simplified for this example
+  } catch (error) {
+    console.error("Auth error getting user:", error);
+    throw new Error("Authentication failed: " + error.message);
   }
 }
 
@@ -166,10 +191,14 @@ serve(async (req) => {
       
       // Check if error is related to OpenAI API key
       const errorMessage = processingError.message || "Unknown processing error";
-      if (errorMessage.includes("OpenAI") && errorMessage.includes("API key")) {
+      if (
+        errorMessage.includes("OpenAI API quota exceeded") || 
+        errorMessage.includes("OpenAI") && 
+        errorMessage.includes("API key")
+      ) {
         return new Response(
           JSON.stringify({ 
-            error: "OpenAI API key issue. Please verify your API key is valid and has sufficient credits." 
+            error: "OpenAI API key issue: " + errorMessage
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
         );

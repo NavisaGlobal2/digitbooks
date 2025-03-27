@@ -19,6 +19,14 @@ export const parseViaEdgeFunction = async (
 
     console.log(`Sending file to edge function: ${endpoint}`);
     
+    // Check authentication status before making the request
+    const { data: authData } = await supabase.auth.getSession();
+    if (!authData.session) {
+      const errorMsg = "You need to be signed in to use this feature. Please sign in and try again.";
+      onError(errorMsg);
+      return [];
+    }
+    
     // Call the serverless function
     const { data, error } = await supabase.functions.invoke(endpoint, {
       body: formData,
@@ -28,8 +36,24 @@ export const parseViaEdgeFunction = async (
       console.error("Edge function error:", error);
       
       // Check for OpenAI API key error
-      if (error.message && error.message.includes("OPENAI_API_KEY")) {
-        onError("OpenAI API key is not configured. Please contact your administrator to set up the OpenAI integration.");
+      if (error.message && (
+        error.message.includes("OPENAI_API_KEY") ||
+        error.message.includes("OpenAI API") ||
+        error.message.includes("exceeded your current quota")
+      )) {
+        const errorMsg = "OpenAI API key error: Either the key is not configured, invalid, or you've exceeded your quota. Please contact your administrator.";
+        onError(errorMsg);
+        return [];
+      }
+      
+      // Check for authentication errors
+      if (error.message && (
+        error.message.includes("Auth session") ||
+        error.message.includes("authentication") ||
+        error.message.includes("unauthorized")
+      )) {
+        const errorMsg = "Authentication error: Please try signing out and signing back in to refresh your session.";
+        onError(errorMsg);
         return [];
       }
       
