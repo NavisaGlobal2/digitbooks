@@ -1,7 +1,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import { parse as csvParse } from 'https://deno.land/std@0.177.0/encoding/csv.ts'
-import * as XLSX from 'https://deno.land/x/excel@v1.1.2/mod.ts'
+import * as XLSX from 'https://deno.land/x/xlsx@v0.4.3/mod.ts'
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -142,40 +142,19 @@ async function processCSV(file: File): Promise<Transaction[]> {
 // Process Excel file
 async function processExcel(file: File): Promise<Transaction[]> {
   const arrayBuffer = await file.arrayBuffer()
-  const workbook = new XLSX.Workbook()
-  
-  // Load workbook from array buffer
-  await workbook.read(new Uint8Array(arrayBuffer))
+  const workbook = await XLSX.readFile(new Uint8Array(arrayBuffer))
   
   // Get the first sheet
-  const worksheet = workbook.getWorksheet(1)
+  const worksheet = workbook.Sheets[workbook.SheetNames[0]]
   if (!worksheet) {
     throw new Error('No worksheet found in Excel file')
   }
   
   // Convert to rows
-  const rows: any[] = []
-  
-  // Add header row
-  const headerRow: any[] = []
-  worksheet.getRow(1).eachCell((cell) => {
-    headerRow.push(cell.value)
-  })
-  rows.push(headerRow)
-  
-  // Add data rows
-  for (let i = 2; i <= worksheet.rowCount; i++) {
-    const row: any[] = []
-    worksheet.getRow(i).eachCell((cell) => {
-      row.push(cell.value)
-    })
-    if (row.length > 0) {
-      rows.push(row)
-    }
-  }
+  const jsonData = XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1 })
   
   // Try to detect columns by header or position
-  return detectAndParseTransactions(rows)
+  return detectAndParseTransactions(jsonData)
 }
 
 // Detect and parse transactions from row data
