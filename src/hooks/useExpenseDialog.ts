@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { toast } from "sonner";
 import { useExpenses } from "@/contexts/ExpenseContext";
 import { ExpenseCategory } from "@/types/expense";
@@ -22,6 +23,10 @@ export const useExpenseDialog = (onCloseDialog: () => void) => {
     setCategory,
     paymentMethod,
     setPaymentMethod,
+    vendor,
+    setVendor,
+    notes,
+    setNotes,
     receiptFile,
     setReceiptFile,
     clearForm
@@ -33,7 +38,13 @@ export const useExpenseDialog = (onCloseDialog: () => void) => {
   };
   
   const handleSave = async () => {
-    if (!validateForm({ description, amount, date, category, paymentMethod })) return;
+    if (!validateForm({ 
+      description, 
+      amount, 
+      date: date ? date.toISOString() : "", 
+      category, 
+      paymentMethod 
+    })) return;
     
     try {
       if (receiptFile) {
@@ -42,22 +53,24 @@ export const useExpenseDialog = (onCloseDialog: () => void) => {
         addExpense({
           description,
           amount: Number(amount),
-          date: new Date(date),
+          date: date || new Date(),
           category: category as ExpenseCategory,
           status: "pending",
-          paymentMethod: paymentMethod as "cash" | "card" | "bank transfer" | "other",
-          vendor: "Unknown",
+          paymentMethod,
+          vendor: vendor || "Unknown",
+          notes: notes || undefined,
           receiptUrl
         });
       } else {
         addExpense({
           description,
           amount: Number(amount),
-          date: new Date(date),
+          date: date || new Date(),
           category: category as ExpenseCategory,
           status: "pending",
-          paymentMethod: paymentMethod as "cash" | "card" | "bank transfer" | "other",
-          vendor: "Unknown"
+          paymentMethod,
+          vendor: vendor || "Unknown",
+          notes: notes || undefined
         });
       }
       
@@ -80,6 +93,10 @@ export const useExpenseDialog = (onCloseDialog: () => void) => {
     setCategory,
     paymentMethod,
     setPaymentMethod,
+    vendor,
+    setVendor,
+    notes,
+    setNotes,
     receiptFile,
     setReceiptFile,
     handleClose,

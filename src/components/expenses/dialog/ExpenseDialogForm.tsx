@@ -10,12 +10,16 @@ interface ExpenseDialogFormProps {
   setDescription: (value: string) => void;
   amount: string;
   setAmount: (value: string) => void;
-  date: string;
-  setDate: (value: string) => void;
+  date: Date | undefined;
+  setDate: (value: Date | undefined) => void;
   category: ExpenseCategory | "";
-  setCategory: (value: ExpenseCategory | "") => void;
-  paymentMethod: string;
-  setPaymentMethod: (value: string) => void;
+  setCategory: (value: ExpenseCategory) => void;
+  paymentMethod: "cash" | "card" | "bank transfer" | "other";
+  setPaymentMethod: (value: "cash" | "card" | "bank transfer" | "other") => void;
+  vendor?: string;
+  setVendor?: (value: string) => void;
+  notes?: string;
+  setNotes?: (value: string) => void;
   receiptFile: File | null;
   setReceiptFile: (file: File | null) => void;
 }

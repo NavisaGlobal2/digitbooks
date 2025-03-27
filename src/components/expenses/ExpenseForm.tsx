@@ -1,4 +1,5 @@
 
+import { FormEvent } from "react";
 import { useExpenseForm } from "@/hooks/useExpenseForm";
 import ExpenseDescriptionField from "./form/ExpenseDescriptionField";
 import ExpenseAmountDateFields from "./form/ExpenseAmountDateFields";
