@@ -1,5 +1,5 @@
 
-import { parseAmount } from '../../lib/parsers/helpers.ts';
+import { parseAmount } from '../../lib/parsers/utils/amountUtils.ts';
 import { assert } from '../helpers.ts';
 
 Deno.test("parseAmount - correctly parses numeric values", () => {

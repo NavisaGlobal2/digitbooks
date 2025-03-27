@@ -1,6 +1,7 @@
 
 import { Transaction, TransactionType } from '../../types.ts';
-import { parseAmount, parseDate } from '../helpers.ts';
+import { parseAmount } from '../utils/amountUtils.ts';
+import { parseDate } from '../utils/dateUtils.ts';
 
 // Function to parse the actual transactions from data rows
 export function parseTransactionsFromRows(

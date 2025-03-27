@@ -1,5 +1,7 @@
 
 // Helper function to guess which column might contain dates
+import { isDateLike } from '../utils/typeDetectionUtils.ts';
+
 export function guessPrimaryDateColumn(rows: any[], headerRowIndex: number): number {
   // Skip the header row
   const startRow = headerRowIndex + 1;
@@ -16,13 +18,10 @@ export function guessPrimaryDateColumn(rows: any[], headerRowIndex: number): num
     if (!row || !Array.isArray(row)) continue;
     
     for (let colIdx = 0; colIdx < row.length; colIdx++) {
-      const value = String(row[colIdx] || '');
+      const value = row[colIdx];
       
       // Check if this looks like a date
-      if (/\d{1,4}[-\/\.]\d{1,2}[-\/\.]\d{1,4}/.test(value) || 
-          !isNaN(Date.parse(value)) ||
-          (typeof row[colIdx] === 'number' && row[colIdx] > 30000 && row[colIdx] < 50000)) { // Excel date range
-        
+      if (isDateLike(value)) {
         if (!dateLikeColumns.includes(colIdx)) {
           dateLikeColumns.push(colIdx);
         }

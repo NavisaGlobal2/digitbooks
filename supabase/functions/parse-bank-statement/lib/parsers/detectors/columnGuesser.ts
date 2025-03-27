@@ -1,5 +1,7 @@
 
 // Helper function to guess description and amount columns based on the date column
+import { parseAmount } from '../utils/amountUtils.ts';
+
 export function guessColumnsFromSample(rows: any[], headerRowIndex: number, dateIndex: number): { 
   descIdx: number, 
   amtIdx: number, 
@@ -122,20 +124,4 @@ export function guessColumnsFromSample(rows: any[], headerRowIndex: number, date
   }
   
   return result;
-}
-
-// Helper function to parse amount values
-function parseAmount(value: any): number {
-  if (typeof value === 'number') return value;
-  if (typeof value !== 'string') return NaN;
-  
-  // Remove currency symbols and commas
-  const cleaned = value.replace(/[,$€£₦\s]/g, '');
-  
-  // Handle parentheses for negative numbers
-  if (cleaned.startsWith('(') && cleaned.endsWith(')')) {
-    return -parseFloat(cleaned.slice(1, -1));
-  }
-  
-  return parseFloat(cleaned) || 0;
 }

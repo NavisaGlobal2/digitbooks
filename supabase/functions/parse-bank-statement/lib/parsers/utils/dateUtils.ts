@@ -1,47 +1,16 @@
 
-// Parse amount from various formats
-export function parseAmount(value: any): number {
-  if (typeof value === 'number') return value;
-  
-  if (typeof value === 'string') {
-    // Skip empty strings
-    if (!value.trim()) return 0;
-    
-    // Remove currency symbols and commas, including Naira symbol (₦)
-    const cleaned = value.replace(/[,$€£₦\s]/g, '');
-    
-    // Support formats with parentheses indicating negative numbers: (100.00)
-    if (cleaned.startsWith('(') && cleaned.endsWith(')')) {
-      return -parseFloat(cleaned.slice(1, -1));
-    }
-    
-    // Support dash or minus prefix for negative numbers
-    if (cleaned.startsWith('-')) {
-      return parseFloat(cleaned);
-    }
-    
-    // Support formats with "DR" or "CR" suffixes - common in Nigerian bank statements
-    if (cleaned.toUpperCase().endsWith('DR')) {
-      return -parseFloat(cleaned.slice(0, -2));
-    }
-    
-    if (cleaned.toUpperCase().endsWith('CR')) {
-      return parseFloat(cleaned.slice(0, -2));
-    }
-    
-    // Regular positive number
-    return parseFloat(cleaned) || 0;
-  }
-  
-  return 0;
-}
+// Date-related utility functions for parsing bank statements
 
-// Format date to a standard format
+/**
+ * Format date to a standard format
+ */
 export function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
-// More flexible date parsing with support for multiple formats
+/**
+ * More flexible date parsing with support for multiple formats
+ */
 export function parseDate(dateStr: string): Date | null {
   if (!dateStr) return null;
   
@@ -108,7 +77,9 @@ export function parseDate(dateStr: string): Date | null {
   return null;
 }
 
-// Helper function to convert month name to month number
+/**
+ * Helper function to convert month name to month number
+ */
 function getMonthNumber(monthStr: string): string {
   const months: { [key: string]: string } = {
     'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06',
