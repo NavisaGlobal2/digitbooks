@@ -40,6 +40,7 @@ const ExpenseReceiptUpload = ({
                 src={receiptPreview}
                 alt="Receipt preview"
                 className="h-full max-h-28 object-contain"
+                crossOrigin="anonymous"
               />
             ) : (
               <span className="flex flex-col items-center space-y-2">
