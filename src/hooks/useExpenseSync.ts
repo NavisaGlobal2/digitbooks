@@ -40,6 +40,7 @@ export const useExpenseSync = () => {
         receipt_url: expense.receiptUrl || null,
         notes: expense.notes || null,
         from_statement: expense.fromStatement || false,
+        batch_id: expense.batchId || null,  // Add the batch_id
         user_id: currentUserId
       };
       
@@ -81,7 +82,8 @@ export const useExpenseSync = () => {
           date: new Date(expense.date),
           receiptUrl: expense.receipt_url || null,
           paymentMethod: expense.payment_method,
-          fromStatement: expense.from_statement
+          fromStatement: expense.from_statement,
+          batchId: expense.batch_id || null  // Map the batch_id
         }));
         
         return formattedExpenses;

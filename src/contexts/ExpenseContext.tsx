@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Expense, ExpenseStatus } from '@/types/expense';
 import { toast } from 'sonner';
@@ -9,6 +8,7 @@ import { safelyStoreExpenses, loadExpensesFromLocalStorage } from '@/utils/expen
 interface ExpenseContextType {
   expenses: Expense[];
   addExpense: (expense: Omit<Expense, 'id'>) => void;
+  addExpenses: (expenses: Omit<Expense, 'id'>[]) => void;
   updateExpenseStatus: (expenseId: string, status: ExpenseStatus) => void;
   deleteExpense: (expenseId: string) => void;
   getTotalExpenses: () => number;
@@ -38,25 +38,21 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   } = useExpenseSync();
   const expenseData = useExpenseData(expenses);
 
-  // Load expenses from database and localStorage on initial load
   useEffect(() => {
     const loadExpenses = async () => {
       setIsLoading(true);
       
       try {
-        // First try to load from Supabase
         const dbExpenses = await loadExpensesFromSupabase();
         
         if (dbExpenses && dbExpenses.length > 0) {
           setExpenses(dbExpenses);
         } else {
-          // Fallback to localStorage if no database expenses
           const localExpenses = loadExpensesFromLocalStorage();
           
           if (localExpenses) {
             setExpenses(localExpenses);
             
-            // If we loaded from localStorage, sync them to Supabase
             if (currentUserId) {
               localExpenses.forEach(async (expense: Expense) => {
                 await syncExpenseToDatabase(expense);
@@ -67,7 +63,6 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       } catch (error) {
         console.error("Failed to load expenses:", error);
         
-        // Final fallback to localStorage
         const localExpenses = loadExpensesFromLocalStorage();
         if (localExpenses) {
           setExpenses(localExpenses);
@@ -87,10 +82,8 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       id: crypto.randomUUID(),
     };
     
-    // Optimistically update the UI
     setExpenses(prev => [newExpense, ...prev]);
     
-    // Sync to database
     const synced = await syncExpenseToDatabase(newExpense);
     
     if (synced) {
@@ -100,8 +93,30 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const addExpenses = async (expensesData: Omit<Expense, 'id'>[]) => {
+    console.log(`Adding ${expensesData.length} new expenses from batch import`);
+    
+    const newExpenses: Expense[] = expensesData.map(expenseData => ({
+      ...expenseData,
+      id: crypto.randomUUID(),
+    }));
+    
+    setExpenses(prev => [...newExpenses, ...prev]);
+    
+    let syncedCount = 0;
+    for (const expense of newExpenses) {
+      const synced = await syncExpenseToDatabase(expense);
+      if (synced) syncedCount++;
+    }
+    
+    if (syncedCount === newExpenses.length) {
+      toast.success(`${newExpenses.length} expenses added successfully`);
+    } else {
+      toast.warning(`${syncedCount} of ${newExpenses.length} expenses synced to database`);
+    }
+  };
+
   const updateExpenseStatus = async (expenseId: string, status: ExpenseStatus) => {
-    // Optimistically update the UI
     setExpenses(prev => 
       prev.map(expense => 
         expense.id === expenseId 
@@ -110,11 +125,9 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       )
     );
     
-    // Find the updated expense
     const updatedExpense = expenses.find(e => e.id === expenseId);
     
     if (updatedExpense) {
-      // Sync to database
       const synced = await syncExpenseToDatabase({
         ...updatedExpense,
         status
@@ -129,7 +142,6 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateExpense = async (updatedExpense: Expense) => {
-    // Optimistically update the UI
     setExpenses(prev => 
       prev.map(expense => 
         expense.id === updatedExpense.id 
@@ -138,7 +150,6 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       )
     );
     
-    // Sync to database
     const synced = await syncExpenseToDatabase(updatedExpense);
     
     if (synced) {
@@ -149,10 +160,8 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const deleteExpense = async (expenseId: string) => {
-    // Delete locally first
     setExpenses(prev => prev.filter(expense => expense.id !== expenseId));
     
-    // Delete from database
     const deleted = await deleteExpenseFromDatabase(expenseId);
     
     if (deleted) {
@@ -160,9 +169,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  // Save expenses to localStorage whenever they change
   useEffect(() => {
-    console.log("Saving expenses to localStorage:", expenses.length);
     if (expenses.length > 0) {
       safelyStoreExpenses(expenses);
     }
@@ -179,7 +186,8 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   return (
     <ExpenseContext.Provider value={{ 
       expenses, 
-      addExpense, 
+      addExpense,
+      addExpenses,
       updateExpenseStatus,
       deleteExpense,
       getTotalExpenses: expenseData.getTotalExpenses,
