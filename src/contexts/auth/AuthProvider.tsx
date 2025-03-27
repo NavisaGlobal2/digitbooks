@@ -63,6 +63,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const isAuthenticated = !!user;
 
+  // Wrapper functions that match the expected types in AuthContextValue
+  const handleSignup = async (email: string, password: string, name: string): Promise<void> => {
+    await signup(email, password, name);
+  };
+
+  const handleCompleteOnboarding = (): void => {
+    if (user) {
+      completeOnboarding(user);
+    }
+  };
+
+  const handleSignInWithGoogle = async (): Promise<void> => {
+    await signInWithGoogle();
+  };
+
   return (
     <AuthContext.Provider
       value={{ 
@@ -70,8 +85,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         isAuthenticated, 
         login, 
         logout, 
-        signup, 
-        completeOnboarding,
+        signup: handleSignup, 
+        completeOnboarding: handleCompleteOnboarding,
         verifyOtp: async (email, token) => {
           try {
             const { data, error } = await supabase.auth.verifyOtp({
@@ -87,7 +102,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             throw error;
           }
         },
-        signInWithGoogle
+        signInWithGoogle: handleSignInWithGoogle
       }}
     >
       {children}
