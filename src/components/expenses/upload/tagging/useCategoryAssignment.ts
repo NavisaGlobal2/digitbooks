@@ -27,10 +27,19 @@ export const useCategoryAssignment = (
         return prevTransactions;
       }
       
+      // Log before state
+      console.log(`Before update: Transaction ${id} has category ${transactionToUpdate.category || 'none'}`);
+      
       // Return a new array with the updated transaction
-      return prevTransactions.map(t => 
+      const updatedTransactions = prevTransactions.map(t => 
         t.id === id ? { ...t, category } : t
       );
+      
+      // Verify the update was applied correctly
+      const updatedTransaction = updatedTransactions.find(t => t.id === id);
+      console.log(`After update: Transaction ${id} has category ${updatedTransaction?.category || 'none'}`);
+      
+      return updatedTransactions;
     });
   }, [setTaggedTransactions]);
 
@@ -39,12 +48,27 @@ export const useCategoryAssignment = (
     console.log(`Setting category ${category} for ALL SELECTED transactions only`);
     
     setTaggedTransactions(prevTransactions => {
+      const selectedIds = prevTransactions.filter(t => t.selected).map(t => t.id);
+      console.log(`Applying category to ${selectedIds.length} selected transactions: ${selectedIds.join(', ')}`);
+      
       // Create a new array with updated transactions
       return prevTransactions.map(t => 
         t.selected ? { ...t, category } : t
       );
     });
   }, [setTaggedTransactions]);
+
+  // Add effect to log category stats
+  useEffect(() => {
+    const categoryCounts = taggedTransactions.reduce((acc: Record<string, number>, t) => {
+      if (t.category && t.selected) {
+        acc[t.category] = (acc[t.category] || 0) + 1;
+      }
+      return acc;
+    }, {});
+    
+    console.log("Category distribution:", categoryCounts);
+  }, [taggedTransactions]);
 
   return {
     taggedCount,
