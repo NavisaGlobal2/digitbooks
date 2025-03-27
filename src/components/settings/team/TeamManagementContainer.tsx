@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTeamMembers } from "@/lib/teamMembers";
@@ -43,26 +42,53 @@ export const TeamManagementContainer = () => {
       const data = await fetchTeamMembers();
       console.log("Team members fetched successfully:", data);
       
-      // If this is a new account with no team members, add the current user as Owner
       if (data.length === 0 && user) {
-        const ownerMember: TeamMember = {
-          id: "owner",
-          user_id: user.id || "",
-          name: user.name || "Account Owner",
-          email: user.email || "",
-          role: "Owner",
-          status: "active",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        setMembers([ownerMember]);
+        try {
+          console.log("No team members found. Creating owner record for current user:", user);
+          
+          const { supabase } = await import("@/integrations/supabase/client");
+          
+          const { data: newMember, error } = await supabase
+            .from('team_members')
+            .insert({
+              user_id: user.id,
+              name: user.user_metadata?.name || user.email?.split('@')[0] || "Account Owner",
+              email: user.email,
+              role: "Owner",
+              status: "active"
+            })
+            .select()
+            .single();
+          
+          if (error) {
+            console.error("Error creating owner team member:", error);
+            toast.error("Failed to set up team ownership");
+            setMembers([]);
+          } else {
+            console.log("Created owner team member:", newMember);
+            toast.success("You've been set as the team owner");
+            setMembers([newMember as TeamMember]);
+          }
+        } catch (createError) {
+          console.error("Error in owner creation process:", createError);
+          const ownerMember: TeamMember = {
+            id: "owner-temp",
+            user_id: user.id || "",
+            name: user.user_metadata?.name || "Account Owner",
+            email: user.email || "",
+            role: "Owner",
+            status: "active",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          setMembers([ownerMember]);
+        }
       } else {
         setMembers(data);
       }
     } catch (error: any) {
       console.error("Error loading team members:", error);
       
-      // Check if it's a connection error (fetch failed)
       if (error.message && (
           error.message.includes("Failed to fetch") || 
           error.message.includes("NetworkError") ||
