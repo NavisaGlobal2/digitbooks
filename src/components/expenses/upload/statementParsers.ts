@@ -75,48 +75,57 @@ export const parseExcelFile = async (
   onError: (errorMessage: string) => void
 ) => {
   try {
-    // Get the auth session first
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get the auth session first with a more reliable method
+    const { data, error } = await supabase.auth.getSession();
     
-    if (!session?.access_token) {
-      onError('Authentication required to parse Excel files. Please sign in.');
+    if (error || !data.session?.access_token) {
+      console.error("Authentication error:", error);
+      onError('Authentication required to parse Excel files. Please sign in again.');
       return;
     }
     
-    // Use edge function to parse Excel instead of mock data
+    const accessToken = data.session.access_token;
+    console.log('Session found, token length:', accessToken.length);
+    
+    // Create form data
     const formData = new FormData();
     formData.append('file', file);
     
     console.log('Preparing to call parse-bank-statement edge function...');
     
-    // Create a properly formatted headers object
+    // Create a properly formatted headers object with Bearer prefix
     const headers = new Headers();
-    headers.append('Authorization', `Bearer ${session.access_token}`);
+    headers.append('Authorization', `Bearer ${accessToken}`);
     
     // Log token for debugging (partially redacted for security)
-    console.log('Using auth token:', session.access_token.substring(0, 5) + '...' + session.access_token.substring(session.access_token.length - 5));
+    console.log('Using auth token:', accessToken.substring(0, 5) + '...' + accessToken.substring(accessToken.length - 5));
+    
+    const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
     
     // Call the edge function with proper authentication header
-    const response = await fetch('https://naxmgtoskeijvdofqyik.supabase.co/functions/v1/parse-bank-statement', {
+    const response = await fetch(`${supabaseUrl}/functions/v1/parse-bank-statement`, {
       method: 'POST',
       body: formData,
-      headers: headers
+      headers: headers,
+      credentials: 'include' // Include cookies for session handling
     });
     
     console.log('Edge function response status:', response.status);
     
+    // Handle unauthorized errors specifically
+    if (response.status === 401) {
+      console.error('Authentication error: Unauthorized access');
+      // Force re-authentication
+      await supabase.auth.refreshSession();
+      onError('Your session has expired. Please sign out and sign in again.');
+      return;
+    }
+    
     // Handle error responses
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Error response from edge function:', errorText);
-      
-      // Special handling for auth errors
-      if (response.status === 401) {
-        onError('Authentication failed. Please sign out and sign in again.');
-        return;
-      }
-      
-      throw new Error(`Failed to parse Excel file: ${errorText}`);
+      const errorData = await response.json();
+      console.error('Error response from edge function:', errorData);
+      throw new Error(`Failed to parse Excel file: ${JSON.stringify(errorData)}`);
     }
     
     const data = await response.json();

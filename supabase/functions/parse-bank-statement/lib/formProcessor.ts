@@ -64,7 +64,7 @@ export async function processFormData(
     const batchId = crypto.randomUUID()
     
     // Parse the file using provided function or default
-    console.log(`Processing file: ${file.name}`);
+    console.log(`Processing file: ${file.name} (size: ${file.size} bytes)`);
     const parseFileFn = customParseFile || parseFile
     const transactions = await parseFileFn(file)
     
