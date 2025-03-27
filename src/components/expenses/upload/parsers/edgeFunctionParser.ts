@@ -3,127 +3,78 @@ import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./types";
 import { toast } from "sonner";
 
-const EDGE_FUNCTION_TIMEOUT = 60000; // 60 seconds
-const EDGE_FUNCTION_NAME = "parse-bank-statement-ai"; // Updated to use the AI-powered function
-
-export interface ParseResult {
-  success: boolean;
-  transactions?: ParsedTransaction[];
-  error?: string;
-  authError?: boolean;
-}
-
-export async function parseViaEdgeFunction(
+export const parseViaEdgeFunction = async (
   file: File,
-  onSuccessCallback: (transactions: ParsedTransaction[]) => void,
-  onErrorCallback: (errorMessage: string) => boolean
-): Promise<ParseResult> {
+  onSuccess: (transactions: ParsedTransaction[]) => void,
+  onError: (errorMessage: string) => boolean
+): Promise<ParsedTransaction[]> => {
   try {
-    // Check authentication
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !sessionData.session) {
-      console.error("Authentication error:", sessionError || "No active session");
-      return {
-        success: false,
-        error: "Authentication failed: Please sign in to use this feature",
-        authError: true
-      };
+    // Get the token for authentication
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      onError("Authentication required. Please sign in to use server-side processing.");
+      return [];
     }
-    
-    // Create form data
+
+    // Create a form to send the file
     const formData = new FormData();
     formData.append("file", file);
-    
-    // Create an AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), EDGE_FUNCTION_TIMEOUT);
-    
-    console.log("Invoking edge function with auth token length:", sessionData.session.access_token.length);
-    
-    // Invoke edge function with proper authentication
-    const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION_NAME, {
+
+    // Decide which endpoint to use based on the file type
+    const endpoint = file.name.toLowerCase().endsWith('.pdf') ? 
+      'parse-bank-statement-ai' : 'parse-bank-statement';
+
+    // Call the serverless function
+    const { data, error } = await supabase.functions.invoke(endpoint, {
       body: formData,
-      headers: {
-        Authorization: `Bearer ${sessionData.session.access_token}`,
-      }
-      // Removed the signal property as it's not supported in FunctionInvokeOptions
     });
-    
-    clearTimeout(timeoutId);
-    
-    // Handle errors
+
     if (error) {
       console.error("Edge function error:", error);
       
-      // Check if it's an authentication error
-      const isAuthError = 
-        error.message?.toLowerCase().includes('auth') || 
-        error.message?.toLowerCase().includes('unauthorized') ||
-        error.message?.toLowerCase().includes('token');
-      
-      const errorMessage = isAuthError
-        ? "Authentication error: Please sign in again to use this feature"
-        : `Server processing error: ${error.message || "Unknown error"}`;
-      
-      onErrorCallback(errorMessage);
-      
-      return {
-        success: false,
-        error: errorMessage,
-        authError: isAuthError
-      };
+      // Check if it's an auth error
+      if (error.message?.includes('auth') || error.message?.includes('Authentication')) {
+        onError(`Authentication error: ${error.message}. Please sign in again.`);
+      } else {
+        onError(`Server error: ${error.message}`);
+      }
+      return [];
     }
-    
-    // Handle successful response
-    if (data && Array.isArray(data.transactions)) {
-      // Process the transactions
-      const transactions: ParsedTransaction[] = data.transactions.map((tx: any, index: number) => ({
-        id: `tx-${index}-${Date.now()}`,
-        date: new Date(tx.date),
-        description: tx.description || tx.narrative || tx.payee || "",
-        amount: tx.amount,
-        type: tx.type || (tx.amount < 0 ? "debit" : "credit"),
-        balance: tx.balance,
-        category: null,
-        selected: tx.type === "debit", // Auto-select debit transactions
-        notes: tx.notes || ""
-      }));
-      
-      onSuccessCallback(transactions);
-      
-      return {
-        success: true,
-        transactions
-      };
-    } else {
-      // No transactions or invalid data format
-      const errorMessage = "No valid transactions found in the bank statement";
-      onErrorCallback(errorMessage);
-      
-      return {
-        success: false,
-        error: errorMessage
-      };
+
+    if (!data || !data.transactions || !Array.isArray(data.transactions)) {
+      onError("Invalid response from server. No transactions found in the response.");
+      return [];
     }
-  } catch (error: any) {
-    let errorMessage = "Processing error: ";
+
+    // Map the server response to our ParsedTransaction type
+    const parsedTransactions: ParsedTransaction[] = data.transactions.map((tx: any) => ({
+      date: new Date(tx.date),
+      description: tx.description,
+      amount: Math.abs(parseFloat(tx.amount)), // Store as positive number
+      type: tx.type || (parseFloat(tx.amount) < 0 ? 'debit' : 'credit'),
+      category: tx.category || null,
+      selected: tx.type === 'debit', // Preselect debits
+      batchId: data.batchId
+    }));
+
+    // Only include debit transactions (expenses)
+    const filteredTransactions = parsedTransactions.filter(tx => tx.type === 'debit');
     
-    // Check if it's an abort error (timeout)
-    if (error.name === "AbortError") {
-      errorMessage = "Processing timed out. Please try again with a smaller file or use client-side processing.";
-    } else if (error.message?.includes("Failed to fetch")) {
-      errorMessage = "Network error: Connection to server failed. Check your internet connection.";
-    } else {
-      errorMessage += error.message || "Unknown error occurred";
+    if (filteredTransactions.length === 0) {
+      onError("No expense transactions found in the statement. Only expense transactions can be imported.");
+      return [];
     }
+
+    // Call success callback with transactions
+    onSuccess(filteredTransactions);
     
-    console.error("Edge function processing error:", error);
-    onErrorCallback(errorMessage);
+    // Show success message with the transaction count
+    toast.success(`Successfully parsed ${filteredTransactions.length} expenses from your statement`);
     
-    return {
-      success: false,
-      error: errorMessage
-    };
+    return filteredTransactions;
+  } catch (error) {
+    console.error("Error in parseViaEdgeFunction:", error);
+    onError(`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    return [];
   }
-}
+};
