@@ -49,6 +49,7 @@ function App() {
     <Router>
       <Toaster />
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<Index />} />
         <Route path="/about" element={<About />} />
         <Route path="/features" element={<Features />} />
@@ -58,8 +59,13 @@ function App() {
         <Route path="/invitation" element={<Invitation />} />
       
         {/* Protected routes */}
+        <Route path="/onboarding" element={
+          <RequireAuth>
+            <Onboarding />
+          </RequireAuth>
+        } />
+        
         <Route element={<RequireAuth><Outlet /></RequireAuth>}>
-          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/revenue" element={<Revenue />} />
           <Route path="/invoicing" element={<Invoicing />} />

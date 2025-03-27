@@ -1,4 +1,3 @@
-
 import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
@@ -19,6 +18,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
+          console.log("Initial session user metadata:", session.user.user_metadata);
+          
           const userData = {
             id: session.user.id,
             email: session.user.email,
@@ -42,6 +43,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state change:", event, session?.user?.id);
+        console.log("Auth state change user metadata:", session?.user?.user_metadata);
         
         if (session) {
           const userData = {

@@ -34,7 +34,11 @@ export const RequireAuth = ({ children }: RequireAuthProps) => {
 
   // Check if user has completed onboarding
   // If user is authenticated but hasn't completed onboarding, redirect to onboarding
-  if (isAuthenticated && user && user.onboardingCompleted === false && location.pathname !== "/onboarding") {
+  // IMPORTANT: Don't redirect if already on the onboarding page
+  if (isAuthenticated && 
+      user && 
+      user.onboardingCompleted === false && 
+      !location.pathname.includes("/onboarding")) {
     console.log("User authenticated but onboarding not completed, redirecting to /onboarding");
     return <Navigate to="/onboarding" replace />;
   }
