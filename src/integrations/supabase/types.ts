@@ -683,6 +683,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_team_member_access: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
       insert_team_member: {
         Args: {
           p_name: string
