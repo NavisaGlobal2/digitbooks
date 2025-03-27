@@ -3,7 +3,7 @@ import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
 import { AuthContext } from "./AuthContext";
-import { login, logout, signup, signInWithGoogle, checkUserOnboardingStatus } from "./authActions";
+import { login, logout, signup, signInWithGoogle } from "./authActions";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -12,80 +12,91 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const getInitialSession = async () => {
+    console.log("Auth initialization started");
+    let authSubscription: { unsubscribe: () => void } | null = null;
+
+    const initializeAuth = async () => {
       try {
+        // First, set up the auth state listener to catch any changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (event, session) => {
+            console.log("Auth state changed:", event);
+            
+            if (session) {
+              const userData = {
+                id: session.user.id,
+                email: session.user.email,
+                name: session.user.user_metadata?.name || session.user.user_metadata?.full_name || "User",
+                avatar: session.user.user_metadata?.avatar || session.user.user_metadata?.picture || "",
+                onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
+              };
+              setUser(userData);
+            } else {
+              setUser(null);
+            }
+          }
+        );
+        
+        authSubscription = subscription;
+
+        // Then check for the initial session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
-          // Get basic user data from session
-          const onboardingCompleted = session.user.user_metadata?.onboardingCompleted || false;
-          
+          console.log("Initial session found");
           const userData = {
             id: session.user.id,
             email: session.user.email,
             name: session.user.user_metadata?.name || session.user.user_metadata?.full_name || "User",
             avatar: session.user.user_metadata?.avatar || session.user.user_metadata?.picture || "",
-            onboardingCompleted: onboardingCompleted
+            onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
           };
-          
-          console.log("Initial session found:", userData);
-          
-          // For all logins (including social), check onboarding status explicitly
-          // to ensure consistent behavior
-          const hasCompletedOnboarding = await checkUserOnboardingStatus(session.user.id);
-          if (hasCompletedOnboarding) {
-            userData.onboardingCompleted = true;
-          }
           
           setUser(userData);
-        }
-      } catch (error) {
-        console.error("Error getting initial session:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    getInitialSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth state change:", event, session?.user?.id);
-        
-        if (session) {
-          // Initialize with metadata from session
-          const onboardingCompleted = session.user.user_metadata?.onboardingCompleted || false;
           
-          const userData = {
-            id: session.user.id,
-            email: session.user.email,
-            name: session.user.user_metadata?.name || session.user.user_metadata?.full_name || "User",
-            avatar: session.user.user_metadata?.avatar || session.user.user_metadata?.picture || "",
-            onboardingCompleted: onboardingCompleted
-          };
-          
-          // For all auth events, ensure consistent onboarding check
-          if ((event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
-            // Use setTimeout to avoid triggering within the auth state change callback
+          // Optimize by checking onboarding status only when needed
+          if (!userData.onboardingCompleted) {
+            // Use setTimeout to avoid blocking the main thread
             setTimeout(async () => {
-              const hasCompletedOnboarding = await checkUserOnboardingStatus(session.user.id);
-              if (hasCompletedOnboarding) {
-                setUser(prev => prev ? {...prev, onboardingCompleted: true} : null);
+              try {
+                const profileResult = await supabase
+                  .from('profiles')
+                  .select('business_name')
+                  .eq('id', session.user.id)
+                  .maybeSingle();
+                
+                if (profileResult.data?.business_name) {
+                  // Only update user metadata if needed
+                  await supabase.auth.updateUser({
+                    data: { onboardingCompleted: true }
+                  });
+                  
+                  setUser(prev => prev ? {...prev, onboardingCompleted: true} : null);
+                }
+              } catch (error) {
+                console.error("Error checking profile:", error);
               }
             }, 0);
           }
-          
-          setUser(userData);
-        } else {
-          setUser(null);
         }
+      } catch (error) {
+        console.error("Auth initialization error:", error);
+      } finally {
+        console.log("Auth initialization completed");
+        setIsLoading(false);
+        setIsInitialized(true);
       }
-    );
+    };
+
+    initializeAuth();
 
     return () => {
-      subscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
   }, []);
 
@@ -167,7 +178,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         signup: handleSignup, 
         completeOnboarding: handleCompleteOnboarding,
         verifyOtp,
-        signInWithGoogle: handleSignInWithGoogle
+        signInWithGoogle: handleSignInWithGoogle,
+        isInitialized
       }}
     >
       {children}

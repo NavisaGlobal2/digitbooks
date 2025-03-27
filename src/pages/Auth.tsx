@@ -9,104 +9,97 @@ import DecorativeBackground from "@/components/auth/DecorativeBackground";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { checkUserOnboardingStatus } from "@/contexts/auth/authActions";
 import { supabase } from "@/integrations/supabase/client";
 
 type AuthMode = 'login' | 'signup';
 
 const Auth: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isInitialized } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [mode, setMode] = useState<AuthMode>('login'); // Default to login mode
+  const [mode, setMode] = useState<AuthMode>('login');
   const [authError, setAuthError] = useState<string | null>(null);
   const [processingAuth, setProcessingAuth] = useState(false);
 
-  // Enhanced logging for debugging
+  // Handle URL parameters on load
   useEffect(() => {
-    console.log("Auth page loaded");
-    console.log("Current URL:", window.location.href);
-    console.log("Origin:", window.location.origin);
-    console.log("Search params:", location.search);
-    console.log("Hash:", location.hash);
-    
-    // Additional debug info for Google auth
-    if (navigator.userAgent) {
-      console.log("User agent:", navigator.userAgent);
-    }
-  }, [location]);
-
-  // Handle OAuth callbacks and auth state
-  useEffect(() => {
-    const handleAuthCallback = async () => {
-      setProcessingAuth(true);
-      
-      try {
-        // Parse URL parameters
-        const params = new URLSearchParams(location.search);
-        const error = params.get('error');
-        const errorDescription = params.get('error_description');
-        
-        // Handle auth errors
-        if (error) {
-          console.error("Auth redirect error:", error, errorDescription);
-          const errorMessage = errorDescription || "Authentication error";
-          setAuthError(errorMessage);
-          toast.error(errorMessage);
-          setProcessingAuth(false);
-          return;
-        }
-        
-        // Handle hash fragments (common in OAuth flows)
-        if (location.hash) {
-          console.log("Detected auth callback with hash:", location.hash);
-          
-          // Ensure the callback is processed by Supabase
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error("Error processing auth callback:", error);
-            setAuthError(error.message);
-            toast.error(error.message);
-          } else if (data.session) {
-            console.log("Session obtained after hash callback");
-            // For social login specifically, check if the user needs to complete onboarding
-            const userId = data.session.user.id;
-            const hasCompletedOnboarding = await checkUserOnboardingStatus(userId);
-            
-            // Redirect to appropriate place based on onboarding status
-            if (hasCompletedOnboarding) {
-              navigate("/dashboard", { replace: true });
-            } else {
-              navigate("/onboarding", { replace: true });
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Error handling auth callback:", err);
-      } finally {
-        setProcessingAuth(false);
-      }
-    };
-
-    handleAuthCallback();
-    
-    // Set to signup mode if redirected from signup flow
     const params = new URLSearchParams(location.search);
     if (params.get('type') === 'signup') {
       setMode('signup');
     }
-  }, [location, navigate]);
+  }, [location]);
+
+  // Handle OAuth callbacks and errors
+  useEffect(() => {
+    if (!isInitialized) return;
+    
+    const handleAuthCallback = async () => {
+      const params = new URLSearchParams(location.search);
+      const error = params.get('error');
+      const errorDescription = params.get('error_description');
+      
+      // Only process if there's an error or a hash (likely OAuth callback)
+      if (error || location.hash) {
+        console.log("Processing auth callback");
+        setProcessingAuth(true);
+        
+        try {
+          if (error) {
+            console.error("Auth redirect error:", error, errorDescription);
+            const errorMessage = errorDescription || "Authentication error";
+            setAuthError(errorMessage);
+            toast.error(errorMessage);
+            return;
+          }
+          
+          if (location.hash) {
+            console.log("Detected auth callback with hash");
+            // Hash will be processed automatically by supabase client
+            // Just check if we have a session
+            const { data } = await supabase.auth.getSession();
+            
+            if (data.session) {
+              console.log("Session obtained after hash callback");
+              // Redirect to dashboard or onboarding based on metadata
+              const needsOnboarding = !data.session.user.user_metadata?.onboardingCompleted;
+              
+              // Check profile as fallback for onboarding status
+              if (needsOnboarding) {
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('business_name')
+                  .eq('id', data.session.user.id)
+                  .maybeSingle();
+                
+                if (profile?.business_name) {
+                  navigate("/dashboard", { replace: true });
+                } else {
+                  navigate("/onboarding", { replace: true });
+                }
+              } else {
+                navigate("/dashboard", { replace: true });
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error handling auth callback:", err);
+        } finally {
+          setProcessingAuth(false);
+        }
+      }
+    };
+
+    handleAuthCallback();
+  }, [location, navigate, isInitialized]);
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      // Get the intended destination
+    if (isInitialized && isAuthenticated && !processingAuth) {
       const from = location.state?.from?.pathname || "/dashboard";
       console.log("User is authenticated, redirecting to:", from);
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, location]);
+  }, [isAuthenticated, navigate, location, isInitialized, processingAuth]);
 
   // Clear auth errors when mode changes
   useEffect(() => {

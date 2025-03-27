@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { User } from "./types";
@@ -202,31 +201,44 @@ export const resendVerificationEmail = async (email: string) => {
 
 export const checkUserOnboardingStatus = async (userId: string): Promise<boolean> => {
   try {
-    // First check if the user has onboardingCompleted set in metadata
-    const { data: userData, error: userError } = await supabase.auth.getUser();
+    console.log("Checking onboarding status for user:", userId);
     
-    if (userError) throw userError;
-    
-    // If onboardingCompleted is explicitly set to true in user metadata, user has completed onboarding
-    if (userData.user.user_metadata?.onboardingCompleted === true) {
-      console.log("User has completed onboarding according to metadata");
+    // First, try to get the cached value from localStorage to avoid unnecessary API calls
+    const cachedValue = localStorage.getItem(`onboarding_completed_${userId}`);
+    if (cachedValue === 'true') {
+      console.log("Using cached onboarding status: completed");
       return true;
     }
     
-    // If not set or false, check if they have a profile in the database
+    // Check if onboardingCompleted is explicitly set in user metadata
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error("Error fetching user:", userError);
+      return false;
+    }
+    
+    // If onboardingCompleted is true in metadata, user has completed onboarding
+    if (userData.user.user_metadata?.onboardingCompleted === true) {
+      console.log("User has completed onboarding according to metadata");
+      localStorage.setItem(`onboarding_completed_${userId}`, 'true');
+      return true;
+    }
+    
+    // Make a single optimized query to check if they have a profile
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('business_name')
       .eq('id', userId)
       .maybeSingle();
       
     if (profileError) {
       console.error("Error checking profile data:", profileError);
-      // Don't throw here, just continue with the check
+      return false;
     }
     
-    // If they have a profile with business_name set, they've likely completed onboarding
-    if (profileData && profileData.business_name) {
+    // If they have a profile with business_name set, they've completed onboarding
+    if (profileData?.business_name) {
       console.log("User has a business profile, updating metadata");
       
       // Update the user metadata to mark onboarding as completed
@@ -234,6 +246,8 @@ export const checkUserOnboardingStatus = async (userId: string): Promise<boolean
         data: { onboardingCompleted: true }
       });
       
+      // Cache the result
+      localStorage.setItem(`onboarding_completed_${userId}`, 'true');
       return true;
     }
     
@@ -241,7 +255,6 @@ export const checkUserOnboardingStatus = async (userId: string): Promise<boolean
     return false;
   } catch (error) {
     console.error("Error checking onboarding status:", error);
-    // Default to false if there's an error
     return false;
   }
 };

@@ -1,27 +1,40 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
-import { BusinessInfo, LegalInfo, FeatureState } from "@/types/onboarding";
+import { toast } from "sonner";
 
-interface UseOnboardingDataReturn {
-  businessInfo: BusinessInfo;
-  setBusinessInfo: React.Dispatch<React.SetStateAction<BusinessInfo>>;
-  legalInfo: LegalInfo;
-  setLegalInfo: React.Dispatch<React.SetStateAction<LegalInfo>>;
-  selectedFeatures: FeatureState;
-  setSelectedFeatures: React.Dispatch<React.SetStateAction<FeatureState>>;
-  isLoading: boolean;
-  isSaving: boolean;
-  setIsSaving: React.Dispatch<React.SetStateAction<boolean>>;
-  saveProfile: () => Promise<boolean>;
+export interface BusinessInfo {
+  name: string;
+  type: string;
+  industry: string;
+  size: string;
+  country: string;
+  state: string;
+  city: string;
+  address: string;
+  phone: string;
+  website: string;
 }
 
-export const useOnboardingData = (): UseOnboardingDataReturn => {
-  const navigate = useNavigate();
-  const { user, completeOnboarding } = useAuth();
+export interface LegalInfo {
+  rcNumber: string;
+  taxId: string;
+  vatNumber: string;
+  registrationDate: string;
+}
+
+export interface Features {
+  invoicing: boolean;
+  expenses: boolean;
+  banking: boolean;
+  reports: boolean;
+  budgeting: boolean;
+  inventory: boolean;
+}
+
+export const useOnboardingData = () => {
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -29,7 +42,7 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
     name: "",
     type: "",
     industry: "",
-    size: "",
+    size: "1-5",
     country: "Nigeria",
     state: "",
     city: "",
@@ -39,12 +52,13 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
   });
 
   const [legalInfo, setLegalInfo] = useState<LegalInfo>({
-    rcNumber: "", 
-    taxId: "", 
-    vatNumber: ""
+    rcNumber: "",
+    taxId: "",
+    vatNumber: "",
+    registrationDate: ""
   });
 
-  const [selectedFeatures, setSelectedFeatures] = useState<FeatureState>({
+  const [selectedFeatures, setSelectedFeatures] = useState<Features>({
     invoicing: true,
     expenses: true,
     banking: false,
@@ -54,14 +68,15 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
   });
 
   useEffect(() => {
-    const fetchProfileData = async () => {
-      if (!user?.id) return;
+    const fetchExistingData = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("Fetching existing profile data for user:", user.id);
       
       try {
-        setIsLoading(true);
-        console.log("Fetching profile for user ID:", user.id);
-        
-        // First check if the profile exists
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -69,108 +84,77 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
           .maybeSingle();
         
         if (error) {
-          console.error('Error fetching profile:', error);
-          setIsLoading(false);
-          return;
+          console.error("Error fetching profile data:", error);
+          throw error;
         }
-        
+
         if (data) {
-          setBusinessInfo({
-            name: data.business_name || "",
-            type: data.business_type || "",
-            industry: data.industry || "",
-            size: "",
-            country: "Nigeria",
-            state: "",
-            city: "",
-            address: data.address || "",
-            phone: data.phone || "",
-            website: data.website || ""
-          });
-          
-          setLegalInfo({
-            rcNumber: data.rc_number || "",
-            taxId: data.tax_number || "",
-            vatNumber: data.vat_number || ""
-          });
-          
-          if (user.onboardingCompleted) {
-            navigate('/dashboard');
-          }
+          console.log("Found existing profile data:", data);
+          // Update state with existing data
+          setBusinessInfo(prev => ({
+            ...prev,
+            name: data.business_name || '',
+            type: data.business_type || '',
+            industry: data.industry || '',
+            address: data.address || '',
+            phone: data.phone || '',
+            website: data.website || ''
+          }));
+
+          setLegalInfo(prev => ({
+            ...prev,
+            rcNumber: data.rc_number || '',
+            taxId: data.tax_number || '',
+            vatNumber: data.vat_number || '',
+            registrationDate: data.registration_date || ''
+          }));
+        } else {
+          console.log("No existing profile data found");
         }
-      } catch (err) {
-        console.error('Error:', err);
+      } catch (error) {
+        console.error("Error in fetchExistingData:", error);
+        // Continue with empty form data
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProfileData();
-  }, [user, navigate]);
+    fetchExistingData();
+  }, [user]);
 
   const saveProfile = async (): Promise<boolean> => {
+    if (!user) {
+      toast.error("User not authenticated");
+      return false;
+    }
+
+    setIsSaving(true);
+    console.log("Saving profile data for user:", user.id);
+
     try {
-      if (!user?.id) {
-        toast.error("User ID is missing. Please try logging in again.");
-        return false;
-      }
-      
-      // Check if the user is authenticated in Supabase
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        console.error("No active Supabase session found");
-        toast.error("Your session has expired. Please log in again.");
-        return false;
-      }
-      
-      setIsSaving(true);
-      console.log("Saving profile for user ID:", user.id);
-      console.log("Profile data being saved:", {
-        id: user.id,
-        business_name: businessInfo.name,
-        industry: businessInfo.industry,
-        tax_number: legalInfo.taxId || null,
-        rc_number: legalInfo.rcNumber,
-        business_type: businessInfo.type,
-        vat_number: legalInfo.vatNumber || null,
-        phone: businessInfo.phone,
-        website: businessInfo.website,
-        address: businessInfo.address
-      });
-      
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
           business_name: businessInfo.name,
-          industry: businessInfo.industry,
-          tax_number: legalInfo.taxId || null,
-          rc_number: legalInfo.rcNumber,
           business_type: businessInfo.type,
-          vat_number: legalInfo.vatNumber || null,
+          industry: businessInfo.industry,
+          address: businessInfo.address,
           phone: businessInfo.phone,
           website: businessInfo.website,
-          address: businessInfo.address
-        })
-        .select();
+          rc_number: legalInfo.rcNumber,
+          tax_number: legalInfo.taxId || null,
+          vat_number: legalInfo.vatNumber || null,
+          registration_date: legalInfo.registrationDate || null
+        });
 
-      if (error) {
-        console.error('Error saving profile:', error);
-        toast.error(error.message || "Failed to save business profile");
-        return false;
-      }
-
-      console.log("Profile saved successfully:", data);
-      await completeOnboarding(user);
+      if (error) throw error;
       
-      toast.success("Setup completed! Welcome to DigiBooks");
-      
-      // Navigate to dashboard after successful save
-      navigate("/dashboard", { replace: true });
+      console.log("Profile saved successfully");
       return true;
     } catch (error: any) {
-      console.error('Error saving profile:', error);
-      toast.error(error.message || "Failed to save business profile");
+      console.error("Error saving profile:", error);
+      toast.error(error.message || "Failed to save profile");
       return false;
     } finally {
       setIsSaving(false);
@@ -186,7 +170,6 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
     setSelectedFeatures,
     isLoading,
     isSaving,
-    setIsSaving,
     saveProfile
   };
 };
