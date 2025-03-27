@@ -32,6 +32,7 @@ import Auth from "./pages/Auth";
 import Onboarding from "./Onboarding";
 import Agent from "./pages/Agent";
 import { RequireAuth } from "./components/auth/RequireAuth";
+import AcceptInvitation from "./pages/AcceptInvitation";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const App = () => (
                         
                         {/* Auth routes */}
                         <Route path="/auth" element={<Auth />} />
+                        <Route path="/accept-invitation" element={<AcceptInvitation />} />
                         <Route path="/onboarding" element={
                           <RequireAuth>
                             <Onboarding />
