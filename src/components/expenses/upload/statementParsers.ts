@@ -1,5 +1,6 @@
 
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export type ParsedTransaction = {
   id: string;
@@ -68,52 +69,65 @@ export const parseCSVFile = (
   reader.readAsText(file);
 };
 
-export const parseExcelFile = (
+export const parseExcelFile = async (
   file: File, 
   onComplete: (transactions: ParsedTransaction[]) => void,
   onError: (errorMessage: string) => void
 ) => {
-  // Use edge function to parse Excel instead of mock data
-  const formData = new FormData();
-  formData.append('file', file);
-  
-  fetch('https://naxmgtoskeijvdofqyik.supabase.co/functions/v1/parse-bank-statement', {
-    method: 'POST',
-    body: formData,
-    headers: {
-      // No auth headers needed as the function is public
-    }
-  })
-  .then(response => {
-    if (!response.ok) {
-      return response.text().then(text => {
-        throw new Error(`Failed to parse Excel file: ${text}`);
-      });
-    }
-    return response.json();
-  })
-  .then(data => {
-    if (!data.transactions || !Array.isArray(data.transactions) || data.transactions.length === 0) {
-      onError('No valid transactions found in the file');
+  try {
+    // Get the auth session first
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      onError('Authentication required to parse Excel files. Please sign in.');
       return;
     }
     
-    // Convert the transactions to the expected format
-    const parsedTransactions: ParsedTransaction[] = data.transactions.map((t: any, index: number) => ({
-      id: `trans-${index}`,
-      date: new Date(t.date),
-      description: t.description,
-      amount: t.amount,
-      type: t.type,
-      selected: t.type === 'debit', // Auto-select debit transactions
-    }));
+    // Use edge function to parse Excel instead of mock data
+    const formData = new FormData();
+    formData.append('file', file);
     
-    onComplete(parsedTransactions);
-  })
-  .catch(error => {
-    console.error('Error parsing Excel:', error);
-    onError(error.message || 'Failed to parse the Excel file. Please check the format and try again.');
-  });
+    fetch('https://naxmgtoskeijvdofqyik.supabase.co/functions/v1/parse-bank-statement', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.text().then(text => {
+          throw new Error(`Failed to parse Excel file: ${text}`);
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (!data.transactions || !Array.isArray(data.transactions) || data.transactions.length === 0) {
+        onError('No valid transactions found in the file');
+        return;
+      }
+      
+      // Convert the transactions to the expected format
+      const parsedTransactions: ParsedTransaction[] = data.transactions.map((t: any, index: number) => ({
+        id: `trans-${index}`,
+        date: new Date(t.date),
+        description: t.description,
+        amount: t.amount,
+        type: t.type,
+        selected: t.type === 'debit', // Auto-select debit transactions
+      }));
+      
+      onComplete(parsedTransactions);
+    })
+    .catch(error => {
+      console.error('Error parsing Excel:', error);
+      onError(error.message || 'Failed to parse the Excel file. Please check the format and try again.');
+    });
+  } catch (error) {
+    console.error('Session error:', error);
+    onError('Authentication error. Please try signing in again.');
+  }
 };
 
 export const parsePDFFile = (
