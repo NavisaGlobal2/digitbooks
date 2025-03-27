@@ -34,7 +34,10 @@ export async function handleRequest(req: Request): Promise<Response> {
       )
     }
     
+    // Logging strategy to debug token issues - only log lengths, not actual tokens
     const token = authHeader.replace('Bearer ', '')
+    console.log(`Token received, length: ${token.length}`)
+    
     if (!token || token.length < 10) {
       console.error('Invalid token in request, length:', token?.length || 0)
       return new Response(
@@ -42,8 +45,6 @@ export async function handleRequest(req: Request): Promise<Response> {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       )
     }
-    
-    console.log('Got token from request, length:', token.length)
     
     // Process the uploaded file and get transactions
     try {
@@ -55,7 +56,6 @@ export async function handleRequest(req: Request): Promise<Response> {
       )
       
       console.log(`Processed ${transactions.length} transactions, user ID: ${user.id}, batch ID: ${batchId}`)
-      console.log(`Transaction types: ${transactions.filter(t => t.type === 'debit').length} debits, ${transactions.filter(t => t.type === 'credit').length} credits`)
       
       // Save transactions to the database
       const savedCount = await saveToDatabase(
@@ -71,6 +71,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       return new Response(
         JSON.stringify({ 
           success: true, 
+          transactions,
           message: `Successfully processed ${savedCount} transactions`, 
           batchId,
           transactionCount: savedCount

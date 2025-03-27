@@ -20,9 +20,9 @@ export async function parseViaEdgeFunction(
 ): Promise<ParseResult> {
   try {
     // Check authentication
-    const { data: session, error: sessionError } = await supabase.auth.getSession();
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     
-    if (sessionError || !session.session) {
+    if (sessionError || !sessionData.session) {
       console.error("Authentication error:", sessionError || "No active session");
       return {
         success: false,
@@ -39,15 +39,16 @@ export async function parseViaEdgeFunction(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), EDGE_FUNCTION_TIMEOUT);
     
-    // Invoke edge function
+    console.log("Invoking edge function with auth token length:", sessionData.session.access_token.length);
+    
+    // Invoke edge function with proper authentication
     const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION_NAME, {
       body: formData,
-      // The type definition is incorrect; signal is actually supported
-      // but TypeScript doesn't know about it, so we need to use any
       headers: {
-        Authorization: `Bearer ${session.session.access_token}`,
-      }
-    } as any);
+        Authorization: `Bearer ${sessionData.session.access_token}`,
+      },
+      signal: controller.signal
+    });
     
     clearTimeout(timeoutId);
     

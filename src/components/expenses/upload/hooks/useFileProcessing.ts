@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { parseCSVFile, CSVParseResult } from "../parsers/csvParser";
 import { parseViaEdgeFunction, ParsedTransaction } from "../parsers";
@@ -12,6 +12,7 @@ interface FileProcessingProps {
   completeProgress: () => void;
   showFallbackMessage: (message?: string) => void;
   isCancelled: boolean;
+  setIsWaitingForServer?: (isWaiting: boolean) => void;
 }
 
 export const useFileProcessing = ({
@@ -20,21 +21,50 @@ export const useFileProcessing = ({
   resetProgress,
   completeProgress,
   showFallbackMessage,
-  isCancelled
+  isCancelled,
+  setIsWaitingForServer
 }: FileProcessingProps) => {
   const [csvParseResult, setCsvParseResult] = useState<CSVParseResult | null>(null);
   const [showColumnMapping, setShowColumnMapping] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  // Check authentication status on mount
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+    
+    checkAuthStatus();
+    
+    // Subscribe to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const processServerSide = async (file: File) => {
     const isPdf = file.name.toLowerCase().endsWith('.pdf');
     
     try {
+      // If we're waiting for server, update the UI
+      if (setIsWaitingForServer) {
+        setIsWaitingForServer(true);
+      }
+      
       // Check authentication before starting the server request
       const { data: sessionData } = await supabase.auth.getSession();
       
       if (!sessionData.session || !sessionData.session.access_token) {
         handleError("You need to be signed in to use server-side processing. Please sign in and try again.");
         resetProgress();
+        if (setIsWaitingForServer) {
+          setIsWaitingForServer(false);
+        }
         return;
       }
       
@@ -44,10 +74,17 @@ export const useFileProcessing = ({
         (transactions) => {
           if (isCancelled) return;
           completeProgress();
+          if (setIsWaitingForServer) {
+            setIsWaitingForServer(false);
+          }
           onTransactionsParsed(transactions);
         },
         (errorMessage) => {
-          if (isCancelled) return;
+          if (isCancelled) return true;
+          
+          if (setIsWaitingForServer) {
+            setIsWaitingForServer(false);
+          }
           
           const isAuthError = errorMessage.toLowerCase().includes('auth') || 
                               errorMessage.toLowerCase().includes('sign in') ||
@@ -83,6 +120,10 @@ export const useFileProcessing = ({
       return result;
     } catch (error: any) {
       if (isCancelled) return;
+      
+      if (setIsWaitingForServer) {
+        setIsWaitingForServer(false);
+      }
       
       console.error("Edge function error:", error);
       handleError(error.message || "Error processing file on server. Trying client-side processing.");
@@ -127,6 +168,7 @@ export const useFileProcessing = ({
     showColumnMapping,
     setShowColumnMapping,
     processServerSide,
-    processClientSideCSV
+    processClientSideCSV,
+    isAuthenticated
   };
 };

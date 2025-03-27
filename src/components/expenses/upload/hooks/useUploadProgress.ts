@@ -1,93 +1,120 @@
 
-import { useState } from "react";
-
-export interface UploadProgressState {
-  progress: number;
-  step: string;
-  isCancelled: boolean;
-}
+import { useState, useRef } from "react";
 
 export const useUploadProgress = () => {
-  const [progressState, setProgressState] = useState<UploadProgressState>({
-    progress: 0,
-    step: "",
-    isCancelled: false
-  });
-
-  const startProgress = () => {
-    setProgressState({
-      progress: 0,
-      step: "Preparing file...",
-      isCancelled: false
-    });
-    
-    const interval = setInterval(() => {
-      setProgressState((prev) => {
-        // Don't update if processing was cancelled
-        if (prev.isCancelled) {
-          clearInterval(interval);
-          return prev;
-        }
-        
-        // Increment progress, but never reach 100% until the actual process completes
-        if (prev.progress < 90) {
-          // Update the processing step based on progress
-          let newStep = prev.step;
-          if (prev.progress === 15) newStep = "Uploading file...";
-          if (prev.progress === 35) newStep = "Parsing transactions...";
-          if (prev.progress === 60) newStep = "Processing data...";
-          if (prev.progress === 80) newStep = "Finalizing...";
-          
-          return {
-            ...prev,
-            progress: prev.progress + 5,
-            step: newStep
-          };
-        }
-        return prev;
-      });
-    }, 800);
-    
-    // Return cleanup function
-    return () => {
-      clearInterval(interval);
-    };
-  };
+  const [progress, setProgress] = useState(0);
+  const [step, setStep] = useState("");
+  const [isCancelled, setIsCancelled] = useState(false);
+  const [isWaitingForServer, setIsWaitingForServer] = useState(false);
+  const animationFrame = useRef<number | null>(null);
 
   const resetProgress = () => {
-    setProgressState({
-      progress: 0,
-      step: "",
-      isCancelled: false
-    });
-  };
-
-  const completeProgress = () => {
-    setProgressState(prev => ({
-      ...prev,
-      progress: 100,
-      step: "Complete!"
-    }));
+    if (animationFrame.current) {
+      cancelAnimationFrame(animationFrame.current);
+      animationFrame.current = null;
+    }
+    setProgress(0);
+    setStep("");
+    setIsCancelled(false);
+    setIsWaitingForServer(false);
   };
 
   const cancelProgress = () => {
-    setProgressState(prev => ({
-      ...prev,
-      isCancelled: true
-    }));
-    resetProgress();
+    setIsCancelled(true);
+    if (animationFrame.current) {
+      cancelAnimationFrame(animationFrame.current);
+      animationFrame.current = null;
+    }
+    setProgress(0);
+    setStep("");
+    setIsWaitingForServer(false);
   };
 
-  const updateProgress = (progress: number, step: string) => {
-    setProgressState(prev => ({
-      ...prev,
-      progress,
-      step
-    }));
+  const completeProgress = () => {
+    if (animationFrame.current) {
+      cancelAnimationFrame(animationFrame.current);
+      animationFrame.current = null;
+    }
+    setProgress(100);
+    setStep("Complete");
+    setIsWaitingForServer(false);
+  };
+
+  const updateProgress = (newProgress: number, newStep: string) => {
+    setProgress(newProgress);
+    setStep(newStep);
+  };
+
+  // Run the progress animation
+  const startProgress = () => {
+    let currentProgress = 0;
+    const totalSteps = 90; // Only go up to 90%, leave 90-100% for server response
+    const timePerStep = 50; // milliseconds
+    
+    // Start with file reading
+    setStep("Reading file...");
+    
+    const animateProgress = () => {
+      if (isCancelled) {
+        if (animationFrame.current) {
+          cancelAnimationFrame(animationFrame.current);
+          animationFrame.current = null;
+        }
+        return;
+      }
+      
+      currentProgress += 1;
+      
+      // Change step description at different stages
+      if (currentProgress === 20) {
+        setStep("Validating file...");
+      } else if (currentProgress === 40) {
+        setStep("Extracting data...");
+      } else if (currentProgress === 60) {
+        setStep("Processing transactions...");
+      } else if (currentProgress === 80) {
+        setStep("Finalizing...");
+      } else if (currentProgress === 90) {
+        setStep("Waiting for server...");
+        setIsWaitingForServer(true);
+        
+        // Stop at 90% and wait for server response
+        if (animationFrame.current) {
+          cancelAnimationFrame(animationFrame.current);
+          animationFrame.current = null;
+        }
+        return;
+      }
+      
+      setProgress(currentProgress);
+      
+      if (currentProgress < totalSteps) {
+        // Schedule next frame based on timePerStep
+        const nextUpdate = () => {
+          animationFrame.current = requestAnimationFrame(animateProgress);
+        };
+        setTimeout(nextUpdate, timePerStep);
+      }
+    };
+    
+    // Start animation
+    animationFrame.current = requestAnimationFrame(animateProgress);
+    
+    // Return function to stop animation
+    return () => {
+      if (animationFrame.current) {
+        cancelAnimationFrame(animationFrame.current);
+        animationFrame.current = null;
+      }
+    };
   };
 
   return {
-    ...progressState,
+    progress,
+    step,
+    isCancelled,
+    isWaitingForServer,
+    setIsWaitingForServer,
     startProgress,
     resetProgress,
     completeProgress,

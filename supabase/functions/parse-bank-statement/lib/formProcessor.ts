@@ -27,18 +27,19 @@ export async function processFormData(
   
   try {
     // Get the current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const { data: userData, error: userError } = await supabase.auth.getUser()
     
     if (userError) {
       console.error('Auth error getting user:', userError.message);
       throw new Error(`Authentication failed: ${userError.message}`);
     }
     
-    if (!user) {
+    if (!userData || !userData.user) {
       console.error('No user found with provided token');
       throw new Error('Authentication failed: No user found with the provided token');
     }
     
+    const user = userData.user;
     console.log('Successfully authenticated user:', user.id);
     
     // Get the form data from the request

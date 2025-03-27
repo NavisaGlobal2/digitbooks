@@ -1,13 +1,20 @@
 
 import { Progress } from "@/components/ui/progress";
+import { Loader2 } from "lucide-react";
 
 interface ProgressIndicatorProps {
   progress: number;
   step: string;
   isVisible: boolean;
+  isWaitingForServer?: boolean;
 }
 
-const ProgressIndicator = ({ progress, step, isVisible }: ProgressIndicatorProps) => {
+const ProgressIndicator = ({ 
+  progress, 
+  step, 
+  isVisible,
+  isWaitingForServer = false
+}: ProgressIndicatorProps) => {
   if (!isVisible) return null;
   
   return (
@@ -17,15 +24,18 @@ const ProgressIndicator = ({ progress, step, isVisible }: ProgressIndicatorProps
         <span>{progress}%</span>
       </div>
       <Progress value={progress} className="h-2" />
-      {progress > 90 && progress < 100 && (
+      
+      {progress > 90 && progress < 100 && !isWaitingForServer && (
         <p className="text-xs text-muted-foreground text-center animate-pulse">
           Processing large file, please wait...
         </p>
       )}
-      {progress === 90 && (
-        <p className="text-xs text-muted-foreground text-center">
-          Waiting for server response...
-        </p>
+      
+      {isWaitingForServer && (
+        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Waiting for server response...</span>
+        </div>
       )}
     </div>
   );
