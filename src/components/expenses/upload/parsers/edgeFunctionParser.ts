@@ -13,9 +13,8 @@ export const parseViaEdgeFunction = async (
     const formData = new FormData();
     formData.append("file", file);
 
-    // Decide which endpoint to use based on the file type
-    const endpoint = file.name.toLowerCase().endsWith('.pdf') ? 
-      'parse-bank-statement-ai' : 'parse-bank-statement';
+    // We now use only the AI-powered parser for all file types
+    const endpoint = 'parse-bank-statement-ai';
 
     console.log(`Sending file to edge function: ${endpoint}`);
     
@@ -35,13 +34,14 @@ export const parseViaEdgeFunction = async (
     if (error) {
       console.error("Edge function error:", error);
       
-      // Check for OpenAI API key error
+      // Check for Anthropic API key error
       if (error.message && (
-        error.message.includes("OPENAI_API_KEY") ||
-        error.message.includes("OpenAI API") ||
-        error.message.includes("exceeded your current quota")
+        error.message.includes("ANTHROPIC_API_KEY") ||
+        error.message.includes("Anthropic API") ||
+        error.message.includes("exceeded") ||
+        error.message.includes("rate limit")
       )) {
-        const errorMsg = "OpenAI API key error: Either the key is not configured, invalid, or you've exceeded your quota. Please contact your administrator.";
+        const errorMsg = "Anthropic API key error: Either the key is not configured, invalid, or you've exceeded your rate limit. Please contact your administrator.";
         onError(errorMsg);
         return [];
       }

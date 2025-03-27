@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useExpenses } from "@/contexts/ExpenseContext";
 import TransactionTaggingDialog from "./TransactionTaggingDialog";
-import ColumnMappingDialog from "./upload/columnMapping/ColumnMappingDialog";
 import { useStatementUpload } from "./upload/hooks/useStatementUpload";
 import { 
   ParsedTransaction
@@ -41,20 +40,13 @@ const BankStatementUploadDialog = ({
     file,
     uploading,
     error,
-    useEdgeFunction,
-    toggleEdgeFunction,
-    edgeFunctionAvailable,
     handleFileChange,
     parseFile,
     clearFile,
     progress,
     step,
     cancelProgress,
-    // Column mapping related
-    showColumnMapping,
-    setShowColumnMapping,
-    csvParseResult,
-    handleColumnMappingComplete
+    isAuthenticated
   } = useStatementUpload(handleTransactionsParsed);
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
@@ -122,28 +114,15 @@ const BankStatementUploadDialog = ({
             file={file}
             uploading={uploading}
             error={error}
-            useEdgeFunction={useEdgeFunction}
-            toggleEdgeFunction={toggleEdgeFunction}
-            edgeFunctionAvailable={edgeFunctionAvailable}
             handleFileChange={handleFileChange}
             parseFile={parseFile}
             onClose={handleClose}
             progress={progress}
             step={step}
+            isAuthenticated={isAuthenticated}
           />
         </DialogContent>
       </Dialog>
-
-      {/* Column Mapping Dialog */}
-      {showColumnMapping && csvParseResult && (
-        <ColumnMappingDialog
-          open={showColumnMapping}
-          onOpenChange={setShowColumnMapping}
-          headers={csvParseResult.headers}
-          sampleData={csvParseResult.rows.slice(csvParseResult.hasHeader ? 1 : 0, csvParseResult.hasHeader ? 6 : 5)}
-          onMappingComplete={handleColumnMappingComplete}
-        />
-      )}
 
       {/* Transaction Tagging Dialog */}
       {showTaggingDialog && (
