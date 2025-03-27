@@ -76,15 +76,15 @@ export const parseExcelFile = async (
 ) => {
   try {
     // Get the auth session first with a more reliable method
-    const { data, error } = await supabase.auth.getSession();
+    const { data: sessionData, error } = await supabase.auth.getSession();
     
-    if (error || !data.session?.access_token) {
+    if (error || !sessionData.session?.access_token) {
       console.error("Authentication error:", error);
       onError('Authentication required to parse Excel files. Please sign in again.');
       return;
     }
     
-    const accessToken = data.session.access_token;
+    const accessToken = sessionData.session.access_token;
     console.log('Session found, token length:', accessToken.length);
     
     // Create form data
@@ -128,16 +128,16 @@ export const parseExcelFile = async (
       throw new Error(`Failed to parse Excel file: ${JSON.stringify(errorData)}`);
     }
     
-    const data = await response.json();
-    console.log('Edge function response data:', data);
+    const responseData = await response.json();
+    console.log('Edge function response data:', responseData);
     
-    if (!data.transactions || !Array.isArray(data.transactions) || data.transactions.length === 0) {
+    if (!responseData.transactions || !Array.isArray(responseData.transactions) || responseData.transactions.length === 0) {
       onError('No valid transactions found in the file');
       return;
     }
     
     // Convert the transactions to the expected format
-    const parsedTransactions: ParsedTransaction[] = data.transactions.map((t: any, index: number) => ({
+    const parsedTransactions: ParsedTransaction[] = responseData.transactions.map((t: any, index: number) => ({
       id: `trans-${index}`,
       date: new Date(t.date),
       description: t.description,
