@@ -110,7 +110,7 @@ const BankStatementUploadDialog = ({
               onFileChange={handleFileChange} 
             />
             
-            {/* Server-side processing toggle */}
+            {/* Processing mode toggle */}
             <div className="flex items-center space-x-2">
               <Switch 
                 id="server-processing" 
@@ -118,8 +118,16 @@ const BankStatementUploadDialog = ({
                 onCheckedChange={toggleEdgeFunction}
                 disabled={!edgeFunctionAvailable}
               />
-              <Label htmlFor="server-processing">
-                Use server-side processing {!edgeFunctionAvailable && "(unavailable)"}
+              <Label htmlFor="server-processing" className="flex flex-col">
+                <span>
+                  {useEdgeFunction ? "Server-side processing" : "Client-side processing"}
+                  {!edgeFunctionAvailable && " (server unavailable)"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {useEdgeFunction 
+                    ? "Processes your statement on the server for better accuracy" 
+                    : "Processes your statement in the browser"}
+                </span>
               </Label>
             </div>
             

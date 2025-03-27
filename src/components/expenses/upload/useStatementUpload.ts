@@ -27,6 +27,9 @@ export const useStatementUpload = (
         setError('Unsupported file format. Please upload CSV, Excel, or PDF files only.');
         return;
       }
+      
+      // Reset edge function availability when a new file is selected
+      setEdgeFunctionAvailable(true);
     }
   };
 
@@ -37,6 +40,7 @@ export const useStatementUpload = (
     }
 
     setUploading(true);
+    setError(null);
 
     // Choose between client-side parsing or edge function
     if (useEdgeFunction && edgeFunctionAvailable) {
@@ -47,6 +51,7 @@ export const useStatementUpload = (
   };
 
   const parseViaClient = () => {
+    toast.info("Processing your bank statement on the client");
     parseStatementFile(
       file!,
       (transactions) => {
@@ -74,6 +79,8 @@ export const useStatementUpload = (
         parseViaClient();
         return;
       }
+      
+      toast.info("Processing your bank statement on the server");
       
       // Create form data
       const formData = new FormData();
@@ -108,11 +115,9 @@ export const useStatementUpload = (
         .eq('upload_batch_id', data.batchId)
         .order('date', { ascending: false });
       
-      if (fetchError || !transactionsData) {
-        console.error("Failed to retrieve transactions:", fetchError);
-        setError("Failed to retrieve processed transactions");
-        setUploading(false);
-        return;
+      if (fetchError || !transactionsData || transactionsData.length === 0) {
+        console.error("Failed to retrieve transactions or no transactions found:", fetchError);
+        throw new Error("Failed to retrieve processed transactions");
       }
       
       // Convert to the format expected by the component
@@ -131,7 +136,7 @@ export const useStatementUpload = (
       
     } catch (error) {
       console.error("Error in edge function:", error);
-      setError(error instanceof Error ? error.message : "Unknown error occurred");
+      setError(`Server-side processing failed: ${error instanceof Error ? error.message : "Unknown error"}`);
       setUploading(false);
       setEdgeFunctionAvailable(false); // Mark edge function as unavailable after an error
       
@@ -148,6 +153,10 @@ export const useStatementUpload = (
 
   const toggleEdgeFunction = () => {
     setUseEdgeFunction(!useEdgeFunction);
+    if (!useEdgeFunction) {
+      // Reset edge function availability when user manually enables it
+      setEdgeFunctionAvailable(true);
+    }
   };
 
   return {
