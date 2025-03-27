@@ -1,71 +1,43 @@
 
-import { useState } from "react";
 import { toast } from "sonner";
 import { useExpenses } from "@/contexts/ExpenseContext";
 import { ExpenseCategory } from "@/types/expense";
+import { useExpenseForm } from "./useExpenseForm";
+import { useExpenseValidation } from "./useExpenseValidation";
+import { useFileProcessing } from "./useFileProcessing";
 
 export const useExpenseDialog = (onCloseDialog: () => void) => {
   const { addExpense } = useExpenses();
+  const { validateForm } = useExpenseValidation();
+  const { processReceiptFile } = useFileProcessing();
   
-  // Form states
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [category, setCategory] = useState<ExpenseCategory | "">("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("");
-  const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  
-  const clearForm = () => {
-    setDescription("");
-    setAmount("");
-    setDate(new Date().toISOString().split('T')[0]);
-    setCategory("");
-    setPaymentMethod("");
-    setReceiptFile(null);
-  };
+  const {
+    description,
+    setDescription,
+    amount,
+    setAmount,
+    date,
+    setDate,
+    category,
+    setCategory,
+    paymentMethod,
+    setPaymentMethod,
+    receiptFile,
+    setReceiptFile,
+    clearForm
+  } = useExpenseForm();
   
   const handleClose = () => {
     clearForm();
     onCloseDialog();
   };
   
-  const validateForm = () => {
-    if (!description) {
-      toast.error("Please enter an expense name");
-      return false;
-    }
+  const handleSave = async () => {
+    if (!validateForm({ description, amount, date, category, paymentMethod })) return;
     
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-      toast.error("Please enter a valid amount");
-      return false;
-    }
-    
-    if (!date) {
-      toast.error("Please select a date");
-      return false;
-    }
-    
-    if (!category) {
-      toast.error("Please select a category");
-      return false;
-    }
-    
-    if (!paymentMethod) {
-      toast.error("Please select a payment method");
-      return false;
-    }
-    
-    return true;
-  };
-  
-  const handleSave = () => {
-    if (!validateForm()) return;
-    
-    if (receiptFile) {
-      const reader = new FileReader();
-      reader.readAsDataURL(receiptFile);
-      reader.onload = () => {
-        const receiptUrl = reader.result as string;
+    try {
+      if (receiptFile) {
+        const receiptUrl = await processReceiptFile(receiptFile);
         
         addExpense({
           description,
@@ -77,23 +49,23 @@ export const useExpenseDialog = (onCloseDialog: () => void) => {
           vendor: "Unknown",
           receiptUrl
         });
-        
-        toast.success("Expense added successfully");
-        handleClose();
-      };
-    } else {
-      addExpense({
-        description,
-        amount: Number(amount),
-        date: new Date(date),
-        category: category as ExpenseCategory,
-        status: "pending",
-        paymentMethod: paymentMethod as "cash" | "card" | "bank transfer" | "other",
-        vendor: "Unknown"
-      });
+      } else {
+        addExpense({
+          description,
+          amount: Number(amount),
+          date: new Date(date),
+          category: category as ExpenseCategory,
+          status: "pending",
+          paymentMethod: paymentMethod as "cash" | "card" | "bank transfer" | "other",
+          vendor: "Unknown"
+        });
+      }
       
       toast.success("Expense added successfully");
       handleClose();
+    } catch (error) {
+      console.error("Error saving expense:", error);
+      toast.error("Failed to save expense");
     }
   };
 
