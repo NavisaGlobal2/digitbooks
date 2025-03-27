@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTeamMembers } from "@/lib/teamMembers";
-import { TeamMember } from "@/types/teamMember";
+import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 import { useAuth } from "@/contexts/auth";
 import { InviteTeamMemberDialog } from "./team/InviteTeamMemberDialog";
 import { EditTeamMemberDialog } from "./team/EditTeamMemberDialog";
@@ -33,7 +34,7 @@ export const TeamManagementSettings = () => {
             user_id: user.id || "",
             name: user.name || "Account Owner",
             email: user.email || "",
-            role: "Owner",
+            role: "Owner" as TeamMemberRole,
             status: "active",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()

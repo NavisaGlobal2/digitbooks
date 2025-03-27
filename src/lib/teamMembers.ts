@@ -6,14 +6,18 @@ import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 export const useTeamMembers = () => {
   const fetchTeamMembers = async () => {
     try {
-      // Properly type the response from Supabase using the Database type
       const { data, error } = await supabase
         .from('team_members')
         .select('*')
         .order('created_at', { ascending: true });
       
       if (error) throw error;
-      return data || [];
+      
+      // Ensure the role property is correctly typed as TeamMemberRole
+      return (data || []).map(member => ({
+        ...member,
+        role: member.role as TeamMemberRole
+      })) as TeamMember[];
     } catch (error) {
       console.error("Error fetching team members:", error);
       toast.error("Failed to load team members");
@@ -42,10 +46,14 @@ export const useTeamMembers = () => {
       
       if (error) throw error;
       
-      // In a real application, we would send an invitation email here
-      // For now, we'll just show a success message
+      // Ensure the role property is correctly typed
+      const typedData = {
+        ...data,
+        role: data.role as TeamMemberRole
+      } as TeamMember;
+      
       toast.success(`Invitation sent to ${teamMember.email}`);
-      return data;
+      return typedData;
     } catch (error) {
       console.error("Error inviting team member:", error);
       toast.error("Failed to invite team member");
@@ -66,8 +74,15 @@ export const useTeamMembers = () => {
         .single();
       
       if (error) throw error;
+      
+      // Ensure the role property is correctly typed
+      const typedData = {
+        ...data,
+        role: data.role as TeamMemberRole
+      } as TeamMember;
+      
       toast.success("Team member updated successfully");
-      return data;
+      return typedData;
     } catch (error) {
       console.error("Error updating team member:", error);
       toast.error("Failed to update team member");

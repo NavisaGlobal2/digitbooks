@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTeamMembers } from "@/lib/teamMembers";
-import { TeamMember } from "@/types/teamMember";
+import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 
 const editFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -63,7 +63,7 @@ export const EditTeamMemberDialog = ({
     const updates = {
       name: data.name,
       email: data.email,
-      role: data.role as any
+      role: data.role as TeamMemberRole
     };
 
     const updatedMember = await updateTeamMember(teamMember.id, updates);

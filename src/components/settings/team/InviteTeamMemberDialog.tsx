@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus } from "lucide-react";
 import { useTeamMembers } from "@/lib/teamMembers";
-import { TeamMember } from "@/types/teamMember";
+import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 
 const inviteFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -46,7 +46,7 @@ export const InviteTeamMemberDialog = ({ onInvite }: InviteTeamMemberDialogProps
     const newMember = {
       name: data.name,
       email: data.email,
-      role: data.role as any,
+      role: data.role as TeamMemberRole,
       status: 'pending' as const
     };
 
