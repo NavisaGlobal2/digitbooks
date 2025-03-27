@@ -20,7 +20,6 @@ export interface LegalInfo {
   rcNumber: string;
   taxId: string;
   vatNumber: string;
-  registrationDate: string;
 }
 
 export interface FeatureState {

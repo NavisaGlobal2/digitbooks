@@ -1,21 +1,35 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
-import { toast } from "sonner";
 import { BusinessInfo, LegalInfo, FeatureState } from "@/types/onboarding";
 
-export const useOnboardingData = () => {
-  const { user } = useAuth();
+interface UseOnboardingDataReturn {
+  businessInfo: BusinessInfo;
+  setBusinessInfo: React.Dispatch<React.SetStateAction<BusinessInfo>>;
+  legalInfo: LegalInfo;
+  setLegalInfo: React.Dispatch<React.SetStateAction<LegalInfo>>;
+  selectedFeatures: FeatureState;
+  setSelectedFeatures: React.Dispatch<React.SetStateAction<FeatureState>>;
+  isLoading: boolean;
+  isSaving: boolean;
+  setIsSaving: React.Dispatch<React.SetStateAction<boolean>>;
+  saveProfile: () => Promise<boolean>;
+}
+
+export const useOnboardingData = (): UseOnboardingDataReturn => {
+  const navigate = useNavigate();
+  const { user, completeOnboarding } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [dataFetched, setDataFetched] = useState(false);
   
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
     name: "",
     type: "",
     industry: "",
-    size: "1-5",
+    size: "",
     country: "Nigeria",
     state: "",
     city: "",
@@ -25,10 +39,9 @@ export const useOnboardingData = () => {
   });
 
   const [legalInfo, setLegalInfo] = useState<LegalInfo>({
-    rcNumber: "",
-    taxId: "",
-    vatNumber: "",
-    registrationDate: ""
+    rcNumber: "", 
+    taxId: "", 
+    vatNumber: ""
   });
 
   const [selectedFeatures, setSelectedFeatures] = useState<FeatureState>({
@@ -40,97 +53,124 @@ export const useOnboardingData = () => {
     inventory: false
   });
 
-  // Memoize fetchExistingData to prevent unnecessary re-renders
-  const fetchExistingData = useCallback(async () => {
-    if (!user || dataFetched) {
-      setIsLoading(false);
-      return;
-    }
-
-    console.log("Fetching existing profile data for user:", user.id);
-    
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-      
-      if (error) {
-        console.error("Error fetching profile data:", error);
-        throw error;
-      }
-
-      if (data) {
-        console.log("Found existing profile data");
-        // Update state with existing data
-        setBusinessInfo(prev => ({
-          ...prev,
-          name: data.business_name || '',
-          type: data.business_type || '',
-          industry: data.industry || '',
-          address: data.address || '',
-          phone: data.phone || '',
-          website: data.website || ''
-        }));
-
-        setLegalInfo(prev => ({
-          ...prev,
-          rcNumber: data.rc_number || '',
-          taxId: data.tax_number || '',
-          vatNumber: data.vat_number || '',
-          registrationDate: data.registration_date || ''
-        }));
-      } else {
-        console.log("No existing profile data found");
-      }
-      
-      setDataFetched(true);
-    } catch (error) {
-      console.error("Error in fetchExistingData:", error);
-      // Continue with empty form data
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, dataFetched]);
-
   useEffect(() => {
-    fetchExistingData();
-  }, [fetchExistingData]);
+    const fetchProfileData = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setIsLoading(true);
+        console.log("Fetching profile for user ID:", user.id);
+        
+        // First check if the profile exists
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error fetching profile:', error);
+          setIsLoading(false);
+          return;
+        }
+        
+        if (data) {
+          setBusinessInfo({
+            name: data.business_name || "",
+            type: data.business_type || "",
+            industry: data.industry || "",
+            size: "",
+            country: "Nigeria",
+            state: "",
+            city: "",
+            address: data.address || "",
+            phone: data.phone || "",
+            website: data.website || ""
+          });
+          
+          setLegalInfo({
+            rcNumber: data.rc_number || "",
+            taxId: data.tax_number || "",
+            vatNumber: data.vat_number || ""
+          });
+          
+          if (user.onboardingCompleted) {
+            navigate('/dashboard');
+          }
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfileData();
+  }, [user, navigate]);
 
   const saveProfile = async (): Promise<boolean> => {
-    if (!user) {
-      toast.error("User not authenticated");
-      return false;
-    }
-
-    setIsSaving(true);
-    console.log("Saving profile data for user:", user.id);
-
     try {
-      const { error } = await supabase
+      if (!user?.id) {
+        toast.error("User ID is missing. Please try logging in again.");
+        return false;
+      }
+      
+      // Check if the user is authenticated in Supabase
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        console.error("No active Supabase session found");
+        toast.error("Your session has expired. Please log in again.");
+        return false;
+      }
+      
+      setIsSaving(true);
+      console.log("Saving profile for user ID:", user.id);
+      console.log("Profile data being saved:", {
+        id: user.id,
+        business_name: businessInfo.name,
+        industry: businessInfo.industry,
+        tax_number: legalInfo.taxId || null,
+        rc_number: legalInfo.rcNumber,
+        business_type: businessInfo.type,
+        vat_number: legalInfo.vatNumber || null,
+        phone: businessInfo.phone,
+        website: businessInfo.website,
+        address: businessInfo.address
+      });
+      
+      const { data, error } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
           business_name: businessInfo.name,
-          business_type: businessInfo.type,
           industry: businessInfo.industry,
-          address: businessInfo.address,
+          tax_number: legalInfo.taxId || null,
+          rc_number: legalInfo.rcNumber,
+          business_type: businessInfo.type,
+          vat_number: legalInfo.vatNumber || null,
           phone: businessInfo.phone,
           website: businessInfo.website,
-          rc_number: legalInfo.rcNumber,
-          tax_number: legalInfo.taxId || null,
-          vat_number: legalInfo.vatNumber || null,
-          registration_date: legalInfo.registrationDate || null
-        });
+          address: businessInfo.address
+        })
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving profile:', error);
+        toast.error(error.message || "Failed to save business profile");
+        return false;
+      }
+
+      console.log("Profile saved successfully:", data);
+      await completeOnboarding(user);
       
-      console.log("Profile saved successfully");
+      toast.success("Setup completed! Welcome to DigiBooks");
+      
+      // Navigate to dashboard after successful save
+      navigate("/dashboard", { replace: true });
       return true;
     } catch (error: any) {
-      console.error("Error saving profile:", error);
-      toast.error(error.message || "Failed to save profile");
+      console.error('Error saving profile:', error);
+      toast.error(error.message || "Failed to save business profile");
       return false;
     } finally {
       setIsSaving(false);
@@ -146,6 +186,7 @@ export const useOnboardingData = () => {
     setSelectedFeatures,
     isLoading,
     isSaving,
+    setIsSaving,
     saveProfile
   };
 };

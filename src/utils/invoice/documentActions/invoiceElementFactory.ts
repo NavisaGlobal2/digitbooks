@@ -3,24 +3,10 @@ import { format } from "date-fns";
 import { InvoiceDetails } from "../pdfSections/types";
 import { calculateSubtotal, calculateTax, calculateTotal } from "../calculations";
 
-// Debounce & cache support
-let cachedElement: HTMLElement | null = null;
-let lastInvoiceDetails: string = '';
-
 /**
  * Creates a temporary invoice HTML element for rendering to PDF/image
- * with performance optimizations
  */
 export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): HTMLElement => {
-  // Cache based on JSON representation of invoice details
-  const detailsJSON = JSON.stringify(invoiceDetails);
-  
-  // Return cached element if it exists and details haven't changed
-  if (cachedElement && detailsJSON === lastInvoiceDetails) {
-    return cachedElement;
-  }
-  
-  // Create new element if cache miss
   const tempDiv = document.createElement('div');
   tempDiv.className = 'invoice-preview-temp';
   tempDiv.style.position = 'absolute';
@@ -36,7 +22,6 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
       src="${invoiceDetails.logoPreview}" 
       style="height: 60px; width: auto; object-fit: contain;" 
       crossorigin="anonymous" 
-      loading="lazy"
       alt="Company Logo"
     />`;
   }
@@ -44,7 +29,7 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
   // Ensure invoice items array exists
   const invoiceItems = invoiceDetails.invoiceItems || [];
   
-  // Create a simplified invoice layout with optimized rendering
+  // Create a simplified invoice layout
   tempDiv.innerHTML = `
     <div style="font-family: Arial, sans-serif;">
       <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
@@ -129,15 +114,5 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
     </div>
   `;
   
-  // Update cache
-  cachedElement = tempDiv;
-  lastInvoiceDetails = detailsJSON;
-  
   return tempDiv;
-};
-
-// Add a function to clear the cache when needed
-export const clearInvoiceElementCache = () => {
-  cachedElement = null;
-  lastInvoiceDetails = '';
 };
