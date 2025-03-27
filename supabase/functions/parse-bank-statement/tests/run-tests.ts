@@ -7,6 +7,7 @@ console.log("=== Running parse-bank-statement tests ===");
 import './parsers/helpers.test.ts';
 import './parsers/csvParser.test.ts';
 import './parsers/transactionDetector.test.ts';
+import './parsers/excelParser.test.ts'; // Add this line to test our new Excel parser
 import './database.test.ts';
 import './formProcessor.test.ts';
 import './validation.test.ts';
