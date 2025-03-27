@@ -6,8 +6,7 @@ import TransactionBulkActions from "./upload/TransactionBulkActions";
 import TransactionTable from "./upload/TransactionTable";
 import TaggingDialogFooter from "./upload/TaggingDialogFooter";
 import { useTransactionTagging } from "./upload/useTransactionTagging";
-import { useEffect, useState } from "react";
-import { v4 as uuidv4 } from 'uuid';
+import { ExpenseCategory } from "@/types/expense";
 
 interface TransactionTaggingDialogProps {
   open: boolean;
@@ -22,28 +21,6 @@ const TransactionTaggingDialog = ({
   transactions,
   onTaggingComplete,
 }: TransactionTaggingDialogProps) => {
-  // Ensure all transactions have unique IDs
-  const [processedTransactions, setProcessedTransactions] = useState<ParsedTransaction[]>([]);
-  
-  // Process transactions when dialog opens or transactions change
-  useEffect(() => {
-    if (open && transactions.length > 0) {
-      console.log(`TransactionTaggingDialog processing ${transactions.length} transactions`);
-      
-      // Ensure all transactions have unique IDs
-      const withUniqueIds = transactions.map(t => ({
-        ...t,
-        id: t.id || uuidv4(), // Ensure each transaction has a unique ID
-        selected: false // Start with no selection
-      }));
-      
-      console.log(`Processed ${withUniqueIds.length} transactions with unique IDs`);
-      console.log(`First few transaction IDs: ${withUniqueIds.slice(0, 3).map(t => t.id).join(', ')}`);
-      
-      setProcessedTransactions(withUniqueIds);
-    }
-  }, [open, transactions]);
-
   const {
     taggedTransactions,
     selectAll,
@@ -55,12 +32,10 @@ const TransactionTaggingDialog = ({
     handleSelectTransaction,
     handleSetCategory,
     handleSetCategoryForAll
-  } = useTransactionTagging(processedTransactions);
+  } = useTransactionTagging(transactions);
 
   const handleSave = () => {
-    console.log(`Saving ${taggedCount} tagged transactions out of ${selectedCount} selected`);
     onTaggingComplete(taggedTransactions);
-    onOpenChange(false);
   };
 
   return (
@@ -76,7 +51,6 @@ const TransactionTaggingDialog = ({
           selectAll={selectAll}
           onSelectAllChange={handleSelectAll}
           onCategoryForAllChange={handleSetCategoryForAll}
-          selectedCount={selectedCount}
         />
         
         <TransactionTable 

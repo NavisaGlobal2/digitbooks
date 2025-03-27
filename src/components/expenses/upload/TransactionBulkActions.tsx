@@ -14,14 +14,12 @@ interface TransactionBulkActionsProps {
   selectAll: boolean;
   onSelectAllChange: (checked: boolean) => void;
   onCategoryForAllChange: (category: ExpenseCategory) => void;
-  selectedCount: number;
 }
 
 const TransactionBulkActions = ({
   selectAll,
   onSelectAllChange,
-  onCategoryForAllChange,
-  selectedCount
+  onCategoryForAllChange
 }: TransactionBulkActionsProps) => {
   return (
     <div className="p-4 space-y-2 border-b">
@@ -30,11 +28,7 @@ const TransactionBulkActions = ({
           <Checkbox 
             id="select-all" 
             checked={selectAll} 
-            onCheckedChange={(checked) => {
-              const isChecked = checked === true;
-              console.log(`Select all checkbox changed to: ${isChecked}`);
-              onSelectAllChange(isChecked);
-            }}
+            onCheckedChange={onSelectAllChange}
           />
           <label htmlFor="select-all" className="text-sm font-medium">
             Select all debit transactions
@@ -42,15 +36,9 @@ const TransactionBulkActions = ({
         </div>
         
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-500">
-            Set category for {selectedCount} selected:
-          </span>
+          <span className="text-sm text-gray-500">Set category for all selected:</span>
           <Select 
-            onValueChange={(value) => {
-              console.log(`Bulk setting category ${value} for ${selectedCount} selected transactions`);
-              onCategoryForAllChange(value as ExpenseCategory);
-            }}
-            disabled={selectedCount === 0}
+            onValueChange={(value) => onCategoryForAllChange(value as ExpenseCategory)}
           >
             <SelectTrigger className="w-40 h-8">
               <SelectValue placeholder="Choose category" />
