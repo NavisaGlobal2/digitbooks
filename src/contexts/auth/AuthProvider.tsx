@@ -1,3 +1,4 @@
+
 import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
@@ -13,11 +14,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const getInitialSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
-        if (session) {
+        if (session && isMounted) {
           console.log("Initial session user metadata:", session.user.user_metadata);
           
           const userData = {
@@ -34,7 +37,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } catch (error) {
         console.error("Error getting initial session:", error);
       } finally {
-        setIsLoading(false);
+        // Only set loading to false if component is still mounted
+        if (isMounted) {
+          console.log("Initial auth loading complete");
+          setIsLoading(false);
+        }
       }
     };
 
@@ -45,7 +52,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.log("Auth state change:", event, session?.user?.id);
         console.log("Auth state change user metadata:", session?.user?.user_metadata);
         
-        if (session) {
+        if (session && isMounted) {
           const userData = {
             id: session.user.id,
             email: session.user.email,
@@ -55,16 +62,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           };
           
           setUser(userData);
-        } else {
+        } else if (isMounted) {
           setUser(null);
         }
       }
     );
 
+    // Cleanup function
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
+
+  // If auth is still loading but taking too long, log a warning
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        console.warn("Auth loading is taking longer than expected");
+      }
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, [isLoading]);
 
   const isAuthenticated = !!user;
 
