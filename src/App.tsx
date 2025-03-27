@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  Outlet,
 } from 'react-router-dom';
 import Index from './pages/Index';
 import About from './pages/About';
@@ -26,28 +28,22 @@ import NotFound from './pages/NotFound';
 import { useAuth } from './contexts/auth';
 import { Toaster } from "@/components/ui/sonner"
 import Invitation from './pages/Invitation';
+import { RequireAuth } from './components/auth/RequireAuth';
 
 function App() {
-  const { user, loading } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
+    // Once we know the authentication state, we're no longer initializing
+    if (isAuthenticated !== undefined) {
       setIsInitializing(false);
     }
-  }, [loading]);
+  }, [isAuthenticated]);
 
-  const RequireAuth = ({ children }: { children: React.ReactNode }) => {
-    if (isInitializing) {
-      return <div>Loading...</div>;
-    }
-
-    if (!user) {
-      return <Navigate to="/auth" />;
-    }
-
-    return <>{children}</>;
-  };
+  if (isInitializing) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Router>
@@ -62,7 +58,7 @@ function App() {
         <Route path="/invitation" element={<Invitation />} />
       
         {/* Protected routes */}
-        <Route element={<RequireAuth />}>
+        <Route element={<RequireAuth><Outlet /></RequireAuth>}>
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/revenue" element={<Revenue />} />
