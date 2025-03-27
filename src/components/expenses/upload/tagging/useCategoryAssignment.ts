@@ -10,32 +10,31 @@ export const useCategoryAssignment = (
   // Derived state
   const taggedCount = taggedTransactions.filter(t => t.selected && t.category).length;
 
-  // Set category for a single transaction - ensuring it only affects the specified transaction
+  // Set category for a single transaction
   const handleSetCategory = useCallback((id: string, category: ExpenseCategory) => {
     if (!id) {
       console.error("Attempted to set category with undefined transaction ID");
       return;
     }
     
-    console.log(`Setting category ${category} for transaction ${id} ONLY`);
+    console.log(`Setting category ${category} for transaction ${id}`);
     
     setTaggedTransactions(prevTransactions => {
-      // Find the transaction to update
+      // Find the transaction to update (for debugging)
       const transactionToUpdate = prevTransactions.find(t => t.id === id);
       if (!transactionToUpdate) {
         console.error(`Transaction with ID ${id} not found`);
         return prevTransactions;
       }
       
-      // Log before state
       console.log(`Before update: Transaction ${id} has category ${transactionToUpdate.category || 'none'}`);
       
-      // Return a new array with the updated transaction
+      // Create new array with the updated transaction
       const updatedTransactions = prevTransactions.map(t => 
         t.id === id ? { ...t, category } : t
       );
       
-      // Verify the update was applied correctly
+      // Verify the update (for debugging)
       const updatedTransaction = updatedTransactions.find(t => t.id === id);
       console.log(`After update: Transaction ${id} has category ${updatedTransaction?.category || 'none'}`);
       
@@ -43,15 +42,15 @@ export const useCategoryAssignment = (
     });
   }, [setTaggedTransactions]);
 
-  // Set category only for selected transactions
+  // Set category for selected transactions
   const handleSetCategoryForAll = useCallback((category: ExpenseCategory) => {
-    console.log(`Setting category ${category} for ALL SELECTED transactions only`);
+    console.log(`Setting category ${category} for ALL SELECTED transactions`);
     
     setTaggedTransactions(prevTransactions => {
       const selectedIds = prevTransactions.filter(t => t.selected).map(t => t.id);
       console.log(`Applying category to ${selectedIds.length} selected transactions: ${selectedIds.join(', ')}`);
       
-      // Create a new array with updated transactions
+      // Create new array with updated transactions
       return prevTransactions.map(t => 
         t.selected ? { ...t, category } : t
       );

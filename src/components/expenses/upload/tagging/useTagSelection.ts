@@ -48,15 +48,7 @@ export const useTagSelection = (initialTransactions: ParsedTransaction[]) => {
     console.log(`Transaction ${id} selection changed to: ${checked}`);
     
     setTaggedTransactions(prevTransactions => {
-      // Find the transaction to update
-      const transactionToUpdate = prevTransactions.find(t => t.id === id);
-      if (!transactionToUpdate) {
-        console.error(`Transaction with ID ${id} not found in selection handler`);
-        console.log("Available transaction IDs:", prevTransactions.map(t => t.id).join(", "));
-        return prevTransactions;
-      }
-      
-      // Return a new array with the updated transaction
+      // Create a new array with the updated transaction
       return prevTransactions.map(t => 
         t.id === id ? { ...t, selected: checked } : t
       );

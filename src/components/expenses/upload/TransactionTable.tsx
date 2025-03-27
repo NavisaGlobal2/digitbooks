@@ -33,6 +33,11 @@ const TransactionTable = ({
   
   console.log(`TransactionTable: ${transactions.length} total (${debitCount} debits, ${creditCount} credits, ${selectedCount} selected)`);
   
+  const handleCheckboxChange = (transactionId: string, checked: boolean) => {
+    console.log(`[DEBUG] Checkbox change for ${transactionId}: ${checked}`);
+    onSelectTransaction(transactionId, checked);
+  };
+  
   return (
     <div className="flex-1 overflow-auto p-0 max-h-[calc(90vh-210px)]">
       <Table>
@@ -51,10 +56,12 @@ const TransactionTable = ({
             <TableRow key={transaction.id} className={!transaction.selected ? "opacity-70" : ""}>
               <TableCell>
                 <Checkbox
+                  id={`chk-${transaction.id}`}
                   checked={transaction.selected}
                   onCheckedChange={(checked) => {
-                    console.log(`Checkbox for transaction ${transaction.id} changed to ${checked}`);
-                    onSelectTransaction(transaction.id, checked as boolean);
+                    const isChecked = checked === true;
+                    console.log(`Checkbox for transaction ${transaction.id} changed to ${isChecked}`);
+                    handleCheckboxChange(transaction.id, isChecked);
                   }}
                   disabled={transaction.type === 'credit'} // Can't select credit transactions
                 />

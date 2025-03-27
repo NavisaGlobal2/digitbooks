@@ -10,11 +10,11 @@ import { v4 as uuidv4 } from 'uuid';
 export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) => {
   console.log(`useTransactionTagging initialized with ${initialTransactions.length} transactions`);
   
-  // Ensure each transaction has a unique ID
+  // Ensure each transaction has a unique ID before passing to hooks
   const validatedTransactions = initialTransactions.map(t => ({
     ...t,
-    id: t.id || uuidv4(), // Use a proper UUID library
-    selected: t.type === 'debit' // Only pre-select debit transactions
+    id: t.id || uuidv4(), // Use UUID for reliable unique IDs
+    selected: false // Always initialize with selected=false
   }));
   
   const {
@@ -35,12 +35,17 @@ export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) 
 
   const { isReadyToSave } = useTransactionValidation(taggedTransactions);
 
-  // Add debugging to track transaction IDs
+  // Add debugging to track transaction IDs and selection state
   useEffect(() => {
     if (taggedTransactions.length > 0) {
-      console.log("Current transaction IDs:", 
-        taggedTransactions.map(t => `${t.id}${t.selected ? ' (selected)' : ''}`).join(", ")
-      );
+      const selectedTransactions = taggedTransactions.filter(t => t.selected);
+      console.log(`Current transaction state: ${taggedTransactions.length} total, ${selectedTransactions.length} selected`);
+      
+      if (selectedTransactions.length > 0) {
+        console.log("Selected transaction IDs:", 
+          selectedTransactions.map(t => t.id).join(", ")
+        );
+      }
       
       // Log category assignment stats
       const categorizedCount = taggedTransactions.filter(t => t.selected && t.category).length;
