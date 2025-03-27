@@ -87,51 +87,60 @@ export const parseExcelFile = async (
     const formData = new FormData();
     formData.append('file', file);
     
-    // Make sure we're using the latest session token
+    console.log('Preparing to call parse-bank-statement edge function...');
+    
+    // Create a properly formatted headers object
     const headers = new Headers();
     headers.append('Authorization', `Bearer ${session.access_token}`);
     
-    console.log('Calling edge function with auth token:', session.access_token.substring(0, 10) + '...');
+    // Log token for debugging (partially redacted for security)
+    console.log('Using auth token:', session.access_token.substring(0, 5) + '...' + session.access_token.substring(session.access_token.length - 5));
     
-    fetch('https://naxmgtoskeijvdofqyik.supabase.co/functions/v1/parse-bank-statement', {
+    // Call the edge function with proper authentication header
+    const response = await fetch('https://naxmgtoskeijvdofqyik.supabase.co/functions/v1/parse-bank-statement', {
       method: 'POST',
       body: formData,
       headers: headers
-    })
-    .then(response => {
-      if (!response.ok) {
-        return response.text().then(text => {
-          console.error('Error response from edge function:', text);
-          throw new Error(`Failed to parse Excel file: ${text}`);
-        });
-      }
-      return response.json();
-    })
-    .then(data => {
-      if (!data.transactions || !Array.isArray(data.transactions) || data.transactions.length === 0) {
-        onError('No valid transactions found in the file');
+    });
+    
+    console.log('Edge function response status:', response.status);
+    
+    // Handle error responses
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error response from edge function:', errorText);
+      
+      // Special handling for auth errors
+      if (response.status === 401) {
+        onError('Authentication failed. Please sign out and sign in again.');
         return;
       }
       
-      // Convert the transactions to the expected format
-      const parsedTransactions: ParsedTransaction[] = data.transactions.map((t: any, index: number) => ({
-        id: `trans-${index}`,
-        date: new Date(t.date),
-        description: t.description,
-        amount: t.amount,
-        type: t.type,
-        selected: t.type === 'debit', // Auto-select debit transactions
-      }));
-      
-      onComplete(parsedTransactions);
-    })
-    .catch(error => {
-      console.error('Error parsing Excel:', error);
-      onError(error.message || 'Failed to parse the Excel file. Please check the format and try again.');
-    });
+      throw new Error(`Failed to parse Excel file: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Edge function response data:', data);
+    
+    if (!data.transactions || !Array.isArray(data.transactions) || data.transactions.length === 0) {
+      onError('No valid transactions found in the file');
+      return;
+    }
+    
+    // Convert the transactions to the expected format
+    const parsedTransactions: ParsedTransaction[] = data.transactions.map((t: any, index: number) => ({
+      id: `trans-${index}`,
+      date: new Date(t.date),
+      description: t.description,
+      amount: t.amount,
+      type: t.type,
+      selected: t.type === 'debit', // Auto-select debit transactions
+    }));
+    
+    onComplete(parsedTransactions);
   } catch (error) {
-    console.error('Session error:', error);
-    onError('Authentication error. Please try signing in again.');
+    console.error('Error parsing Excel:', error);
+    onError(error.message || 'Failed to parse the Excel file. Please check the format and try again.');
   }
 };
 
