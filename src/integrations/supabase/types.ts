@@ -401,6 +401,7 @@ export type Database = {
           created_at: string
           id: string
           industry: string | null
+          logo_url: string | null
           phone: string | null
           rc_number: string | null
           registration_date: string | null
@@ -415,6 +416,7 @@ export type Database = {
           created_at?: string
           id: string
           industry?: string | null
+          logo_url?: string | null
           phone?: string | null
           rc_number?: string | null
           registration_date?: string | null
@@ -429,6 +431,7 @@ export type Database = {
           created_at?: string
           id?: string
           industry?: string | null
+          logo_url?: string | null
           phone?: string | null
           rc_number?: string | null
           registration_date?: string | null
