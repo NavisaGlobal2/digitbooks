@@ -584,6 +584,7 @@ export type Database = {
       }
       team_invitations: {
         Row: {
+          business_id: string | null
           created_at: string
           email: string
           expires_at: string
@@ -597,6 +598,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          business_id?: string | null
           created_at?: string
           email: string
           expires_at?: string
@@ -610,6 +612,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          business_id?: string | null
           created_at?: string
           email?: string
           expires_at?: string
@@ -627,6 +630,7 @@ export type Database = {
       team_members: {
         Row: {
           avatar: string | null
+          business_id: string | null
           created_at: string
           email: string
           id: string
@@ -638,6 +642,7 @@ export type Database = {
         }
         Insert: {
           avatar?: string | null
+          business_id?: string | null
           created_at?: string
           email: string
           id?: string
@@ -649,6 +654,7 @@ export type Database = {
         }
         Update: {
           avatar?: string | null
+          business_id?: string | null
           created_at?: string
           email?: string
           id?: string

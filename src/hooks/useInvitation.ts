@@ -8,6 +8,7 @@ interface Invitation {
   email: string;
   name: string;
   role: string;
+  business_id?: string;
 }
 
 export const useInvitation = (token: string | null) => {
@@ -31,13 +32,29 @@ export const useInvitation = (token: string | null) => {
         // Validate the token with Supabase
         const { data, error } = await supabase
           .from('team_invitations')
-          .select('email, name, role, status')
+          .select('email, name, role, status, business_id, expires_at')
           .eq('token', token)
           .single();
         
-        if (error || !data || data.status !== 'pending') {
-          console.error("Invalid or expired invitation:", error || "Status is not pending");
+        if (error || !data) {
+          console.error("Invalid invitation:", error || "No data returned");
           toast.error("This invitation is invalid or has expired");
+          navigate("/auth");
+          return;
+        }
+        
+        // Check if invitation is pending and not expired
+        if (data.status !== 'pending') {
+          console.error("Invitation is not pending", data.status);
+          toast.error("This invitation has already been used");
+          navigate("/auth");
+          return;
+        }
+        
+        // Check expiration
+        if (data.expires_at && new Date(data.expires_at) < new Date()) {
+          console.error("Invitation has expired");
+          toast.error("This invitation has expired");
           navigate("/auth");
           return;
         }
@@ -45,7 +62,8 @@ export const useInvitation = (token: string | null) => {
         setInvitation({
           email: data.email,
           name: data.name,
-          role: data.role
+          role: data.role,
+          business_id: data.business_id
         });
         setIsValid(true);
       } catch (error) {
@@ -65,22 +83,23 @@ export const useInvitation = (token: string | null) => {
     try {
       setIsSubmitting(true);
       
-      // Call the Supabase RPC function directly with proper typing
+      // Call the Supabase RPC function with proper typing
       const { error } = await supabase.rpc('accept_team_invitation', {
         p_token: token
       });
       
       if (error) {
-        // Check for specific error messages to provide better user feedback
+        // The updated function should handle missing team member records
+        // but we'll still check for specific error messages as a fallback
         if (error.message.includes('team member record not found')) {
-          console.warn("Team member record not found, but proceeding with invitation acceptance");
-          // We can continue since our updated function will handle this case
+          console.warn("Team member record not found, but the function should handle this case");
+          // Continue since our updated function should have handled this
         } else {
           throw error;
         }
       }
       
-      toast.success("Invitation accepted successfully!");
+      toast.success("Team invitation accepted successfully!");
       
       // Redirect to dashboard
       setTimeout(() => {
