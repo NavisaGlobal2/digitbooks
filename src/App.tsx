@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   BrowserRouter as Router,
@@ -13,7 +14,7 @@ import { RequireAuth } from './components/auth/RequireAuth';
 
 // Eagerly load critical pages for better initial load experience
 import Index from './pages/Index';
-import Auth from './pages/Auth'; // Import Auth directly to avoid module fetch issues
+import Auth from './pages/Auth'; // Import Auth directly to avoid dynamic import issues
 
 // Group lazy loaded routes by functional area
 // Public pages
@@ -64,7 +65,7 @@ function App() {
       // Use requestAnimationFrame for better performance
       const animationFrame = requestAnimationFrame(() => {
         // Use a shorter timeout to improve perceived performance
-        const timer = setTimeout(() => setIsInitializing(false), 500);
+        const timer = setTimeout(() => setIsInitializing(false), 300);
         return () => clearTimeout(timer);
       });
       
