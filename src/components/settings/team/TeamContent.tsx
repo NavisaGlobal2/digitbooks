@@ -1,12 +1,12 @@
 
-import { useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { TeamMember } from "@/types/teamMember";
+import { Button } from "@/components/ui/button";
+import { RefreshCcw, Users, WifiOff } from "lucide-react";
 import { TeamMemberList } from "./TeamMemberList";
-import { TeamConnectionError } from "./TeamConnectionError";
 import { TeamLoadingState } from "./TeamLoadingState";
+import { TeamConnectionError } from "./TeamConnectionError";
 import { TeamErrorAlert } from "./TeamErrorAlert";
-import { EmptyState } from "../../ui/empty-state";
-import { UserPlus } from "lucide-react";
 
 interface TeamContentProps {
   isLoading: boolean;
@@ -18,6 +18,7 @@ interface TeamContentProps {
   onDelete: (member: TeamMember) => void;
   onRetry: () => void;
   openInviteDialog: () => void;
+  canManage?: boolean;
 }
 
 export const TeamContent = ({
@@ -30,6 +31,7 @@ export const TeamContent = ({
   onDelete,
   onRetry,
   openInviteDialog,
+  canManage = false
 }: TeamContentProps) => {
   if (isLoading) {
     return <TeamLoadingState />;
@@ -45,25 +47,28 @@ export const TeamContent = ({
 
   if (members.length === 0) {
     return (
-      <EmptyState
-        icon={<UserPlus className="h-8 w-8 text-gray-400" />}
-        title="No team members yet"
-        description="Invite your colleagues to collaborate with you"
-        primaryAction={{
-          label: "Invite Team Member",
-          onClick: openInviteDialog,
-          icon: <UserPlus className="h-4 w-4 mr-2" />
-        }}
-      />
+      <div className="text-center py-10">
+        <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h3 className="text-lg font-medium mb-2">No team members yet</h3>
+        <p className="text-muted-foreground mb-6">
+          Get started by inviting team members to collaborate
+        </p>
+        {canManage && (
+          <Button onClick={openInviteDialog}>
+            Invite Team Member
+          </Button>
+        )}
+      </div>
     );
   }
 
   return (
-    <TeamMemberList
+    <TeamMemberList 
       members={members}
       searchQuery={searchQuery}
       onEdit={onEdit}
       onDelete={onDelete}
+      canManage={canManage}
     />
   );
 };

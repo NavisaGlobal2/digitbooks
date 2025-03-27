@@ -9,6 +9,7 @@ import { EditTeamMemberDialog } from "./EditTeamMemberDialog";
 import { DeleteTeamMemberDialog } from "./DeleteTeamMemberDialog";
 import { TeamHeaderActions } from "./TeamHeaderActions";
 import { TeamContent } from "./TeamContent";
+import { canManageTeam, canDeleteTeamMember } from "@/lib/team/userPermissions";
 
 export const TeamManagementContainer = () => {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -20,6 +21,7 @@ export const TeamManagementContainer = () => {
   const [isError, setIsError] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
   const [loadAttempted, setLoadAttempted] = useState(false);
+  const [canManage, setCanManage] = useState(false);
   const { user } = useAuth();
 
   const { fetchTeamMembers } = useTeamMembers();
@@ -29,8 +31,14 @@ export const TeamManagementContainer = () => {
     if (!loadAttempted) {
       console.log("Attempting to load team members");
       loadTeamMembers();
+      checkPermissions();
     }
   }, [loadAttempted]);
+
+  const checkPermissions = async () => {
+    const hasPermission = await canManageTeam();
+    setCanManage(hasPermission);
+  };
 
   const loadTeamMembers = async () => {
     console.log("loadTeamMembers function called");
@@ -145,12 +153,26 @@ export const TeamManagementContainer = () => {
     setMembers(members.filter(member => member.id !== memberId));
   };
 
-  const openEditDialog = (member: TeamMember) => {
+  const openEditDialog = async (member: TeamMember) => {
+    const canEdit = await canManageTeam();
+    
+    if (!canEdit) {
+      toast.error("You don't have permission to edit team members");
+      return;
+    }
+    
     setCurrentMember(member);
     setIsEditDialogOpen(true);
   };
 
-  const openDeleteDialog = (member: TeamMember) => {
+  const openDeleteDialog = async (member: TeamMember) => {
+    const canDelete = await canDeleteTeamMember(member.role);
+    
+    if (!canDelete) {
+      toast.error(`You don't have permission to delete ${member.role.toLowerCase()} team members`);
+      return;
+    }
+    
     setCurrentMember(member);
     setIsDeleteDialogOpen(true);
   };
@@ -174,6 +196,7 @@ export const TeamManagementContainer = () => {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onInvite={handleAddMember}
+          canInvite={canManage}
         />
       </CardHeader>
       <CardContent>
@@ -187,6 +210,7 @@ export const TeamManagementContainer = () => {
           onDelete={openDeleteDialog}
           onRetry={handleRetry}
           openInviteDialog={openInviteDialog}
+          canManage={canManage}
         />
 
         <EditTeamMemberDialog

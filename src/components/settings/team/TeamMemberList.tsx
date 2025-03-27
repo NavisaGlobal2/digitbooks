@@ -11,13 +11,15 @@ interface TeamMemberListProps {
   searchQuery: string;
   onEdit: (member: TeamMember) => void;
   onDelete: (member: TeamMember) => void;
+  canManage?: boolean;
 }
 
 export const TeamMemberList = ({ 
   members, 
   searchQuery, 
   onEdit, 
-  onDelete 
+  onDelete,
+  canManage = false
 }: TeamMemberListProps) => {
   const filteredMembers = members.filter(
     (member) =>
@@ -101,7 +103,7 @@ export const TeamMemberList = ({
                   </div>
                 </Badge>
 
-                {member.role !== "Owner" && (
+                {canManage && member.role !== "Owner" && (
                   <>
                     <Button
                       variant="ghost"
