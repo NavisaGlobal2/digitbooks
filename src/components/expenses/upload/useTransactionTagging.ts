@@ -1,5 +1,5 @@
 
-import { ParsedTransaction } from "./parsers/types";
+import { ParsedTransaction } from "./parsers";
 import { ExpenseCategory } from "@/types/expense";
 import { useTagSelection } from "./tagging/useTagSelection";
 import { useCategoryAssignment } from "./tagging/useCategoryAssignment";

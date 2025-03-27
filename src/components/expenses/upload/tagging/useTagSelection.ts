@@ -4,7 +4,9 @@ import { ParsedTransaction } from "../parsers/types";
 
 export const useTagSelection = (initialTransactions: ParsedTransaction[]) => {
   const [taggedTransactions, setTaggedTransactions] = useState<ParsedTransaction[]>(initialTransactions);
-  const [selectAll, setSelectAll] = useState(true);
+  const [selectAll, setSelectAll] = useState(false); // Changed default to false to avoid auto-selecting all
+
+  // Effect to handle initial state removed - we'll let users explicitly select items
 
   // Derived state
   const selectedCount = taggedTransactions.filter(t => t.selected).length;
