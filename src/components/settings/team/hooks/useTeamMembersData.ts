@@ -22,7 +22,7 @@ export const useTeamMembersData = () => {
         const data = await fetchTeamMembers();
         
         // Always ensure at least the owner is displayed even if DB fetch fails
-        if ((data.length === 0 || data.error) && user) {
+        if (data.length === 0 && user) {
           // Create a fallback owner member when no data is available
           const ownerMember: TeamMember = {
             id: "owner",
@@ -37,13 +37,13 @@ export const useTeamMembersData = () => {
           setMembers([ownerMember]);
         } else {
           // Use actual fetched data
-          setMembers(Array.isArray(data) ? data : []);
+          setMembers(data);
         }
       } catch (error) {
         console.error("Error loading team members:", error);
         // Don't set error state for the recursive policy error 
         // so UI doesn't show error state
-        if (typeof error === 'object' && error && 'code' !== '42P17') {
+        if (typeof error === 'object' && error && (error as any).code !== '42P17') {
           setIsError(true);
         }
         
