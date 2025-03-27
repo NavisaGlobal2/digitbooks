@@ -37,11 +37,14 @@ const BankStatementUploadDialog = ({
   const [parsedTransactions, setParsedTransactions] = useState<ParsedTransaction[]>([]);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingStep, setProcessingStep] = useState<string>("");
+  const [isProcessingCancelled, setIsProcessingCancelled] = useState(false);
 
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
+    if (isProcessingCancelled) return;
+    
     setParsedTransactions(transactions);
     setProcessingProgress(100);
-    setProcessingStep("");
+    setProcessingStep("Complete!");
     setShowTaggingDialog(true);
   };
 
@@ -66,9 +69,16 @@ const BankStatementUploadDialog = ({
     // Simulate progress for long-running operations
     setProcessingProgress(0);
     setProcessingStep("Preparing file...");
+    setIsProcessingCancelled(false);
     
     const interval = setInterval(() => {
       setProcessingProgress((prev) => {
+        // Don't update if processing was cancelled
+        if (isProcessingCancelled) {
+          clearInterval(interval);
+          return prev;
+        }
+        
         // Increment progress, but never reach 100% until the actual process completes
         if (prev < 90) {
           // Update the processing step based on progress
@@ -84,7 +94,9 @@ const BankStatementUploadDialog = ({
     }, 800);
     
     // Clear the interval when component unmounts or parsing completes
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   };
 
   const handleParseFile = () => {
@@ -97,6 +109,14 @@ const BankStatementUploadDialog = ({
         setProcessingStep("");
       }
     });
+  };
+
+  const handleCancelProcessing = () => {
+    setIsProcessingCancelled(true);
+    setProcessingProgress(0);
+    setProcessingStep("");
+    clearFile();
+    toast.info("Processing cancelled");
   };
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
@@ -159,11 +179,15 @@ const BankStatementUploadDialog = ({
   };
 
   const handleClose = () => {
-    clearFile();
-    setParsedTransactions([]);
-    setProcessingProgress(0);
-    setProcessingStep("");
-    onOpenChange(false);
+    if (uploading) {
+      handleCancelProcessing();
+    } else {
+      clearFile();
+      setParsedTransactions([]);
+      setProcessingProgress(0);
+      setProcessingStep("");
+      onOpenChange(false);
+    }
   };
 
   return (
@@ -217,7 +241,9 @@ const BankStatementUploadDialog = ({
               <ul className="list-disc list-inside ml-2">
                 <li>CSV files from most Nigerian banks</li>
                 <li>Excel files (.xlsx, .xls) with transaction data</li>
+                <li>PDF files require server-side processing</li>
                 <li>Files should include date, description, and amount columns</li>
+                <li>Maximum file size: 10MB</li>
               </ul>
             </div>
             
@@ -226,6 +252,7 @@ const BankStatementUploadDialog = ({
               onParse={handleParseFile}
               uploading={uploading}
               disabled={!file}
+              showCancelButton={uploading}
             />
           </div>
         </DialogContent>
@@ -237,7 +264,7 @@ const BankStatementUploadDialog = ({
           open={showColumnMapping}
           onOpenChange={setShowColumnMapping}
           headers={csvParseResult.headers}
-          sampleData={csvParseResult.rows.slice(csvParseResult.hasHeader ? 1 : 0)}
+          sampleData={csvParseResult.rows.slice(csvParseResult.hasHeader ? 1 : 0, csvParseResult.hasHeader ? 6 : 5)}
           onMappingComplete={handleColumnMappingComplete}
         />
       )}

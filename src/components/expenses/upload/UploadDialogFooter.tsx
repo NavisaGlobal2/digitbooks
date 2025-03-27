@@ -6,13 +6,15 @@ interface UploadDialogFooterProps {
   onParse: () => void;
   uploading: boolean;
   disabled: boolean;
+  showCancelButton?: boolean;
 }
 
 const UploadDialogFooter = ({ 
   onCancel, 
   onParse, 
   uploading, 
-  disabled 
+  disabled,
+  showCancelButton = false
 }: UploadDialogFooterProps) => {
   return (
     <div className="flex justify-end space-x-2 pt-2">
@@ -20,7 +22,7 @@ const UploadDialogFooter = ({
         variant="outline" 
         onClick={onCancel}
       >
-        Cancel
+        {showCancelButton ? "Cancel Upload" : "Cancel"}
       </Button>
       <Button 
         onClick={onParse} 

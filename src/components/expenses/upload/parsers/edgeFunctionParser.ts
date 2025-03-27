@@ -27,28 +27,27 @@ export const parseViaEdgeFunction = async (
     console.log('Preparing to call parse-bank-statement edge function...');
     
     // Set up a timeout for the function call
-    const timeoutDuration = 30000; // 30 seconds
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Request timed out after 30 seconds')), timeoutDuration);
-    });
+    const timeoutDuration = 45000; // 45 seconds
+    const functionController = new AbortController();
+    const timeoutId = setTimeout(() => functionController.abort(), timeoutDuration);
     
     try {
       console.log('Using supabase.functions.invoke to call the edge function');
       
-      // Call the edge function with timeout
-      const functionPromise = supabase.functions.invoke(
+      // Call the edge function with abort controller
+      const { data, error: functionError } = await supabase.functions.invoke(
         'parse-bank-statement',
         {
           body: formData,
           headers: {
             Authorization: `Bearer ${accessToken}`
-          }
+          },
+          signal: functionController.signal
         }
       );
       
-      // Race the function call against the timeout
-      const result = await Promise.race([functionPromise, timeoutPromise]);
-      const { data, error: functionError } = result as any;
+      // Clear the timeout since the call completed
+      clearTimeout(timeoutId);
       
       if (functionError) {
         console.error('Edge function error:', functionError);
@@ -62,15 +61,20 @@ export const parseViaEdgeFunction = async (
       
       console.log('Edge function response:', data);
       
+      // Set up a timeout for the database fetch
+      const fetchController = new AbortController();
+      const fetchTimeoutId = setTimeout(() => fetchController.abort(), timeoutDuration);
+      
       // After successful function call, fetch the transactions with timeout
-      const fetchPromise = supabase
+      const { data: transactionsData, error: fetchError } = await supabase
         .from('uploaded_bank_lines')
         .select('*')
         .eq('upload_batch_id', data.batchId)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .abortSignal(fetchController.signal);
       
-      const fetchResult = await Promise.race([fetchPromise, timeoutPromise]);
-      const { data: transactionsData, error: fetchError } = fetchResult as any;
+      // Clear the fetch timeout
+      clearTimeout(fetchTimeoutId);
       
       if (fetchError) {
         console.error('Failed to retrieve transactions:', fetchError);
@@ -103,7 +107,15 @@ export const parseViaEdgeFunction = async (
       
       return true;
     } catch (functionError: any) {
+      // Clear any pending timeouts
+      clearTimeout(timeoutId);
+      
       console.error('Error calling edge function:', functionError);
+      
+      // Check if this is an abort error (timeout)
+      if (functionError.name === 'AbortError') {
+        throw new Error('Server processing timed out after 45 seconds. Please try client-side processing or a smaller file.');
+      }
       
       // Try to extract a more helpful error message
       let errorMessage = 'Failed to process file via server. Falling back to client-side processing.';

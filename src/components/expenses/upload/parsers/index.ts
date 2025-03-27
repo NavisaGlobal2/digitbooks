@@ -20,8 +20,17 @@ export const parseStatementFile = (
     return;
   }
   
+  // Check file size first
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  if (file.size > MAX_FILE_SIZE) {
+    onError(`File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 10MB.`);
+    return;
+  }
+  
   try {
-    if (file.name.endsWith('.csv')) {
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
+    
+    if (fileExt === 'csv') {
       parseCSVFile(
         file, 
         (result: CSVParseResult) => {
@@ -30,16 +39,16 @@ export const parseStatementFile = (
         }, 
         onError
       );
-    } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+    } else if (fileExt === 'xlsx' || fileExt === 'xls') {
       parseExcelFile(file, (transactions: ParsedTransaction[]) => {
         onSuccess(transactions);
       }, onError);
-    } else if (file.name.endsWith('.pdf')) {
+    } else if (fileExt === 'pdf') {
       parsePDFFile(file, (transactions: ParsedTransaction[]) => {
         onSuccess(transactions);
       }, onError);
     } else {
-      onError('Unsupported file format');
+      onError(`Unsupported file format: ${fileExt || 'unknown'}. Please upload CSV, Excel, or PDF files.`);
     }
   } catch (error) {
     console.error("Error in parseStatementFile:", error);
