@@ -1,4 +1,4 @@
-
+import React, { useEffect } from "react";
 import { 
   Dialog, DialogContent, DialogDescription, DialogFooter, 
   DialogHeader, DialogTitle
@@ -45,8 +45,7 @@ export const EditTeamMemberDialog = ({
     }
   });
 
-  // Update form values when teamMember changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (teamMember) {
       form.reset({
         name: teamMember.name,

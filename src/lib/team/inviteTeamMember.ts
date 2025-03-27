@@ -39,9 +39,13 @@ export const inviteTeamMember = async (teamMember: Omit<TeamMember, 'id' | 'user
       throw error;
     }
     
+    // Fix: Properly type the data and extract the id
+    // The data returned from create_team_invite is a jsonb object with id and token
+    const responseData = data as { id: string, token: string };
+    
     // Create a properly typed response that matches what we'd expect
     const typedData = {
-      id: data.id,
+      id: responseData.id,
       user_id: '', // This will be assigned when the invitation is accepted
       name: teamMember.name,
       email: teamMember.email,
