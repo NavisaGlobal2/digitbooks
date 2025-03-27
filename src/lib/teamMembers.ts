@@ -69,9 +69,29 @@ export const useTeamMembers = () => {
         throw error;
       }
       
+      console.log("RPC response:", data);
+      
+      // The RPC function returns a JSON object with an 'id' property
+      // We need to properly extract the ID from the returned JSON
+      let memberId = '';
+      
+      // Handle the different potential response formats
+      if (data && typeof data === 'object') {
+        memberId = (data as { id: string }).id;
+      } else if (data && typeof data === 'string') {
+        try {
+          // Try to parse if it's a JSON string
+          const parsedData = JSON.parse(data);
+          memberId = parsedData.id || '';
+        } catch (e) {
+          console.error("Error parsing ID from response:", e);
+          memberId = '';
+        }
+      }
+      
       // Create a properly typed response that matches what we'd get from a direct insert
       const typedData = {
-        id: data?.id || '',
+        id: memberId,
         user_id: user.id,
         name: teamMember.name,
         email: teamMember.email,
