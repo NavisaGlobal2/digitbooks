@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EXPENSE_CATEGORIES } from "@/utils/expenseCategories";
 import { ExpenseCategory } from "@/types/expense";
 import { ParsedTransaction } from "./parsers/types";
+import { formatCurrency } from "@/utils/invoice/formatters";
 
 interface TransactionTableProps {
   transactions: ParsedTransaction[];
@@ -54,10 +55,7 @@ const TransactionTable = ({
                 {format(new Date(transaction.date), "yyyy-MM-dd")}
               </TableCell>
               <TableCell className="font-medium">
-                {new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: 'USD'
-                }).format(transaction.amount)}
+                {formatCurrency(transaction.amount)}
               </TableCell>
               <TableCell>
                 <Badge variant={transaction.type === 'debit' ? "destructive" : "default"} className="capitalize">

@@ -20,7 +20,7 @@ export function parseAmount(value: any): number {
       return parseFloat(cleaned);
     }
     
-    // Support formats with "DR" or "CR" suffixes
+    // Support formats with "DR" or "CR" suffixes - common in Nigerian bank statements
     if (cleaned.toUpperCase().endsWith('DR')) {
       return -parseFloat(cleaned.slice(0, -2));
     }

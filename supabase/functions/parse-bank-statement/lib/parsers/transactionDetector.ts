@@ -13,7 +13,7 @@ const DATE_COLUMN_PATTERNS = [
   'date', 'transaction date', 'txn date', 'value date', 'posting date', 
   'trans date', 'entry date', 'transaction date', 'post date', 'effective date',
   'date posted', 'booking date', 'trade date', 'settlement date', 'date of transaction',
-  'transaction time', 'datetime'
+  'transaction time', 'datetime', 'val date', 'val. date', 'value. date', 'date value'
 ];
 
 const DESCRIPTION_COLUMN_PATTERNS = [
@@ -21,7 +21,7 @@ const DESCRIPTION_COLUMN_PATTERNS = [
   'particulars', 'narration', 'transaction narration', 'remarks', 'trans desc',
   'note', 'notes', 'memo', 'reference', 'payee', 'transaction details',
   'transaction information', 'payment details', 'transaction note', 'merchant',
-  'merchant name', 'beneficiary', 'sender', 'payment reference'
+  'merchant name', 'beneficiary', 'sender', 'payment reference', 'remarks', 'trans. details'
 ];
 
 const AMOUNT_COLUMN_PATTERNS = [
@@ -29,7 +29,8 @@ const AMOUNT_COLUMN_PATTERNS = [
   'ngn', 'ngn amount', 'debit', 'credit', 'deposit', 'withdrawal', 'payment amount',
   'transaction value', 'money', 'cash', 'total', 'net amount', 'gross amount',
   'transaction sum', 'payment', 'fee', 'charge', 'balance', 'amount (ngn)', 'amt',
-  'amount in naira', 'local amount', 'transaction fee', 'amount paid', 'price'
+  'amount in naira', 'local amount', 'transaction fee', 'amount paid', 'price',
+  'inflow', 'outflow', 'deposit', 'withdrawal'
 ];
 
 const CREDIT_COLUMN_PATTERNS = [
