@@ -683,16 +683,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      insert_team_member: {
-        Args: {
-          p_name: string
-          p_email: string
-          p_role: string
-          p_status: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

@@ -4,7 +4,7 @@ import {
   DialogHeader, DialogTitle 
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useTeamMembers } from "@/lib/team/useTeamMembers";
+import { useTeamMembers } from "@/lib/teamMembers";
 import { TeamMember } from "@/types/teamMember";
 
 interface DeleteTeamMemberDialogProps {
