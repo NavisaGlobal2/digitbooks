@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { parseViaEdgeFunction, ParsedTransaction } from "../parsers";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -25,14 +25,14 @@ export const useFileProcessing = ({
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   // Check authentication status on mount
-  useState(() => {
+  useEffect(() => {
     const checkAuthStatus = async () => {
       const { data } = await supabase.auth.getSession();
       setIsAuthenticated(!!data.session);
     };
     
     checkAuthStatus();
-  });
+  }, []);
 
   const processServerSide = async (file: File) => {
     try {
