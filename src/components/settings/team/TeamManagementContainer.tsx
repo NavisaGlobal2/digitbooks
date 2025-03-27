@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTeamMembers } from "@/lib/teamMembers";
@@ -25,18 +24,23 @@ export const TeamManagementContainer = () => {
   const { fetchTeamMembers } = useTeamMembers();
 
   useEffect(() => {
+    console.log("TeamManagementContainer mounting, fetching team members soon");
     if (!loadAttempted) {
+      console.log("Attempting to load team members");
       loadTeamMembers();
     }
   }, [loadAttempted]);
 
   const loadTeamMembers = async () => {
+    console.log("loadTeamMembers function called");
     setIsLoading(true);
     setIsError(false);
     setConnectionError(false);
     
     try {
+      console.log("Fetching team members...");
       const data = await fetchTeamMembers();
+      console.log("Team members fetched successfully:", data);
       
       // If this is a new account with no team members, add the current user as Owner
       if (data.length === 0 && user) {
@@ -73,6 +77,7 @@ export const TeamManagementContainer = () => {
     } finally {
       setIsLoading(false);
       setLoadAttempted(true);
+      console.log("Team members loading complete");
     }
   };
 
@@ -111,9 +116,9 @@ export const TeamManagementContainer = () => {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle>Team Members</CardTitle>
+        <CardTitle>Team Members (Offline Mode)</CardTitle>
         <CardDescription>
-          Manage your team members and their access levels
+          Managing your team members in offline mode - database connections disabled
         </CardDescription>
         <TeamHeaderActions 
           searchQuery={searchQuery}

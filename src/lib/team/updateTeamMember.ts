@@ -1,11 +1,33 @@
 
-import { supabase } from "@/integrations/supabase/client";
 import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 import { toast } from "sonner";
 import { handleTeamError } from "./teamMemberUtils";
 
+// Flag to control database connectivity - must be the same as in fetchTeamMembers.ts
+const OFFLINE_MODE = true;
+
 export const updateTeamMember = async (id: string, updates: Partial<Omit<TeamMember, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => {
+  if (OFFLINE_MODE) {
+    console.log("Running in offline mode - simulating team member update");
+    
+    // Create a mock updated team member
+    const mockUpdatedMember = {
+      id: id,
+      user_id: 'offline-user',
+      name: updates.name || 'Updated Name',
+      email: updates.email || 'updated@example.com',
+      role: updates.role || 'Member' as TeamMemberRole,
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    } as TeamMember;
+    
+    toast.success("Team member updated successfully (offline mode)");
+    return mockUpdatedMember;
+  }
+
   try {
+    const { supabase } = await import("@/integrations/supabase/client");
     const { data, error } = await supabase
       .from('team_members')
       .update({ 
