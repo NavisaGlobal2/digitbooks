@@ -28,26 +28,20 @@ export const parseViaEdgeFunction = async (
     
     // Set up a timeout for the function call
     const timeoutDuration = 45000; // 45 seconds
-    const functionController = new AbortController();
-    const timeoutId = setTimeout(() => functionController.abort(), timeoutDuration);
     
     try {
       console.log('Using supabase.functions.invoke to call the edge function');
       
-      // Call the edge function with abort controller
+      // Call the edge function
       const { data, error: functionError } = await supabase.functions.invoke(
         'parse-bank-statement',
         {
           body: formData,
           headers: {
             Authorization: `Bearer ${accessToken}`
-          },
-          signal: functionController.signal
+          }
         }
       );
-      
-      // Clear the timeout since the call completed
-      clearTimeout(timeoutId);
       
       if (functionError) {
         console.error('Edge function error:', functionError);
@@ -62,8 +56,8 @@ export const parseViaEdgeFunction = async (
       console.log('Edge function response:', data);
       
       // Set up a timeout for the database fetch
-      const fetchController = new AbortController();
-      const fetchTimeoutId = setTimeout(() => fetchController.abort(), timeoutDuration);
+      const abortController = new AbortController();
+      const fetchTimeoutId = setTimeout(() => abortController.abort(), timeoutDuration);
       
       // After successful function call, fetch the transactions with timeout
       const { data: transactionsData, error: fetchError } = await supabase
@@ -71,7 +65,7 @@ export const parseViaEdgeFunction = async (
         .select('*')
         .eq('upload_batch_id', data.batchId)
         .order('date', { ascending: false })
-        .abortSignal(fetchController.signal);
+        .abortSignal(abortController.signal);
       
       // Clear the fetch timeout
       clearTimeout(fetchTimeoutId);
@@ -107,9 +101,6 @@ export const parseViaEdgeFunction = async (
       
       return true;
     } catch (functionError: any) {
-      // Clear any pending timeouts
-      clearTimeout(timeoutId);
-      
       console.error('Error calling edge function:', functionError);
       
       // Check if this is an abort error (timeout)
