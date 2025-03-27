@@ -71,6 +71,8 @@ export const parseViaEdgeFunction = async (
         return false;
       }
       
+      console.log('Retrieved transactions data:', transactionsData);
+      
       // Convert to the format expected by the component
       const transactions: ParsedTransaction[] = transactionsData.map((item) => ({
         id: item.id,
@@ -78,7 +80,7 @@ export const parseViaEdgeFunction = async (
         description: item.description,
         amount: item.amount,
         type: item.type as 'credit' | 'debit',
-        selected: item.type === 'debit',
+        selected: item.type === 'debit', // Automatically select debit transactions
         category: item.category as ExpenseCategory | undefined
       }));
       

@@ -69,10 +69,10 @@ export function detectAndParseTransactions(rows: any[]): Transaction[] {
   let creditIndex = -1;
   let debitIndex = -1;
   
-  if (amountIndex === -1) {
-    creditIndex = findColumnIndex(headers, CREDIT_COLUMN_PATTERNS);
-    debitIndex = findColumnIndex(headers, DEBIT_COLUMN_PATTERNS);
-  }
+  // Check for credit/debit columns even if amount is found 
+  // as Nigerian banks often have both amount and separate credit/debit columns
+  creditIndex = findColumnIndex(headers, CREDIT_COLUMN_PATTERNS);
+  debitIndex = findColumnIndex(headers, DEBIT_COLUMN_PATTERNS);
   
   // If we still can't determine columns, try positional guessing with stronger heuristics
   if ((dateIndex === -1 || descIndex === -1) && (amountIndex === -1 && creditIndex === -1 && debitIndex === -1)) {
@@ -147,6 +147,16 @@ function parseTransactionsFromRows(
     // Skip rows with missing essential data
     if (!dateValue || !description) continue;
     
+    // Skip rows with placeholder data patterns (common in Nigerian bank statements)
+    const lowerDesc = description.toLowerCase();
+    if (lowerDesc.includes('opening balance') || 
+        lowerDesc.includes('closing balance') || 
+        lowerDesc.includes('b/fwd') || 
+        lowerDesc.includes('brought forward') ||
+        lowerDesc.includes('c/fwd')) {
+      continue;
+    }
+    
     // Parse date
     let parsedDate = parseDate(dateValue);
     
@@ -160,26 +170,48 @@ function parseTransactionsFromRows(
     let amount: number = 0;
     let type: TransactionType = 'unknown';
     
-    if (amountIndex !== -1) {
-      // Single amount column
+    // Check for Nigerian bank-specific patterns in description
+    const hasDebitMarker = lowerDesc.includes(' dr') || lowerDesc.includes('(dr)') || lowerDesc.endsWith('dr');
+    const hasCreditMarker = lowerDesc.includes(' cr') || lowerDesc.includes('(cr)') || lowerDesc.endsWith('cr');
+    
+    // First check for dedicated debit/credit columns
+    if (debitIndex !== -1 && row[debitIndex] && parseAmount(row[debitIndex]) > 0) {
+      amount = parseAmount(row[debitIndex]);
+      type = 'debit';
+    } else if (creditIndex !== -1 && row[creditIndex] && parseAmount(row[creditIndex]) > 0) {
+      amount = parseAmount(row[creditIndex]);
+      type = 'credit';
+    } else if (amountIndex !== -1) {
+      // Single amount column - check for DR/CR markers in description first
       amount = parseAmount(row[amountIndex]);
       
-      // Determine type based on sign
-      type = amount < 0 ? 'debit' : amount > 0 ? 'credit' : 'unknown';
-      
-      // Use absolute value for the amount
-      amount = Math.abs(amount);
-    } else if (creditIndex !== -1 && debitIndex !== -1) {
-      // Separate credit and debit columns
-      const creditAmount = parseAmount(row[creditIndex]);
-      const debitAmount = parseAmount(row[debitIndex]);
-      
-      if (debitAmount > 0) {
-        amount = debitAmount;
-        type = 'debit';
-      } else if (creditAmount > 0) {
-        amount = creditAmount;
-        type = 'credit';
+      if (amount > 0) {
+        if (hasDebitMarker) {
+          type = 'debit';
+        } else if (hasCreditMarker) {
+          type = 'credit';
+        } else {
+          // Determine type based on sign or context from nearby columns
+          const amountStr = String(row[amountIndex]).toLowerCase();
+          if (amountStr.includes('dr') || amountStr.includes('-') || amountStr.startsWith('-')) {
+            type = 'debit';
+          } else if (amountStr.includes('cr') || amountStr.includes('+')) {
+            type = 'credit';
+          } else {
+            // Use the column to the right or left to check if it indicates DR/CR
+            const prevCol = amountIndex > 0 ? String(row[amountIndex - 1] || '').toLowerCase() : '';
+            const nextCol = amountIndex < row.length - 1 ? String(row[amountIndex + 1] || '').toLowerCase() : '';
+            
+            if (prevCol.includes('dr') || nextCol.includes('dr')) {
+              type = 'debit';
+            } else if (prevCol.includes('cr') || nextCol.includes('cr')) {
+              type = 'credit';
+            } else {
+              // Default to debit for bank statements as conservative approach
+              type = 'debit';
+            }
+          }
+        }
       }
     } else if (creditIndex !== -1) {
       // Only credit column exists
@@ -194,6 +226,9 @@ function parseTransactionsFromRows(
     // Skip if there's no valid amount
     if (amount === 0) continue;
     
+    // Log the transaction we're about to add for debugging
+    console.log(`Adding ${type} transaction: ${formattedDate} | ${description} | ${amount}`);
+    
     transactions.push({
       date: formattedDate,
       description,
@@ -201,6 +236,8 @@ function parseTransactionsFromRows(
       type
     });
   }
+  
+  console.log(`Detected ${transactions.length} transactions (${transactions.filter(t => t.type === 'debit').length} debits, ${transactions.filter(t => t.type === 'credit').length} credits)`);
   
   return transactions;
 }

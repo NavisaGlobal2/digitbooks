@@ -19,14 +19,20 @@ export async function parseFile(file: File): Promise<Transaction[]> {
     
     if (fileName.endsWith('.csv')) {
       try {
-        return await processCSV(file)
+        console.log('Processing CSV file...')
+        const transactions = await processCSV(file)
+        console.log(`Successfully extracted ${transactions.length} transactions from CSV`)
+        return transactions
       } catch (csvError) {
         console.error('CSV processing error:', csvError)
         throw new Error(`Failed to process CSV file: ${csvError.message}. Please check if your file is properly formatted and contains date, description, and amount columns.`)
       }
     } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
       try {
-        return await processExcel(file)
+        console.log('Processing Excel file...')
+        const transactions = await processExcel(file)
+        console.log(`Successfully extracted ${transactions.length} transactions from Excel`)
+        return transactions
       } catch (excelError) {
         console.error('Excel processing error:', excelError)
         throw new Error(`Failed to process Excel file: ${excelError.message}. Please check if your file is properly formatted and contains date, description, and amount columns.`)

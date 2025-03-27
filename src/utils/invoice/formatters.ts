@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for formatting values in invoices
  */

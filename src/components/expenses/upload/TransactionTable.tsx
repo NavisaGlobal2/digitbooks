@@ -26,6 +26,13 @@ const TransactionTable = ({
   onSelectTransaction,
   onSetCategory
 }: TransactionTableProps) => {
+  // Calculate some stats for debugging
+  const debitCount = transactions.filter(t => t.type === 'debit').length;
+  const creditCount = transactions.filter(t => t.type === 'credit').length;
+  const selectedCount = transactions.filter(t => t.selected).length;
+  
+  console.log(`TransactionTable: ${transactions.length} total (${debitCount} debits, ${creditCount} credits, ${selectedCount} selected)`);
+  
   return (
     <div className="flex-1 overflow-auto p-0 max-h-[calc(90vh-210px)]">
       <Table>
