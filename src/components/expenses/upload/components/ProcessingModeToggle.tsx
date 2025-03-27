@@ -34,7 +34,7 @@ const ProcessingModeToggle = ({
         <Label htmlFor="server-processing" className="flex flex-col">
           <div className="flex items-center gap-1">
             <span>
-              {useEdgeFunction ? "Server-side processing" : "Client-side processing with column mapping"}
+              {useEdgeFunction ? "AI-powered processing" : "Client-side processing with column mapping"}
               {!edgeFunctionAvailable && " (server unavailable)"}
             </span>
             
@@ -45,7 +45,7 @@ const ProcessingModeToggle = ({
                     <Info className="h-4 w-4 text-amber-500" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Authentication required for server-side processing</p>
+                    <p>Authentication required for AI-powered processing</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -53,15 +53,15 @@ const ProcessingModeToggle = ({
           </div>
           <span className="text-xs text-muted-foreground">
             {useEdgeFunction 
-              ? "Processes your statement on the server for better accuracy" 
-              : "Process and customize column mapping in the browser"}
+              ? "Uses AI to intelligently extract transactions from any statement format" 
+              : "Process and customize column mapping in the browser (CSV only)"}
           </span>
         </Label>
       </div>
       
       {showAuthWarning && (
         <p className="text-xs text-amber-500 mt-1">
-          You need to be signed in to use server-side processing.
+          You need to be signed in to use AI-powered processing.
         </p>
       )}
     </div>

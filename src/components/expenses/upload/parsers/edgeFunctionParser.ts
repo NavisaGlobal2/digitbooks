@@ -4,7 +4,7 @@ import { ParsedTransaction } from "./types";
 import { toast } from "sonner";
 
 const EDGE_FUNCTION_TIMEOUT = 60000; // 60 seconds
-const EDGE_FUNCTION_NAME = "parse-bank-statement";
+const EDGE_FUNCTION_NAME = "parse-bank-statement-ai"; // Updated to use the AI-powered function
 
 export interface ParseResult {
   success: boolean;
@@ -80,13 +80,13 @@ export async function parseViaEdgeFunction(
       // Process the transactions
       const transactions: ParsedTransaction[] = data.transactions.map((tx: any, index: number) => ({
         id: `tx-${index}-${Date.now()}`,
-        date: tx.date,
+        date: new Date(tx.date),
         description: tx.description || tx.narrative || tx.payee || "",
         amount: tx.amount,
         type: tx.type || (tx.amount < 0 ? "debit" : "credit"),
         balance: tx.balance,
         category: null,
-        selected: true,
+        selected: tx.type === "debit", // Auto-select debit transactions
         notes: tx.notes || ""
       }));
       

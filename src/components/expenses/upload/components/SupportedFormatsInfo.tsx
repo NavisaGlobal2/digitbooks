@@ -18,7 +18,7 @@ const SupportedFormatsInfo = ({ isAuthenticated = true }: SupportedFormatsInfoPr
                 <Info className="h-4 w-4 text-amber-500" />
               </TooltipTrigger>
               <TooltipContent>
-                <p>Sign in to enable server-side processing for PDF files</p>
+                <p>Sign in to enable AI-powered processing for all file formats</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -34,7 +34,7 @@ const SupportedFormatsInfo = ({ isAuthenticated = true }: SupportedFormatsInfoPr
       
       {!isAuthenticated && (
         <p className="mt-1 text-amber-500">
-          Note: Server-side processing requires authentication
+          Note: AI-powered processing requires authentication
         </p>
       )}
     </div>

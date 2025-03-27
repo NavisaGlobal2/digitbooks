@@ -32,7 +32,7 @@ const FileUploadArea = ({ file, onFileChange, disabled = false, errorState }: Fi
                 )}
                 {file.name.toLowerCase().endsWith('.pdf') && (
                   <p className="text-xs text-amber-500 mt-1">
-                    PDF files require server-side processing with authentication
+                    PDF files require AI-powered processing with authentication
                   </p>
                 )}
               </div>
@@ -43,7 +43,7 @@ const FileUploadArea = ({ file, onFileChange, disabled = false, errorState }: Fi
                   Drop your bank statement here or click to browse
                 </span>
                 <span className="text-xs text-gray-400">
-                  Supports CSV, Excel, PDF
+                  Supports CSV, Excel, PDF with AI-powered processing
                 </span>
               </div>
             )}
