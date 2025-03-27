@@ -12,15 +12,15 @@ import { useAuth } from './contexts/auth';
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from './components/auth/RequireAuth';
 
-// Eagerly load the Index page for better initial load experience
+// Eagerly load critical pages for better initial load experience
 import Index from './pages/Index';
+import Auth from './pages/Auth'; // Import Auth directly instead of lazy loading
 
 // Lazy load other pages
 const About = lazy(() => import('./pages/About'));
 const Features = lazy(() => import('./pages/Features'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const Careers = lazy(() => import('./pages/Careers'));
-const Auth = lazy(() => import('./pages/Auth'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Revenue = lazy(() => import('./pages/Revenue'));
@@ -56,7 +56,7 @@ function App() {
       // Set a maximum timeout to prevent indefinite loading
       const timer = setTimeout(() => {
         setIsInitializing(false);
-      }, 2000); // 2 seconds max
+      }, 1000); // Reduce timeout to 1 second
       
       return () => clearTimeout(timer);
     }
@@ -83,7 +83,7 @@ function App() {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/careers" element={<Careers />} />
           
-          {/* Auth pages - handled by RequireAuth but not wrapped in it */}
+          {/* Auth pages - not protected by RequireAuth */}
           <Route path="/auth" element={<Auth />} />
           <Route path="/invitation" element={<Invitation />} />
         

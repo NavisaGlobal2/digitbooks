@@ -1,3 +1,4 @@
+
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 
@@ -9,29 +10,26 @@ export const RequireAuth = ({ children }: RequireAuthProps) => {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
 
-  // If user is trying to access the auth page and they're already authenticated,
-  // redirect them appropriately
-  if (isAuthenticated && location.pathname === "/auth") {
-    // If they haven't completed onboarding, send to onboarding
-    if (user && !user.onboardingCompleted) {
-      return <Navigate to="/onboarding" replace />;
-    }
-    // Otherwise send to dashboard
-    return <Navigate to="/dashboard" replace />;
+  // Don't redirect if on auth or public pages
+  if (location.pathname === "/auth" || 
+      location.pathname === "/" || 
+      location.pathname === "/about" || 
+      location.pathname === "/features" || 
+      location.pathname === "/pricing" || 
+      location.pathname === "/careers" || 
+      location.pathname === "/invitation") {
+    return children;
   }
 
-  // If not authenticated, redirect to login except for auth page
+  // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    // Don't redirect if they're already on the auth page
-    if (location.pathname === "/auth") {
-      return children;
-    }
-    // Otherwise redirect to auth
+    console.log("User not authenticated, redirecting to /auth");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // Check if user has completed onboarding
   if (user && !user.onboardingCompleted && location.pathname !== "/onboarding") {
+    console.log("User has not completed onboarding, redirecting to /onboarding");
     return <Navigate to="/onboarding" replace />;
   }
 

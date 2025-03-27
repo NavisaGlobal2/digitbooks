@@ -14,40 +14,42 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Handle initial session
-    const getInitialSession = async () => {
+    let mounted = true;
+    let authSubscription: { unsubscribe: () => void } | null = null;
+
+    // Handle initial session and auth state changes
+    const initializeAuth = async () => {
       try {
+        console.log("Setting up auth state change listener");
+        // First set up the listener before checking session
+        authSubscription = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            console.log("Auth state change:", event, session?.user?.id);
+            
+            if (!mounted) return;
+            
+            if (session) {
+              const userData = {
+                id: session.user.id,
+                email: session.user.email,
+                name: session.user.user_metadata?.name || "User",
+                avatar: session.user.user_metadata?.avatar || "",
+                onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
+              };
+              
+              setUser(userData);
+              console.log("User metadata:", session.user.user_metadata);
+            } else {
+              setUser(null);
+            }
+          }
+        );
+
+        // Now check for existing session
         console.log("Checking for initial session...");
         const { data: { session } } = await supabase.auth.getSession();
         
-        if (session) {
-          const userData = {
-            id: session.user.id,
-            email: session.user.email,
-            name: session.user.user_metadata?.name || "User",
-            avatar: session.user.user_metadata?.avatar || "",
-            onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
-          };
-          
-          console.log("Initial session found:", userData);
-          setUser(userData);
-        } else {
-          console.log("No initial session found");
-        }
-      } catch (error) {
-        console.error("Error getting initial session:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    // Set up auth state change listener
-    const setupAuthListener = () => {
-      console.log("Setting up auth state change listener");
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
-          console.log("Auth state change:", event, session?.user?.id);
-          
+        if (mounted) {
           if (session) {
             const userData = {
               id: session.user.id,
@@ -57,23 +59,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
             };
             
+            console.log("Initial session found:", userData);
             setUser(userData);
             console.log("User metadata:", session.user.user_metadata);
           } else {
+            console.log("No initial session found");
             setUser(null);
           }
+          
+          setIsLoading(false);
         }
-      );
-
-      return subscription;
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
     };
 
-    const subscription = setupAuthListener();
-    getInitialSession();
+    initializeAuth();
 
-    // Cleanup subscription
+    // Cleanup function
     return () => {
-      subscription.unsubscribe();
+      mounted = false;
+      if (authSubscription) {
+        console.log("Cleaning up auth subscription");
+        authSubscription.unsubscribe();
+      }
     };
   }, []);
 
