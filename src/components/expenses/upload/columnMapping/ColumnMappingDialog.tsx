@@ -1,12 +1,10 @@
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowDown, Check, AlertCircle, HelpCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import DialogHeader from "../DialogHeader";
+import { ColumnMapping, guessColumnMapping } from "../parsers/columnMapper";
+import MappingSelector from "./MappingSelector";
 
 interface ColumnMappingDialogProps {
   open: boolean;
@@ -14,14 +12,6 @@ interface ColumnMappingDialogProps {
   headers: string[];
   sampleData: string[][];
   onMappingComplete: (mapping: ColumnMapping) => void;
-  initialMapping?: ColumnMapping;
-}
-
-export interface ColumnMapping {
-  date: number;
-  description: number;
-  amount: number;
-  type?: number; // Optional - some statements have explicit type columns
 }
 
 const ColumnMappingDialog = ({
@@ -29,258 +19,142 @@ const ColumnMappingDialog = ({
   onOpenChange,
   headers,
   sampleData,
-  onMappingComplete,
-  initialMapping
+  onMappingComplete
 }: ColumnMappingDialogProps) => {
-  const [mapping, setMapping] = useState<ColumnMapping>(() => {
-    if (initialMapping) return initialMapping;
-    
-    // Default mapping - attempt to guess based on common column names
-    const guessedMapping: ColumnMapping = {
-      date: -1,
-      description: -1,
-      amount: -1
-    };
-    
-    headers.forEach((header, index) => {
-      const headerLower = header.toLowerCase();
-      
-      if (headerLower.includes('date') || headerLower.includes('time')) {
-        guessedMapping.date = index;
-      } else if (
-        headerLower.includes('desc') || 
-        headerLower.includes('narr') || 
-        headerLower.includes('part') || 
-        headerLower.includes('ref')
-      ) {
-        guessedMapping.description = index;
-      } else if (
-        headerLower.includes('amount') || 
-        headerLower.includes('sum') || 
-        headerLower.includes('debit') || 
-        headerLower.includes('credit') || 
-        headerLower.includes('value')
-      ) {
-        guessedMapping.amount = index;
-      } else if (
-        headerLower.includes('type') || 
-        headerLower.includes('dr/cr') || 
-        headerLower.includes('d/c')
-      ) {
-        guessedMapping.type = index;
-      }
-    });
-    
-    return guessedMapping;
-  });
+  const [mapping, setMapping] = useState<ColumnMapping>({ date: -1, description: -1, amount: -1 });
   
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  
-  // Validate the current mapping
+  // When headers change, try to guess the mapping
   useEffect(() => {
-    const errors: Record<string, string> = {};
-    
-    if (mapping.date === -1) {
-      errors.date = "Date column is required";
+    if (headers.length > 0) {
+      const guessedMapping = guessColumnMapping(headers);
+      setMapping(guessedMapping);
     }
-    
-    if (mapping.description === -1) {
-      errors.description = "Description column is required";
-    }
-    
-    if (mapping.amount === -1) {
-      errors.amount = "Amount column is required";
-    }
-    
-    // Check for duplicates
-    const selectedIndices = Object.values(mapping).filter(index => index !== -1);
-    if (new Set(selectedIndices).size !== selectedIndices.length) {
-      errors.general = "Each column can only be mapped once";
-    }
-    
-    setValidationErrors(errors);
-  }, [mapping]);
+  }, [headers]);
   
-  const handleColumnSelect = (field: keyof ColumnMapping, index: number) => {
-    setMapping(prev => ({
-      ...prev,
-      [field]: index
-    }));
+  const handleMappingChange = (field: keyof ColumnMapping, value: number) => {
+    setMapping(prev => ({ ...prev, [field]: value }));
   };
   
-  const handleComplete = () => {
-    if (Object.keys(validationErrors).length === 0) {
-      onMappingComplete(mapping);
+  const handleSave = () => {
+    // Validate that we have the required mappings
+    if (mapping.date === -1 || mapping.description === -1 || mapping.amount === -1) {
+      alert("Please map all required fields: Date, Description, and Amount");
+      return;
     }
+    
+    onMappingComplete(mapping);
   };
-  
-  const isValid = Object.keys(validationErrors).length === 0;
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader title="Column Mapping" />
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Map CSV Columns</DialogTitle>
+        </DialogHeader>
         
-        <div className="p-4 space-y-4 flex-1 overflow-auto">
-          <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-md">
-            <div className="flex space-x-2 text-yellow-800">
-              <HelpCircle className="h-5 w-5 flex-shrink-0" />
-              <div>
-                <h4 className="font-medium">Customize Column Mapping</h4>
-                <p className="text-sm">
-                  Please match each required field to the corresponding column in your bank statement. 
-                  This helps ensure your transactions are correctly imported.
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          {validationErrors.general && (
-            <div className="bg-red-50 border border-red-200 p-3 rounded-md">
-              <div className="flex space-x-2 text-red-800">
-                <AlertCircle className="h-5 w-5 flex-shrink-0" />
-                <p>{validationErrors.general}</p>
-              </div>
-            </div>
-          )}
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <MappingSelector
-              label="Date"
+        <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+          <div className="grid grid-cols-4 gap-4">
+            <MappingSelector 
+              label="Date Column" 
               headers={headers}
               selectedIndex={mapping.date}
-              onSelect={(index) => handleColumnSelect('date', index)}
-              error={validationErrors.date}
+              onChange={(value) => handleMappingChange('date', value)}
+              required
             />
             
-            <MappingSelector
-              label="Description"
+            <MappingSelector 
+              label="Description Column" 
               headers={headers}
               selectedIndex={mapping.description}
-              onSelect={(index) => handleColumnSelect('description', index)}
-              error={validationErrors.description}
+              onChange={(value) => handleMappingChange('description', value)}
+              required
             />
             
-            <MappingSelector
-              label="Amount"
+            <MappingSelector 
+              label="Amount Column" 
               headers={headers}
               selectedIndex={mapping.amount}
-              onSelect={(index) => handleColumnSelect('amount', index)}
-              error={validationErrors.amount}
+              onChange={(value) => handleMappingChange('amount', value)}
+              required
             />
             
-            <MappingSelector
-              label="Type (Optional)"
+            <MappingSelector 
+              label="Transaction Type Column (optional)" 
               headers={headers}
-              selectedIndex={mapping.type ?? -1}
-              onSelect={(index) => handleColumnSelect('type', index)}
-              optional
+              selectedIndex={mapping.type !== undefined ? mapping.type : -1}
+              onChange={(value) => handleMappingChange('type', value)}
+              required={false}
             />
           </div>
           
-          <div className="mt-4">
-            <h3 className="text-sm font-medium mb-2">Preview with Current Mapping</h3>
-            <div className="border rounded-md overflow-x-auto max-h-64">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Amount</TableHead>
-                    {mapping.type !== undefined && <TableHead>Type</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sampleData.slice(0, 5).map((row, rowIndex) => (
-                    <TableRow key={rowIndex}>
-                      <TableCell>{mapping.date >= 0 ? row[mapping.date] : 'Not mapped'}</TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {mapping.description >= 0 ? row[mapping.description] : 'Not mapped'}
-                      </TableCell>
-                      <TableCell>
-                        {mapping.amount >= 0 ? row[mapping.amount] : 'Not mapped'}
-                      </TableCell>
-                      {mapping.type !== undefined && (
-                        <TableCell>
-                          {mapping.type >= 0 ? row[mapping.type] : 'Not mapped'}
-                        </TableCell>
-                      )}
-                    </TableRow>
+          <div className="overflow-auto flex-1 border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {headers.map((header, index) => (
+                    <TableHead key={index} className={`whitespace-nowrap ${
+                      index === mapping.date ? 'bg-blue-100' : 
+                      index === mapping.description ? 'bg-green-100' : 
+                      index === mapping.amount ? 'bg-yellow-100' : 
+                      index === mapping.type ? 'bg-purple-100' : ''
+                    }`}>
+                      {header}
+                    </TableHead>
                   ))}
-                </TableBody>
-              </Table>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sampleData.slice(0, 5).map((row, rowIndex) => (
+                  <TableRow key={rowIndex}>
+                    {row.map((cell, cellIndex) => (
+                      <TableCell key={cellIndex} className={`whitespace-nowrap ${
+                        cellIndex === mapping.date ? 'bg-blue-50' : 
+                        cellIndex === mapping.description ? 'bg-green-50' : 
+                        cellIndex === mapping.amount ? 'bg-yellow-50' : 
+                        cellIndex === mapping.type ? 'bg-purple-50' : ''
+                      }`}>
+                        {cell}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          
+          <div className="text-sm text-muted-foreground p-2 bg-gray-50 rounded-md">
+            <p className="font-semibold">Column Mapping Key:</p>
+            <div className="grid grid-cols-4 gap-2 mt-1">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-blue-100 rounded"></div>
+                <span>Date</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-green-100 rounded"></div>
+                <span>Description</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-yellow-100 rounded"></div>
+                <span>Amount</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-purple-100 rounded"></div>
+                <span>Type (optional)</span>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Showing first 5 rows of {sampleData.length} transactions
-            </p>
           </div>
         </div>
         
-        <div className="border-t p-4 flex justify-end space-x-2">
+        <div className="flex justify-end gap-2 mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleComplete} 
-            disabled={!isValid}
-            className="bg-green-500 hover:bg-green-600 text-white"
-          >
-            <Check className="h-4 w-4 mr-2" />
+          <Button onClick={handleSave}>
             Apply Mapping
           </Button>
         </div>
       </DialogContent>
     </Dialog>
-  );
-};
-
-interface MappingSelectorProps {
-  label: string;
-  headers: string[];
-  selectedIndex: number;
-  onSelect: (index: number) => void;
-  error?: string;
-  optional?: boolean;
-}
-
-const MappingSelector = ({
-  label,
-  headers,
-  selectedIndex,
-  onSelect,
-  error,
-  optional = false
-}: MappingSelectorProps) => {
-  return (
-    <div className="space-y-1">
-      <div className="flex items-center">
-        <span className="text-sm font-medium">{label}</span>
-        {optional && (
-          <Badge variant="outline" className="ml-2 text-xs">
-            Optional
-          </Badge>
-        )}
-      </div>
-      <Select
-        value={selectedIndex === -1 ? "" : selectedIndex.toString()}
-        onValueChange={(value) => onSelect(parseInt(value) || -1)}
-      >
-        <SelectTrigger className={error ? "border-red-300" : ""}>
-          <SelectValue placeholder="Select column" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="">
-            {optional ? 'Not selected' : 'Select column'}
-          </SelectItem>
-          {headers.map((header, index) => (
-            <SelectItem key={index} value={index.toString()}>
-              {header}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {error && <p className="text-xs text-red-500">{error}</p>}
-    </div>
   );
 };
 

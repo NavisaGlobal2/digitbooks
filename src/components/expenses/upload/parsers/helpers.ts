@@ -1,150 +1,91 @@
 
-// Format currency value
-export const formatCurrency = (amount: number, currency: string = '₦') => {
-  return new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    minimumFractionDigits: 2
-  }).format(amount);
-};
+/**
+ * Helper functions for parsing dates and amounts from various formats
+ */
 
-// Parse amount from various formats
-export const parseAmount = (value: any): number => {
-  if (typeof value === 'number') return value;
+// Parse a date string into a Date object
+export const parseDate = (dateString: string): Date => {
+  if (!dateString) return new Date();
+
+  // Try to parse the date string directly
+  const date = new Date(dateString);
   
-  if (typeof value === 'string') {
-    // Skip empty strings
-    if (!value.trim()) return 0;
-    
-    // Remove currency symbols and commas, including Naira symbol (₦)
-    const cleaned = value.replace(/[,$€£₦\s]/g, '');
-    
-    // Support formats with parentheses indicating negative numbers: (100.00)
-    if (cleaned.startsWith('(') && cleaned.endsWith(')')) {
-      return -parseFloat(cleaned.slice(1, -1));
-    }
-    
-    // Support dash or minus prefix for negative numbers
-    if (cleaned.startsWith('-')) {
-      return parseFloat(cleaned);
-    }
-    
-    // Support formats with "DR" or "CR" suffixes
-    if (cleaned.toUpperCase().endsWith('DR')) {
-      return -parseFloat(cleaned.slice(0, -2));
-    }
-    
-    if (cleaned.toUpperCase().endsWith('CR')) {
-      return parseFloat(cleaned.slice(0, -2));
-    }
-    
-    return parseFloat(cleaned) || 0;
+  // Check if the date is valid
+  if (!isNaN(date.getTime())) {
+    return date;
   }
   
-  return 0;
-};
-
-// Format date to a standard format
-export const formatDate = (date: Date): string => {
-  return date.toISOString().split('T')[0];
-};
-
-// More flexible date parsing with support for multiple formats
-export const parseDate = (dateStr: string): Date => {
-  // Clean the string
-  dateStr = dateStr.toString().trim().replace(/"|'/g, '');
-  
-  // Try direct parsing first
-  let date = new Date(dateStr);
-  if (!isNaN(date.getTime())) return date;
-  
-  // Try common formats
+  // Handle different date formats
   const formats = [
-    // MM/DD/YYYY
-    { regex: /(\d{1,2})\/(\d{1,2})\/(\d{4})/, fn: (m: RegExpMatchArray) => new Date(`${m[3]}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`) },
-    // DD/MM/YYYY
-    { regex: /(\d{1,2})\/(\d{1,2})\/(\d{4})/, fn: (m: RegExpMatchArray) => new Date(`${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`) },
-    // MM-DD-YYYY
-    { regex: /(\d{1,2})-(\d{1,2})-(\d{4})/, fn: (m: RegExpMatchArray) => new Date(`${m[3]}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`) },
-    // DD-MM-YYYY
-    { regex: /(\d{1,2})-(\d{1,2})-(\d{4})/, fn: (m: RegExpMatchArray) => new Date(`${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`) },
-    // DD.MM.YYYY
-    { regex: /(\d{1,2})\.(\d{1,2})\.(\d{4})/, fn: (m: RegExpMatchArray) => new Date(`${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`) },
-    // YYYY/MM/DD
-    { regex: /(\d{4})\/(\d{1,2})\/(\d{1,2})/, fn: (m: RegExpMatchArray) => new Date(`${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`) },
-    // YYYY-MM-DD
-    { regex: /(\d{4})-(\d{1,2})-(\d{1,2})/, fn: (m: RegExpMatchArray) => new Date(`${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`) },
-    // DD MMM YYYY (e.g. 01 Jan 2023)
-    { regex: /(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/, fn: (m: RegExpMatchArray) => new Date(`${m[3]}-${getMonthNumber(m[2])}-${m[1].padStart(2, '0')}`) },
-    // MMM DD, YYYY (e.g. Jan 01, 2023)
-    { regex: /([A-Za-z]{3})\s+(\d{1,2}),?\s+(\d{4})/, fn: (m: RegExpMatchArray) => new Date(`${m[3]}-${getMonthNumber(m[1])}-${m[2].padStart(2, '0')}`) },
+    // DD/MM/YYYY or DD-MM-YYYY
+    {
+      regex: /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/,
+      parse: (match: RegExpMatchArray) => {
+        const day = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10) - 1; // Months are 0-indexed in JS
+        let year = parseInt(match[3], 10);
+        
+        // Handle 2-digit years
+        if (year < 100) {
+          year += year < 50 ? 2000 : 1900;
+        }
+        
+        return new Date(year, month, day);
+      }
+    },
+    // MM/DD/YYYY or MM-DD-YYYY (US format)
+    {
+      regex: /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/,
+      parse: (match: RegExpMatchArray) => {
+        const month = parseInt(match[1], 10) - 1; // Months are 0-indexed in JS
+        const day = parseInt(match[2], 10);
+        const year = parseInt(match[3], 10);
+        
+        return new Date(year, month, day);
+      }
+    },
+    // YYYY/MM/DD or YYYY-MM-DD (ISO format)
+    {
+      regex: /^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/,
+      parse: (match: RegExpMatchArray) => {
+        const year = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10) - 1; // Months are 0-indexed in JS
+        const day = parseInt(match[3], 10);
+        
+        return new Date(year, month, day);
+      }
+    }
   ];
   
+  // Try each format
   for (const format of formats) {
-    const match = dateStr.match(format.regex);
+    const match = dateString.match(format.regex);
     if (match) {
-      const parsedDate = format.fn(match);
-      if (!isNaN(parsedDate.getTime())) return parsedDate;
+      const parsedDate = format.parse(match);
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate;
+      }
     }
   }
   
-  // Try to handle date formats with time components
-  const dateTimeMatch = dateStr.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})\s+(\d{1,2}):(\d{1,2})/);
-  if (dateTimeMatch) {
-    // Try both MM/DD and DD/MM interpretations
-    const date1 = new Date(`${dateTimeMatch[3]}-${dateTimeMatch[1].padStart(2, '0')}-${dateTimeMatch[2].padStart(2, '0')}T${dateTimeMatch[4].padStart(2, '0')}:${dateTimeMatch[5].padStart(2, '0')}:00`);
-    if (!isNaN(date1.getTime())) return date1;
-    
-    const date2 = new Date(`${dateTimeMatch[3]}-${dateTimeMatch[2].padStart(2, '0')}-${dateTimeMatch[1].padStart(2, '0')}T${dateTimeMatch[4].padStart(2, '0')}:${dateTimeMatch[5].padStart(2, '0')}:00`);
-    if (!isNaN(date2.getTime())) return date2;
-  }
-  
-  // If it's a number, try parsing as an Excel date (days since 1900-01-01)
-  if (!isNaN(Number(dateStr))) {
-    const excelDate = Number(dateStr);
-    const excelEpoch = new Date(1900, 0, 1);
-    const excelDateObj = new Date(excelEpoch.getTime() + (excelDate - 1) * 24 * 60 * 60 * 1000);
-    
-    if (!isNaN(excelDateObj.getTime())) {
-      return excelDateObj;
-    }
-  }
-  
-  // If all fails, return the original parse result (will likely be invalid)
-  return date;
+  // If all parsing attempts fail, return current date
+  console.warn(`Could not parse date: ${dateString}, using current date instead`);
+  return new Date();
 };
 
-// Helper function to convert month name to month number
-const getMonthNumber = (monthStr: string): string => {
-  const months: { [key: string]: string } = {
-    'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06',
-    'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
-  };
+// Parse an amount string into a number
+export const parseAmount = (amountStr: string): number => {
+  if (!amountStr) return 0;
   
-  return months[monthStr.toLowerCase().slice(0, 3)] || '01';
-};
-
-// Find the best column match among possible names
-export const findBestColumnMatch = (headers: string[], possibleNames: string[]): number => {
-  // First try exact matches
-  for (const name of possibleNames) {
-    const index = headers.findIndex(h => h === name);
-    if (index !== -1) return index;
-  }
+  // Remove currency symbols, commas, and other non-numeric characters except for decimal points and minus signs
+  const cleanedStr = amountStr.replace(/[^\d.-]/g, '');
   
-  // Then try partial matches
-  for (const name of possibleNames) {
-    const index = headers.findIndex(h => h.includes(name));
-    if (index !== -1) return index;
-  }
+  // If there's nothing left after cleaning, return 0
+  if (!cleanedStr) return 0;
   
-  // Finally try if any header contains any of the names
-  for (let i = 0; i < headers.length; i++) {
-    const header = headers[i];
-    for (const name of possibleNames) {
-      if (name.includes(header)) return i;
-    }
-  }
+  // Parse the cleaned string as a float
+  const amount = parseFloat(cleanedStr);
   
-  return -1;
+  // Check if the result is a valid number
+  return isNaN(amount) ? 0 : amount;
 };

@@ -1,7 +1,7 @@
 
 import { toast } from "sonner";
 import { ParsedTransaction } from "./types";
-import { parseCSVFile } from "./csvParser";
+import { parseCSVFile, CSVParseResult } from "./csvParser";
 import { parseExcelFile } from "./excelParser";
 import { parsePDFFile } from "./pdfParser";
 import { parseViaEdgeFunction } from "./edgeFunctionParser";
@@ -21,7 +21,14 @@ export const parseStatementFile = (
   }
   
   if (file.name.endsWith('.csv')) {
-    parseCSVFile(file, onSuccess, onError);
+    parseCSVFile(
+      file, 
+      (result: CSVParseResult) => {
+        // Extract transactions from the result object
+        onSuccess(result.transactions);
+      }, 
+      onError
+    );
   } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
     parseExcelFile(file, onSuccess, onError);
   } else if (file.name.endsWith('.pdf')) {

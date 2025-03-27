@@ -7,6 +7,6 @@ export type ParsedTransaction = {
   description: string;
   amount: number;
   type: 'credit' | 'debit';
-  category?: string;
+  category?: ExpenseCategory;
   selected: boolean;
 };

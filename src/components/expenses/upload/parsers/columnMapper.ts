@@ -73,7 +73,7 @@ export const parseRowsWithMapping = (
  */
 export const extractHeadersAndData = (rows: string[][]) => {
   if (rows.length === 0) {
-    return { headers: [], sampleData: [] };
+    return { headers: [], sampleData: [], hasHeader: false };
   }
   
   // Try to determine if the first row is a header row
