@@ -35,7 +35,7 @@ export const parseCSVFile = (
         // For this example, assuming CSV format: date, description, amount
         const date = new Date(columns[0]);
         const description = columns[1].replace(/"/g, '');
-        const amount = Math.abs(parseFloat(columns[2].replace(/"/g, '')));
+        const amount = Math.abs(parseFloat(columns[2].replace(/[₦,"]/g, ''))); // Added Naira symbol to replacement
         
         // Determine if credit or debit
         const type = parseFloat(columns[2]) < 0 ? 'debit' : 'credit';
@@ -70,39 +70,56 @@ export const parseCSVFile = (
 
 export const parseExcelFile = (
   file: File, 
-  onComplete: (transactions: ParsedTransaction[]) => void
+  onComplete: (transactions: ParsedTransaction[]) => void,
+  onError: (errorMessage: string) => void
 ) => {
-  // Mock Excel parsing for this example
-  // In a real app, use a library like xlsx or exceljs
-  setTimeout(() => {
-    // Generate mock data for demonstration
-    const transactions: ParsedTransaction[] = [];
-    const now = new Date();
-    
-    for (let i = 0; i < 10; i++) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      
-      const amount = Math.round(Math.random() * 10000) / 100;
-      const type = i % 3 === 0 ? 'credit' : 'debit';
-      
-      transactions.push({
-        id: `trans-${i}`,
-        date,
-        description: `Transaction #${i+1} from Excel`,
-        amount,
-        type,
-        selected: type === 'debit', // Auto-select debit transactions
+  // Use edge function to parse Excel instead of mock data
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  fetch('https://naxmgtoskeijvdofqyik.supabase.co/functions/v1/parse-bank-statement', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      // No auth headers needed as the function is public
+    }
+  })
+  .then(response => {
+    if (!response.ok) {
+      return response.text().then(text => {
+        throw new Error(`Failed to parse Excel file: ${text}`);
       });
     }
+    return response.json();
+  })
+  .then(data => {
+    if (!data.transactions || !Array.isArray(data.transactions) || data.transactions.length === 0) {
+      onError('No valid transactions found in the file');
+      return;
+    }
     
-    onComplete(transactions);
-  }, 1000);
+    // Convert the transactions to the expected format
+    const parsedTransactions: ParsedTransaction[] = data.transactions.map((t: any, index: number) => ({
+      id: `trans-${index}`,
+      date: new Date(t.date),
+      description: t.description,
+      amount: t.amount,
+      type: t.type,
+      selected: t.type === 'debit', // Auto-select debit transactions
+    }));
+    
+    onComplete(parsedTransactions);
+  })
+  .catch(error => {
+    console.error('Error parsing Excel:', error);
+    onError(error.message || 'Failed to parse the Excel file. Please check the format and try again.');
+  });
 };
 
 export const parsePDFFile = (
   file: File, 
-  onComplete: (transactions: ParsedTransaction[]) => void
+  onComplete: (transactions: ParsedTransaction[]) => void,
+  onError: (errorMessage: string) => void
 ) => {
   // Mock PDF parsing for this example
   // In a real app, use a PDF parsing library or service
@@ -146,7 +163,7 @@ export const parseStatementFile = (
   if (file.name.endsWith('.csv')) {
     parseCSVFile(file, onSuccess, onError);
   } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-    parseExcelFile(file, onSuccess);
+    parseExcelFile(file, onSuccess, onError);
   } else if (file.name.endsWith('.pdf')) {
     parsePDFFile(file, onSuccess);
   } else {

@@ -16,10 +16,10 @@ export function detectAndParseTransactions(rows: any[]): Transaction[] {
   let descIndex = -1
   let amountIndex = -1
   
-  // Common header names for each column
-  const dateHeaders = ['date', 'transaction date', 'posted date', 'posting date']
-  const descHeaders = ['description', 'desc', 'narrative', 'details', 'transaction description', 'particulars']
-  const amountHeaders = ['amount', 'transaction amount', 'sum', 'value', 'debit/credit']
+  // Common header names for each column - updated for Nigerian bank formats
+  const dateHeaders = ['date', 'transaction date', 'posted date', 'posting date', 'value date', 'transaction date', 'entry date']
+  const descHeaders = ['description', 'desc', 'narrative', 'details', 'transaction description', 'particulars', 'narration', 'transaction narration']
+  const amountHeaders = ['amount', 'transaction amount', 'sum', 'value', 'debit/credit', 'naira value', 'ngn', 'ngn amount']
   
   // Find column indices from headers
   headers.forEach((header: string, index: number) => {
@@ -53,7 +53,7 @@ export function detectAndParseTransactions(rows: any[]): Transaction[] {
         descIndex = i
       }
       // Check if this looks like an amount (number)
-      else if (amountIndex === -1 && !isNaN(Number(value.replace(/[,$€£]/g, '')))) {
+      else if (amountIndex === -1 && !isNaN(Number(value.replace(/[,$€£₦]/g, '')))) {
         amountIndex = i
       }
     }
