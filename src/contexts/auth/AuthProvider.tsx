@@ -3,7 +3,7 @@ import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
 import { AuthContext } from "./AuthContext";
-import { login, logout, signup, signInWithGoogle, checkUserOnboardingStatus } from "./authActions";
+import { login, logout, signup, signInWithGoogle } from "./authActions";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -19,28 +19,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
-          // Get basic user data
-          const onboardingCompleted = session.user.user_metadata?.onboardingCompleted || false;
-          
           const userData = {
             id: session.user.id,
             email: session.user.email,
-            name: session.user.user_metadata?.name || session.user.user_metadata?.full_name || "User",
-            avatar: session.user.user_metadata?.avatar || session.user.user_metadata?.picture || "",
-            onboardingCompleted: onboardingCompleted
+            name: session.user.user_metadata?.name || "User",
+            avatar: session.user.user_metadata?.avatar || "",
+            onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
           };
           
           console.log("Initial session found:", userData);
-          
-          // For social logins (like Google), check onboarding status explicitly
-          // as the metadata might not have been set correctly
-          if (!onboardingCompleted) {
-            const hasCompletedOnboarding = await checkUserOnboardingStatus(session.user.id);
-            if (hasCompletedOnboarding) {
-              userData.onboardingCompleted = true;
-            }
-          }
-          
           setUser(userData);
         }
       } catch (error) {
@@ -57,27 +44,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.log("Auth state change:", event, session?.user?.id);
         
         if (session) {
-          // Initialize with metadata from session
-          const onboardingCompleted = session.user.user_metadata?.onboardingCompleted || false;
-          
           const userData = {
             id: session.user.id,
             email: session.user.email,
-            name: session.user.user_metadata?.name || session.user.user_metadata?.full_name || "User",
-            avatar: session.user.user_metadata?.avatar || session.user.user_metadata?.picture || "",
-            onboardingCompleted: onboardingCompleted
+            name: session.user.user_metadata?.name || "User",
+            avatar: session.user.user_metadata?.avatar || "",
+            onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
           };
-          
-          // For social login events, check onboarding status explicitly
-          if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && !onboardingCompleted) {
-            // Use setTimeout to avoid triggering within the auth state change callback
-            setTimeout(async () => {
-              const hasCompletedOnboarding = await checkUserOnboardingStatus(session.user.id);
-              if (hasCompletedOnboarding) {
-                setUser(prev => prev ? {...prev, onboardingCompleted: true} : null);
-              }
-            }, 0);
-          }
           
           setUser(userData);
         } else {

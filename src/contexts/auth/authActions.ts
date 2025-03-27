@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { User } from "./types";
@@ -130,6 +131,7 @@ export const signInWithGoogle = async () => {
     console.log("Starting Google authentication flow...");
     
     // Get the canonical URL (in case we're on a custom domain or subdomain)
+    // Add detailed logging of the window location
     console.log("Current window location details:", {
       origin: window.location.origin,
       pathname: window.location.pathname,
@@ -139,6 +141,7 @@ export const signInWithGoogle = async () => {
     
     // For Supabase Google auth, the redirect must go to a URL that's
     // allowed in both the Google console and Supabase settings
+    // Use just the origin without the pathname to avoid issues
     const redirectUrl = window.location.origin + "/auth";
     
     console.log("Using redirect URL for Google auth:", redirectUrl);
@@ -195,52 +198,6 @@ export const resendVerificationEmail = async (email: string) => {
   } catch (error: any) {
     console.error("Error resending verification email:", error);
     toast.error(error.message || "Failed to resend verification email");
-    return false;
-  }
-};
-
-export const checkUserOnboardingStatus = async (userId: string): Promise<boolean> => {
-  try {
-    // First check if the user has onboardingCompleted set in metadata
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    
-    if (userError) throw userError;
-    
-    // If onboardingCompleted is explicitly set to true in user metadata, user has completed onboarding
-    if (userData.user.user_metadata?.onboardingCompleted === true) {
-      console.log("User has completed onboarding according to metadata");
-      return true;
-    }
-    
-    // If not set or false, check if they have a profile in the database
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-      
-    if (profileError) {
-      console.error("Error checking profile data:", profileError);
-      // Don't throw here, just continue with the check
-    }
-    
-    // If they have a profile with business_name set, they've likely completed onboarding
-    if (profileData && profileData.business_name) {
-      console.log("User has a business profile, updating metadata");
-      
-      // Update the user metadata to mark onboarding as completed
-      await supabase.auth.updateUser({
-        data: { onboardingCompleted: true }
-      });
-      
-      return true;
-    }
-    
-    console.log("User needs to complete onboarding");
-    return false;
-  } catch (error) {
-    console.error("Error checking onboarding status:", error);
-    // Default to false if there's an error
     return false;
   }
 };
