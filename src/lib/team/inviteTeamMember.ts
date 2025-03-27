@@ -68,23 +68,30 @@ export const inviteTeamMember = async (teamMember: Omit<TeamMember, 'id' | 'user
     // Call the edge function to send the invitation email
     const inviterName = (await supabase.auth.getUser()).data.user?.user_metadata?.name || "Team Admin";
     
-    const { error: emailError } = await supabase.functions.invoke("send-team-invitation", {
-      body: {
-        token: responseData.token,
-        email: teamMember.email,
-        inviterName,
-        role: teamMember.role,
-        name: teamMember.name
-      }
-    });
-    
-    if (emailError) {
-      console.warn("Error sending invitation email:", emailError);
-      toast.warning("Invitation created but email could not be sent", {
-        description: "The user has been invited, but they may not receive an email notification."
+    try {
+      const { data: emailData, error: emailError } = await supabase.functions.invoke("send-team-invitation", {
+        body: {
+          token: responseData.token,
+          email: teamMember.email,
+          inviterName,
+          role: teamMember.role,
+          name: teamMember.name
+        }
       });
-    } else {
-      toast.success(`Invitation sent to ${teamMember.email}`);
+      
+      if (emailError) {
+        console.warn("Error sending invitation email:", emailError);
+        toast.warning("Invitation created but email could not be sent", {
+          description: "The user has been invited, but they may not receive an email notification."
+        });
+      } else {
+        toast.success(`Invitation sent to ${teamMember.email}`);
+      }
+    } catch (emailSendError: any) {
+      console.warn("Exception when sending invitation email:", emailSendError);
+      toast.warning("Invitation created but email could not be sent", {
+        description: "The user has been invited, but they may not receive an email notification. Please contact them directly."
+      });
     }
     
     return typedData;

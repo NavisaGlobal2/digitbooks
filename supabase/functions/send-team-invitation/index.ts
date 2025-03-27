@@ -54,7 +54,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "DigiBooks Team <team@digitbooks.app>",
+        from: "DigiBooks <onboarding@resend.dev>", // Using the default verified Resend domain
         to: email,
         subject: `You've been invited to join DigiBooks as a ${role}`,
         html: `
