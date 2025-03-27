@@ -1,9 +1,8 @@
 
 import React from "react";
-import { Card, CardHeader, CardContent, CardFooter, CardDescription, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import { useBusinessProfile } from "./BusinessProfileContext";
 
