@@ -1,108 +1,129 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Filter, Search } from "lucide-react";
+import { Search, Filter, Calendar, CreditCard } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import FilterDropdown, { FilterOption } from "@/components/ui/FilterDropdown";
+import { ExpenseCategory } from "@/types/expense";
+import { getCategoryLabel } from "@/utils/expenseCategories";
+import { DateRange } from "react-day-picker";
+import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 interface ExpenseFiltersProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  onCategoryChange?: (category: string) => void;
+  onPaymentMethodChange?: (method: string) => void;
+  onDateRangeChange?: (range: DateRange | undefined) => void;
+  selectedCategory?: string;
+  selectedPaymentMethod?: string;
+  selectedDateRange?: DateRange;
 }
 
-const ExpenseFilters = ({ searchQuery, setSearchQuery }: ExpenseFiltersProps) => {
-  const [filterPeriod, setFilterPeriod] = useState("Last six month");
+const ExpenseFilters = ({ 
+  searchQuery, 
+  setSearchQuery,
+  onCategoryChange,
+  onPaymentMethodChange,
+  onDateRangeChange,
+  selectedCategory = 'all',
+  selectedPaymentMethod = 'all',
+  selectedDateRange
+}: ExpenseFiltersProps) => {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(selectedDateRange);
+  
+  // Category filter options
+  const categoryOptions: FilterOption[] = [
+    { label: "All Categories", value: "all" },
+    { label: getCategoryLabel("office"), value: "office" },
+    { label: getCategoryLabel("travel"), value: "travel" },
+    { label: getCategoryLabel("meals"), value: "meals" },
+    { label: getCategoryLabel("utilities"), value: "utilities" },
+    { label: getCategoryLabel("rent"), value: "rent" },
+    { label: getCategoryLabel("software"), value: "software" },
+    { label: getCategoryLabel("hardware"), value: "hardware" },
+    { label: getCategoryLabel("marketing"), value: "marketing" },
+    { label: getCategoryLabel("salaries"), value: "salaries" },
+    { label: getCategoryLabel("taxes"), value: "taxes" },
+    { label: getCategoryLabel("other"), value: "other" },
+  ];
+  
+  // Payment method filter options
+  const paymentMethodOptions: FilterOption[] = [
+    { label: "All Methods", value: "all" },
+    { label: "Cash", value: "cash" },
+    { label: "Card", value: "card" },
+    { label: "Bank Transfer", value: "bank transfer" },
+    { label: "Other", value: "other" },
+  ];
+  
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDateRange(range);
+    if (onDateRangeChange) {
+      onDateRangeChange(range);
+    }
+  };
   
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mb-6 gap-4">
-      <div className="relative w-full sm:w-64">
+    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 items-start sm:items-center justify-between mb-4 gap-2">
+      <div className="relative w-full sm:w-auto flex-grow max-w-md">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
         <Input
           type="search"
           placeholder="Search expenses..."
-          className="pl-9"
+          className="pl-8 w-full"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
       
-      <div className="flex gap-2 sm:gap-3">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              {filterPeriod}
-              <Filter className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setFilterPeriod("Last month")}>
-              Last month
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setFilterPeriod("Last three month")}>
-              Last three month
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setFilterPeriod("Last six month")}>
-              Last six month
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setFilterPeriod("Last year")}>
-              Last year
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setFilterPeriod("All time")}>
-              All time
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+        <FilterDropdown
+          options={categoryOptions}
+          selectedValue={selectedCategory}
+          onFilterChange={(value) => onCategoryChange?.(value)}
+          label="Category"
+          className="w-full sm:w-auto"
+        />
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              All category
-              <svg className="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="24">
-                <path d="m6 9 6 6 6-6"></path>
-              </svg>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>All categories</DropdownMenuItem>
-            <DropdownMenuItem>Office</DropdownMenuItem>
-            <DropdownMenuItem>Travel</DropdownMenuItem>
-            <DropdownMenuItem>Meals</DropdownMenuItem>
-            <DropdownMenuItem>Utilities</DropdownMenuItem>
-            <DropdownMenuItem>Rent</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <FilterDropdown
+          options={paymentMethodOptions}
+          selectedValue={selectedPaymentMethod}
+          onFilterChange={(value) => onPaymentMethodChange?.(value)}
+          label="Payment"
+          className="w-full sm:w-auto"
+        />
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              Amount
-              <svg className="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="24">
-                <path d="m6 9 6 6 6-6"></path>
-              </svg>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-full sm:w-auto">
+              <Calendar className="h-4 w-4 mr-2" />
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>
+                    {format(dateRange.from, "LLL dd")} - {format(dateRange.to, "LLL dd")}
+                  </>
+                ) : (
+                  format(dateRange.from, "LLL dd")
+                )
+              ) : (
+                "Date Range"
+              )}
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Highest to lowest</DropdownMenuItem>
-            <DropdownMenuItem>Lowest to highest</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              Date range
-              <svg className="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="24">
-                <path d="m6 9 6 6 6-6"></path>
-              </svg>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Last 7 days</DropdownMenuItem>
-            <DropdownMenuItem>Last 30 days</DropdownMenuItem>
-            <DropdownMenuItem>Last 90 days</DropdownMenuItem>
-            <DropdownMenuItem>Custom range</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <CalendarComponent
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={handleDateRangeChange}
+              numberOfMonths={2}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );

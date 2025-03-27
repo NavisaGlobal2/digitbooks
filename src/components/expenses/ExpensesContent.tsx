@@ -14,6 +14,7 @@ import ExpenseFilters from "./ExpenseFilters";
 import ConnectBankBanner from "./ConnectBankBanner";
 import BillsSection from "@/components/dashboard/BillsSection";
 import VendorsSection from "./VendorsSection";
+import { DateRange } from "react-day-picker";
 
 interface ExpensesContentProps {
   expenses: Expense[];
@@ -36,7 +37,11 @@ const ExpensesContent = ({
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("expenses");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   
+  // Filter expenses based on search query
   const filteredExpenses = expenses.filter(expense => 
     expense.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
     expense.vendor.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -102,7 +107,13 @@ const ExpensesContent = ({
             {/* Filters and Search */}
             <ExpenseFilters 
               searchQuery={searchQuery} 
-              setSearchQuery={setSearchQuery} 
+              setSearchQuery={setSearchQuery}
+              onCategoryChange={setSelectedCategory}
+              onPaymentMethodChange={setSelectedPaymentMethod}
+              onDateRangeChange={setDateRange}
+              selectedCategory={selectedCategory}
+              selectedPaymentMethod={selectedPaymentMethod}
+              selectedDateRange={dateRange}
             />
             
             {/* Table */}
@@ -110,7 +121,13 @@ const ExpensesContent = ({
               <div className="min-w-full px-4 sm:px-0">
                 <ExpensesTable 
                   expenses={filteredExpenses} 
-                  onDeleteExpense={deleteExpense} 
+                  onDeleteExpense={deleteExpense}
+                  filters={{
+                    category: selectedCategory === "all" ? undefined : selectedCategory,
+                    paymentMethod: selectedPaymentMethod === "all" ? undefined : selectedPaymentMethod,
+                    dateRange: dateRange?.from && dateRange?.to ? 
+                      { start: dateRange.from, end: dateRange.to } : undefined
+                  }}
                 />
               </div>
             </div>
