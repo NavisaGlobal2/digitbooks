@@ -92,12 +92,6 @@ export const AddressCard: React.FC = () => {
           </div>
         </div>
       </CardContent>
-      <CardFooter className="border-t px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex flex-col xs:flex-row xs:justify-end gap-2 w-full">
-          <Button variant="outline" size="sm" className="text-xs" type="reset">Cancel</Button>
-          <Button type="submit" size="sm" className="text-xs">Save Changes</Button>
-        </div>
-      </CardFooter>
     </Card>
   );
 };
