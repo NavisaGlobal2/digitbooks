@@ -1,7 +1,9 @@
 
 import { Transaction } from '../types.ts'
 import { detectAndParseTransactions } from './transactionDetector.ts'
-import { parseDate } from './helpers.ts'
+import { parseDate } from './utils/dateUtils.ts'
+import { parseAmount } from './utils/amountUtils.ts'
+import { isDateLike, looksLikeNumber } from './utils/typeDetectionUtils.ts'
 
 // Process Excel file
 export async function processExcel(file: File): Promise<Transaction[]> {
