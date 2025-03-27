@@ -14,7 +14,7 @@ export const useStatementUpload = (
   const [useEdgeFunction, setUseEdgeFunction] = useState(true);
   const [edgeFunctionAvailable, setEdgeFunctionAvailable] = useState(true);
   
-  // New state for column mapping
+  // Column mapping related state
   const [showColumnMapping, setShowColumnMapping] = useState(false);
   const [csvParseResult, setCsvParseResult] = useState<CSVParseResult | null>(null);
   const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
@@ -57,7 +57,7 @@ export const useStatementUpload = (
       setUseEdgeFunction(true);
     }
 
-    // For CSV files, we offer column mapping
+    // Always use column mapping for CSV files when client-side processing is selected
     if (isCsv && !useEdgeFunction) {
       parseCSVFile(
         file,
@@ -74,7 +74,7 @@ export const useStatementUpload = (
       return;
     }
 
-    // Choose between client-side parsing or edge function
+    // For non-CSV files or when server-side processing is enabled
     if (useEdgeFunction) {
       await parseViaEdgeFunction(
         file,
@@ -90,22 +90,26 @@ export const useStatementUpload = (
           // Fallback to client-side parsing if not a PDF
           if (!isPdf) {
             toast.info("Falling back to client-side parsing");
-            parseViaClient();
+            if (isCsv) {
+              // For CSV files, always use column mapping
+              parseCSVFile(
+                file,
+                (result) => {
+                  setCsvParseResult(result);
+                  setShowColumnMapping(true);
+                },
+                (innerError) => {
+                  setError(innerError);
+                }
+              );
+            } else {
+              // For Excel files
+              setError("Client-side Excel parsing is not fully implemented yet. Please try CSV format.");
+            }
           }
         }
       );
-    } else {
-      parseViaClient();
     }
-  };
-
-  const parseViaClient = () => {
-    toast.info("Processing your bank statement on the client");
-    
-    // Use existing parser functions here
-    // For now we're focusing on the CSV mapping feature
-    setUploading(false);
-    setError("Client side parsing without column mapping is not supported in this version. Please use column mapping for CSV files or server-side processing.");
   };
 
   const handleColumnMappingComplete = (mapping: ColumnMapping) => {

@@ -12,7 +12,7 @@ export { parseViaEdgeFunction } from "./edgeFunctionParser";
 // Main function to parse a statement file
 export const parseStatementFile = (
   file: File,
-  onSuccess: (transactions: ParsedTransaction[]) => void,
+  onSuccess: (result: CSVParseResult | ParsedTransaction[]) => void,
   onError: (errorMessage: string) => void
 ) => {
   if (!file) {
@@ -24,15 +24,19 @@ export const parseStatementFile = (
     parseCSVFile(
       file, 
       (result: CSVParseResult) => {
-        // Extract transactions from the result object
-        onSuccess(result.transactions);
+        // Pass the full result object
+        onSuccess(result);
       }, 
       onError
     );
   } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-    parseExcelFile(file, onSuccess, onError);
+    parseExcelFile(file, (transactions: ParsedTransaction[]) => {
+      onSuccess(transactions);
+    }, onError);
   } else if (file.name.endsWith('.pdf')) {
-    parsePDFFile(file, onSuccess, onError);
+    parsePDFFile(file, (transactions: ParsedTransaction[]) => {
+      onSuccess(transactions);
+    }, onError);
   } else {
     onError('Unsupported file format');
   }
