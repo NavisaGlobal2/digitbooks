@@ -22,7 +22,21 @@ export const useTeamMembers = () => {
       })) as TeamMember[];
     } catch (error) {
       console.error("Error fetching team members:", error);
-      throw error; // Don't show a toast here, let the component handle it
+      
+      // Check for connection-related errors
+      if (error instanceof Error) {
+        if (error.message && (
+            error.message.includes("Failed to fetch") || 
+            error.message.includes("Network request failed") ||
+            error.message.includes("NetworkError") ||
+            error.message.includes("network") ||
+            error.message.includes("timeout") ||
+            error.message.includes("connection"))) {
+          throw new Error("Connection failed: Unable to reach the database");
+        }
+      }
+      
+      throw error;
     }
   };
 

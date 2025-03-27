@@ -10,7 +10,7 @@ import { DeleteTeamMemberDialog } from "./team/DeleteTeamMemberDialog";
 import { TeamMemberList } from "./team/TeamMemberList";
 import { TeamMemberSearch } from "./team/TeamMemberSearch";
 import { EmptyState } from "../ui/empty-state";
-import { UserPlus, AlertCircle, RefreshCw } from "lucide-react";
+import { UserPlus, AlertCircle, RefreshCw, Database } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -67,9 +67,10 @@ export const TeamManagementSettings = () => {
       if (error.message && (
           error.message.includes("Failed to fetch") || 
           error.message.includes("NetworkError") ||
-          error.message.includes("Network request failed"))) {
+          error.message.includes("Network request failed") ||
+          error.message.includes("Connection failed"))) {
         setConnectionError(true);
-        toast.error("Connection to server failed", {
+        toast.error("Database connection failed", {
           description: "Please check your internet connection and try again"
         });
       } else {
@@ -136,9 +137,9 @@ export const TeamManagementSettings = () => {
         ) : connectionError ? (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4 mr-2" />
-            <AlertTitle>Connection Error</AlertTitle>
+            <AlertTitle>Database Connection Error</AlertTitle>
             <AlertDescription className="space-y-4">
-              <p>Unable to connect to the server. This could be due to:</p>
+              <p>Unable to connect to the database server. This could be due to:</p>
               <ul className="list-disc pl-5 space-y-1">
                 <li>Internet connection issues</li>
                 <li>The database service is temporarily unavailable</li>
