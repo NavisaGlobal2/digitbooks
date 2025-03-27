@@ -59,3 +59,33 @@ Deno.test("detectAndParseTransactions - handles different column formats", () =>
   
   console.log("Transaction detector format handling test passed!");
 });
+
+Deno.test("detectAndParseTransactions - handles uncommon column names", () => {
+  // Test with non-standard column names
+  const nonStandardHeadersRows = [
+    ["Transaction Time", "Narrative", "Value"],
+    ["01/15/2023", "Unusual transaction description", "100.00"],
+    ["01/20/2023", "Another strange narrative", "-75.50"]
+  ];
+  
+  const transactions = detectAndParseTransactions(nonStandardHeadersRows);
+  assert(transactions.length === 2, "Should parse 2 transactions with non-standard headers");
+  assert(transactions[0].description === "Unusual transaction description", "Should correctly map narrative to description");
+  assert(transactions[1].amount === 75.5, "Should correctly map value to amount");
+  
+  console.log("Transaction detector uncommon column names test passed!");
+});
+
+Deno.test("detectAndParseTransactions - handles data without clear headers", () => {
+  // Data without clear header row
+  const noHeaderRows = [
+    ["01/15/2023", "First transaction", "100.00"],
+    ["01/20/2023", "Second transaction", "-75.50"],
+    ["01/25/2023", "Third transaction", "200.00"]
+  ];
+  
+  const transactions = detectAndParseTransactions(noHeaderRows);
+  assert(transactions.length > 0, "Should extract transactions even without clear headers");
+  
+  console.log("Transaction detector headerless data test passed!");
+});

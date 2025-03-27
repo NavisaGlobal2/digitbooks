@@ -18,9 +18,19 @@ export async function parseFile(file: File): Promise<Transaction[]> {
     console.log(`Processing file: ${fileName}, size: ${file.size} bytes, type: ${file.type}`)
     
     if (fileName.endsWith('.csv')) {
-      return await processCSV(file)
+      try {
+        return await processCSV(file)
+      } catch (csvError) {
+        console.error('CSV processing error:', csvError)
+        throw new Error(`Failed to process CSV file: ${csvError.message}. Please check if your file is properly formatted and contains date, description, and amount columns.`)
+      }
     } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-      return await processExcel(file)
+      try {
+        return await processExcel(file)
+      } catch (excelError) {
+        console.error('Excel processing error:', excelError)
+        throw new Error(`Failed to process Excel file: ${excelError.message}. Please check if your file is properly formatted and contains date, description, and amount columns.`)
+      }
     } else if (fileName.endsWith('.pdf')) {
       throw new Error('PDF parsing is not supported by the server function. Please use CSV or Excel format.')
     } else {
@@ -28,7 +38,16 @@ export async function parseFile(file: File): Promise<Transaction[]> {
     }
   } catch (error) {
     console.error(`Error parsing file ${file.name}:`, error)
-    throw new Error(`Failed to process file: ${error.message}`)
+    
+    // Provide more helpful error messages
+    let errorMessage = error.message;
+    
+    if (errorMessage.includes('columns')) {
+      errorMessage += ' Please ensure your file contains columns for transaction date, description/narrative, and transaction amount.';
+    } else if (errorMessage.includes('format')) {
+      errorMessage += ' Supported file formats are CSV (.csv) and Excel (.xlsx, .xls).';
+    }
+    
+    throw new Error(`Failed to process file: ${errorMessage}`)
   }
 }
-
