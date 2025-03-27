@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
-          // Get basic user data from session
+          // Get basic user data
           const onboardingCompleted = session.user.user_metadata?.onboardingCompleted || false;
           
           const userData = {
@@ -32,11 +32,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           
           console.log("Initial session found:", userData);
           
-          // For all logins (including social), check onboarding status explicitly
-          // to ensure consistent behavior
-          const hasCompletedOnboarding = await checkUserOnboardingStatus(session.user.id);
-          if (hasCompletedOnboarding) {
-            userData.onboardingCompleted = true;
+          // For social logins (like Google), check onboarding status explicitly
+          // as the metadata might not have been set correctly
+          if (!onboardingCompleted) {
+            const hasCompletedOnboarding = await checkUserOnboardingStatus(session.user.id);
+            if (hasCompletedOnboarding) {
+              userData.onboardingCompleted = true;
+            }
           }
           
           setUser(userData);
@@ -66,8 +68,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             onboardingCompleted: onboardingCompleted
           };
           
-          // For all auth events, ensure consistent onboarding check
-          if ((event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+          // For social login events, check onboarding status explicitly
+          if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && !onboardingCompleted) {
             // Use setTimeout to avoid triggering within the auth state change callback
             setTimeout(async () => {
               const hasCompletedOnboarding = await checkUserOnboardingStatus(session.user.id);
