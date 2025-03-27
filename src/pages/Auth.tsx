@@ -25,11 +25,7 @@ const Auth: React.FC = () => {
     console.log("Origin:", window.location.origin);
     console.log("Search params:", location.search);
     console.log("Hash:", location.hash);
-    
-    // Additional debug info for Google auth
-    if (navigator.userAgent) {
-      console.log("User agent:", navigator.userAgent);
-    }
+    console.log("Auth state:", { isAuthenticated, user });
     
     // Test if we can access Google domains (for CORS diagnostics)
     fetch('https://accounts.google.com/gsi/status', { 
@@ -38,7 +34,7 @@ const Auth: React.FC = () => {
     })
     .then(() => console.log("Google domains seem accessible"))
     .catch(err => console.error("Cannot access Google domains:", err));
-  }, [location]);
+  }, [location, isAuthenticated, user]);
 
   // Check URL parameters and handle auth redirects
   useEffect(() => {

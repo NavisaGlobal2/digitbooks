@@ -53,9 +53,19 @@ function App() {
   useEffect(() => {
     // Once we know the authentication state, we're no longer initializing
     if (isAuthenticated !== undefined) {
-      setIsInitializing(false);
+      // Set a maximum timeout to prevent indefinite loading
+      const timer = setTimeout(() => {
+        setIsInitializing(false);
+      }, 2000); // 2 seconds max
+      
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated]);
+
+  // For debugging - add this to help troubleshoot auth state
+  useEffect(() => {
+    console.log("Auth state in App:", { isAuthenticated, user, isInitializing });
+  }, [isAuthenticated, user, isInitializing]);
 
   if (isInitializing) {
     return <LoadingPage />;
@@ -66,11 +76,14 @@ function App() {
       <Toaster />
       <Suspense fallback={<LoadingPage />}>
         <Routes>
+          {/* Public routes - don't require authentication */}
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<About />} />
           <Route path="/features" element={<Features />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/careers" element={<Careers />} />
+          
+          {/* Auth pages - handled by RequireAuth but not wrapped in it */}
           <Route path="/auth" element={<Auth />} />
           <Route path="/invitation" element={<Invitation />} />
         

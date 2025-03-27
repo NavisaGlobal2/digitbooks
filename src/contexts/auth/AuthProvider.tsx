@@ -14,8 +14,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Handle initial session
     const getInitialSession = async () => {
       try {
+        console.log("Checking for initial session...");
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
@@ -29,6 +31,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           
           console.log("Initial session found:", userData);
           setUser(userData);
+        } else {
+          console.log("No initial session found");
         }
       } catch (error) {
         console.error("Error getting initial session:", error);
@@ -37,28 +41,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     };
 
+    // Set up auth state change listener
+    const setupAuthListener = () => {
+      console.log("Setting up auth state change listener");
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log("Auth state change:", event, session?.user?.id);
+          
+          if (session) {
+            const userData = {
+              id: session.user.id,
+              email: session.user.email,
+              name: session.user.user_metadata?.name || "User",
+              avatar: session.user.user_metadata?.avatar || "",
+              onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
+            };
+            
+            setUser(userData);
+            console.log("User metadata:", session.user.user_metadata);
+          } else {
+            setUser(null);
+          }
+        }
+      );
+
+      return subscription;
+    };
+
+    const subscription = setupAuthListener();
     getInitialSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth state change:", event, session?.user?.id);
-        
-        if (session) {
-          const userData = {
-            id: session.user.id,
-            email: session.user.email,
-            name: session.user.user_metadata?.name || "User",
-            avatar: session.user.user_metadata?.avatar || "",
-            onboardingCompleted: session.user.user_metadata?.onboardingCompleted || false
-          };
-          
-          setUser(userData);
-        } else {
-          setUser(null);
-        }
-      }
-    );
-
+    // Cleanup subscription
     return () => {
       subscription.unsubscribe();
     };
@@ -97,6 +110,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       };
       
       setUser(updatedUser);
+      console.log("Onboarding completed successfully:", updatedUser);
       return updatedUser;
     } catch (error: any) {
       console.error("Error completing onboarding:", error);
