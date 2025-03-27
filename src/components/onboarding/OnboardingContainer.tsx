@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useOnboardingData } from "@/hooks/useOnboardingData";
 import { ChevronLeft } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 
 // Components
 import OnboardingStepIndicator from "@/components/onboarding/OnboardingStepIndicator";
@@ -48,7 +48,7 @@ const OnboardingContainer = () => {
         const success = await saveProfile();
         if (success) {
           console.log("Profile saved successfully, marking onboarding as complete");
-          completeOnboarding();
+          await completeOnboarding(user);
           navigate('/dashboard', { replace: true });
         }
       } catch (error) {
@@ -72,7 +72,7 @@ const OnboardingContainer = () => {
       const success = await saveProfile();
       if (success) {
         console.log("Profile saved successfully from skip, marking onboarding as complete");
-        completeOnboarding();
+        await completeOnboarding(user);
         navigate('/dashboard', { replace: true });
       }
     } catch (error: any) {

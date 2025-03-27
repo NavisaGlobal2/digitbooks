@@ -161,7 +161,7 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
       }
 
       console.log("Profile saved successfully:", data);
-      completeOnboarding();
+      await completeOnboarding(user);
       
       toast.success("Setup completed! Welcome to DigiBooks");
       

@@ -3,7 +3,7 @@ import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
 import { AuthContext } from "./AuthContext";
-import { login, logout, signup, completeOnboarding, signInWithGoogle } from "./authActions";
+import { login, logout, signup, signInWithGoogle } from "./authActions";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -81,10 +81,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     await signup(email, password, name);
   };
 
-  const handleCompleteOnboarding = async () => {
-    const updatedUser = await completeOnboarding(user);
-    if (updatedUser) {
+  const handleCompleteOnboarding = async (currentUser: User | null) => {
+    if (!currentUser) return null;
+    
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        data: { onboardingCompleted: true }
+      });
+      
+      if (error) throw error;
+      
+      const updatedUser = {
+        ...currentUser,
+        onboardingCompleted: true
+      };
+      
       setUser(updatedUser);
+      return updatedUser;
+    } catch (error: any) {
+      console.error("Error completing onboarding:", error);
+      return currentUser;
     }
   };
 
