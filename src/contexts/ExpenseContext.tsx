@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Expense, ExpenseStatus } from '@/types/expense';
 import { toast } from 'sonner';
@@ -32,6 +33,7 @@ const safelyStoreExpenses = (expenses: Expense[]): boolean => {
         expenseCopy.hasReceipt = true;
       }
       
+      // Store date as string for localStorage
       expenseCopy.date = expense.date instanceof Date ? expense.date.toISOString() : expense.date;
       
       return expenseCopy;
