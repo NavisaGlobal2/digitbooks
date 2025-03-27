@@ -1,4 +1,3 @@
-
 import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
@@ -15,14 +14,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     let mounted = true;
-    let authSubscription: { unsubscribe: () => void } | null = null;
 
     // Handle initial session and auth state changes
     const initializeAuth = async () => {
       try {
         console.log("Setting up auth state change listener");
         // First set up the listener before checking session
-        authSubscription = supabase.auth.onAuthStateChange(
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             console.log("Auth state change:", event, session?.user?.id);
             
@@ -82,10 +80,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Cleanup function
     return () => {
       mounted = false;
-      if (authSubscription) {
-        console.log("Cleaning up auth subscription");
-        authSubscription.unsubscribe();
-      }
     };
   }, []);
 
