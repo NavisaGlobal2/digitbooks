@@ -24,7 +24,7 @@ export const inviteTeamMember = async (
     console.log("Current user:", user.id);
     console.log("Inviting team member:", teamMember);
 
-    // Try a direct insert first with better error handling
+    // Try a direct insert first
     const { data: directData, error: directError } = await supabase
       .from('team_members')
       .insert({
@@ -47,14 +47,10 @@ export const inviteTeamMember = async (
         role: directData.role as TeamMemberRole
       } as TeamMember;
       
-      // Try to send email through our Edge Function
+      // Try to send email but don't block on it
       try {
-        const response = await sendInvitationEmail(typedData, user);
-        if (response.error) {
-          toast.warning("Team member added but email delivery might be delayed");
-        } else {
-          toast.success(`Invitation sent to ${teamMember.email}`);
-        }
+        await sendInvitationEmail(typedData, user);
+        toast.success(`Invitation sent to ${teamMember.email}`);
       } catch (emailError) {
         console.error("Error sending invitation email:", emailError);
         toast.warning("Team member added but invitation email could not be sent");
@@ -115,16 +111,15 @@ export const inviteTeamMember = async (
       updated_at: new Date().toISOString()
     } as TeamMember;
     
-    // Send the invitation email through our Edge Function
     try {
-      const response = await sendInvitationEmail(typedData, user);
-      if (response.error) {
-        toast.warning("Team member added but email delivery might be delayed");
-      } else {
-        toast.success(`Invitation sent to ${teamMember.email}`);
-      }
+      // Send the invitation email through our Edge Function
+      await sendInvitationEmail(typedData, user);
+      
+      toast.success(`Invitation sent to ${teamMember.email}`);
     } catch (inviteError) {
       console.error("Error sending invitation email:", inviteError);
+      // We don't throw here because the team member was already created,
+      // we just couldn't send the email
       toast.warning("Team member added but invitation email could not be sent");
     }
     
@@ -148,7 +143,7 @@ export const inviteTeamMember = async (
 const sendInvitationEmail = async (
   teamMember: TeamMember, 
   currentUser: any
-): Promise<any> => {
+): Promise<void> => {
   try {
     // Get the current user's info to include in the invitation
     const response = await supabase.functions.invoke('send-invitation', {
@@ -164,13 +159,16 @@ const sendInvitationEmail = async (
     
     if (response.error) {
       console.error("Error calling invitation function:", response.error);
-      return { error: response.error };
+      toast.error("Invitation created but email sending failed. Please try again or contact support.");
+      throw response.error;
     } else {
       console.log("Invitation function response:", response.data);
-      return response.data;
     }
   } catch (inviteError) {
     console.error("Error sending invitation:", inviteError);
+    // We don't throw here because the team member was already created,
+    // we just couldn't send the email
+    toast.warning("Team member added but invitation email could not be sent");
     throw inviteError;
   }
 };

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useTeamMembers } from "@/lib/team/useTeamMembers";
 import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 import { useAuth } from "@/contexts/auth";
@@ -14,7 +14,7 @@ export const useTeamMembersData = () => {
   const { user } = useAuth();
   const { fetchTeamMembers, inviteTeamMember, removeTeamMember } = useTeamMembers();
 
-  const loadTeamMembers = useCallback(async () => {
+  const loadTeamMembers = async () => {
     setIsLoading(true);
     setIsError(false);
     try {
@@ -64,39 +64,11 @@ export const useTeamMembersData = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user, fetchTeamMembers]);
+  };
 
   useEffect(() => {
     loadTeamMembers();
-  }, [loadTeamMembers]);
-
-  // Setup realtime subscription to the team_members table
-  useEffect(() => {
-    // Skip if no user is logged in
-    if (!user) return;
-    
-    // Subscribe to changes on the team_members table
-    const channel = supabase
-      .channel('team-members-changes')
-      .on(
-        'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'team_members' 
-        },
-        () => {
-          // Refresh team members when any change happens
-          console.log('Detected change in team_members table, refreshing data');
-          loadTeamMembers();
-        }
-      )
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, loadTeamMembers]);
+  }, [user]);
 
   const handleAddMember = async (newMemberData: Omit<TeamMember, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     try {
@@ -118,8 +90,9 @@ export const useTeamMembersData = () => {
             return [...prevMembers, result];
           }
         });
+        toast.success(`Invitation sent to ${newMemberData.email}. They should receive an email shortly.`);
         
-        // Force refresh the team members list to ensure we have the latest data
+        // Refresh the team members list to ensure we have the latest data
         setTimeout(() => {
           loadTeamMembers();
         }, 1000);
@@ -134,11 +107,6 @@ export const useTeamMembersData = () => {
     setMembers(members.map(member => 
       member.id === updatedMember.id ? updatedMember : member
     ));
-    
-    // Also refresh the list to ensure server state is reflected
-    setTimeout(() => {
-      loadTeamMembers();
-    }, 1000);
   };
 
   const handleDeleteMember = async (memberId: string) => {
@@ -150,11 +118,6 @@ export const useTeamMembersData = () => {
           // Update the UI state after successful API call
           setMembers(members.filter(member => member.id !== memberId));
           toast.success("Team member removed successfully");
-          
-          // Refresh to make sure we have latest data
-          setTimeout(() => {
-            loadTeamMembers();
-          }, 1000);
         }
       } catch (error) {
         console.error("Error deleting team member:", error);

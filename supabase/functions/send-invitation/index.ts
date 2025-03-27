@@ -24,7 +24,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     );
 
-    // Double check that the team member exists in the database
+    // Verify that the team member exists in the database
     const { data: verifyData, error: verifyError } = await supabaseAdmin
       .from('team_members')
       .select('id, email, name')
@@ -33,41 +33,19 @@ serve(async (req) => {
     
     if (verifyError || !verifyData) {
       console.error("Team member not found in database:", verifyError);
-      
-      // If not found, attempt to create the team member record
-      console.log("Attempting to create team member record as fallback");
-      
-      const { data: createData, error: createError } = await supabaseAdmin
-        .from('team_members')
-        .insert({
-          id: teamMember.id,
-          name: teamMember.name,
-          email: teamMember.email,
-          role: teamMember.role,
-          status: 'pending',
-          user_id: invitedBy.id
-        })
-        .select()
-        .single();
-      
-      if (createError) {
-        console.error("Failed to create team member:", createError);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: "Failed to find or create team member record" 
-          }),
-          { 
-            status: 500, 
-            headers: { 
-              "Content-Type": "application/json",
-              ...corsHeaders
-            } 
-          }
-        );
-      }
-      
-      console.log("Created team member as fallback:", createData);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Team member not found in database" 
+        }),
+        { 
+          status: 404, 
+          headers: { 
+            "Content-Type": "application/json",
+            ...corsHeaders
+          } 
+        }
+      );
     }
 
     // Get application URL for the invitation link
@@ -81,7 +59,6 @@ serve(async (req) => {
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
     
     // Send the actual email
-    let emailSent = false;
     try {
       // Using onboarding@resend.dev as the from address to avoid domain verification issues
       const emailResponse = await resend.emails.send({
@@ -107,18 +84,14 @@ serve(async (req) => {
       });
       
       console.log("Email sent successfully:", emailResponse);
-      emailSent = true;
-      
-      if (emailResponse.error) {
-        console.error("Email API reported an error:", emailResponse.error);
-        // We'll continue with the process but note there was an issue
-      }
     } catch (emailError) {
       console.error("Error sending email:", emailError);
-      // We'll still continue the process but note that we couldn't send the email
+      // Don't throw an error here, just log it
+      // We'll still return success to the client so the team member is added
+      // and we'll inform them about the email issue
     }
 
-    // Always update the team member status to pending, even if email failed
+    // Update the team member status to reflect the invitation was sent
     const { data, error } = await supabaseAdmin
       .from('team_members')
       .update({ status: 'pending' })
@@ -127,14 +100,13 @@ serve(async (req) => {
 
     if (error) {
       console.error("Error updating team member status:", error);
-      // Not throwing here since we've already tried to send the email
+      throw error;
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: emailSent ? "Team member added and invitation sent" : "Team member added but email could not be sent",
-        emailSent: emailSent,
+        message: "Team member added, invitation processing", 
         data: data 
       }),
       { 
@@ -145,7 +117,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Error in invitation process:", error);
+    console.error("Error sending invitation:", error);
     
     return new Response(
       JSON.stringify({ 
