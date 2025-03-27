@@ -26,6 +26,11 @@ const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadArea
                     Large file might take longer to process
                   </p>
                 )}
+                {file.name.toLowerCase().endsWith('.pdf') && (
+                  <p className="text-xs text-amber-500 mt-1">
+                    PDF files require server-side processing with authentication
+                  </p>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center space-y-2">

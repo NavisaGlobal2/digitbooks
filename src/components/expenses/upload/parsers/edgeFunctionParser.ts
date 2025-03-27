@@ -10,11 +10,24 @@ export const parseViaEdgeFunction = async (
   onError: (errorMessage: string) => void
 ) => {
   try {
-    const { data: sessionData, error } = await supabase.auth.getSession();
+    // First check if the user is authenticated
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     
-    if (error || !sessionData.session?.access_token) {
-      console.error("Authentication error:", error);
-      onError('Authentication required to parse files. Please sign in again.');
+    if (sessionError) {
+      console.error("Authentication error:", sessionError);
+      onError('Authentication error: ' + sessionError.message);
+      return false;
+    }
+    
+    if (!sessionData.session) {
+      console.error("No active session found");
+      onError('Authentication required to parse files. Please sign in to use this feature.');
+      return false;
+    }
+    
+    if (!sessionData.session.access_token) {
+      console.error("No access token found in session");
+      onError('Invalid authentication token. Please sign out and sign in again.');
       return false;
     }
     
@@ -27,13 +40,12 @@ export const parseViaEdgeFunction = async (
     console.log('Preparing to call parse-bank-statement edge function...');
     
     // Set up a timeout for the function call
-    const timeoutDuration = 60000; // 60 seconds - increased from 45
+    const timeoutDuration = 60000; // 60 seconds
     
     try {
       console.log('Using supabase.functions.invoke to call the edge function');
       
       // Call the edge function with an increased timeout
-      // Removed the responseType property as it's not supported in FunctionInvokeOptions
       const { data, error: functionError } = await supabase.functions.invoke(
         'parse-bank-statement',
         {
@@ -46,61 +58,88 @@ export const parseViaEdgeFunction = async (
       
       if (functionError) {
         console.error('Edge function error:', functionError);
+        
+        // Provide more specific error messages based on the error type
+        if (functionError.message?.includes('JWT')) {
+          throw new Error('Authentication token is invalid or expired. Please sign in again.');
+        }
+        
+        if (functionError.message?.includes('timeout') || functionError.message?.includes('timed out')) {
+          throw new Error('Server processing timed out. Please try a smaller file or use client-side processing.');
+        }
+        
         throw new Error(`Edge function error: ${functionError.message || 'Unknown error'}`);
       }
       
       if (!data) {
         console.error('No data returned from edge function');
-        throw new Error('No data returned from edge function');
+        throw new Error('No data returned from edge function. The server may be experiencing issues.');
       }
       
       console.log('Edge function response:', data);
       
-      // Set up a timeout for the database fetch
+      if (!data.batchId) {
+        console.error('No batchId found in edge function response:', data);
+        throw new Error('Invalid server response. Please try again or use client-side processing.');
+      }
+      
+      // After successful function call, fetch the transactions with timeout
       const abortController = new AbortController();
       const fetchTimeoutId = setTimeout(() => abortController.abort(), timeoutDuration);
       
-      // After successful function call, fetch the transactions with timeout
-      const { data: transactionsData, error: fetchError } = await supabase
-        .from('uploaded_bank_lines')
-        .select('*')
-        .eq('upload_batch_id', data.batchId)
-        .order('date', { ascending: false })
-        .abortSignal(abortController.signal);
-      
-      // Clear the fetch timeout
-      clearTimeout(fetchTimeoutId);
-      
-      if (fetchError) {
-        console.error('Failed to retrieve transactions:', fetchError);
-        throw new Error(`Failed to retrieve processed transactions: ${fetchError.message}`);
+      try {
+        // Add small delay to ensure database has time to insert records
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const { data: transactionsData, error: fetchError } = await supabase
+          .from('uploaded_bank_lines')
+          .select('*')
+          .eq('upload_batch_id', data.batchId)
+          .order('date', { ascending: false })
+          .abortSignal(abortController.signal);
+        
+        // Clear the fetch timeout
+        clearTimeout(fetchTimeoutId);
+        
+        if (fetchError) {
+          console.error('Failed to retrieve transactions:', fetchError);
+          throw new Error(`Failed to retrieve processed transactions: ${fetchError.message}`);
+        }
+        
+        if (!transactionsData || transactionsData.length === 0) {
+          console.warn('No transactions found for batch ID:', data.batchId);
+          toast.warning('No transactions were found in the uploaded file. Please check the file format.');
+          onError('No transactions were found. The file may be empty or in an unsupported format.');
+          return false;
+        }
+        
+        console.log('Retrieved transactions data:', transactionsData.length, 'transactions');
+        
+        // Convert to the format expected by the component
+        const transactions: ParsedTransaction[] = transactionsData.map((item) => ({
+          id: item.id,
+          date: new Date(item.date),
+          description: item.description,
+          amount: item.amount,
+          type: item.type as 'credit' | 'debit',
+          selected: item.type === 'debit', // Automatically select debit transactions
+          category: item.category as ExpenseCategory | undefined
+        }));
+        
+        console.log(`Successfully processed ${transactions.length} transactions from edge function`);
+        console.log(`Transaction types: ${transactions.filter(t => t.type === 'debit').length} debits, ${transactions.filter(t => t.type === 'credit').length} credits`);
+        onComplete(transactions);
+        
+        return true;
+      } catch (fetchError: any) {
+        console.error('Error fetching transaction data:', fetchError);
+        
+        if (fetchError.name === 'AbortError') {
+          throw new Error('Database query timed out. The server may be experiencing high load.');
+        }
+        
+        throw fetchError;
       }
-      
-      if (!transactionsData || transactionsData.length === 0) {
-        console.warn('No transactions found for batch ID:', data.batchId);
-        toast.warning('No transactions were found in the uploaded file. Please check the file format.');
-        onError('No transactions were found. The file may be empty or in an unsupported format.');
-        return false;
-      }
-      
-      console.log('Retrieved transactions data:', transactionsData.length, 'transactions');
-      
-      // Convert to the format expected by the component
-      const transactions: ParsedTransaction[] = transactionsData.map((item) => ({
-        id: item.id,
-        date: new Date(item.date),
-        description: item.description,
-        amount: item.amount,
-        type: item.type as 'credit' | 'debit',
-        selected: item.type === 'debit', // Automatically select debit transactions
-        category: item.category as ExpenseCategory | undefined
-      }));
-      
-      console.log(`Successfully processed ${transactions.length} transactions from edge function`);
-      console.log(`Transaction types: ${transactions.filter(t => t.type === 'debit').length} debits, ${transactions.filter(t => t.type === 'credit').length} credits`);
-      onComplete(transactions);
-      
-      return true;
     } catch (functionError: any) {
       console.error('Error calling edge function:', functionError);
       
@@ -113,6 +152,14 @@ export const parseViaEdgeFunction = async (
       if (functionError.message?.includes('Failed to fetch') || 
           functionError.message?.includes('Network error')) {
         throw new Error('Network error while uploading. Please check your internet connection and try again.');
+      }
+      
+      // Auth specific errors
+      if (functionError.message?.includes('auth') || 
+          functionError.message?.includes('Authentication') ||
+          functionError.message?.includes('JWT') ||
+          functionError.message?.includes('token')) {
+        throw new Error('Authentication error: ' + functionError.message + '. Please sign out and sign in again.');
       }
       
       // Try to extract a more helpful error message

@@ -24,17 +24,25 @@ export async function handleRequest(req: Request): Promise<Response> {
       )
     }
     
-    // Regular Supabase client using the token from the request
+    // Check for authentication header
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       console.error('Missing Authorization header in request')
       return new Response(
-        JSON.stringify({ error: 'Missing Authorization header' }),
+        JSON.stringify({ error: 'Missing Authorization header', errorType: 'authentication' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       )
     }
     
     const token = authHeader.replace('Bearer ', '')
+    if (!token || token.length < 10) {
+      console.error('Invalid token in request, length:', token?.length || 0)
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication token', errorType: 'authentication' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      )
+    }
+    
     console.log('Got token from request, length:', token.length)
     
     // Process the uploaded file and get transactions
@@ -72,6 +80,23 @@ export async function handleRequest(req: Request): Promise<Response> {
     } catch (validationError) {
       // Handle validation errors with a 400 Bad Request status
       console.error('Validation error:', validationError.message)
+      
+      // Check if it's an auth error
+      if (validationError.message?.includes('auth') || 
+          validationError.message?.includes('Authentication') ||
+          validationError.message?.includes('token') ||
+          validationError.message?.includes('Unauthorized')) {
+        return new Response(
+          JSON.stringify({ 
+            error: validationError.message,
+            errorType: 'authentication'
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 401
+          }
+        )
+      }
       
       return new Response(
         JSON.stringify({ 

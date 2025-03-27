@@ -31,12 +31,12 @@ export async function processFormData(
     
     if (userError) {
       console.error('Auth error getting user:', userError.message);
-      throw new Error(`Unauthorized or invalid token: ${userError.message}`);
+      throw new Error(`Authentication failed: ${userError.message}`);
     }
     
     if (!user) {
       console.error('No user found with provided token');
-      throw new Error('Unauthorized or invalid token: No user found');
+      throw new Error('Authentication failed: No user found with the provided token');
     }
     
     console.log('Successfully authenticated user:', user.id);
