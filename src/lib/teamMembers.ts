@@ -6,14 +6,14 @@ import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 export const useTeamMembers = () => {
   const fetchTeamMembers = async () => {
     try {
-      // Using the any type as a workaround since the generated types don't include the team_members table yet
+      // Properly type the response from Supabase using the Database type
       const { data, error } = await supabase
-        .from('team_members' as any)
+        .from('team_members')
         .select('*')
         .order('created_at', { ascending: true });
       
       if (error) throw error;
-      return data as TeamMember[] || [];
+      return data || [];
     } catch (error) {
       console.error("Error fetching team members:", error);
       toast.error("Failed to load team members");
@@ -31,7 +31,7 @@ export const useTeamMembers = () => {
       }
 
       const { data, error } = await supabase
-        .from('team_members' as any)
+        .from('team_members')
         .insert({ 
           ...teamMember, 
           user_id: user.id,
@@ -45,7 +45,7 @@ export const useTeamMembers = () => {
       // In a real application, we would send an invitation email here
       // For now, we'll just show a success message
       toast.success(`Invitation sent to ${teamMember.email}`);
-      return data as TeamMember;
+      return data;
     } catch (error) {
       console.error("Error inviting team member:", error);
       toast.error("Failed to invite team member");
@@ -56,7 +56,7 @@ export const useTeamMembers = () => {
   const updateTeamMember = async (id: string, updates: Partial<Omit<TeamMember, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => {
     try {
       const { data, error } = await supabase
-        .from('team_members' as any)
+        .from('team_members')
         .update({ 
           ...updates, 
           updated_at: new Date().toISOString() 
@@ -67,7 +67,7 @@ export const useTeamMembers = () => {
       
       if (error) throw error;
       toast.success("Team member updated successfully");
-      return data as TeamMember;
+      return data;
     } catch (error) {
       console.error("Error updating team member:", error);
       toast.error("Failed to update team member");
@@ -78,7 +78,7 @@ export const useTeamMembers = () => {
   const removeTeamMember = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('team_members' as any)
+        .from('team_members')
         .delete()
         .eq('id', id);
       
