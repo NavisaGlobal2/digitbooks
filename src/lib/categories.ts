@@ -9,6 +9,7 @@ export type Category = {
   description?: string;
   color?: string;
   icon?: string;
+  user_id: string;
   created_at: string;
   updated_at: string;
 };
@@ -32,9 +33,16 @@ export const useCategories = () => {
 
   const createCategory = async (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to create a category");
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('categories')
-        .insert(category)
+        .insert({ ...category, user_id: user.id })
         .select()
         .single();
       
@@ -48,7 +56,7 @@ export const useCategories = () => {
     }
   };
 
-  const updateCategory = async (id: string, category: Partial<Omit<Category, 'id' | 'created_at' | 'updated_at'>>) => {
+  const updateCategory = async (id: string, category: Partial<Omit<Category, 'id' | 'created_at' | 'updated_at' | 'user_id'>>) => {
     try {
       const { data, error } = await supabase
         .from('categories')

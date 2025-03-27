@@ -1,6 +1,7 @@
 
 export interface TaxRate {
   id: string;
+  user_id: string;
   name: string;
   rate: number;
   description?: string;

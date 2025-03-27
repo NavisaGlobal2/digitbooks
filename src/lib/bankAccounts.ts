@@ -11,6 +11,7 @@ export type BankAccount = {
   balance?: number;
   currency?: string;
   is_active?: boolean;
+  user_id: string;
   created_at: string;
   updated_at: string;
 };
@@ -34,9 +35,16 @@ export const useBankAccounts = () => {
 
   const createBankAccount = async (bankAccount: Omit<BankAccount, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to create a bank account");
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('bank_accounts')
-        .insert(bankAccount)
+        .insert({ ...bankAccount, user_id: user.id })
         .select()
         .single();
       
@@ -50,7 +58,7 @@ export const useBankAccounts = () => {
     }
   };
 
-  const updateBankAccount = async (id: string, bankAccount: Partial<Omit<BankAccount, 'id' | 'created_at' | 'updated_at'>>) => {
+  const updateBankAccount = async (id: string, bankAccount: Partial<Omit<BankAccount, 'id' | 'created_at' | 'updated_at' | 'user_id'>>) => {
     try {
       const { data, error } = await supabase
         .from('bank_accounts')

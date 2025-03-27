@@ -3,6 +3,7 @@ export type AccountType = 'checking' | 'savings' | 'credit' | 'investment' | 'ot
 
 export interface BankAccount {
   id: string;
+  user_id: string;
   name: string;
   account_number?: string;
   bank_name?: string;

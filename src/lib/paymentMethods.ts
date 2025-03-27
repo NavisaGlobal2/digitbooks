@@ -7,6 +7,7 @@ export type PaymentMethod = {
   name: string;
   description?: string;
   is_active?: boolean;
+  user_id: string;
   created_at: string;
   updated_at: string;
 };
@@ -30,9 +31,16 @@ export const usePaymentMethods = () => {
 
   const createPaymentMethod = async (paymentMethod: Omit<PaymentMethod, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to create a payment method");
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('payment_methods')
-        .insert(paymentMethod)
+        .insert({ ...paymentMethod, user_id: user.id })
         .select()
         .single();
       
@@ -46,7 +54,7 @@ export const usePaymentMethods = () => {
     }
   };
 
-  const updatePaymentMethod = async (id: string, paymentMethod: Partial<Omit<PaymentMethod, 'id' | 'created_at' | 'updated_at'>>) => {
+  const updatePaymentMethod = async (id: string, paymentMethod: Partial<Omit<PaymentMethod, 'id' | 'created_at' | 'updated_at' | 'user_id'>>) => {
     try {
       const { data, error } = await supabase
         .from('payment_methods')

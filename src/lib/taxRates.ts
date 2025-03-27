@@ -8,6 +8,7 @@ export type TaxRate = {
   rate: number;
   description?: string;
   is_default?: boolean;
+  user_id: string;
   created_at: string;
   updated_at: string;
 };
@@ -31,9 +32,16 @@ export const useTaxRates = () => {
 
   const createTaxRate = async (taxRate: Omit<TaxRate, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to create a tax rate");
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('tax_rates')
-        .insert(taxRate)
+        .insert({ ...taxRate, user_id: user.id })
         .select()
         .single();
       
@@ -47,7 +55,7 @@ export const useTaxRates = () => {
     }
   };
 
-  const updateTaxRate = async (id: string, taxRate: Partial<Omit<TaxRate, 'id' | 'created_at' | 'updated_at'>>) => {
+  const updateTaxRate = async (id: string, taxRate: Partial<Omit<TaxRate, 'id' | 'created_at' | 'updated_at' | 'user_id'>>) => {
     try {
       const { data, error } = await supabase
         .from('tax_rates')

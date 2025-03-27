@@ -14,6 +14,7 @@ export type RecurringTransaction = {
   bank_account_id?: string;
   next_due_date?: string;
   status?: 'active' | 'paused' | 'completed';
+  user_id: string;
   created_at: string;
   updated_at: string;
 };
@@ -37,9 +38,16 @@ export const useRecurringTransactions = () => {
 
   const createRecurringTransaction = async (transaction: Omit<RecurringTransaction, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to create a recurring transaction");
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('recurring_transactions')
-        .insert(transaction)
+        .insert({ ...transaction, user_id: user.id })
         .select()
         .single();
       
@@ -53,7 +61,7 @@ export const useRecurringTransactions = () => {
     }
   };
 
-  const updateRecurringTransaction = async (id: string, transaction: Partial<Omit<RecurringTransaction, 'id' | 'created_at' | 'updated_at'>>) => {
+  const updateRecurringTransaction = async (id: string, transaction: Partial<Omit<RecurringTransaction, 'id' | 'created_at' | 'updated_at' | 'user_id'>>) => {
     try {
       const { data, error } = await supabase
         .from('recurring_transactions')
