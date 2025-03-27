@@ -75,21 +75,26 @@ export const BusinessProfileProvider: React.FC<{ children: React.ReactNode }> = 
         }
         
         if (data) {
+          console.log("Retrieved profile data:", data);
+          
+          // Parse address components from the address string if available
+          const addressParts = parseAddressString(data.address || "");
+          
           // Map database fields to our profile structure
           setProfile({
             name: data.business_name || defaultProfile.name,
             description: data.industry || defaultProfile.description,
             logo: "", // We don't store this yet
-            email: data.email || defaultProfile.email,
+            email: data.email || defaultProfile.email, // This might come from auth user
             phone: data.phone || defaultProfile.phone,
             website: data.website || defaultProfile.website,
             address: {
-              line1: data.address || defaultProfile.address.line1,
-              line2: defaultProfile.address.line2, // Not stored in DB yet
-              city: data.city || defaultProfile.address.city,
-              state: data.state || defaultProfile.address.state,
-              postalCode: data.postal_code || defaultProfile.address.postalCode,
-              country: data.country || defaultProfile.address.country
+              line1: addressParts.line1 || defaultProfile.address.line1,
+              line2: addressParts.line2 || defaultProfile.address.line2,
+              city: addressParts.city || defaultProfile.address.city,
+              state: addressParts.state || defaultProfile.address.state,
+              postalCode: addressParts.postalCode || defaultProfile.address.postalCode,
+              country: addressParts.country || defaultProfile.address.country
             }
           });
         }
@@ -103,6 +108,35 @@ export const BusinessProfileProvider: React.FC<{ children: React.ReactNode }> = 
 
     fetchBusinessProfile();
   }, [user]);
+
+  // Helper function to parse address string into components
+  const parseAddressString = (addressString: string): Partial<BusinessAddress> => {
+    // Very simple parsing logic - in a real app this would be more sophisticated
+    const parts = addressString.split(',').map(part => part.trim());
+    
+    return {
+      line1: parts[0] || '',
+      line2: parts.length > 4 ? parts[1] : '',
+      city: parts.length > 4 ? parts[2] : (parts.length > 1 ? parts[1] : ''),
+      state: parts.length > 4 ? parts[3] : (parts.length > 2 ? parts[2] : ''),
+      postalCode: parts.length > 4 ? parts[4] : (parts.length > 3 ? parts[3] : ''),
+      country: parts.length > 5 ? parts[5] : (parts.length > 4 ? parts[4] : '')
+    };
+  };
+
+  // Helper function to format address components into a single string for storage
+  const formatAddressString = (address: BusinessAddress): string => {
+    // Format address components into a single string for storage
+    let addressString = address.line1;
+    
+    if (address.line2) {
+      addressString += `, ${address.line2}`;
+    }
+    
+    addressString += `, ${address.city}, ${address.state}, ${address.postalCode}, ${address.country}`;
+    
+    return addressString;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -136,6 +170,9 @@ export const BusinessProfileProvider: React.FC<{ children: React.ReactNode }> = 
       setIsLoading(true);
       console.log("Saving profile to database:", profile);
       
+      // Format address for storage
+      const formattedAddress = formatAddressString(profile.address);
+      
       // Update profile in Supabase
       const { error } = await supabase
         .from('profiles')
@@ -144,12 +181,7 @@ export const BusinessProfileProvider: React.FC<{ children: React.ReactNode }> = 
           industry: profile.description,
           phone: profile.phone,
           website: profile.website,
-          email: profile.email,
-          address: profile.address.line1,
-          city: profile.address.city,
-          state: profile.address.state,
-          postal_code: profile.address.postalCode,
-          country: profile.address.country
+          address: formattedAddress
         })
         .eq('id', user.id);
       
