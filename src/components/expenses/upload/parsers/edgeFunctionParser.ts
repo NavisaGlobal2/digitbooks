@@ -24,6 +24,13 @@ export const parseViaEdgeFunction = async (
 
     if (error) {
       console.error("Edge function error:", error);
+      
+      // Check for OpenAI API key error
+      if (error.message && error.message.includes("OPENAI_API_KEY")) {
+        onError("OpenAI API key is not configured. Please contact your administrator to set up the OpenAI integration.");
+        return [];
+      }
+      
       onError(`Server error: ${error.message}`);
       return [];
     }

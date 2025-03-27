@@ -89,12 +89,19 @@ export const useFileProcessing = ({
           const isAuthError = errorMessage.toLowerCase().includes('auth') || 
                               errorMessage.toLowerCase().includes('sign in') ||
                               errorMessage.toLowerCase().includes('token');
+          const isOpenAIError = errorMessage.toLowerCase().includes('openai') ||
+                               errorMessage.toLowerCase().includes('api key');
           
           handleError(errorMessage);
           
-          // For auth errors, don't try to fallback to client-side
-          if (isAuthError) {
+          // For auth or OpenAI errors, don't try to fallback to client-side
+          if (isAuthError || isOpenAIError) {
             resetProgress();
+            
+            if (isOpenAIError) {
+              toast.error("The AI processing feature requires an OpenAI API key. Please contact your administrator.");
+            }
+            
             return true;
           }
           

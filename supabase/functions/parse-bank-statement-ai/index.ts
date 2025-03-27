@@ -31,7 +31,7 @@ async function extractTextFromFile(file: File): Promise<string> {
 async function processWithOpenAI(text: string): Promise<any> {
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
   if (!OPENAI_API_KEY) {
-    throw new Error("Missing OPENAI_API_KEY");
+    throw new Error("OPENAI_API_KEY is not configured. Please set up your OpenAI API key in Supabase.");
   }
 
   console.log("Sending to OpenAI for processing...");
@@ -116,6 +116,17 @@ serve(async (req) => {
   }
 
   try {
+    // Check if OpenAI API key is configured
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) {
+      return new Response(
+        JSON.stringify({ 
+          error: "OPENAI_API_KEY is not configured. Please set up your OpenAI API key in Supabase." 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+
     // Parse the request body - this will contain our file
     const formData = await req.formData();
     const file = formData.get("file");
