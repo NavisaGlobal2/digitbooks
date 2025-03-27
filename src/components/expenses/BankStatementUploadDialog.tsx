@@ -1,16 +1,8 @@
 
 import { useState } from "react";
-import { toast } from "sonner";
-import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress"; 
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useExpenses } from "@/contexts/ExpenseContext";
 import TransactionTaggingDialog from "./TransactionTaggingDialog";
-import FileUploadArea from "./upload/FileUploadArea";
-import ErrorDisplay from "./upload/ErrorDisplay";
-import DialogHeader from "./upload/DialogHeader";
-import UploadDialogFooter from "./upload/UploadDialogFooter";
 import ColumnMappingDialog from "./upload/columnMapping/ColumnMappingDialog";
 import { useStatementUpload } from "./upload/hooks/useStatementUpload";
 import { 
@@ -20,6 +12,8 @@ import {
   saveTransactionsToDatabase,
   prepareExpensesFromTransactions 
 } from "./upload/transactionStorage";
+import UploadDialogContent from "./upload/components/UploadDialogContent";
+import { toast } from "sonner";
 
 interface BankStatementUploadDialogProps {
   open: boolean;
@@ -124,82 +118,19 @@ const BankStatementUploadDialog = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader title="Upload Bank Statement" />
-          <DialogDescription className="text-center text-sm text-muted-foreground">
-            Upload your bank statement to automatically create expenses
-          </DialogDescription>
-          
-          <div className="space-y-4 p-4 pt-2">
-            <ErrorDisplay error={error} />
-            
-            <FileUploadArea 
-              file={file} 
-              onFileChange={handleFileChange} 
-              disabled={uploading}
-              errorState={error}
-            />
-            
-            {/* Processing mode toggle */}
-            <div className="flex items-center space-x-2">
-              <Switch 
-                id="server-processing" 
-                checked={useEdgeFunction} 
-                onCheckedChange={toggleEdgeFunction}
-                disabled={!edgeFunctionAvailable || uploading}
-              />
-              <Label htmlFor="server-processing" className="flex flex-col">
-                <span>
-                  {useEdgeFunction ? "Server-side processing" : "Client-side processing with column mapping"}
-                  {!edgeFunctionAvailable && " (server unavailable)"}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {useEdgeFunction 
-                    ? "Processes your statement on the server for better accuracy" 
-                    : "Process and customize column mapping in the browser"}
-                </span>
-              </Label>
-            </div>
-            
-            {/* Progress indicator */}
-            {uploading && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{step}</span>
-                  <span>{progress}%</span>
-                </div>
-                <Progress value={progress} className="h-2" />
-                {progress > 90 && progress < 100 && (
-                  <p className="text-xs text-muted-foreground text-center animate-pulse">
-                    Processing large file, please wait...
-                  </p>
-                )}
-                {progress === 90 && (
-                  <p className="text-xs text-muted-foreground text-center">
-                    Waiting for server response...
-                  </p>
-                )}
-              </div>
-            )}
-            
-            <div className="text-xs text-muted-foreground mt-2">
-              <p>Supported formats:</p>
-              <ul className="list-disc list-inside ml-2">
-                <li>CSV files from most Nigerian banks</li>
-                <li>Excel files (.xlsx, .xls) with transaction data</li>
-                <li>PDF files require server-side processing</li>
-                <li>Files should include date, description, and amount columns</li>
-                <li>Maximum file size: 10MB</li>
-              </ul>
-            </div>
-            
-            <UploadDialogFooter
-              onCancel={handleClose}
-              onParse={parseFile}
-              uploading={uploading}
-              disabled={!file}
-              showCancelButton={uploading}
-            />
-          </div>
+          <UploadDialogContent
+            file={file}
+            uploading={uploading}
+            error={error}
+            useEdgeFunction={useEdgeFunction}
+            toggleEdgeFunction={toggleEdgeFunction}
+            edgeFunctionAvailable={edgeFunctionAvailable}
+            handleFileChange={handleFileChange}
+            parseFile={parseFile}
+            onClose={handleClose}
+            progress={progress}
+            step={step}
+          />
         </DialogContent>
       </Dialog>
 
