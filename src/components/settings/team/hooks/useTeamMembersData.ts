@@ -4,6 +4,7 @@ import { useTeamMembers } from "@/lib/team/useTeamMembers";
 import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useTeamMembersData = () => {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -90,6 +91,11 @@ export const useTeamMembersData = () => {
           }
         });
         toast.success(`Invitation sent to ${newMemberData.email}. They should receive an email shortly.`);
+        
+        // Refresh the team members list to ensure we have the latest data
+        setTimeout(() => {
+          loadTeamMembers();
+        }, 1000);
       }
     } catch (error) {
       console.error("Error inviting team member:", error);

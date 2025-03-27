@@ -24,6 +24,30 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     );
 
+    // Verify that the team member exists in the database
+    const { data: verifyData, error: verifyError } = await supabaseAdmin
+      .from('team_members')
+      .select('id, email, name')
+      .eq('id', teamMember.id)
+      .single();
+    
+    if (verifyError || !verifyData) {
+      console.error("Team member not found in database:", verifyError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Team member not found in database" 
+        }),
+        { 
+          status: 404, 
+          headers: { 
+            "Content-Type": "application/json",
+            ...corsHeaders
+          } 
+        }
+      );
+    }
+
     // Get application URL for the invitation link
     const appUrl = req.headers.get('origin') || Deno.env.get('APP_URL') || '';
     const inviteLink = `${appUrl}/invitation?token=${encodeURIComponent(teamMember.id)}`;

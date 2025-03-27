@@ -24,7 +24,45 @@ export const inviteTeamMember = async (
     console.log("Current user:", user.id);
     console.log("Inviting team member:", teamMember);
 
-    // Use a direct SQL insert via RPC to bypass RLS policies
+    // Try a direct insert first
+    const { data: directData, error: directError } = await supabase
+      .from('team_members')
+      .insert({
+        name: teamMember.name,
+        email: teamMember.email,
+        role: teamMember.role,
+        status: 'pending',
+        user_id: user.id
+      })
+      .select()
+      .single();
+    
+    // If direct insert succeeds, use that data
+    if (!directError && directData) {
+      console.log("Direct insert successful:", directData);
+      
+      // Create properly typed result
+      const typedData = {
+        ...directData,
+        role: directData.role as TeamMemberRole
+      } as TeamMember;
+      
+      // Try to send email but don't block on it
+      try {
+        await sendInvitationEmail(typedData, user);
+        toast.success(`Invitation sent to ${teamMember.email}`);
+      } catch (emailError) {
+        console.error("Error sending invitation email:", emailError);
+        toast.warning("Team member added but invitation email could not be sent");
+      }
+      
+      return typedData;
+    }
+    
+    // If direct insert fails, try the RPC method as fallback
+    console.log("Direct insert failed, trying RPC:", directError);
+    
+    // Use a SQL function via RPC to bypass RLS policies
     const { data, error } = await supabase.rpc('insert_team_member', {
       p_name: teamMember.name,
       p_email: teamMember.email,
@@ -34,7 +72,7 @@ export const inviteTeamMember = async (
     });
     
     if (error) {
-      console.error("Error inviting team member:", error);
+      console.error("RPC error inviting team member:", error);
       throw error;
     }
     
