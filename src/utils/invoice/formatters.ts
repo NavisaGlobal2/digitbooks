@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for formatting values in invoices
  */
@@ -35,4 +34,16 @@ export const formatTableCurrency = (amount: number) => {
 };
 
 // Export a general currency formatter that can be used throughout the app
-export const formatCurrency = formatNaira;
+export const formatCurrency = (amount: number, currency = 'NGN'): string => {
+  try {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch (error) {
+    // Fallback if the Intl API fails
+    return `₦${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+  }
+};

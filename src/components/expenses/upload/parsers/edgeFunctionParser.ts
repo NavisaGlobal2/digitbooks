@@ -42,7 +42,7 @@ export const parseViaEdgeFunction = async (
       
       if (functionError) {
         console.error('Edge function error:', functionError);
-        throw new Error(`Edge function error: ${functionError.message}`);
+        throw new Error(`Edge function error: ${functionError.message || 'Unknown error'}`);
       }
       
       if (!data) {
@@ -59,9 +59,16 @@ export const parseViaEdgeFunction = async (
         .eq('upload_batch_id', data.batchId)
         .order('date', { ascending: false });
       
-      if (fetchError || !transactionsData || transactionsData.length === 0) {
-        console.error('Failed to retrieve transactions or no transactions found:', fetchError);
-        throw new Error('Failed to retrieve processed transactions');
+      if (fetchError) {
+        console.error('Failed to retrieve transactions:', fetchError);
+        throw new Error(`Failed to retrieve processed transactions: ${fetchError.message}`);
+      }
+      
+      if (!transactionsData || transactionsData.length === 0) {
+        console.warn('No transactions found for batch ID:', data.batchId);
+        toast.warning('No transactions were found in the uploaded file. Please check the file format.');
+        onError('No transactions were found. The file may be empty or in an unsupported format.');
+        return false;
       }
       
       // Convert to the format expected by the component
@@ -81,7 +88,18 @@ export const parseViaEdgeFunction = async (
       return true;
     } catch (functionError) {
       console.error('Error calling edge function:', functionError);
-      throw functionError;
+      
+      // Try to extract a more helpful error message
+      let errorMessage = 'Failed to process file via server. Falling back to client-side processing.';
+      if (functionError instanceof Error) {
+        if (functionError.message.includes('non-2xx status code')) {
+          errorMessage = 'Server function is unavailable or authentication error. Please try again later.';
+        } else {
+          errorMessage = functionError.message;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
   } catch (error) {
     console.error('Error in parseViaEdgeFunction:', error);

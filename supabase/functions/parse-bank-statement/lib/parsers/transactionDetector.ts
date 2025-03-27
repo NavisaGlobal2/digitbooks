@@ -181,6 +181,14 @@ function parseTransactionsFromRows(
         amount = creditAmount;
         type = 'credit';
       }
+    } else if (creditIndex !== -1) {
+      // Only credit column exists
+      amount = parseAmount(row[creditIndex]);
+      if (amount > 0) type = 'credit';
+    } else if (debitIndex !== -1) {
+      // Only debit column exists
+      amount = parseAmount(row[debitIndex]);
+      if (amount > 0) type = 'debit';
     }
     
     // Skip if there's no valid amount
