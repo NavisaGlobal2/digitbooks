@@ -50,7 +50,7 @@ export const BusinessProfileProvider: React.FC<{ children: React.ReactNode }> = 
           setProfile({
             name: data.business_name || defaultProfile.name,
             description: data.industry || defaultProfile.description,
-            logo: "", // We don't store this yet
+            logo: data.logo_url || defaultProfile.logo,
             email: user.email || defaultProfile.email, // Use email from auth user instead of profile
             phone: data.phone || defaultProfile.phone,
             website: data.website || defaultProfile.website,
@@ -118,7 +118,8 @@ export const BusinessProfileProvider: React.FC<{ children: React.ReactNode }> = 
           industry: profile.description,
           phone: profile.phone,
           website: profile.website,
-          address: formattedAddress
+          address: formattedAddress,
+          logo_url: profile.logo
         })
         .eq('id', user.id);
       

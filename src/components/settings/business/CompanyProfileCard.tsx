@@ -6,11 +6,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Camera } from "lucide-react";
 import { useBusinessProfile } from "./BusinessProfileContext";
+import LogoUpload from "@/components/invoicing/LogoUpload";
 
 export const CompanyProfileCard: React.FC = () => {
-  const { profile, handleChange } = useBusinessProfile();
+  const { profile, handleChange, setProfile } = useBusinessProfile();
+
+  const handleLogoChange = (logoUrl: string | null) => {
+    setProfile((prevProfile) => ({
+      ...prevProfile,
+      logo: logoUrl || ""
+    }));
+  };
 
   return (
     <Card>
@@ -23,16 +30,10 @@ export const CompanyProfileCard: React.FC = () => {
       <CardContent className="px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
           <div className="flex flex-col items-center space-y-3 mb-4 sm:mb-0">
-            <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
-              <AvatarImage src={profile.logo} />
-              <AvatarFallback className="text-lg bg-blue-100 text-blue-600">
-                {profile.name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs">
-              <Camera className="h-3 w-3 sm:h-4 sm:w-4" />
-              Change Logo
-            </Button>
+            <LogoUpload 
+              logoPreview={profile.logo} 
+              setLogoPreview={handleLogoChange} 
+            />
           </div>
           
           <div className="flex-1 grid gap-3 sm:gap-4">
