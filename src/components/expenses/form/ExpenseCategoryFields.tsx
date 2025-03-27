@@ -5,7 +5,7 @@ import { ExpenseCategory } from "@/types/expense";
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS } from "@/utils/expenseCategories";
 
 interface ExpenseCategoryFieldsProps {
-  category: ExpenseCategory;
+  category: ExpenseCategory | "";
   setCategory: (value: ExpenseCategory) => void;
   paymentMethod: "cash" | "card" | "bank transfer" | "other";
   setPaymentMethod: (value: "cash" | "card" | "bank transfer" | "other") => void;

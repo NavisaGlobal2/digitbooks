@@ -1,19 +1,16 @@
 
 import { useState } from "react";
-import { Expense, ExpenseCategory } from "@/types/expense";
+import { Expense } from "@/types/expense";
 import ExpenseStatsCards from "./ExpenseStatsCards";
-import ExpenseSearch from "./ExpenseSearch";
-import ExpensesTable from "./ExpensesTable";
 import ExpenseEmptyState from "./ExpenseEmptyState";
-import ExpenseForm from "./ExpenseForm";
-import AddExpenseDialog from "./AddExpenseDialog";
 import ExpenseTabs from "./ExpenseTabs";
 import ExpenseVsBudgetChart from "./charts/ExpenseVsBudgetChart";
 import ExpenseBreakdownChart from "./charts/ExpenseBreakdownChart";
-import ExpenseFilters from "./ExpenseFilters";
+import ExpenseFilters from "./filters/ExpenseFilters";
 import ConnectBankBanner from "./ConnectBankBanner";
 import BillsSection from "@/components/dashboard/BillsSection";
 import VendorsSection from "./VendorsSection";
+import ExpensesTable from "./ExpensesTable";
 import { DateRange } from "react-day-picker";
 
 interface ExpensesContentProps {
@@ -34,19 +31,10 @@ const ExpensesContent = ({
   onAddExpense
 }: ExpensesContentProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isAddingExpense, setIsAddingExpense] = useState(false);
-  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("expenses");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  
-  // Filter expenses based on search query
-  const filteredExpenses = expenses.filter(expense => 
-    expense.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    expense.vendor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    expense.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
   
   // Get category totals
   const categoryTotals = getExpensesByCategory();
@@ -64,7 +52,7 @@ const ExpensesContent = ({
         : "0%";
       
       return { 
-        category: category as ExpenseCategory, 
+        category: category as any, 
         amount,
         percentage
       };
@@ -104,7 +92,7 @@ const ExpensesContent = ({
             {/* Connect Bank Banner */}
             <ConnectBankBanner onConnectBank={onConnectBank} />
             
-            {/* Filters and Search */}
+            {/* Filters */}
             <ExpenseFilters 
               searchQuery={searchQuery} 
               setSearchQuery={setSearchQuery}
@@ -120,7 +108,7 @@ const ExpensesContent = ({
             <div className="overflow-x-auto -mx-4 sm:mx-0">
               <div className="min-w-full px-4 sm:px-0">
                 <ExpensesTable 
-                  expenses={filteredExpenses} 
+                  expenses={expenses} 
                   onDeleteExpense={deleteExpense}
                   filters={{
                     category: selectedCategory === "all" ? undefined : selectedCategory,
@@ -138,35 +126,20 @@ const ExpensesContent = ({
 
   return (
     <>
-      {isAddingExpense ? (
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-xl font-semibold mb-4">Add New Expense</h2>
-          <ExpenseForm onCancel={() => setIsAddingExpense(false)} />
-        </div>
+      {expenses.length === 0 ? (
+        <ExpenseEmptyState 
+          onAddExpense={onAddExpense} 
+          onConnectBank={onConnectBank} 
+        />
       ) : (
-        <>
-          {expenses.length === 0 ? (
-            <ExpenseEmptyState 
-              onAddExpense={onAddExpense} 
-              onConnectBank={onConnectBank} 
-            />
-          ) : (
-            <div className="space-y-4 sm:space-y-6">
-              {/* Expense Tabs */}
-              <ExpenseTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-              
-              {/* Render content based on active tab */}
-              {renderActiveTabContent()}
-            </div>
-          )}
-        </>
+        <div className="space-y-4 sm:space-y-6">
+          {/* Expense Tabs */}
+          <ExpenseTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+          
+          {/* Render content based on active tab */}
+          {renderActiveTabContent()}
+        </div>
       )}
-      
-      {/* Add expense dialog */}
-      <AddExpenseDialog 
-        open={showExpenseDialog} 
-        onOpenChange={setShowExpenseDialog} 
-      />
     </>
   );
 };
