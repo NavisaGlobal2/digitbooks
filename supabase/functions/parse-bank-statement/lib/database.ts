@@ -1,4 +1,6 @@
 
+// Adjust the database.ts file to make it more testable by accepting a custom client
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import { Transaction } from './types.ts'
 
@@ -8,14 +10,15 @@ export async function saveToDatabase(
   batchId: string, 
   userId: string,
   supabaseUrl: string,
-  supabaseKey: string
+  supabaseKey: string,
+  customClient?: any
 ): Promise<number> {
   if (transactions.length === 0) {
     return 0
   }
   
   // Create Supabase client with admin rights
-  const supabaseAdmin = createClient(supabaseUrl, supabaseKey)
+  const supabaseAdmin = customClient || createClient(supabaseUrl, supabaseKey)
   
   let savedCount = 0
   

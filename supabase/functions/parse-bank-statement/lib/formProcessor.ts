@@ -1,15 +1,23 @@
 
+// Modify the form processor to be more testable by accepting custom dependencies
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import { Transaction } from './types.ts'
 import { parseFile } from './parsers/fileParser.ts'
 
-export async function processFormData(req: Request, token: string, supabaseUrl: string): Promise<{
+export async function processFormData(
+  req: Request, 
+  token: string, 
+  supabaseUrl: string,
+  customParseFile?: (file: File) => Promise<Transaction[]>,
+  customSupabaseClient?: any
+): Promise<{
   transactions: Transaction[], 
   user: any, 
   batchId: string
 }> {
-  // Create Supabase client with user token
-  const supabase = createClient(supabaseUrl, token, {
+  // Create Supabase client with user token or use custom client for testing
+  const supabase = customSupabaseClient || createClient(supabaseUrl, token, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
@@ -38,9 +46,10 @@ export async function processFormData(req: Request, token: string, supabaseUrl: 
   // Generate a unique batch ID for this upload
   const batchId = crypto.randomUUID()
   
-  // Parse the file
+  // Parse the file using provided function or default
   console.log(`Processing file: ${file.name}`)
-  const transactions = await parseFile(file)
+  const parseFileFn = customParseFile || parseFile
+  const transactions = await parseFileFn(file)
   
   console.log(`Parsed ${transactions.length} transactions from the file`)
   

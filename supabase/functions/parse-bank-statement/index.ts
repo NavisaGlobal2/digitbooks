@@ -4,7 +4,8 @@ import { corsHeaders } from './lib/cors.ts'
 import { processFormData } from './lib/formProcessor.ts'
 import { saveToDatabase } from './lib/database.ts'
 
-serve(async (req) => {
+// Export the request handler for testability
+export async function handleRequest(req: Request): Promise<Response> {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders, status: 204 })
@@ -32,7 +33,11 @@ serve(async (req) => {
     }
     
     // Process the uploaded file and get transactions
-    const { transactions, user, batchId } = await processFormData(req, authHeader.replace('Bearer ', ''), supabaseUrl)
+    const { transactions, user, batchId } = await processFormData(
+      req, 
+      authHeader.replace('Bearer ', ''), 
+      supabaseUrl
+    )
     
     // Save transactions to the database
     const savedCount = await saveToDatabase(
@@ -66,4 +71,7 @@ serve(async (req) => {
       }
     )
   }
-})
+}
+
+// Start the server
+serve(handleRequest)
