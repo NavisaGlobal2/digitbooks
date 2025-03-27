@@ -6,8 +6,8 @@ import { toast, Toaster } from 'sonner';
 
 // Display a notification that the database is disconnected
 setTimeout(() => {
-  toast.info('Database connection disabled', {
-    description: 'The application is running without database connectivity',
+  toast.info('Sandbox Mode Active', {
+    description: 'The application is running without database connectivity for preview purposes',
     duration: 5000
   });
 }, 1000);
