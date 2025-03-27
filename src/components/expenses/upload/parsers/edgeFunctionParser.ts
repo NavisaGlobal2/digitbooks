@@ -85,6 +85,7 @@ export const parseViaEdgeFunction = async (
       }));
       
       console.log(`Successfully processed ${transactions.length} transactions from edge function`);
+      console.log(`Transaction types: ${transactions.filter(t => t.type === 'debit').length} debits, ${transactions.filter(t => t.type === 'credit').length} credits`);
       onComplete(transactions);
       
       return true;

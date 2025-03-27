@@ -22,6 +22,7 @@ export async function parseFile(file: File): Promise<Transaction[]> {
         console.log('Processing CSV file...')
         const transactions = await processCSV(file)
         console.log(`Successfully extracted ${transactions.length} transactions from CSV`)
+        console.log(`Transaction types breakdown: ${transactions.filter(t => t.type === 'debit').length} debits, ${transactions.filter(t => t.type === 'credit').length} credits`)
         return transactions
       } catch (csvError) {
         console.error('CSV processing error:', csvError)
@@ -32,6 +33,7 @@ export async function parseFile(file: File): Promise<Transaction[]> {
         console.log('Processing Excel file...')
         const transactions = await processExcel(file)
         console.log(`Successfully extracted ${transactions.length} transactions from Excel`)
+        console.log(`Transaction types breakdown: ${transactions.filter(t => t.type === 'debit').length} debits, ${transactions.filter(t => t.type === 'credit').length} credits`)
         return transactions
       } catch (excelError) {
         console.error('Excel processing error:', excelError)
