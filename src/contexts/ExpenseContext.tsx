@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Expense, ExpenseStatus } from '@/types/expense';
+import { toast } from 'sonner';
 
 interface ExpenseContextType {
   expenses: Expense[];
@@ -21,14 +22,60 @@ export const useExpenses = () => {
   return context;
 };
 
+// Helper function to safely store data in localStorage
+const safelyStoreExpenses = (expenses: Expense[]): boolean => {
+  try {
+    // Limit storage by removing receipt URLs which can be large
+    const storableExpenses = expenses.map(expense => {
+      // Create a copy without the receiptUrl to reduce size
+      const { receiptUrl, ...essentialData } = expense;
+      return {
+        ...essentialData,
+        // Store a flag indicating a receipt exists instead of the actual data
+        hasReceipt: !!receiptUrl
+      };
+    });
+    
+    localStorage.setItem('expenses', JSON.stringify(storableExpenses));
+    return true;
+  } catch (error) {
+    console.error("Failed to store expenses in localStorage:", error);
+    
+    // If quota exceeded, try storing fewer expenses
+    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+      try {
+        // Store only essential data for the 50 most recent expenses
+        const limitedExpenses = expenses.slice(0, 50).map(expense => ({
+          id: expense.id,
+          description: expense.description,
+          amount: expense.amount,
+          date: expense.date,
+          category: expense.category,
+          status: expense.status,
+          paymentMethod: expense.paymentMethod,
+          vendor: expense.vendor,
+        }));
+        
+        localStorage.setItem('expenses', JSON.stringify(limitedExpenses));
+        toast.warning("Some expense data couldn't be stored locally due to size limits");
+        return true;
+      } catch (fallbackError) {
+        console.error("Failed to store limited expenses:", fallbackError);
+        return false;
+      }
+    }
+    return false;
+  }
+};
+
 export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
   // Load expenses from localStorage on mount
   useEffect(() => {
-    const storedExpenses = localStorage.getItem('expenses');
-    if (storedExpenses) {
-      try {
+    try {
+      const storedExpenses = localStorage.getItem('expenses');
+      if (storedExpenses) {
         const parsedExpenses = JSON.parse(storedExpenses);
         
         // Convert string dates back to Date objects
@@ -38,15 +85,18 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }));
         
         setExpenses(processedExpenses);
-      } catch (error) {
-        console.error("Failed to parse stored expenses:", error);
       }
+    } catch (error) {
+      console.error("Failed to parse stored expenses:", error);
+      // Continue with empty expenses array if loading fails
     }
   }, []);
 
   // Save expenses to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('expenses', JSON.stringify(expenses));
+    if (expenses.length > 0) {
+      safelyStoreExpenses(expenses);
+    }
   }, [expenses]);
 
   const addExpense = (expenseData: Omit<Expense, 'id'>) => {
