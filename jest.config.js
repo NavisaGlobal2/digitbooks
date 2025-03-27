@@ -11,4 +11,10 @@ module.exports = {
       tsconfig: 'tsconfig.json',
     }],
   },
+  testMatch: ['**/__tests__/**/*.test.(ts|tsx)'],
+  globals: {
+    'ts-jest': {
+      isolatedModules: true,
+    },
+  },
 };
