@@ -1,24 +1,41 @@
 
 import React from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { BusinessProfileProvider } from "./business/BusinessProfileContext";
 import { CompanyProfileCard } from "./business/CompanyProfileCard";
 import { ContactInfoCard } from "./business/ContactInfoCard";
 import { AddressCard } from "./business/AddressCard";
+import { useBusinessProfile } from "./business/BusinessProfileContext";
 
+// This component wraps the form with the provider
 export const BusinessProfileSettings = () => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // This will be handled by the context's handleSubmit
-  };
-
   return (
     <BusinessProfileProvider>
-      <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
-        <CompanyProfileCard />
-        <ContactInfoCard />
-        <AddressCard />
-      </form>
+      <BusinessProfileForm />
     </BusinessProfileProvider>
+  );
+};
+
+// This is the actual form component that uses the context
+const BusinessProfileForm = () => {
+  const { handleSubmit, isLoading } = useBusinessProfile();
+
+  return (
+    <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
+      <CompanyProfileCard />
+      <ContactInfoCard />
+      <AddressCard />
+      
+      <div className="flex justify-end">
+        <Button 
+          type="submit" 
+          className="px-6"
+          disabled={isLoading}
+        >
+          {isLoading ? "Saving..." : "Save Changes"}
+        </Button>
+      </div>
+    </form>
   );
 };
