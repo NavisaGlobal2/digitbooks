@@ -26,6 +26,9 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
     />`;
   }
   
+  // Ensure invoice items array exists
+  const invoiceItems = invoiceDetails.invoiceItems || [];
+  
   // Create a simplified invoice layout
   tempDiv.innerHTML = `
     <div style="font-family: Arial, sans-serif;">
@@ -63,15 +66,18 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
           </tr>
         </thead>
         <tbody>
-          ${invoiceDetails.invoiceItems.map(item => `
-            <tr style="border-bottom: 1px solid #eee;">
-              <td style="padding: 8px;">${item.description}</td>
-              <td style="text-align: right; padding: 8px;">${item.quantity}</td>
-              <td style="text-align: right; padding: 8px;">₦${item.price.toLocaleString()}</td>
-              <td style="text-align: right; padding: 8px;">${item.tax}%</td>
-              <td style="text-align: right; padding: 8px;">₦${(item.quantity * item.price).toLocaleString()}</td>
-            </tr>
-          `).join('')}
+          ${invoiceItems.length > 0 ? 
+            invoiceItems.map(item => `
+              <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 8px;">${item.description || ""}</td>
+                <td style="text-align: right; padding: 8px;">${item.quantity || 0}</td>
+                <td style="text-align: right; padding: 8px;">₦${(item.price || 0).toLocaleString()}</td>
+                <td style="text-align: right; padding: 8px;">${item.tax || 0}%</td>
+                <td style="text-align: right; padding: 8px;">₦${((item.quantity || 0) * (item.price || 0)).toLocaleString()}</td>
+              </tr>
+            `).join('') :
+            `<tr><td colspan="5" style="text-align: center; padding: 16px;">No items added</td></tr>`
+          }
         </tbody>
       </table>
       
@@ -79,15 +85,15 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
         <div style="width: 200px;">
           <div style="display: flex; justify-content: space-between; padding: 5px 0;">
             <span style="color: #666;">Subtotal:</span>
-            <span>₦${calculateSubtotal(invoiceDetails.invoiceItems).toLocaleString()}</span>
+            <span>₦${calculateSubtotal(invoiceItems).toLocaleString()}</span>
           </div>
           <div style="display: flex; justify-content: space-between; padding: 5px 0;">
             <span style="color: #666;">Tax:</span>
-            <span>₦${calculateTax(invoiceDetails.invoiceItems).toLocaleString()}</span>
+            <span>₦${calculateTax(invoiceItems).toLocaleString()}</span>
           </div>
           <div style="display: flex; justify-content: space-between; padding: 5px 0; font-weight: bold; border-top: 1px solid #ddd; margin-top: 5px;">
             <span>Total:</span>
-            <span>₦${calculateTotal(invoiceDetails.invoiceItems).toLocaleString()}</span>
+            <span>₦${calculateTotal(invoiceItems).toLocaleString()}</span>
           </div>
         </div>
       </div>

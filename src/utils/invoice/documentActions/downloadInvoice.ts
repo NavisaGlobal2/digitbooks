@@ -5,7 +5,6 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { InvoiceDetails } from "../pdfSections/types";
 import { createTemporaryInvoiceElement } from "./invoiceElementFactory";
-import { calculateSubtotal, calculateTax, calculateTotal } from "../calculations";
 
 /**
  * Function to download the invoice using image capture and PDF conversion
@@ -14,8 +13,19 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
   try {
     toast.loading("Generating PDF...");
     
+    // Ensure invoiceItems is always an array
+    const sanitizedDetails = {
+      ...invoiceDetails,
+      invoiceItems: invoiceDetails.invoiceItems || [],
+      clientName: invoiceDetails.clientName || "Client",
+      additionalInfo: invoiceDetails.additionalInfo || "",
+      bankName: invoiceDetails.bankName || "",
+      accountName: invoiceDetails.accountName || "",
+      accountNumber: invoiceDetails.accountNumber || ""
+    };
+    
     // Process the logo if it exists to avoid CORS issues
-    if (invoiceDetails.logoPreview) {
+    if (sanitizedDetails.logoPreview) {
       try {
         // Create a new Image to properly load the logo with CORS handling
         const img = new Image();
@@ -25,7 +35,7 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
         await new Promise((resolve, reject) => {
           img.onload = resolve;
           img.onerror = reject;
-          img.src = invoiceDetails.logoPreview;
+          img.src = sanitizedDetails.logoPreview as string;
         });
         
         // Update the invoice details with the properly loaded image
@@ -36,11 +46,12 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
         ctx?.drawImage(img, 0, 0);
         
         // Replace the logo with a clean base64 version
-        invoiceDetails.logoPreview = canvas.toDataURL("image/png");
+        sanitizedDetails.logoPreview = canvas.toDataURL("image/png");
       } catch (error) {
         console.error("Error preprocessing logo:", error);
         // If there's an error with the logo, we continue but without it
         toast.error("Could not process logo, continuing without it");
+        sanitizedDetails.logoPreview = null;
       }
     }
     
@@ -70,7 +81,7 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
       
       // Generate a filename
       const dateStr = format(new Date(), "yyyyMMdd");
-      const clientName = invoiceDetails.clientName || "Client";
+      const clientName = sanitizedDetails.clientName || "Client";
       const fileName = `Invoice-${clientName.replace(/\s+/g, '_').toLowerCase()}-${dateStr}.pdf`;
       
       // Save the PDF
@@ -80,7 +91,7 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
       return true;
     } else {
       // If no preview element exists, create a temporary one
-      const tempDiv = createTemporaryInvoiceElement(invoiceDetails);
+      const tempDiv = createTemporaryInvoiceElement(sanitizedDetails);
       document.body.appendChild(tempDiv);
       
       try {
@@ -106,7 +117,7 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
         
         // Generate a filename
         const dateStr = format(new Date(), "yyyyMMdd");
-        const clientName = invoiceDetails.clientName || "Client";
+        const clientName = sanitizedDetails.clientName || "Client";
         const fileName = `Invoice-${clientName.replace(/\s+/g, '_').toLowerCase()}-${dateStr}.pdf`;
         
         // Save the PDF

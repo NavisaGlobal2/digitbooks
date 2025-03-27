@@ -34,6 +34,8 @@ const SocialLoginButton: React.FC<SocialLoginButtonProps> = ({
           throw new Error("You appear to be offline. Please check your internet connection.");
         }
         
+        // We don't need to reset isButtonLoading here as it will be handled by the auth state change
+        // which automatically redirects the user after successful login
         await onClick();
       } catch (error: any) {
         console.error(`${provider} authentication error:`, error);

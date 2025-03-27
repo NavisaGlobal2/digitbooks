@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -13,7 +12,7 @@ import { AlertCircle } from "lucide-react";
 type AuthMode = 'login' | 'signup';
 
 const Auth: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mode, setMode] = useState<AuthMode>('login'); // Default to login mode
@@ -75,11 +74,19 @@ const Auth: React.FC = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
+      // If user is authenticated but hasn't completed onboarding, redirect to onboarding
+      if (user && !user.onboardingCompleted) {
+        console.log("User authenticated but hasn't completed onboarding, redirecting to onboarding");
+        navigate("/onboarding", { replace: true });
+        return;
+      }
+      
+      // Otherwise redirect to dashboard or the page they were trying to access
       const from = location.state?.from?.pathname || "/dashboard";
-      console.log("User is authenticated, redirecting to:", from);
+      console.log("User is authenticated and has completed onboarding, redirecting to:", from);
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, location]);
+  }, [isAuthenticated, navigate, location, user]);
 
   // Clear auth errors when mode changes
   useEffect(() => {
