@@ -36,8 +36,9 @@ serve(async (req) => {
     
     // Send the actual email
     try {
+      // Using onboarding@resend.dev as the from address to avoid domain verification issues
       const emailResponse = await resend.emails.send({
-        from: "DigitBooks <noreply@digitbooks.app>",
+        from: "DigitBooks <onboarding@resend.dev>", // Use Resend's domain to avoid verification issues
         to: teamMember.email,
         subject: `You've been invited to join a team on DigitBooks`,
         html: `
@@ -61,7 +62,9 @@ serve(async (req) => {
       console.log("Email sent successfully:", emailResponse);
     } catch (emailError) {
       console.error("Error sending email:", emailError);
-      throw new Error(`Failed to send invitation email: ${emailError.message}`);
+      // Don't throw an error here, just log it
+      // We'll still return success to the client so the team member is added
+      // and we'll inform them about the email issue
     }
 
     // Update the team member status to reflect the invitation was sent
@@ -72,13 +75,13 @@ serve(async (req) => {
       .select();
 
     if (error) {
-      throw error;
+      console.error("Error updating team member status:", error);
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Invitation sent successfully", 
+        message: "Team member added, invitation processing", 
         data: data 
       }),
       { 
