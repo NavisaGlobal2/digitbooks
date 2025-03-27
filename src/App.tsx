@@ -26,25 +26,13 @@ import SettingsPage from './pages/Settings';
 import Agent from './pages/Agent';
 import NotFound from './pages/NotFound';
 import { useAuth } from './contexts/auth';
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner"
 import Invitation from './pages/Invitation';
 import { RequireAuth } from './components/auth/RequireAuth';
 
 function App() {
   const { user, isAuthenticated } = useAuth();
   const [isInitializing, setIsInitializing] = useState(true);
-
-  // Add a timeout to prevent infinite loading
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isInitializing) {
-        console.log("Forcing initialization to complete after timeout");
-        setIsInitializing(false);
-      }
-    }, 3000); // 3 seconds timeout
-    
-    return () => clearTimeout(timer);
-  }, [isInitializing]);
 
   useEffect(() => {
     // Once we know the authentication state, we're no longer initializing
@@ -61,7 +49,6 @@ function App() {
     <Router>
       <Toaster />
       <Routes>
-        {/* Public routes - NO AUTH CHECK */}
         <Route path="/" element={<Index />} />
         <Route path="/about" element={<About />} />
         <Route path="/features" element={<Features />} />
@@ -71,13 +58,8 @@ function App() {
         <Route path="/invitation" element={<Invitation />} />
       
         {/* Protected routes */}
-        <Route path="/onboarding" element={
-          <RequireAuth>
-            <Onboarding />
-          </RequireAuth>
-        } />
-        
         <Route element={<RequireAuth><Outlet /></RequireAuth>}>
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/revenue" element={<Revenue />} />
           <Route path="/invoicing" element={<Invoicing />} />

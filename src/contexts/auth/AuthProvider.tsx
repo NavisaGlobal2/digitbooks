@@ -14,15 +14,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-    
     const getInitialSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
-        if (session && isMounted) {
-          console.log("Initial session user metadata:", session.user.user_metadata);
-          
+        if (session) {
           const userData = {
             id: session.user.id,
             email: session.user.email,
@@ -37,11 +33,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } catch (error) {
         console.error("Error getting initial session:", error);
       } finally {
-        // Only set loading to false if component is still mounted
-        if (isMounted) {
-          console.log("Initial auth loading complete");
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
@@ -50,9 +42,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state change:", event, session?.user?.id);
-        console.log("Auth state change user metadata:", session?.user?.user_metadata);
         
-        if (session && isMounted) {
+        if (session) {
           const userData = {
             id: session.user.id,
             email: session.user.email,
@@ -62,29 +53,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           };
           
           setUser(userData);
-        } else if (isMounted) {
+        } else {
           setUser(null);
         }
       }
     );
 
-    // Cleanup function
     return () => {
-      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
-
-  // If auth is still loading but taking too long, log a warning
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isLoading) {
-        console.warn("Auth loading is taking longer than expected");
-      }
-    }, 5000);
-    
-    return () => clearTimeout(timer);
-  }, [isLoading]);
 
   const isAuthenticated = !!user;
 
