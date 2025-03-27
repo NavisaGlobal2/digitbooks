@@ -101,6 +101,35 @@ export const useTeamMembers = () => {
         updated_at: new Date().toISOString()
       } as TeamMember;
       
+      // Now send the invitation email through our Edge Function
+      try {
+        // Get the current user's info to include in the invitation
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        
+        const response = await supabase.functions.invoke('send-invitation', {
+          body: {
+            teamMember: typedData,
+            invitedBy: {
+              id: currentUser?.id,
+              name: currentUser?.user_metadata?.name,
+              email: currentUser?.email
+            }
+          }
+        });
+        
+        if (response.error) {
+          console.error("Error calling invitation function:", response.error);
+          toast.error("Invitation created but email sending failed. Please try again or contact support.");
+        } else {
+          console.log("Invitation function response:", response.data);
+        }
+      } catch (inviteError) {
+        console.error("Error sending invitation:", inviteError);
+        // We don't throw here because the team member was already created,
+        // we just couldn't send the email
+        toast.warning("Team member added but invitation email could not be sent");
+      }
+      
       toast.success(`Invitation sent to ${teamMember.email}`);
       return typedData;
     } catch (error: any) {
