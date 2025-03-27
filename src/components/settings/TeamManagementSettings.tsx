@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTeamMembers } from "@/lib/teamMembers";
@@ -11,6 +10,7 @@ import { TeamMemberList } from "./team/TeamMemberList";
 import { TeamMemberSearch } from "./team/TeamMemberSearch";
 import { EmptyState } from "../ui/empty-state";
 import { UserPlus } from "lucide-react";
+import { toast } from "sonner";
 
 export const TeamManagementSettings = () => {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -31,7 +31,6 @@ export const TeamManagementSettings = () => {
       try {
         const data = await fetchTeamMembers();
         
-        // If this is a new account with no team members, add the current user as Owner
         if (data.length === 0 && user) {
           const ownerMember: TeamMember = {
             id: "owner",
@@ -60,6 +59,7 @@ export const TeamManagementSettings = () => {
 
   const handleAddMember = (newMember: TeamMember) => {
     setMembers([...members, newMember]);
+    toast.success(`Invitation sent to ${newMember.email}. They should receive an email shortly.`);
   };
 
   const handleUpdateMember = (updatedMember: TeamMember) => {

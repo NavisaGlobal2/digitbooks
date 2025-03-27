@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,28 +28,41 @@ serve(async (req) => {
     const appUrl = req.headers.get('origin') || Deno.env.get('APP_URL') || '';
     const inviteLink = `${appUrl}/invitation?token=${encodeURIComponent(teamMember.id)}`;
 
-    // Placeholder for actual email sending
-    // In a production environment, you would use a service like SendGrid, Resend, or Mailgun
-    console.log("Would send email to:", teamMember.email);
-    console.log("Invitation link:", inviteLink);
     console.log("Team Member role:", teamMember.role);
-
-    // For now, let's log what would be sent
-    const emailContent = `
-      Hello ${teamMember.name},
-
-      You have been invited to join a team as a ${teamMember.role} by ${invitedBy.name || invitedBy.email}.
+    console.log("Invitation link:", inviteLink);
+    
+    // Initialize Resend for email sending
+    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+    
+    // Send the actual email
+    try {
+      const emailResponse = await resend.emails.send({
+        from: "DigitBooks <onboarding@resend.dev>",
+        to: teamMember.email,
+        subject: `You've been invited to join a team on DigitBooks`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+            <h2 style="color: #4f46e5;">DigitBooks Team Invitation</h2>
+            <p>Hello ${teamMember.name},</p>
+            <p>You have been invited to join a team as a <strong>${teamMember.role}</strong> by ${invitedBy.name || invitedBy.email}.</p>
+            <p style="margin: 25px 0;">
+              <a href="${inviteLink}" style="background-color: #4f46e5; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                Accept Invitation
+              </a>
+            </p>
+            <p>Or copy and paste this link in your browser:</p>
+            <p style="word-break: break-all; color: #4f46e5;">${inviteLink}</p>
+            <p>This invitation will expire in 7 days.</p>
+            <p>Best regards,<br/>The DigitBooks Team</p>
+          </div>
+        `,
+      });
       
-      Click the following link to accept the invitation:
-      ${inviteLink}
-      
-      This invitation will expire in 7 days.
-      
-      Best regards,
-      The Team
-    `;
-
-    console.log("Email content:", emailContent);
+      console.log("Email sent successfully:", emailResponse);
+    } catch (emailError) {
+      console.error("Error sending email:", emailError);
+      throw new Error(`Failed to send invitation email: ${emailError.message}`);
+    }
 
     // Update the team member status to reflect the invitation was sent
     const { data, error } = await supabaseAdmin
