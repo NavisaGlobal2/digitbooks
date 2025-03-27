@@ -82,15 +82,17 @@ export const inviteTeamMember = async (teamMember: Omit<TeamMember, 'id' | 'user
       if (emailError) {
         console.warn("Error sending invitation email:", emailError);
         toast.warning("Invitation created but email could not be sent", {
-          description: "The user has been invited, but they may not receive an email notification."
+          description: "Using Resend's free tier: The invitation has been sent to the admin email, who will need to forward it to the team member."
         });
       } else {
-        toast.success(`Invitation sent to ${teamMember.email}`);
+        toast.success(`Invitation created for ${teamMember.email}`, {
+          description: "Using Resend's free tier: The invitation has been sent to the admin email, who will need to forward it to the team member."
+        });
       }
     } catch (emailSendError: any) {
       console.warn("Exception when sending invitation email:", emailSendError);
-      toast.warning("Invitation created but email could not be sent", {
-        description: "The user has been invited, but they may not receive an email notification. Please contact them directly."
+      toast.warning("Invitation created but email notification requires manual forwarding", {
+        description: "The user has been invited, but due to email service limitations, you'll need to manually share the invitation link with them."
       });
     }
     

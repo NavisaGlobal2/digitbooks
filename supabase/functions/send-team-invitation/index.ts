@@ -25,6 +25,7 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
+    const ADMIN_EMAIL = "onifade.john.o@gmail.com"; // The verified email address
 
     if (!RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY is required");
@@ -55,11 +56,18 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "DigiBooks <onboarding@resend.dev>", // Using the default verified Resend domain
-        to: email,
-        subject: `You've been invited to join DigiBooks as a ${role}`,
+        to: ADMIN_EMAIL, // Send to the admin's email (which is verified)
+        subject: `Team invitation for ${email} to join as ${role}`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
             <h2>Team Invitation</h2>
+            <p>Hi Admin,</p>
+            <p>A new invitation has been created for ${name} (${email}) to join as a <strong>${role}</strong>.</p>
+            <p>The invitation was created by ${inviterName}.</p>
+            <p>Invitation link: ${invitationUrl}</p>
+            <p>Since you're using Resend's free tier, you'll need to manually forward this invitation to ${email}</p>
+            <hr>
+            <p>Message that would be sent to the user:</p>
             <p>Hi ${name},</p>
             <p>${inviterName} has invited you to join their team on DigiBooks as a <strong>${role}</strong>.</p>
             <p>Click the button below to accept your invitation:</p>
@@ -67,8 +75,6 @@ serve(async (req) => {
             <p>If you can't click the button, copy and paste this URL into your browser:</p>
             <p>${invitationUrl}</p>
             <p>This invitation link will expire in 7 days.</p>
-            <p>If you did not expect this invitation, you can safely ignore this email.</p>
-            <p>Best regards,<br>The DigiBooks Team</p>
           </div>
         `,
       }),
@@ -83,7 +89,11 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: "Invitation email sent" }),
+      JSON.stringify({ 
+        success: true, 
+        message: "Invitation email sent to admin",
+        note: "Using Resend's free tier: email will be sent to admin, who must forward it to the actual recipient" 
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
