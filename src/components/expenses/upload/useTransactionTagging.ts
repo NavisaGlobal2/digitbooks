@@ -17,6 +17,9 @@ export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) 
     selected: false // Always initialize with selected=false
   }));
   
+  // Log all transaction IDs for debugging
+  console.log("Transaction IDs before hooks:", validatedTransactions.map(t => t.id).join(", "));
+  
   const {
     taggedTransactions,
     setTaggedTransactions,

@@ -23,11 +23,12 @@ export const useCategoryAssignment = (
       // Find the transaction to update (for debugging)
       const transactionToUpdate = prevTransactions.find(t => t.id === id);
       if (!transactionToUpdate) {
-        console.error(`Transaction with ID ${id} not found`);
+        console.error(`Transaction with ID ${id} not found in useCategoryAssignment`);
+        console.log("Available transaction IDs:", prevTransactions.map(t => t.id).join(", "));
         return prevTransactions;
       }
       
-      console.log(`Before update: Transaction ${id} has category ${transactionToUpdate.category || 'none'}`);
+      console.log(`Before update: Transaction ${id} has category ${transactionToUpdate.category || 'none'}, selected=${transactionToUpdate.selected}`);
       
       // Create new array with the updated transaction
       const updatedTransactions = prevTransactions.map(t => 
@@ -36,7 +37,7 @@ export const useCategoryAssignment = (
       
       // Verify the update (for debugging)
       const updatedTransaction = updatedTransactions.find(t => t.id === id);
-      console.log(`After update: Transaction ${id} has category ${updatedTransaction?.category || 'none'}`);
+      console.log(`After update: Transaction ${id} has category ${updatedTransaction?.category || 'none'}, selected=${updatedTransaction?.selected}`);
       
       return updatedTransactions;
     });
@@ -51,9 +52,15 @@ export const useCategoryAssignment = (
       console.log(`Applying category to ${selectedIds.length} selected transactions: ${selectedIds.join(', ')}`);
       
       // Create new array with updated transactions
-      return prevTransactions.map(t => 
+      const updatedTransactions = prevTransactions.map(t => 
         t.selected ? { ...t, category } : t
       );
+      
+      // Verify updates for debugging
+      const updatedCount = updatedTransactions.filter(t => t.selected && t.category === category).length;
+      console.log(`After bulk update: ${updatedCount} transactions have category ${category}`);
+      
+      return updatedTransactions;
     });
   }, [setTaggedTransactions]);
 
