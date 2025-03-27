@@ -14,6 +14,7 @@ import { EXPENSE_CATEGORIES } from "@/utils/expenseCategories";
 import { ExpenseCategory } from "@/types/expense";
 import { ParsedTransaction } from "./parsers/types";
 import { formatCurrency } from "@/utils/invoice/formatters";
+import { useEffect } from "react";
 
 interface TransactionTableProps {
   transactions: ParsedTransaction[];
@@ -31,7 +32,10 @@ const TransactionTable = ({
   const creditCount = transactions.filter(t => t.type === 'credit').length;
   const selectedCount = transactions.filter(t => t.selected).length;
   
-  console.log(`TransactionTable: ${transactions.length} total (${debitCount} debits, ${creditCount} credits, ${selectedCount} selected)`);
+  // Log when transactions change for debugging
+  useEffect(() => {
+    console.log(`TransactionTable: ${transactions.length} total (${debitCount} debits, ${creditCount} credits, ${selectedCount} selected)`);
+  }, [transactions, debitCount, creditCount, selectedCount]);
   
   return (
     <div className="flex-1 overflow-auto p-0 max-h-[calc(90vh-210px)]">
@@ -47,57 +51,71 @@ const TransactionTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {transactions.map((transaction) => (
-            <TableRow key={transaction.id} className={!transaction.selected ? "opacity-70" : ""}>
-              <TableCell>
-                <Checkbox
-                  checked={transaction.selected}
-                  onCheckedChange={(checked) => 
-                    onSelectTransaction(transaction.id, checked as boolean)
-                  }
-                  disabled={transaction.type === 'credit'} // Can't select credit transactions
-                />
-              </TableCell>
-              <TableCell className="font-mono text-xs">
-                {format(new Date(transaction.date), "yyyy-MM-dd")}
-              </TableCell>
-              <TableCell className="font-medium">
-                {formatCurrency(transaction.amount)}
-              </TableCell>
-              <TableCell>
-                <Badge variant={transaction.type === 'debit' ? "destructive" : "default"} className="capitalize">
-                  {transaction.type}
-                </Badge>
-              </TableCell>
-              <TableCell className="max-w-xs truncate" title={transaction.description}>
-                {transaction.description}
-              </TableCell>
-              <TableCell>
-                {transaction.type === 'debit' ? (
-                  <Select
-                    value={transaction.category}
-                    onValueChange={(value) => 
-                      onSetCategory(transaction.id, value as ExpenseCategory)
-                    }
-                    disabled={!transaction.selected}
-                  >
-                    <SelectTrigger className={`w-full ${!transaction.category && transaction.selected ? "border-red-300" : ""}`}>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EXPENSE_CATEGORIES.map((category) => (
-                        <SelectItem key={category.value} value={category.value}>
-                          {category.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <span className="text-sm text-gray-500 italic">N/A</span>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
+          {transactions.map((transaction) => {
+            // Skip rendering if transaction has no ID (safety check)
+            if (!transaction.id) {
+              console.error("Transaction without ID detected:", transaction);
+              return null;
+            }
+            
+            return (
+              <TableRow 
+                key={transaction.id} 
+                className={!transaction.selected ? "opacity-70" : ""}
+              >
+                <TableCell>
+                  <Checkbox
+                    id={`tx-${transaction.id}`}
+                    checked={transaction.selected}
+                    onCheckedChange={(checked) => {
+                      console.log(`Checkbox for ${transaction.id} changed to:`, checked);
+                      onSelectTransaction(transaction.id, checked as boolean);
+                    }}
+                    disabled={transaction.type === 'credit'} // Can't select credit transactions
+                  />
+                </TableCell>
+                <TableCell className="font-mono text-xs">
+                  {format(new Date(transaction.date), "yyyy-MM-dd")}
+                </TableCell>
+                <TableCell className="font-medium">
+                  {formatCurrency(transaction.amount)}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={transaction.type === 'debit' ? "destructive" : "default"} className="capitalize">
+                    {transaction.type}
+                  </Badge>
+                </TableCell>
+                <TableCell className="max-w-xs truncate" title={transaction.description}>
+                  {transaction.description}
+                </TableCell>
+                <TableCell>
+                  {transaction.type === 'debit' ? (
+                    <Select
+                      value={transaction.category}
+                      onValueChange={(value) => {
+                        console.log(`Setting category for ${transaction.id} to:`, value);
+                        onSetCategory(transaction.id, value as ExpenseCategory);
+                      }}
+                      disabled={!transaction.selected}
+                    >
+                      <SelectTrigger className={`w-full ${!transaction.category && transaction.selected ? "border-red-300" : ""}`}>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {EXPENSE_CATEGORIES.map((category) => (
+                          <SelectItem key={category.value} value={category.value}>
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="text-sm text-gray-500 italic">N/A</span>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
