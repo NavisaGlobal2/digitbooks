@@ -6,7 +6,7 @@ import { parseExcelFile } from "./excelParser";
 import { parsePDFFile } from "./pdfParser";
 import { parseViaEdgeFunction } from "./edgeFunctionParser";
 
-export { ParsedTransaction } from "./types";
+export type { ParsedTransaction } from "./types";
 export { parseViaEdgeFunction } from "./edgeFunctionParser";
 
 // Main function to parse a statement file

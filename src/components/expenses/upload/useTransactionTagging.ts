@@ -1,51 +1,28 @@
 
-import { useState, useEffect } from "react";
-import { ParsedTransaction } from "./statementParsers";
+import { ParsedTransaction } from "./parsers/types";
 import { ExpenseCategory } from "@/types/expense";
+import { useTagSelection } from "./tagging/useTagSelection";
+import { useCategoryAssignment } from "./tagging/useCategoryAssignment";
+import { useTransactionValidation } from "./tagging/useTransactionValidation";
 
 export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) => {
-  const [taggedTransactions, setTaggedTransactions] = useState<ParsedTransaction[]>(initialTransactions);
-  const [selectAll, setSelectAll] = useState(true);
-  const [isReadyToSave, setIsReadyToSave] = useState(false);
+  const {
+    taggedTransactions,
+    setTaggedTransactions,
+    selectAll,
+    selectedCount,
+    debitCount,
+    handleSelectAll,
+    handleSelectTransaction
+  } = useTagSelection(initialTransactions);
 
-  // Derived state
-  const selectedCount = taggedTransactions.filter(t => t.selected).length;
-  const debitCount = taggedTransactions.filter(t => t.type === 'debit').length;
-  const taggedCount = taggedTransactions.filter(t => t.selected && t.category).length;
+  const {
+    taggedCount,
+    handleSetCategory,
+    handleSetCategoryForAll
+  } = useCategoryAssignment(taggedTransactions, setTaggedTransactions);
 
-  useEffect(() => {
-    // Check if all selected transactions have categories
-    const selectedTransactions = taggedTransactions.filter(t => t.selected);
-    const allTagged = selectedTransactions.length > 0 && 
-                      selectedTransactions.every(t => t.category);
-    setIsReadyToSave(allTagged);
-  }, [taggedTransactions]);
-
-  const handleSelectAll = (checked: boolean) => {
-    setSelectAll(checked);
-    setTaggedTransactions(taggedTransactions.map(t => ({
-      ...t,
-      selected: checked && t.type === 'debit' // Only select debits
-    })));
-  };
-
-  const handleSelectTransaction = (id: string, checked: boolean) => {
-    setTaggedTransactions(taggedTransactions.map(t => 
-      t.id === id ? { ...t, selected: checked } : t
-    ));
-  };
-
-  const handleSetCategory = (id: string, category: ExpenseCategory) => {
-    setTaggedTransactions(taggedTransactions.map(t => 
-      t.id === id ? { ...t, category } : t
-    ));
-  };
-
-  const handleSetCategoryForAll = (category: ExpenseCategory) => {
-    setTaggedTransactions(taggedTransactions.map(t => 
-      t.selected ? { ...t, category } : t
-    ));
-  };
+  const { isReadyToSave } = useTransactionValidation(taggedTransactions);
 
   return {
     taggedTransactions,

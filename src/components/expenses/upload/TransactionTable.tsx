@@ -12,7 +12,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EXPENSE_CATEGORIES } from "@/utils/expenseCategories";
 import { ExpenseCategory } from "@/types/expense";
-import { ParsedTransaction } from "./statementParsers";
+import { ParsedTransaction } from "./parsers/types";
 
 interface TransactionTableProps {
   transactions: ParsedTransaction[];
