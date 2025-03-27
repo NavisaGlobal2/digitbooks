@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress"; 
@@ -12,7 +12,7 @@ import ErrorDisplay from "./upload/ErrorDisplay";
 import DialogHeader from "./upload/DialogHeader";
 import UploadDialogFooter from "./upload/UploadDialogFooter";
 import ColumnMappingDialog from "./upload/columnMapping/ColumnMappingDialog";
-import { useStatementUpload } from "./upload/useStatementUpload";
+import { useStatementUpload } from "./upload/hooks/useStatementUpload";
 import { 
   ParsedTransaction
 } from "./upload/parsers";
@@ -35,9 +35,11 @@ const BankStatementUploadDialog = ({
   const { addExpenses } = useExpenses();
   const [showTaggingDialog, setShowTaggingDialog] = useState(false);
   const [parsedTransactions, setParsedTransactions] = useState<ParsedTransaction[]>([]);
+  const [processingComplete, setProcessingComplete] = useState(false);
   
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
     setParsedTransactions(transactions);
+    setProcessingComplete(true);
     setShowTaggingDialog(true);
   };
 
@@ -65,36 +67,42 @@ const BankStatementUploadDialog = ({
     // Generate a unique batch ID for this import
     const batchId = `batch-${Date.now()}`;
     
-    // Save transactions to database first
-    const dbSaveSuccess = await saveTransactionsToDatabase(taggedTransactions, batchId);
-    
-    if (!dbSaveSuccess) {
-      toast.warning("There was an issue storing the bank transaction data");
+    try {
+      // Save transactions to database first
+      const dbSaveSuccess = await saveTransactionsToDatabase(taggedTransactions, batchId);
+      
+      if (!dbSaveSuccess) {
+        toast.warning("There was an issue storing the bank transaction data");
+      }
+      
+      // Prepare expenses to save
+      const expensesToSave = prepareExpensesFromTransactions(
+        taggedTransactions, 
+        batchId, 
+        file?.name || 'unknown'
+      );
+      
+      if (expensesToSave.length === 0) {
+        toast.warning("No expenses to save. Please tag at least one transaction.");
+        return;
+      }
+      
+      // Save the expenses
+      addExpenses(expensesToSave);
+      
+      toast.success(`${expensesToSave.length} expenses imported successfully!`);
+      
+      // Reset state
+      clearFile();
+      setParsedTransactions([]);
+      setShowTaggingDialog(false);
+      setProcessingComplete(false);
+      onOpenChange(false);
+      onStatementProcessed();
+    } catch (error) {
+      console.error("Error saving expenses:", error);
+      toast.error("Failed to save expenses. Please try again.");
     }
-    
-    // Prepare expenses to save
-    const expensesToSave = prepareExpensesFromTransactions(
-      taggedTransactions, 
-      batchId, 
-      file?.name || 'unknown'
-    );
-    
-    if (expensesToSave.length === 0) {
-      toast.warning("No expenses to save. Please tag at least one transaction.");
-      return;
-    }
-    
-    // Save the expenses
-    addExpenses(expensesToSave);
-    
-    toast.success(`${expensesToSave.length} expenses imported successfully!`);
-    
-    // Reset state
-    clearFile();
-    setParsedTransactions([]);
-    setShowTaggingDialog(false);
-    onOpenChange(false);
-    onStatementProcessed();
   };
 
   const closeTaggingDialog = () => {
@@ -107,6 +115,7 @@ const BankStatementUploadDialog = ({
     } else {
       clearFile();
       setParsedTransactions([]);
+      setProcessingComplete(false);
       onOpenChange(false);
     }
   };
@@ -116,6 +125,9 @@ const BankStatementUploadDialog = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader title="Upload Bank Statement" />
+          <DialogDescription className="text-center text-sm text-muted-foreground">
+            Upload your bank statement to automatically create expenses
+          </DialogDescription>
           
           <div className="space-y-4 p-4 pt-2">
             <ErrorDisplay error={error} />
@@ -123,6 +135,7 @@ const BankStatementUploadDialog = ({
             <FileUploadArea 
               file={file} 
               onFileChange={handleFileChange} 
+              disabled={uploading}
             />
             
             {/* Processing mode toggle */}
@@ -154,6 +167,11 @@ const BankStatementUploadDialog = ({
                   <span>{progress}%</span>
                 </div>
                 <Progress value={progress} className="h-2" />
+                {progress > 90 && progress < 100 && (
+                  <p className="text-xs text-muted-foreground text-center animate-pulse">
+                    Processing large file, please wait...
+                  </p>
+                )}
               </div>
             )}
             

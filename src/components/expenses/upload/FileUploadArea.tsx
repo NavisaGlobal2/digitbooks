@@ -5,21 +5,27 @@ import { Label } from "@/components/ui/label";
 interface FileUploadAreaProps {
   file: File | null;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
 }
 
-const FileUploadArea = ({ file, onFileChange }: FileUploadAreaProps) => {
+const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadAreaProps) => {
   return (
     <div>
       <Label htmlFor="bank-statement" className="mb-2 block">
         Select statement file
       </Label>
       <div className="mt-1">
-        <label className="block w-full">
-          <div className="flex items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-md appearance-none cursor-pointer hover:border-gray-400 focus:outline-none">
+        <label className={`block w-full ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+          <div className={`flex items-center justify-center w-full h-32 px-4 transition bg-white border-2 ${file ? 'border-green-300' : 'border-gray-300'} ${disabled ? 'bg-gray-100' : 'border-dashed hover:border-gray-400'} rounded-md appearance-none focus:outline-none`}>
             {file ? (
               <div className="text-center">
                 <p className="text-sm text-gray-600">{file.name}</p>
-                <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(2)} KB</p>
+                <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                {file.size > 5 * 1024 * 1024 && (
+                  <p className="text-xs text-amber-500 mt-1">
+                    Large file might take longer to process
+                  </p>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center space-y-2">
@@ -38,6 +44,7 @@ const FileUploadArea = ({ file, onFileChange }: FileUploadAreaProps) => {
               className="hidden"
               accept=".csv,.xlsx,.xls,.pdf"
               onChange={onFileChange}
+              disabled={disabled}
             />
           </div>
         </label>

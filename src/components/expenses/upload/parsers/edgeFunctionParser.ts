@@ -27,19 +27,20 @@ export const parseViaEdgeFunction = async (
     console.log('Preparing to call parse-bank-statement edge function...');
     
     // Set up a timeout for the function call
-    const timeoutDuration = 45000; // 45 seconds
+    const timeoutDuration = 60000; // 60 seconds - increased from 45
     
     try {
       console.log('Using supabase.functions.invoke to call the edge function');
       
-      // Call the edge function
+      // Call the edge function with an increased timeout
       const { data, error: functionError } = await supabase.functions.invoke(
         'parse-bank-statement',
         {
           body: formData,
           headers: {
             Authorization: `Bearer ${accessToken}`
-          }
+          },
+          responseType: 'json',
         }
       );
       
@@ -82,7 +83,7 @@ export const parseViaEdgeFunction = async (
         return false;
       }
       
-      console.log('Retrieved transactions data:', transactionsData);
+      console.log('Retrieved transactions data:', transactionsData.length, 'transactions');
       
       // Convert to the format expected by the component
       const transactions: ParsedTransaction[] = transactionsData.map((item) => ({
@@ -105,7 +106,13 @@ export const parseViaEdgeFunction = async (
       
       // Check if this is an abort error (timeout)
       if (functionError.name === 'AbortError') {
-        throw new Error('Server processing timed out after 45 seconds. Please try client-side processing or a smaller file.');
+        throw new Error('Server processing timed out after 60 seconds. Please try client-side processing or a smaller file.');
+      }
+      
+      // Check if the error is a network error
+      if (functionError.message?.includes('Failed to fetch') || 
+          functionError.message?.includes('Network error')) {
+        throw new Error('Network error while uploading. Please check your internet connection and try again.');
       }
       
       // Try to extract a more helpful error message
