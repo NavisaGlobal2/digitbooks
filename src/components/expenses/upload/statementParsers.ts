@@ -87,16 +87,21 @@ export const parseExcelFile = async (
     const formData = new FormData();
     formData.append('file', file);
     
+    // Make sure we're using the latest session token
+    const headers = new Headers();
+    headers.append('Authorization', `Bearer ${session.access_token}`);
+    
+    console.log('Calling edge function with auth token:', session.access_token.substring(0, 10) + '...');
+    
     fetch('https://naxmgtoskeijvdofqyik.supabase.co/functions/v1/parse-bank-statement', {
       method: 'POST',
       body: formData,
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`
-      }
+      headers: headers
     })
     .then(response => {
       if (!response.ok) {
         return response.text().then(text => {
+          console.error('Error response from edge function:', text);
           throw new Error(`Failed to parse Excel file: ${text}`);
         });
       }
