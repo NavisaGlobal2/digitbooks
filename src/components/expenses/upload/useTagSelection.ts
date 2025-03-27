@@ -1,17 +1,17 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ParsedTransaction } from "./parsers/types";
 
 export const useTagSelection = (initialTransactions: ParsedTransaction[]) => {
-  const [taggedTransactions, setTaggedTransactions] = useState<ParsedTransaction[]>(initialTransactions);
-  const [selectAll, setSelectAll] = useState(true);
+  const [taggedTransactions, setTaggedTransactions] = useState<ParsedTransaction[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
 
-  // Effect to handle initial state - ensure debit transactions are selected by default
+  // Effect to handle initial state - ensure transactions are NOT selected by default
   useEffect(() => {
-    // Make sure all debit transactions are selected by default
+    // Initialize transactions with selected=false
     const updatedTransactions = initialTransactions.map(t => ({
       ...t,
-      selected: t.type === 'debit' // Only select debits by default
+      selected: false // Default to not selected
     }));
     
     setTaggedTransactions(updatedTransactions);
@@ -26,19 +26,21 @@ export const useTagSelection = (initialTransactions: ParsedTransaction[]) => {
   const selectedCount = taggedTransactions.filter(t => t.selected).length;
   const debitCount = taggedTransactions.filter(t => t.type === 'debit').length;
   
-  const handleSelectAll = (checked: boolean) => {
+  const handleSelectAll = useCallback((checked: boolean) => {
+    console.log(`Select all changed to: ${checked}`);
     setSelectAll(checked);
-    setTaggedTransactions(taggedTransactions.map(t => ({
+    setTaggedTransactions(prevTransactions => prevTransactions.map(t => ({
       ...t,
       selected: checked && t.type === 'debit' // Only select debits
     })));
-  };
+  }, []);
 
-  const handleSelectTransaction = (id: string, checked: boolean) => {
-    setTaggedTransactions(taggedTransactions.map(t => 
+  const handleSelectTransaction = useCallback((id: string, checked: boolean) => {
+    console.log(`Transaction ${id} selection changed to: ${checked}`);
+    setTaggedTransactions(prevTransactions => prevTransactions.map(t => 
       t.id === id ? { ...t, selected: checked } : t
     ));
-  };
+  }, []);
 
   return {
     taggedTransactions,

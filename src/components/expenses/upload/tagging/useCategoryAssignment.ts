@@ -1,6 +1,7 @@
 
 import { ExpenseCategory } from "@/types/expense";
 import { ParsedTransaction } from "../parsers/types";
+import { useCallback } from "react";
 
 export const useCategoryAssignment = (
   taggedTransactions: ParsedTransaction[],
@@ -10,22 +11,24 @@ export const useCategoryAssignment = (
   const taggedCount = taggedTransactions.filter(t => t.selected && t.category).length;
 
   // Set category for a single transaction - ensuring it only affects the specified transaction
-  const handleSetCategory = (id: string, category: ExpenseCategory) => {
+  const handleSetCategory = useCallback((id: string, category: ExpenseCategory) => {
+    console.log(`Setting category ${category} for transaction ${id}`);
     setTaggedTransactions(prevTransactions => 
       prevTransactions.map(t => 
         t.id === id ? { ...t, category } : t
       )
     );
-  };
+  }, [setTaggedTransactions]);
 
   // Set category only for selected transactions
-  const handleSetCategoryForAll = (category: ExpenseCategory) => {
+  const handleSetCategoryForAll = useCallback((category: ExpenseCategory) => {
+    console.log(`Setting category ${category} for all selected transactions`);
     setTaggedTransactions(prevTransactions => 
       prevTransactions.map(t => 
         t.selected ? { ...t, category } : t
       )
     );
-  };
+  }, [setTaggedTransactions]);
 
   return {
     taggedCount,

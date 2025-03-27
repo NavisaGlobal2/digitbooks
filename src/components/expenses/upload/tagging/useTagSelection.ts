@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { ParsedTransaction } from "../parsers/types";
 
 export const useTagSelection = (initialTransactions: ParsedTransaction[]) => {
@@ -16,19 +16,21 @@ export const useTagSelection = (initialTransactions: ParsedTransaction[]) => {
   const selectedCount = taggedTransactions.filter(t => t.selected).length;
   const debitCount = taggedTransactions.filter(t => t.type === 'debit').length;
   
-  const handleSelectAll = (checked: boolean) => {
+  const handleSelectAll = useCallback((checked: boolean) => {
+    console.log(`Select all: ${checked}`);
     setSelectAll(checked);
     setTaggedTransactions(prevTransactions => prevTransactions.map(t => ({
       ...t,
       selected: checked && t.type === 'debit' // Only select debits
     })));
-  };
+  }, []);
 
-  const handleSelectTransaction = (id: string, checked: boolean) => {
+  const handleSelectTransaction = useCallback((id: string, checked: boolean) => {
+    console.log(`Selecting transaction ${id}: ${checked}`);
     setTaggedTransactions(prevTransactions => prevTransactions.map(t => 
       t.id === id ? { ...t, selected: checked } : t
     ));
-  };
+  }, []);
 
   return {
     taggedTransactions,

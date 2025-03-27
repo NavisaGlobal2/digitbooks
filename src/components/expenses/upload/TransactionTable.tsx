@@ -77,7 +77,7 @@ const TransactionTable = ({
                   <Select
                     value={transaction.category || ""}
                     onValueChange={(value) => {
-                      // Ensure we're only updating THIS transaction
+                      console.log(`Selected category ${value} for transaction ${transaction.id}`);
                       onSetCategory(transaction.id, value as ExpenseCategory);
                     }}
                     disabled={!transaction.selected}
