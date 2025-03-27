@@ -69,9 +69,14 @@ export const useTeamMembers = () => {
         throw error;
       }
       
+      // Fix: Cast the data to any to access the id property
+      // Then create a properly typed TeamMember object
+      const responseData = data as any;
+      const newId = responseData.id;
+      
       // Create a properly typed response that matches what we'd get from a direct insert
       const typedData = {
-        id: data.id,
+        id: newId,
         user_id: user.id,
         name: teamMember.name,
         email: teamMember.email,
