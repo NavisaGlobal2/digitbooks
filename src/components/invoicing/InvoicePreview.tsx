@@ -57,6 +57,17 @@ const InvoicePreview = ({
               alt="Company Logo" 
               className="h-16 w-auto object-contain" 
               crossOrigin="anonymous"
+              onError={(e) => {
+                console.error("Error loading logo in preview:", e);
+                // Fallback to Logo component if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallbackDiv = document.createElement('div');
+                fallbackDiv.className = 'h-16 w-16';
+                const logoComponent = document.createElement('div');
+                fallbackDiv.appendChild(logoComponent);
+                target.parentNode?.appendChild(fallbackDiv);
+              }}
             />
           ) : (
             <div className="h-16 w-16">

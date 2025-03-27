@@ -15,6 +15,17 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
   tempDiv.style.padding = '20px';
   tempDiv.style.width = '800px';
   
+  // Process the logo for the temporary element
+  let logoHtml = '';
+  if (invoiceDetails.logoPreview) {
+    logoHtml = `<img 
+      src="${invoiceDetails.logoPreview}" 
+      style="height: 60px; width: auto; object-fit: contain;" 
+      crossorigin="anonymous" 
+      alt="Company Logo"
+    />`;
+  }
+  
   // Create a simplified invoice layout
   tempDiv.innerHTML = `
     <div style="font-family: Arial, sans-serif;">
@@ -31,7 +42,7 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
             <span style="font-weight: 500;">Due Date:</span> ${invoiceDetails.dueDate ? format(invoiceDetails.dueDate, "dd MMM yyyy") : ""}
           </p>
         </div>
-        ${invoiceDetails.logoPreview ? `<img src="${invoiceDetails.logoPreview}" style="height: 60px; object-fit: contain;" crossorigin="anonymous" />` : ''}
+        ${logoHtml}
       </div>
       
       <div style="margin-bottom: 20px;">
@@ -99,4 +110,3 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
   
   return tempDiv;
 };
-

@@ -54,15 +54,33 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
   // Apply document-wide font setting for consistency
   doc.setFont('helvetica');
   
-  // Ensure the logo is properly loaded if available
+  // Process the logo if available
   let processedLogo = logoPreview;
   if (logoPreview && typeof logoPreview === 'string') {
-    // Make sure the logo is properly cached to avoid CORS issues
     try {
+      // Create a new Image element to properly handle the logo
       const img = new Image();
       img.crossOrigin = 'Anonymous';
-      img.src = logoPreview;
-      // We don't need to wait for the image to load as jsPDF will handle this
+      
+      // Wait for the image to load
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = logoPreview;
+      });
+      
+      // Create a canvas to process the image
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        // Draw the image to the canvas
+        ctx.drawImage(img, 0, 0);
+        // Get the processed image data
+        processedLogo = canvas.toDataURL('image/png');
+      }
     } catch (error) {
       console.error("Error processing logo:", error);
       processedLogo = null;
