@@ -116,61 +116,7 @@ serve(async (req) => {
   }
 
   try {
-    // Get environment variables
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("Missing environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-      return new Response(
-        JSON.stringify({ error: "Server configuration error" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
-    }
-    
-    // Validate authentication
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Missing Authorization header", errorType: "authentication" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
-      );
-    }
-    
-    const token = authHeader.replace("Bearer ", "");
-    console.log(`Token received, length: ${token.length}`);
-    
-    if (!token || token.length < 10) {
-      return new Response(
-        JSON.stringify({ error: "Invalid authentication token", errorType: "authentication" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
-      );
-    }
-    
-    // Create Supabase clients - one with user token, one with service key
-    const supabaseClient = createClient(supabaseUrl, token, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
-    
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Get the user
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !userData.user) {
-      console.error("Auth error:", userError || "No user found");
-      return new Response(
-        JSON.stringify({ error: userError?.message || "Authentication failed", errorType: "authentication" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
-      );
-    }
-    
-    const userId = userData.user.id;
-    console.log(`Processing request for user: ${userId}`);
-    
-    // Parse the form data
+    // Parse the request body - this will contain our file
     const formData = await req.formData();
     const file = formData.get("file");
     
@@ -181,9 +127,10 @@ serve(async (req) => {
       );
     }
     
+    console.log(`Processing file: ${file.name}, size: ${file.size} bytes`);
+    
     // Generate batch ID for tracking
     const batchId = crypto.randomUUID();
-    console.log(`Processing file: ${file.name}, size: ${file.size} bytes, batchId: ${batchId}`);
     
     try {
       // 1. Extract text from the file
@@ -194,42 +141,12 @@ serve(async (req) => {
       
       console.log(`Parsed ${transactions.length} transactions from file`);
       
-      // 3. Save the transactions to the database
-      let savedCount = 0;
-      const BATCH_SIZE = 50;
-      
-      for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
-        const batch = transactions.slice(i, i + BATCH_SIZE);
-        
-        const { error } = await supabaseAdmin
-          .from("uploaded_bank_lines")
-          .insert(batch.map((t: any) => ({
-            user_id: userId,
-            upload_batch_id: batchId,
-            date: t.date,
-            description: t.description,
-            amount: t.amount,
-            type: t.type,
-            status: "unprocessed"
-          })));
-        
-        if (error) {
-          console.error("Error saving transactions:", error);
-          throw new Error(`Failed to save transactions: ${error.message}`);
-        }
-        
-        savedCount += batch.length;
-      }
-      
-      console.log(`Successfully saved ${savedCount} transactions to database`);
-      
       return new Response(
         JSON.stringify({ 
           success: true, 
           transactions,
-          message: `Successfully processed ${savedCount} transactions`, 
-          batchId,
-          transactionCount: savedCount
+          message: `Successfully processed ${transactions.length} transactions`, 
+          batchId
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

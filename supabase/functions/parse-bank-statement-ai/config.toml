@@ -1,3 +1,4 @@
 
 project_id = "naxmgtoskeijvdofqyik"
 name = "parse-bank-statement-ai"
+verify_jwt = false

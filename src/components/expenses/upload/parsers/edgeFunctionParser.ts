@@ -9,13 +9,6 @@ export const parseViaEdgeFunction = async (
   onError: (errorMessage: string) => boolean
 ): Promise<ParsedTransaction[]> => {
   try {
-    // Get the token for authentication
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
-      onError("Authentication required. Please sign in to use server-side processing.");
-      return [];
-    }
-
     // Create a form to send the file
     const formData = new FormData();
     formData.append("file", file);
@@ -31,13 +24,7 @@ export const parseViaEdgeFunction = async (
 
     if (error) {
       console.error("Edge function error:", error);
-      
-      // Check if it's an auth error
-      if (error.message?.includes('auth') || error.message?.includes('Authentication')) {
-        onError(`Authentication error: ${error.message}. Please sign in again.`);
-      } else {
-        onError(`Server error: ${error.message}`);
-      }
+      onError(`Server error: ${error.message}`);
       return [];
     }
 
