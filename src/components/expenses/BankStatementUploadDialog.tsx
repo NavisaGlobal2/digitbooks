@@ -136,6 +136,7 @@ const BankStatementUploadDialog = ({
               file={file} 
               onFileChange={handleFileChange} 
               disabled={uploading}
+              errorState={error}
             />
             
             {/* Processing mode toggle */}
@@ -170,6 +171,11 @@ const BankStatementUploadDialog = ({
                 {progress > 90 && progress < 100 && (
                   <p className="text-xs text-muted-foreground text-center animate-pulse">
                     Processing large file, please wait...
+                  </p>
+                )}
+                {progress === 90 && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Waiting for server response...
                   </p>
                 )}
               </div>

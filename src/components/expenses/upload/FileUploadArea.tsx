@@ -6,9 +6,10 @@ interface FileUploadAreaProps {
   file: File | null;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   disabled?: boolean;
+  errorState?: string | null;
 }
 
-const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadAreaProps) => {
+const FileUploadArea = ({ file, onFileChange, disabled = false, errorState }: FileUploadAreaProps) => {
   return (
     <div>
       <Label htmlFor="bank-statement" className="mb-2 block">
@@ -16,7 +17,10 @@ const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadArea
       </Label>
       <div className="mt-1">
         <label className={`block w-full ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
-          <div className={`flex items-center justify-center w-full h-32 px-4 transition bg-white border-2 ${file ? 'border-green-300' : 'border-gray-300'} ${disabled ? 'bg-gray-100' : 'border-dashed hover:border-gray-400'} rounded-md appearance-none focus:outline-none`}>
+          <div className={`flex items-center justify-center w-full h-32 px-4 transition bg-white border-2 
+            ${file ? (errorState ? 'border-red-300' : 'border-green-300') : 'border-gray-300'} 
+            ${disabled ? 'bg-gray-100' : 'border-dashed hover:border-gray-400'} 
+            rounded-md appearance-none focus:outline-none`}>
             {file ? (
               <div className="text-center">
                 <p className="text-sm text-gray-600">{file.name}</p>

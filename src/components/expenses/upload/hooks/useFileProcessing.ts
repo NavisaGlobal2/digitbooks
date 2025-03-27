@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { parseCSVFile, CSVParseResult } from "../parsers/csvParser";
 import { parseViaEdgeFunction, ParsedTransaction } from "../parsers";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FileProcessingProps {
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
@@ -25,53 +26,74 @@ export const useFileProcessing = ({
   const [showColumnMapping, setShowColumnMapping] = useState(false);
 
   const processServerSide = async (file: File) => {
-    // Set a timeout for edge function calls
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Server processing timed out after 45 seconds")), 45000);
-    });
-    
     const isPdf = file.name.toLowerCase().endsWith('.pdf');
     
     try {
-      // Race the edge function call against the timeout
-      await Promise.race([
-        parseViaEdgeFunction(
-          file,
-          (transactions) => {
-            if (isCancelled) return;
-            completeProgress();
-            onTransactionsParsed(transactions);
-          },
-          (errorMessage) => {
-            if (isCancelled) return;
-            handleError(errorMessage);
-            
-            // Fallback to client-side parsing if not a PDF
-            if (!isPdf) {
-              const isCsv = file.name.toLowerCase().endsWith('.csv');
-              showFallbackMessage();
-              
-              if (isCsv) {
-                processClientSideCSV(file);
-              } else {
-                handleError("Client-side Excel parsing is not fully implemented yet. Please try CSV format.");
-              }
-            }
+      // Check authentication before starting the server request
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session || !sessionData.session.access_token) {
+        handleError("You need to be signed in to use server-side processing. Please sign in and try again.");
+        resetProgress();
+        return;
+      }
+      
+      // Now process with edge function
+      const result = await parseViaEdgeFunction(
+        file,
+        (transactions) => {
+          if (isCancelled) return;
+          completeProgress();
+          onTransactionsParsed(transactions);
+        },
+        (errorMessage) => {
+          if (isCancelled) return;
+          
+          const isAuthError = errorMessage.toLowerCase().includes('auth') || 
+                              errorMessage.toLowerCase().includes('sign in') ||
+                              errorMessage.toLowerCase().includes('token');
+          
+          handleError(errorMessage);
+          
+          // For auth errors, don't try to fallback to client-side
+          if (isAuthError) {
+            resetProgress();
+            return true;
           }
-        ),
-        timeoutPromise
-      ]);
+          
+          // Fallback to client-side parsing if not a PDF
+          if (!isPdf) {
+            const isCsv = file.name.toLowerCase().endsWith('.csv');
+            showFallbackMessage("Falling back to client-side processing");
+            
+            if (isCsv) {
+              processClientSideCSV(file);
+            } else {
+              handleError("Client-side Excel parsing is not fully implemented yet. Please try CSV format.");
+              resetProgress();
+            }
+          } else {
+            resetProgress();
+          }
+          
+          return true;
+        }
+      );
+      
+      return result;
     } catch (error: any) {
       if (isCancelled) return;
       
-      console.error("Edge function timeout or error:", error);
-      handleError("Server processing timed out. Please try client-side processing or a smaller file.");
+      console.error("Edge function error:", error);
+      handleError(error.message || "Error processing file on server. Trying client-side processing.");
       
       // Fallback to client-side parsing if not a PDF
       const isCsv = file.name.toLowerCase().endsWith('.csv');
       if (!isPdf && isCsv) {
-        showFallbackMessage("Falling back to client-side parsing due to timeout");
+        showFallbackMessage("Falling back to client-side parsing");
         processClientSideCSV(file);
+      } else {
+        resetProgress();
       }
     }
   };

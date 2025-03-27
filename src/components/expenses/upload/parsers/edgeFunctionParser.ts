@@ -21,7 +21,7 @@ export const parseViaEdgeFunction = async (
     
     if (!sessionData.session) {
       console.error("No active session found");
-      onError('Authentication required to parse files. Please sign in to use this feature.');
+      onError('Authentication required to parse files. Please sign in again to use this feature.');
       return false;
     }
     
@@ -39,33 +39,41 @@ export const parseViaEdgeFunction = async (
     
     console.log('Preparing to call parse-bank-statement edge function...');
     
-    // Set up a timeout for the function call
-    const timeoutDuration = 60000; // 60 seconds
-    
     try {
+      // Create a timeout promise for the function call
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds
+      
       console.log('Using supabase.functions.invoke to call the edge function');
       
-      // Call the edge function with an increased timeout
+      // Call the edge function with the appropriate authorization
       const { data, error: functionError } = await supabase.functions.invoke(
         'parse-bank-statement',
         {
           body: formData,
           headers: {
             Authorization: `Bearer ${accessToken}`
-          }
+          },
+          signal: controller.signal
         }
       );
+      
+      // Clear the timeout
+      clearTimeout(timeoutId);
       
       if (functionError) {
         console.error('Edge function error:', functionError);
         
         // Provide more specific error messages based on the error type
-        if (functionError.message?.includes('JWT')) {
-          throw new Error('Authentication token is invalid or expired. Please sign in again.');
-        }
-        
-        if (functionError.message?.includes('timeout') || functionError.message?.includes('timed out')) {
-          throw new Error('Server processing timed out. Please try a smaller file or use client-side processing.');
+        if (typeof functionError === 'object' && functionError !== null) {
+          // Check if it's an auth error
+          if (functionError.message?.includes('auth') || 
+              functionError.message?.includes('Authentication') ||
+              functionError.message?.includes('JWT') ||
+              functionError.message?.includes('token') ||
+              functionError.message?.includes('Unauthorized')) {
+            throw new Error('Authentication failed: ' + functionError.message + '. Please sign out and sign in again.');
+          }
         }
         
         throw new Error(`Edge function error: ${functionError.message || 'Unknown error'}`);
@@ -78,25 +86,33 @@ export const parseViaEdgeFunction = async (
       
       console.log('Edge function response:', data);
       
+      if (data.error) {
+        if (data.errorType === 'authentication') {
+          throw new Error('Authentication error: ' + data.error + '. Please sign out and sign in again.');
+        } else {
+          throw new Error(data.error);
+        }
+      }
+      
       if (!data.batchId) {
         console.error('No batchId found in edge function response:', data);
         throw new Error('Invalid server response. Please try again or use client-side processing.');
       }
       
       // After successful function call, fetch the transactions with timeout
-      const abortController = new AbortController();
-      const fetchTimeoutId = setTimeout(() => abortController.abort(), timeoutDuration);
+      const fetchController = new AbortController();
+      const fetchTimeoutId = setTimeout(() => fetchController.abort(), 30000); // 30 seconds
       
       try {
         // Add small delay to ensure database has time to insert records
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         const { data: transactionsData, error: fetchError } = await supabase
           .from('uploaded_bank_lines')
           .select('*')
           .eq('upload_batch_id', data.batchId)
           .order('date', { ascending: false })
-          .abortSignal(abortController.signal);
+          .abortSignal(fetchController.signal);
         
         // Clear the fetch timeout
         clearTimeout(fetchTimeoutId);
@@ -146,6 +162,22 @@ export const parseViaEdgeFunction = async (
       // Check if this is an abort error (timeout)
       if (functionError.name === 'AbortError') {
         throw new Error('Server processing timed out after 60 seconds. Please try client-side processing or a smaller file.');
+      }
+      
+      // Check if we received a structured error response from the function
+      if (functionError.response) {
+        try {
+          const errorBody = await functionError.response.json();
+          if (errorBody.error) {
+            if (errorBody.errorType === 'authentication') {
+              throw new Error('Authentication error: ' + errorBody.error);
+            }
+            throw new Error(errorBody.error);
+          }
+        } catch (e) {
+          // If we can't parse the response, fall back to the original error
+          console.log('Could not parse error response:', e);
+        }
       }
       
       // Check if the error is a network error
