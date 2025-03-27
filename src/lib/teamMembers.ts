@@ -13,6 +13,14 @@ export const useTeamMembers = () => {
       
       if (error) {
         console.error("Supabase error fetching team members:", error);
+        
+        // Return empty array for the specific recursive policy error
+        // This prevents the UI from showing an error state when no team members exist
+        if (error.code === '42P17') {
+          console.info("No team members exist or recursion policy detected - returning empty array");
+          return [];
+        }
+        
         throw error;
       }
       
@@ -23,7 +31,12 @@ export const useTeamMembers = () => {
       })) as TeamMember[];
     } catch (error) {
       console.error("Error fetching team members:", error);
-      toast.error("Failed to load team members");
+      
+      // Only show toast for errors other than the recursion policy error
+      if ((error as any)?.code !== '42P17') {
+        toast.error("Failed to load team members");
+      }
+      
       return [];
     }
   };

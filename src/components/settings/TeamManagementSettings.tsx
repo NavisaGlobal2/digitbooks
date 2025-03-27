@@ -9,6 +9,8 @@ import { EditTeamMemberDialog } from "./team/EditTeamMemberDialog";
 import { DeleteTeamMemberDialog } from "./team/DeleteTeamMemberDialog";
 import { TeamMemberList } from "./team/TeamMemberList";
 import { TeamMemberSearch } from "./team/TeamMemberSearch";
+import { EmptyState } from "../ui/empty-state";
+import { UserPlus } from "lucide-react";
 
 export const TeamManagementSettings = () => {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -17,6 +19,7 @@ export const TeamManagementSettings = () => {
   const [currentMember, setCurrentMember] = useState<TeamMember | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
   const { user } = useAuth();
 
   const { fetchTeamMembers } = useTeamMembers();
@@ -24,6 +27,7 @@ export const TeamManagementSettings = () => {
   useEffect(() => {
     const loadTeamMembers = async () => {
       setIsLoading(true);
+      setIsError(false);
       try {
         const data = await fetchTeamMembers();
         
@@ -45,6 +49,7 @@ export const TeamManagementSettings = () => {
         }
       } catch (error) {
         console.error("Error loading team members:", error);
+        setIsError(true);
       } finally {
         setIsLoading(false);
       }
@@ -77,6 +82,10 @@ export const TeamManagementSettings = () => {
     setIsDeleteDialogOpen(true);
   };
 
+  const openInviteDialog = () => {
+    // When using InviteTeamMemberDialog directly as button
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -97,6 +106,28 @@ export const TeamManagementSettings = () => {
           <div className="flex justify-center p-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
+        ) : isError ? (
+          <EmptyState
+            icon={<UserPlus className="h-8 w-8 text-gray-400" />}
+            title="Error loading team members"
+            description="There was a problem loading your team members. Please try again later."
+            primaryAction={{
+              label: "Try Again",
+              onClick: () => window.location.reload(),
+              icon: <div className="mr-2">↻</div>
+            }}
+          />
+        ) : members.length === 0 ? (
+          <EmptyState
+            icon={<UserPlus className="h-8 w-8 text-gray-400" />}
+            title="No team members yet"
+            description="Invite your colleagues to collaborate with you"
+            primaryAction={{
+              label: "Invite Team Member",
+              onClick: openInviteDialog,
+              icon: <UserPlus className="h-4 w-4 mr-2" />
+            }}
+          />
         ) : (
           <TeamMemberList
             members={members}
