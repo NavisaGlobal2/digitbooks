@@ -110,7 +110,7 @@ const BankStatementUploadDialog = ({
               onFileChange={handleFileChange} 
             />
             
-            {/* Add server-side processing toggle */}
+            {/* Server-side processing toggle */}
             <div className="flex items-center space-x-2">
               <Switch 
                 id="server-processing" 

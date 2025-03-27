@@ -62,12 +62,16 @@ export const useStatementUpload = (
 
   const parseViaEdgeFunction = async () => {
     try {
-      // Get the auth token
+      // Get the auth token directly from the user's session
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.access_token) {
+        console.error("No authentication session found", session);
         setError("You need to be authenticated to upload files");
         setUploading(false);
+        setUseEdgeFunction(false); // Automatically switch to client-side parsing
+        toast.info("Falling back to client-side parsing due to authentication issue");
+        parseViaClient();
         return;
       }
       
@@ -75,42 +79,44 @@ export const useStatementUpload = (
       const formData = new FormData();
       formData.append('file', file!);
       
-      // Call the edge function
-      const response = await fetch(
-        `https://naxmgtoskeijvdofqyik.supabase.co/functions/v1/parse-bank-statement`,
+      // Call the edge function using Supabase Functions invoke
+      const { data, error: functionError } = await supabase.functions.invoke(
+        'parse-bank-statement',
         {
-          method: 'POST',
+          body: formData,
           headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: formData
+            Authorization: `Bearer ${session.access_token}`
+          }
         }
       );
       
-      const result = await response.json();
-      
-      if (!response.ok) {
-        setError(result.error || "Failed to process file");
-        setUploading(false);
-        setEdgeFunctionAvailable(false); // Mark edge function as unavailable after an error
-        return;
+      if (functionError) {
+        console.error("Edge function error:", functionError);
+        throw new Error(functionError.message);
       }
       
+      if (!data) {
+        throw new Error("No data returned from edge function");
+      }
+      
+      console.log("Edge function response:", data);
+      
       // If successful, fetch the transactions from the database
-      const { data, error: fetchError } = await supabase
+      const { data: transactionsData, error: fetchError } = await supabase
         .from('uploaded_bank_lines')
         .select('*')
-        .eq('upload_batch_id', result.batchId)
+        .eq('upload_batch_id', data.batchId)
         .order('date', { ascending: false });
       
-      if (fetchError || !data) {
+      if (fetchError || !transactionsData) {
+        console.error("Failed to retrieve transactions:", fetchError);
         setError("Failed to retrieve processed transactions");
         setUploading(false);
         return;
       }
       
       // Convert to the format expected by the component
-      const transactions: ParsedTransaction[] = data.map((item) => ({
+      const transactions: ParsedTransaction[] = transactionsData.map((item) => ({
         id: item.id,
         date: new Date(item.date),
         description: item.description,
