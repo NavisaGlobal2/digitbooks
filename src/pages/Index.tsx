@@ -1,5 +1,6 @@
+
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
-import { useState, lazy, Suspense } from "react";
+import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { WaitlistForm } from "@/components/WaitlistForm";
