@@ -35,7 +35,7 @@ const ExpenseDialogForm = ({
   setReceiptFile
 }: ExpenseDialogFormProps) => {
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-5 max-h-[calc(70vh-130px)] overflow-y-auto">
       <ExpenseDialogDescriptionField 
         description={description} 
         setDescription={setDescription} 
