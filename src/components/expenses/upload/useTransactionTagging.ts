@@ -11,15 +11,29 @@ export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) 
   console.log(`useTransactionTagging initialized with ${initialTransactions.length} transactions`);
   
   // Ensure each transaction has a unique ID before passing to hooks
-  const validatedTransactions = initialTransactions.map(t => ({
-    ...t,
-    id: t.id || uuidv4(), // Use UUID for reliable unique IDs
-    selected: false // Always initialize with selected=false
-  }));
+  const validatedTransactions = initialTransactions.map(t => {
+    const transaction = {
+      ...t,
+      id: t.id || uuidv4(), // Use UUID for reliable unique IDs
+      selected: false // Always initialize with selected=false
+    };
+    
+    return transaction;
+  });
   
   // Log all transaction IDs for debugging
-  console.log("Transaction IDs before hooks:", validatedTransactions.map(t => t.id).join(", "));
-  
+  useEffect(() => {
+    if (validatedTransactions.length > 0) {
+      console.log("Transaction IDs before hooks:", validatedTransactions.slice(0, 5).map(t => t.id).join(", "));
+      console.log(`Generated IDs for ${validatedTransactions.length} transactions`);
+      
+      // Log details of first few transactions
+      validatedTransactions.slice(0, 5).forEach(t => {
+        console.log(`Transaction [${t.id}]: Type=${t.type}, Amount=${t.amount}, Description=${t.description?.substring(0, 20)}`);
+      });
+    }
+  }, [validatedTransactions]);
+
   const {
     taggedTransactions,
     setTaggedTransactions,
@@ -37,25 +51,6 @@ export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) 
   } = useCategoryAssignment(taggedTransactions, setTaggedTransactions);
 
   const { isReadyToSave } = useTransactionValidation(taggedTransactions);
-
-  // Add debugging to track transaction IDs and selection state
-  useEffect(() => {
-    if (taggedTransactions.length > 0) {
-      const selectedTransactions = taggedTransactions.filter(t => t.selected);
-      console.log(`Current transaction state: ${taggedTransactions.length} total, ${selectedTransactions.length} selected`);
-      
-      if (selectedTransactions.length > 0) {
-        console.log("Selected transaction IDs:", 
-          selectedTransactions.map(t => t.id).join(", ")
-        );
-      }
-      
-      // Log category assignment stats
-      const categorizedCount = taggedTransactions.filter(t => t.selected && t.category).length;
-      const selectedCount = taggedTransactions.filter(t => t.selected).length;
-      console.log(`Category assignment stats: ${categorizedCount}/${selectedCount} selected transactions have categories`);
-    }
-  }, [taggedTransactions]);
 
   return {
     taggedTransactions,

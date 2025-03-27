@@ -6,7 +6,8 @@ import TransactionBulkActions from "./upload/TransactionBulkActions";
 import TransactionTable from "./upload/TransactionTable";
 import TaggingDialogFooter from "./upload/TaggingDialogFooter";
 import { useTransactionTagging } from "./upload/useTransactionTagging";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from 'uuid';
 
 interface TransactionTaggingDialogProps {
   open: boolean;
@@ -21,11 +22,25 @@ const TransactionTaggingDialog = ({
   transactions,
   onTaggingComplete,
 }: TransactionTaggingDialogProps) => {
-  // Log received transactions for debugging
+  // Ensure all transactions have unique IDs
+  const [processedTransactions, setProcessedTransactions] = useState<ParsedTransaction[]>([]);
+  
+  // Process transactions when dialog opens or transactions change
   useEffect(() => {
-    if (open) {
-      console.log(`TransactionTaggingDialog opened with ${transactions.length} transactions`);
-      console.log("First few transaction IDs:", transactions.slice(0, 3).map(t => t.id).join(", "));
+    if (open && transactions.length > 0) {
+      console.log(`TransactionTaggingDialog processing ${transactions.length} transactions`);
+      
+      // Ensure all transactions have unique IDs
+      const withUniqueIds = transactions.map(t => ({
+        ...t,
+        id: t.id || uuidv4(), // Ensure each transaction has a unique ID
+        selected: false // Start with no selection
+      }));
+      
+      console.log(`Processed ${withUniqueIds.length} transactions with unique IDs`);
+      console.log(`First few transaction IDs: ${withUniqueIds.slice(0, 3).map(t => t.id).join(', ')}`);
+      
+      setProcessedTransactions(withUniqueIds);
     }
   }, [open, transactions]);
 
@@ -40,11 +55,12 @@ const TransactionTaggingDialog = ({
     handleSelectTransaction,
     handleSetCategory,
     handleSetCategoryForAll
-  } = useTransactionTagging(transactions);
+  } = useTransactionTagging(processedTransactions);
 
   const handleSave = () => {
-    console.log(`Saving ${taggedCount} tagged transactions`);
+    console.log(`Saving ${taggedCount} tagged transactions out of ${selectedCount} selected`);
     onTaggingComplete(taggedTransactions);
+    onOpenChange(false);
   };
 
   return (

@@ -26,22 +26,27 @@ export const useCategoryAssignment = (
     }
     
     setTransactions(prevTransactions => {
-      // Verify the transaction exists first
-      const transaction = prevTransactions.find(t => t.id === id);
-      if (!transaction) {
+      // Create a deep copy of the transactions to avoid reference issues
+      const updatedTransactions = [...prevTransactions];
+      
+      // Find the transaction index
+      const transactionIndex = updatedTransactions.findIndex(t => t.id === id);
+      
+      if (transactionIndex === -1) {
         console.error(`Transaction with ID ${id} not found when setting category`);
-        console.log("Available transaction IDs:", prevTransactions.map(t => t.id).join(", "));
+        console.log("Available transaction IDs:", updatedTransactions.map(t => t.id).join(", "));
         return prevTransactions;
       }
       
-      // Update the category
-      const updated = prevTransactions.map(t => 
-        t.id === id ? { ...t, category } : t
-      );
+      // Update the specific transaction with a new object
+      updatedTransactions[transactionIndex] = {
+        ...updatedTransactions[transactionIndex],
+        category
+      };
       
-      console.log(`After setting category for ${id}: ${updated.filter(t => t.selected && t.category).length} transactions are tagged`);
+      console.log(`After setting category for ${id}: ${updatedTransactions.filter(t => t.selected && t.category).length} transactions are tagged`);
       
-      return updated;
+      return updatedTransactions;
     });
   }, [setTransactions]);
   
@@ -49,6 +54,7 @@ export const useCategoryAssignment = (
     console.log(`Setting category ${category} for all selected transactions`);
     
     setTransactions(prevTransactions => {
+      // Create a new array of transactions with updated categories for selected ones
       const updated = prevTransactions.map(t => 
         t.selected ? { ...t, category } : t
       );
