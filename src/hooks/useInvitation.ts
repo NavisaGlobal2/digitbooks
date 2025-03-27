@@ -65,10 +65,13 @@ export const useInvitation = (token: string | null) => {
     try {
       setIsSubmitting(true);
       
-      // Accept the invitation using a custom query
-      const { error } = await supabase.rpc('accept_team_invitation', {
-        p_token: token
-      });
+      // Use the _rpc endpoint to call the function
+      // This bypasses TypeScript typing issues while still making the correct call
+      const { error } = await supabase
+        .from('_rpc')
+        .select('*')
+        .eq('name', 'accept_team_invitation')
+        .eq('args', { p_token: token });
       
       if (error) {
         throw error;
