@@ -10,14 +10,13 @@ export const RequireAuth = ({ children }: RequireAuthProps) => {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
 
-  // Don't redirect if on auth or public pages
-  if (location.pathname === "/auth" || 
-      location.pathname === "/" || 
-      location.pathname === "/about" || 
-      location.pathname === "/features" || 
-      location.pathname === "/pricing" || 
-      location.pathname === "/careers" || 
-      location.pathname === "/invitation") {
+  console.log("RequireAuth check:", { path: location.pathname, isAuthenticated, user });
+
+  // List of public routes that don't require authentication
+  const publicRoutes = ["/auth", "/", "/about", "/features", "/pricing", "/careers", "/invitation"];
+  
+  // If on a public page, don't redirect
+  if (publicRoutes.includes(location.pathname)) {
     return children;
   }
 

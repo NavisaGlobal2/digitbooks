@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   BrowserRouter as Router,
@@ -59,6 +58,15 @@ function App() {
   const { user, isAuthenticated } = useAuth();
   const [isInitializing, setIsInitializing] = useState(true);
 
+  // Add debugging for authentication state
+  useEffect(() => {
+    console.log("App authentication state:", { 
+      isAuthenticated, 
+      user, 
+      userOnboardingStatus: user?.onboardingCompleted 
+    });
+  }, [isAuthenticated, user]);
+
   // Optimized initialization effect
   useEffect(() => {
     if (isAuthenticated !== undefined) {
@@ -73,13 +81,6 @@ function App() {
     }
   }, [isAuthenticated]);
 
-  // For debugging - use conditional logging to reduce console noise
-  useEffect(() => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log("Auth state in App:", { isAuthenticated, user, isInitializing });
-    }
-  }, [isAuthenticated, user, isInitializing]);
-
   if (isInitializing) {
     return <LoadingPage />;
   }
@@ -91,13 +92,11 @@ function App() {
         <Routes>
           {/* Public routes - don't require authentication */}
           <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/about" element={<publicPages.About />} />
           <Route path="/features" element={<publicPages.Features />} />
           <Route path="/pricing" element={<publicPages.Pricing />} />
           <Route path="/careers" element={<publicPages.Careers />} />
-          
-          {/* Auth pages - not protected by RequireAuth */}
-          <Route path="/auth" element={<Auth />} />
           <Route path="/invitation" element={<publicPages.Invitation />} />
         
           {/* Protected routes */}
