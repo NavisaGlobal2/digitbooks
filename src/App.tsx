@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   BrowserRouter as Router,
@@ -14,28 +13,37 @@ import { RequireAuth } from './components/auth/RequireAuth';
 
 // Eagerly load critical pages for better initial load experience
 import Index from './pages/Index';
-import Auth from './pages/Auth'; // Import Auth directly instead of lazy loading
+import Auth from './pages/Auth'; // Import Auth directly to avoid module fetch issues
 
-// Lazy load other pages
-const About = lazy(() => import('./pages/About'));
-const Features = lazy(() => import('./pages/Features'));
-const Pricing = lazy(() => import('./pages/Pricing'));
-const Careers = lazy(() => import('./pages/Careers'));
-const Onboarding = lazy(() => import('./pages/Onboarding'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Revenue = lazy(() => import('./pages/Revenue'));
-const Invoicing = lazy(() => import('./pages/Invoicing'));
-const Expenses = lazy(() => import('./pages/Expenses'));
-const Budget = lazy(() => import('./pages/Budget'));
-const Clients = lazy(() => import('./pages/Clients'));
-const FinancialReports = lazy(() => import('./pages/FinancialReports'));
-const Ledger = lazy(() => import('./pages/Ledger'));
-const SettingsPage = lazy(() => import('./pages/Settings'));
-const Agent = lazy(() => import('./pages/Agent'));
+// Group lazy loaded routes by functional area
+// Public pages
+const publicPages = {
+  About: lazy(() => import('./pages/About')),
+  Features: lazy(() => import('./pages/Features')),
+  Pricing: lazy(() => import('./pages/Pricing')),
+  Careers: lazy(() => import('./pages/Careers')),
+  Invitation: lazy(() => import('./pages/Invitation')),
+};
+
+// Dashboard and main app pages
+const appPages = {
+  Onboarding: lazy(() => import('./pages/Onboarding')),
+  Dashboard: lazy(() => import('./pages/Dashboard')),
+  Revenue: lazy(() => import('./pages/Revenue')),
+  Invoicing: lazy(() => import('./pages/Invoicing')),
+  Expenses: lazy(() => import('./pages/Expenses')),
+  Budget: lazy(() => import('./pages/Budget')),
+  Clients: lazy(() => import('./pages/Clients')),
+  FinancialReports: lazy(() => import('./pages/FinancialReports')),
+  Ledger: lazy(() => import('./pages/Ledger')),
+  Settings: lazy(() => import('./pages/Settings')),
+  Agent: lazy(() => import('./pages/Agent')),
+};
+
+// Other pages
 const NotFound = lazy(() => import('./pages/NotFound'));
-const Invitation = lazy(() => import('./pages/Invitation'));
 
-// Loading component for Suspense fallback
+// Optimized loading component with reduced animation delay
 const LoadingPage = () => (
   <div className="flex items-center justify-center h-screen">
     <div className="animate-pulse flex flex-col items-center">
@@ -50,21 +58,25 @@ function App() {
   const { user, isAuthenticated } = useAuth();
   const [isInitializing, setIsInitializing] = useState(true);
 
+  // Optimized initialization effect
   useEffect(() => {
-    // Once we know the authentication state, we're no longer initializing
     if (isAuthenticated !== undefined) {
-      // Set a maximum timeout to prevent indefinite loading
-      const timer = setTimeout(() => {
-        setIsInitializing(false);
-      }, 1000); // Reduce timeout to 1 second
+      // Use requestAnimationFrame for better performance
+      const animationFrame = requestAnimationFrame(() => {
+        // Use a shorter timeout to improve perceived performance
+        const timer = setTimeout(() => setIsInitializing(false), 500);
+        return () => clearTimeout(timer);
+      });
       
-      return () => clearTimeout(timer);
+      return () => cancelAnimationFrame(animationFrame);
     }
   }, [isAuthenticated]);
 
-  // For debugging - add this to help troubleshoot auth state
+  // For debugging - use conditional logging to reduce console noise
   useEffect(() => {
-    console.log("Auth state in App:", { isAuthenticated, user, isInitializing });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Auth state in App:", { isAuthenticated, user, isInitializing });
+    }
   }, [isAuthenticated, user, isInitializing]);
 
   if (isInitializing) {
@@ -78,28 +90,28 @@ function App() {
         <Routes>
           {/* Public routes - don't require authentication */}
           <Route path="/" element={<Index />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/features" element={<Features />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/careers" element={<Careers />} />
+          <Route path="/about" element={<publicPages.About />} />
+          <Route path="/features" element={<publicPages.Features />} />
+          <Route path="/pricing" element={<publicPages.Pricing />} />
+          <Route path="/careers" element={<publicPages.Careers />} />
           
           {/* Auth pages - not protected by RequireAuth */}
           <Route path="/auth" element={<Auth />} />
-          <Route path="/invitation" element={<Invitation />} />
+          <Route path="/invitation" element={<publicPages.Invitation />} />
         
           {/* Protected routes */}
           <Route element={<RequireAuth><Outlet /></RequireAuth>}>
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/revenue" element={<Revenue />} />
-            <Route path="/invoicing" element={<Invoicing />} />
-            <Route path="/expenses" element={<Expenses />} />
-            <Route path="/budget" element={<Budget />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/financial-reports" element={<FinancialReports />} />
-            <Route path="/ledger" element={<Ledger />} />
-            <Route path="/settings/*" element={<SettingsPage />} />
-            <Route path="/agent" element={<Agent />} />
+            <Route path="/onboarding" element={<appPages.Onboarding />} />
+            <Route path="/dashboard" element={<appPages.Dashboard />} />
+            <Route path="/revenue" element={<appPages.Revenue />} />
+            <Route path="/invoicing" element={<appPages.Invoicing />} />
+            <Route path="/expenses" element={<appPages.Expenses />} />
+            <Route path="/budget" element={<appPages.Budget />} />
+            <Route path="/clients" element={<appPages.Clients />} />
+            <Route path="/financial-reports" element={<appPages.FinancialReports />} />
+            <Route path="/ledger" element={<appPages.Ledger />} />
+            <Route path="/settings/*" element={<appPages.Settings />} />
+            <Route path="/agent" element={<appPages.Agent />} />
           </Route>
         
           <Route path="*" element={<NotFound />} />
