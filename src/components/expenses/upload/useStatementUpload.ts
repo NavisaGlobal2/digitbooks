@@ -39,8 +39,16 @@ export const useStatementUpload = (
     setUploading(true);
     setError(null);
 
+    // PDF files can only be processed by the edge function
+    const isPdf = file.name.toLowerCase().endsWith('.pdf');
+    
+    if (isPdf && !useEdgeFunction) {
+      toast.info("PDF files require server-side processing. Switching to server mode.");
+      setUseEdgeFunction(true);
+    }
+
     // Choose between client-side parsing or edge function
-    if (useEdgeFunction && edgeFunctionAvailable) {
+    if (useEdgeFunction) {
       await parseViaEdgeFunction(
         file,
         (transactions) => {
@@ -52,9 +60,11 @@ export const useStatementUpload = (
           setUploading(false);
           setEdgeFunctionAvailable(false); // Mark edge function as unavailable after an error
           
-          // Fallback to client-side parsing
-          toast.info("Falling back to client-side parsing");
-          parseViaClient();
+          // Fallback to client-side parsing if not a PDF
+          if (!isPdf) {
+            toast.info("Falling back to client-side parsing");
+            parseViaClient();
+          }
         }
       );
     } else {
