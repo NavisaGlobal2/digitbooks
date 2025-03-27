@@ -27,5 +27,5 @@ export interface Expense {
   paymentMethod: 'cash' | 'card' | 'bank transfer' | 'other';
   vendor: string;
   fromStatement?: boolean;
-  batchId?: string;  // Add this field
+  batchId?: string;  // This field is now properly typed
 }

@@ -40,7 +40,7 @@ export const useExpenseSync = () => {
         receipt_url: expense.receiptUrl || null,
         notes: expense.notes || null,
         from_statement: expense.fromStatement || false,
-        batch_id: expense.batchId || null,  // Add the batch_id
+        batch_id: expense.batchId || null,  // Ensure this is included
         user_id: currentUserId
       };
       

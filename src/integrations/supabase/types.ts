@@ -222,6 +222,7 @@ export type Database = {
       expenses: {
         Row: {
           amount: number
+          batch_id: string | null
           category: string
           created_at: string
           date: string
@@ -237,6 +238,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          batch_id?: string | null
           category: string
           created_at?: string
           date: string
@@ -252,6 +254,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          batch_id?: string | null
           category?: string
           created_at?: string
           date?: string
@@ -701,6 +704,48 @@ export type Database = {
           reference?: string | null
           status?: string
           type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      uploaded_bank_lines: {
+        Row: {
+          amount: number | null
+          business_id: string | null
+          category: string | null
+          created_at: string | null
+          date: string | null
+          description: string | null
+          id: string
+          status: string | null
+          type: string | null
+          upload_batch_id: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          business_id?: string | null
+          category?: string | null
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          type?: string | null
+          upload_batch_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          business_id?: string | null
+          category?: string | null
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          type?: string | null
+          upload_batch_id?: string
           user_id?: string
         }
         Relationships: []

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useExpenses } from "@/contexts/ExpenseContext";
 import { ExpenseCategory } from "@/types/expense";
+import { supabase } from "@/integrations/supabase/client";
 import TransactionTaggingDialog from "./TransactionTaggingDialog";
 
 interface BankStatementUploadDialogProps {
@@ -49,6 +50,44 @@ const BankStatementUploadDialog = ({
         setError('Unsupported file format. Please upload CSV, Excel, or PDF files only.');
         return;
       }
+    }
+  };
+
+  const saveTransactionsToDatabase = async (transactions: ParsedTransaction[], batchId: string) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        console.error("No authenticated user found");
+        return false;
+      }
+      
+      // Save each transaction to the uploaded_bank_lines table
+      for (const transaction of transactions) {
+        if (!transaction.selected) continue;
+        
+        const { error } = await supabase
+          .from('uploaded_bank_lines')
+          .insert({
+            user_id: userData.user.id,
+            upload_batch_id: batchId,
+            date: transaction.date.toISOString(),
+            description: transaction.description,
+            amount: transaction.amount,
+            type: transaction.type,
+            category: transaction.category,
+            status: 'processed'
+          });
+          
+        if (error) {
+          console.error("Error saving bank transaction:", error);
+          toast.error("Failed to save some transaction data");
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error saving transaction data:", error);
+      return false;
     }
   };
 
@@ -180,7 +219,17 @@ const BankStatementUploadDialog = ({
     }
   };
 
-  const handleTaggingComplete = (taggedTransactions: ParsedTransaction[]) => {
+  const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
+    // Generate a unique batch ID for this import
+    const batchId = `batch-${Date.now()}`;
+    
+    // Save transactions to database first
+    const dbSaveSuccess = await saveTransactionsToDatabase(taggedTransactions, batchId);
+    
+    if (!dbSaveSuccess) {
+      toast.warning("There was an issue storing the bank transaction data");
+    }
+    
     // Filter only the selected transactions that have been categorized
     const expensesToSave = taggedTransactions
       .filter(t => t.selected && t.category) 
@@ -194,7 +243,7 @@ const BankStatementUploadDialog = ({
         vendor: "Bank Statement Import",
         notes: `Imported from bank statement: ${file?.name}`,
         fromStatement: true,
-        batchId: `batch-${Date.now()}`  // Add batch ID for tracking
+        batchId: batchId  // Using the generated batch ID
       }));
     
     if (expensesToSave.length === 0) {
