@@ -4,7 +4,6 @@ import { useTeamMembers } from "@/lib/team/useTeamMembers";
 import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 export const useTeamMembersData = () => {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -12,7 +11,7 @@ export const useTeamMembersData = () => {
   const [isError, setIsError] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { user } = useAuth();
-  const { fetchTeamMembers, inviteTeamMember, removeTeamMember } = useTeamMembers();
+  const { fetchTeamMembers, removeTeamMember } = useTeamMembers();
 
   const loadTeamMembers = async () => {
     setIsLoading(true);
@@ -43,7 +42,7 @@ export const useTeamMembersData = () => {
       console.error("Error loading team members:", error);
       // Don't set error state for the recursive policy error 
       // so UI doesn't show error state
-      if (typeof error === 'object' && error && 'code' in error && (error as any).code !== '42P17') {
+      if (typeof error === 'object' && error && (error as any).code !== '42P17') {
         setIsError(true);
       }
       
@@ -68,39 +67,24 @@ export const useTeamMembersData = () => {
 
   useEffect(() => {
     loadTeamMembers();
-  }, [user]);
+  }, [fetchTeamMembers, user]);
 
-  const handleAddMember = async (newMemberData: Omit<TeamMember, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    try {
-      // First, call the API to create the team member
-      const result = await inviteTeamMember(newMemberData);
-      
-      if (result) {
-        // Add the new member to the UI state immediately for better UX
-        setMembers(prevMembers => {
-          // Check if member with this ID already exists to avoid duplicates
-          const existingMemberIndex = prevMembers.findIndex(m => m.id === result.id);
-          if (existingMemberIndex >= 0) {
-            // Replace existing member with updated one
-            const updatedMembers = [...prevMembers];
-            updatedMembers[existingMemberIndex] = result;
-            return updatedMembers;
-          } else {
-            // Add new member to the list
-            return [...prevMembers, result];
-          }
-        });
-        toast.success(`Invitation sent to ${newMemberData.email}. They should receive an email shortly.`);
-        
-        // Refresh the team members list to ensure we have the latest data
-        setTimeout(() => {
-          loadTeamMembers();
-        }, 1000);
+  const handleAddMember = (newMember: TeamMember) => {
+    // Add the new member to the UI state immediately for better UX
+    setMembers(prevMembers => {
+      // Check if member with this ID already exists to avoid duplicates
+      const existingMemberIndex = prevMembers.findIndex(m => m.id === newMember.id);
+      if (existingMemberIndex >= 0) {
+        // Replace existing member with updated one
+        const updatedMembers = [...prevMembers];
+        updatedMembers[existingMemberIndex] = newMember;
+        return updatedMembers;
+      } else {
+        // Add new member to the list
+        return [...prevMembers, newMember];
       }
-    } catch (error) {
-      console.error("Error inviting team member:", error);
-      toast.error("Failed to send invitation. Please try again.");
-    }
+    });
+    toast.success(`Invitation sent to ${newMember.email}. They should receive an email shortly.`);
   };
 
   const handleUpdateMember = (updatedMember: TeamMember) => {
