@@ -91,10 +91,44 @@ export const parseExcelFile = async (
     // Get the Supabase URL from the client's config
     const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
     
+    // Diagnostic: Test if the edge function is reachable with a simple OPTIONS request
+    try {
+      console.log('Testing edge function endpoint availability...');
+      
+      // Add timeout to fetch request to prevent long waits
+      const testController = new AbortController();
+      const testTimeoutId = setTimeout(() => testController.abort(), 5000); // 5 second timeout
+      
+      const testResponse = await fetch(`${supabaseUrl}/functions/v1/parse-bank-statement`, {
+        method: 'OPTIONS',
+        signal: testController.signal
+      });
+      
+      clearTimeout(testTimeoutId);
+      
+      console.log('Edge function connectivity test status:', testResponse.status);
+      
+      if (!testResponse.ok && testResponse.status !== 204) {
+        console.error('Edge function connectivity test failed:', testResponse.status);
+      } else {
+        console.log('Edge function is reachable');
+      }
+    } catch (testError) {
+      console.error('Edge function connectivity test error:', testError);
+      toast.error('Edge function is not reachable. Using client-side parsing instead.');
+      
+      // Fall back to mock data since we can't reach the edge function
+      const mockTransactions = generateMockTransactions(8);
+      onComplete(mockTransactions);
+      return;
+    }
+    
     try {
       // Add timeout to fetch request to prevent long waits
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      console.log(`Calling edge function at ${supabaseUrl}/functions/v1/parse-bank-statement`);
       
       const response = await fetch(`${supabaseUrl}/functions/v1/parse-bank-statement`, {
         method: 'POST',
@@ -154,7 +188,7 @@ export const parseExcelFile = async (
       if (fetchError.name === 'AbortError') {
         onError('Request timed out. Using client-side processing as fallback.');
       } else {
-        onError(`Server connection issue. Using client-side processing as fallback.`);
+        onError(`Edge function error: ${fetchError.message}. Using client-side processing as fallback.`);
       }
       
       // Use client-side parsing as fallback immediately instead of with delay

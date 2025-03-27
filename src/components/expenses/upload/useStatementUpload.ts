@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { parseStatementFile } from "./statementParsers";
 import { ParsedTransaction } from "./statementParsers";
 import { supabase } from "@/integrations/supabase/client";
-import { ExpenseCategory } from "@/types/expense"; // Add this import
+import { ExpenseCategory } from "@/types/expense";
 
 export const useStatementUpload = (
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void
@@ -12,7 +12,8 @@ export const useStatementUpload = (
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [useEdgeFunction, setUseEdgeFunction] = useState(false);
+  const [useEdgeFunction, setUseEdgeFunction] = useState(true);
+  const [edgeFunctionAvailable, setEdgeFunctionAvailable] = useState(true);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -38,7 +39,7 @@ export const useStatementUpload = (
     setUploading(true);
 
     // Choose between client-side parsing or edge function
-    if (useEdgeFunction) {
+    if (useEdgeFunction && edgeFunctionAvailable) {
       await parseViaEdgeFunction();
     } else {
       parseViaClient();
@@ -91,6 +92,7 @@ export const useStatementUpload = (
       if (!response.ok) {
         setError(result.error || "Failed to process file");
         setUploading(false);
+        setEdgeFunctionAvailable(false); // Mark edge function as unavailable after an error
         return;
       }
       
@@ -125,6 +127,11 @@ export const useStatementUpload = (
       console.error("Error in edge function:", error);
       setError(error instanceof Error ? error.message : "Unknown error occurred");
       setUploading(false);
+      setEdgeFunctionAvailable(false); // Mark edge function as unavailable after an error
+      
+      // Fallback to client-side parsing
+      toast.info("Falling back to client-side parsing");
+      parseViaClient();
     }
   };
 
@@ -133,12 +140,18 @@ export const useStatementUpload = (
     setError(null);
   };
 
+  const toggleEdgeFunction = () => {
+    setUseEdgeFunction(!useEdgeFunction);
+  };
+
   return {
     file,
     uploading,
     error,
     useEdgeFunction,
     setUseEdgeFunction,
+    toggleEdgeFunction,
+    edgeFunctionAvailable,
     handleFileChange,
     parseFile,
     clearFile

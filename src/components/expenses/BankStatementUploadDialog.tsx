@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useExpenses } from "@/contexts/ExpenseContext";
 import TransactionTaggingDialog from "./TransactionTaggingDialog";
 import FileUploadArea from "./upload/FileUploadArea";
@@ -41,6 +43,9 @@ const BankStatementUploadDialog = ({
     file,
     uploading,
     error,
+    useEdgeFunction,
+    toggleEdgeFunction,
+    edgeFunctionAvailable,
     handleFileChange,
     parseFile,
     clearFile
@@ -104,6 +109,19 @@ const BankStatementUploadDialog = ({
               file={file} 
               onFileChange={handleFileChange} 
             />
+            
+            {/* Add server-side processing toggle */}
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="server-processing" 
+                checked={useEdgeFunction} 
+                onCheckedChange={toggleEdgeFunction}
+                disabled={!edgeFunctionAvailable}
+              />
+              <Label htmlFor="server-processing">
+                Use server-side processing {!edgeFunctionAvailable && "(unavailable)"}
+              </Label>
+            </div>
             
             <UploadDialogFooter
               onCancel={handleClose}
