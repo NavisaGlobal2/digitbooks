@@ -17,6 +17,8 @@ export const parseViaEdgeFunction = async (
     const endpoint = file.name.toLowerCase().endsWith('.pdf') ? 
       'parse-bank-statement-ai' : 'parse-bank-statement';
 
+    console.log(`Sending file to edge function: ${endpoint}`);
+    
     // Call the serverless function
     const { data, error } = await supabase.functions.invoke(endpoint, {
       body: formData,

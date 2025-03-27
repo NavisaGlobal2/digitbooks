@@ -116,7 +116,7 @@ serve(async (req) => {
   }
 
   try {
-    // Check if OpenAI API key is configured
+    // Validate that OpenAI API key exists
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) {
       return new Response(
@@ -163,8 +163,20 @@ serve(async (req) => {
       );
     } catch (processingError) {
       console.error("Processing error:", processingError);
+      
+      // Check if error is related to OpenAI API key
+      const errorMessage = processingError.message || "Unknown processing error";
+      if (errorMessage.includes("OpenAI") && errorMessage.includes("API key")) {
+        return new Response(
+          JSON.stringify({ 
+            error: "OpenAI API key issue. Please verify your API key is valid and has sufficient credits." 
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        );
+      }
+      
       return new Response(
-        JSON.stringify({ error: processingError.message }),
+        JSON.stringify({ error: errorMessage }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
