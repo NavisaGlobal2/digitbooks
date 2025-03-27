@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TeamMember, TeamMemberRole } from "@/types/teamMember";
@@ -23,9 +22,7 @@ export const useTeamMembers = () => {
       })) as TeamMember[];
     } catch (error) {
       console.error("Error fetching team members:", error);
-      toast.error("Failed to load team members");
-      // Return an empty array to prevent further loading attempts
-      return [];
+      throw error; // Don't show a toast here, let the component handle it
     }
   };
 
