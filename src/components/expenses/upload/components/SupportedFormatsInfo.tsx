@@ -1,5 +1,5 @@
 
-import { InfoCircledIcon } from "@radix-ui/react-icons";
+import { Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SupportedFormatsInfoProps {
@@ -15,7 +15,7 @@ const SupportedFormatsInfo = ({ isAuthenticated = true }: SupportedFormatsInfoPr
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <InfoCircledIcon className="h-4 w-4 text-amber-500" />
+                <Info className="h-4 w-4 text-amber-500" />
               </TooltipTrigger>
               <TooltipContent>
                 <p>Sign in to enable server-side processing for PDF files</p>

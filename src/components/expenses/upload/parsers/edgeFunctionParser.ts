@@ -46,8 +46,8 @@ export async function parseViaEdgeFunction(
       body: formData,
       headers: {
         Authorization: `Bearer ${sessionData.session.access_token}`,
-      },
-      signal: controller.signal
+      }
+      // Removed the signal property as it's not supported in FunctionInvokeOptions
     });
     
     clearTimeout(timeoutId);

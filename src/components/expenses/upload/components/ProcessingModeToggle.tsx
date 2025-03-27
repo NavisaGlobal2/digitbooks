@@ -1,7 +1,7 @@
 
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { InfoCircledIcon } from "@radix-ui/react-icons";
+import { Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ProcessingModeToggleProps {
@@ -42,7 +42,7 @@ const ProcessingModeToggle = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <InfoCircledIcon className="h-4 w-4 text-amber-500" />
+                    <Info className="h-4 w-4 text-amber-500" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Authentication required for server-side processing</p>
