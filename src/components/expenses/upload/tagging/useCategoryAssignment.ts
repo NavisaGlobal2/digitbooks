@@ -12,7 +12,7 @@ export const useCategoryAssignment = (
 
   // Set category for a single transaction - ensuring it only affects the specified transaction
   const handleSetCategory = useCallback((id: string, category: ExpenseCategory) => {
-    console.log(`Setting category ${category} for transaction ${id}`);
+    console.log(`Setting category ${category} for transaction ${id} ONLY`);
     setTaggedTransactions(prevTransactions => 
       prevTransactions.map(t => 
         t.id === id ? { ...t, category } : t
@@ -22,7 +22,7 @@ export const useCategoryAssignment = (
 
   // Set category only for selected transactions
   const handleSetCategoryForAll = useCallback((category: ExpenseCategory) => {
-    console.log(`Setting category ${category} for all selected transactions`);
+    console.log(`Setting category ${category} for ALL SELECTED transactions only`);
     setTaggedTransactions(prevTransactions => 
       prevTransactions.map(t => 
         t.selected ? { ...t, category } : t

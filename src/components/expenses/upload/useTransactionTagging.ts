@@ -6,6 +6,8 @@ import { useCategoryAssignment } from "./tagging/useCategoryAssignment";
 import { useTransactionValidation } from "./tagging/useTransactionValidation";
 
 export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) => {
+  console.log(`useTransactionTagging initialized with ${initialTransactions.length} transactions`);
+  
   const {
     taggedTransactions,
     setTaggedTransactions,

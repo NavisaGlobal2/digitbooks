@@ -52,9 +52,10 @@ const TransactionTable = ({
               <TableCell>
                 <Checkbox
                   checked={transaction.selected}
-                  onCheckedChange={(checked) => 
-                    onSelectTransaction(transaction.id, checked as boolean)
-                  }
+                  onCheckedChange={(checked) => {
+                    console.log(`Checkbox for transaction ${transaction.id} changed to ${checked}`);
+                    onSelectTransaction(transaction.id, checked as boolean);
+                  }}
                   disabled={transaction.type === 'credit'} // Can't select credit transactions
                 />
               </TableCell>
@@ -77,7 +78,7 @@ const TransactionTable = ({
                   <Select
                     value={transaction.category || ""}
                     onValueChange={(value) => {
-                      console.log(`Selected category ${value} for transaction ${transaction.id}`);
+                      console.log(`Selected category ${value} for transaction ${transaction.id} only`);
                       onSetCategory(transaction.id, value as ExpenseCategory);
                     }}
                     disabled={!transaction.selected}

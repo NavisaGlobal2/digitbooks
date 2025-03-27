@@ -30,7 +30,10 @@ const TransactionBulkActions = ({
           <Checkbox 
             id="select-all" 
             checked={selectAll} 
-            onCheckedChange={onSelectAllChange}
+            onCheckedChange={(checked) => {
+              console.log(`Select all checkbox changed to: ${checked}`);
+              onSelectAllChange(checked as boolean);
+            }}
           />
           <label htmlFor="select-all" className="text-sm font-medium">
             Select all debit transactions
@@ -42,7 +45,10 @@ const TransactionBulkActions = ({
             Set category for {selectedCount} selected:
           </span>
           <Select 
-            onValueChange={(value) => onCategoryForAllChange(value as ExpenseCategory)}
+            onValueChange={(value) => {
+              console.log(`Bulk setting category ${value} for ${selectedCount} selected transactions`);
+              onCategoryForAllChange(value as ExpenseCategory);
+            }}
             disabled={selectedCount === 0}
           >
             <SelectTrigger className="w-40 h-8">
