@@ -165,7 +165,7 @@ export const parseStatementFile = (
   } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
     parseExcelFile(file, onSuccess, onError);
   } else if (file.name.endsWith('.pdf')) {
-    parsePDFFile(file, onSuccess);
+    parsePDFFile(file, onSuccess, onError);
   } else {
     onError('Unsupported file format');
   }
