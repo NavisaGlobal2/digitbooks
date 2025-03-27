@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { handleTeamError } from "./teamMemberUtils";
 
 // Flag to control database connectivity - must be the same as in fetchTeamMembers.ts
-const OFFLINE_MODE = true;
+const OFFLINE_MODE = false;
 
 export const removeTeamMember = async (id: string) => {
   if (OFFLINE_MODE) {

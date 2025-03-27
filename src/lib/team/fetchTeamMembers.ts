@@ -3,7 +3,7 @@ import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 import { toast } from "sonner";
 
 // Flag to control database connectivity
-const OFFLINE_MODE = true;
+const OFFLINE_MODE = false;
 
 export const fetchTeamMembers = async () => {
   if (OFFLINE_MODE) {

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTeamMembers } from "@/lib/teamMembers";
@@ -116,9 +117,9 @@ export const TeamManagementContainer = () => {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle>Team Members (Offline Mode)</CardTitle>
+        <CardTitle>Team Members</CardTitle>
         <CardDescription>
-          Managing your team members in offline mode - database connections disabled
+          Manage your team members and their permissions
         </CardDescription>
         <TeamHeaderActions 
           searchQuery={searchQuery}

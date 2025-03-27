@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { handleTeamError } from "./teamMemberUtils";
 
 // Flag to control database connectivity - must be the same as in fetchTeamMembers.ts
-const OFFLINE_MODE = true;
+const OFFLINE_MODE = false;
 
 export const updateTeamMember = async (id: string, updates: Partial<Omit<TeamMember, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => {
   if (OFFLINE_MODE) {
