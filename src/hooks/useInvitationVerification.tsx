@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { TeamMember } from "@/types/teamMember";
+import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 
 interface InvitationVerificationResult {
   isVerifying: boolean;
@@ -44,8 +44,8 @@ export const useInvitationVerification = (token: string | null): InvitationVerif
           user_id: data.user_id || "",
           name: data.name,
           email: data.email,
-          role: data.role,
-          status: data.status,
+          role: data.role as TeamMemberRole,
+          status: data.status as 'active' | 'pending' | 'inactive',
           created_at: data.created_at,
           updated_at: data.updated_at
         });

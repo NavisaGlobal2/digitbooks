@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useTeamMembers } from "@/lib/teamMembers";
+import { useTeamMembers } from "@/lib/team/useTeamMembers";
 import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 import { useAuth } from "@/contexts/auth";
 import { InviteTeamMemberDialog } from "./team/InviteTeamMemberDialog";

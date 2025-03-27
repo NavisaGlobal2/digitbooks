@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus } from "lucide-react";
-import { useTeamMembers } from "@/lib/teamMembers";
+import { useTeamMembers } from "@/lib/team/useTeamMembers";
 import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 
 const inviteFormSchema = z.object({

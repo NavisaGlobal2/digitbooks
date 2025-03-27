@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTeamMembers } from "@/lib/teamMembers";
+import { useTeamMembers } from "@/lib/team/useTeamMembers";
 import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 
 const editFormSchema = z.object({
