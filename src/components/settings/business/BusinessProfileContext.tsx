@@ -85,7 +85,7 @@ export const BusinessProfileProvider: React.FC<{ children: React.ReactNode }> = 
             name: data.business_name || defaultProfile.name,
             description: data.industry || defaultProfile.description,
             logo: "", // We don't store this yet
-            email: data.email || defaultProfile.email, // This might come from auth user
+            email: user.email || defaultProfile.email, // Use email from auth user instead of profile
             phone: data.phone || defaultProfile.phone,
             website: data.website || defaultProfile.website,
             address: {
