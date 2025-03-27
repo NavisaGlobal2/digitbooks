@@ -2,7 +2,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Expense, ExpenseStatus } from '@/types/expense';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { useExpenseSync } from '@/hooks/useExpenseSync';
+import { useExpenseData } from '@/hooks/useExpenseData';
+import { safelyStoreExpenses, loadExpensesFromLocalStorage } from '@/utils/expenseStorage';
 
 interface ExpenseContextType {
   expenses: Expense[];
@@ -24,71 +26,17 @@ export const useExpenses = () => {
   return context;
 };
 
-const safelyStoreExpenses = (expenses: Expense[]): boolean => {
-  try {
-    const storableExpenses = expenses.map(expense => {
-      const expenseCopy = {...expense};
-      
-      if (expenseCopy.receiptUrl) {
-        expenseCopy.hasReceipt = true;
-      }
-      
-      return {
-        ...expenseCopy,
-        date: expense.date instanceof Date ? expense.date.toISOString() : String(expense.date)
-      };
-    });
-    
-    localStorage.setItem('expenses', JSON.stringify(storableExpenses));
-    return true;
-  } catch (error) {
-    console.error("Failed to store expenses in localStorage:", error);
-    
-    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-      try {
-        const limitedExpenses = expenses.slice(0, 50).map(expense => ({
-          id: expense.id,
-          description: expense.description,
-          amount: expense.amount,
-          date: expense.date instanceof Date ? expense.date.toISOString() : String(expense.date),
-          category: expense.category,
-          status: expense.status,
-          paymentMethod: expense.paymentMethod,
-          vendor: expense.vendor,
-          receiptUrl: expense.receiptUrl,
-          hasReceipt: !!expense.receiptUrl
-        }));
-        
-        localStorage.setItem('expenses', JSON.stringify(limitedExpenses));
-        toast.warning("Some expense data couldn't be stored locally due to size limits");
-        return true;
-      } catch (fallbackError) {
-        console.error("Failed to store limited expenses:", fallbackError);
-        toast.error("Failed to save your expenses. Please export them if needed.");
-        return false;
-      }
-    }
-    toast.error("Failed to save your expenses. Please export them if needed.");
-    return false;
-  }
-};
-
 export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
-  // Check for current user on initial load
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        setCurrentUserId(data.user.id);
-      }
-    };
-    
-    checkUser();
-  }, []);
+  const { 
+    currentUserId, 
+    isLoading, 
+    setIsLoading, 
+    syncExpenseToDatabase, 
+    loadExpensesFromSupabase,
+    deleteExpenseFromDatabase 
+  } = useExpenseSync();
+  const expenseData = useExpenseData(expenses);
 
   // Load expenses from database and localStorage on initial load
   useEffect(() => {
@@ -97,43 +45,20 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       
       try {
         // First try to load from Supabase
-        const { data: dbExpenses, error } = await supabase
-          .from('expenses')
-          .select('*')
-          .order('date', { ascending: false });
-        
-        if (error) {
-          console.error("Failed to load expenses from Supabase:", error);
-          throw error;
-        }
+        const dbExpenses = await loadExpensesFromSupabase();
         
         if (dbExpenses && dbExpenses.length > 0) {
-          console.log("Loaded expenses from Supabase:", dbExpenses.length);
-          const formattedExpenses = dbExpenses.map((expense: any) => ({
-            ...expense,
-            date: new Date(expense.date),
-            receiptUrl: expense.receipt_url || null,
-          }));
-          
-          setExpenses(formattedExpenses);
+          setExpenses(dbExpenses);
         } else {
           // Fallback to localStorage if no database expenses
-          const storedExpenses = localStorage.getItem('expenses');
-          if (storedExpenses) {
-            const parsedExpenses = JSON.parse(storedExpenses);
-            
-            const processedExpenses = parsedExpenses.map((expense: any) => ({
-              ...expense,
-              date: new Date(expense.date),
-              receiptUrl: expense.receiptUrl || null
-            }));
-            
-            console.log("Loaded expenses from localStorage:", processedExpenses.length);
-            setExpenses(processedExpenses);
+          const localExpenses = loadExpensesFromLocalStorage();
+          
+          if (localExpenses) {
+            setExpenses(localExpenses);
             
             // If we loaded from localStorage, sync them to Supabase
             if (currentUserId) {
-              processedExpenses.forEach(async (expense: Expense) => {
+              localExpenses.forEach(async (expense: Expense) => {
                 await syncExpenseToDatabase(expense);
               });
             }
@@ -143,22 +68,9 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         console.error("Failed to load expenses:", error);
         
         // Final fallback to localStorage
-        try {
-          const storedExpenses = localStorage.getItem('expenses');
-          if (storedExpenses) {
-            const parsedExpenses = JSON.parse(storedExpenses);
-            const processedExpenses = parsedExpenses.map((expense: any) => ({
-              ...expense,
-              date: new Date(expense.date),
-              receiptUrl: expense.receiptUrl || null
-            }));
-            
-            console.log("Fallback: Loaded expenses from localStorage:", processedExpenses.length);
-            setExpenses(processedExpenses);
-          }
-        } catch (localError) {
-          console.error("Failed to parse stored expenses:", localError);
-          toast.error("Failed to load your saved expenses");
+        const localExpenses = loadExpensesFromLocalStorage();
+        if (localExpenses) {
+          setExpenses(localExpenses);
         }
       } finally {
         setIsLoading(false);
@@ -166,50 +78,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
     
     loadExpenses();
-  }, [currentUserId]);
-
-  // Sync expense to database
-  const syncExpenseToDatabase = async (expense: Expense) => {
-    try {
-      // Make sure we have a current user ID
-      if (!currentUserId) {
-        console.warn("No current user ID available, cannot sync to database");
-        return false;
-      }
-
-      const expenseForDb = {
-        id: expense.id,
-        description: expense.description,
-        amount: expense.amount,
-        date: expense.date instanceof Date ? expense.date.toISOString() : expense.date,
-        category: expense.category,
-        status: expense.status,
-        payment_method: expense.paymentMethod,
-        vendor: expense.vendor,
-        receipt_url: expense.receiptUrl || null,
-        notes: expense.notes || null,
-        from_statement: expense.fromStatement || false,
-        user_id: currentUserId
-      };
-      
-      const { error } = await supabase
-        .from('expenses')
-        .upsert(expenseForDb, { 
-          onConflict: 'id',
-          ignoreDuplicates: false 
-        });
-      
-      if (error) {
-        console.error("Failed to sync expense to database:", error);
-        throw error;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error("Error syncing expense to database:", error);
-      return false;
-    }
-  };
+  }, [currentUserId, setIsLoading]);
 
   const addExpense = async (expenseData: Omit<Expense, 'id'>) => {
     console.log("Adding new expense:", expenseData);
@@ -283,38 +152,12 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // Delete locally first
     setExpenses(prev => prev.filter(expense => expense.id !== expenseId));
     
-    try {
-      // Delete from database
-      const { error } = await supabase
-        .from('expenses')
-        .delete()
-        .eq('id', expenseId);
-      
-      if (error) {
-        console.error("Failed to delete expense from database:", error);
-        toast.error("Failed to delete expense from database");
-      } else {
-        toast.success("Expense deleted successfully");
-      }
-    } catch (error) {
-      console.error("Error deleting expense:", error);
-      toast.error("Failed to delete expense from database");
+    // Delete from database
+    const deleted = await deleteExpenseFromDatabase(expenseId);
+    
+    if (deleted) {
+      toast.success("Expense deleted successfully");
     }
-  };
-
-  const getTotalExpenses = () => {
-    return expenses.reduce((total, expense) => total + expense.amount, 0);
-  };
-
-  const getExpensesByCategory = () => {
-    return expenses.reduce((acc, expense) => {
-      const category = expense.category;
-      if (!acc[category]) {
-        acc[category] = 0;
-      }
-      acc[category] += expense.amount;
-      return acc;
-    }, {} as Record<string, number>);
   };
 
   // Save expenses to localStorage whenever they change
@@ -339,8 +182,8 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       addExpense, 
       updateExpenseStatus,
       deleteExpense,
-      getTotalExpenses,
-      getExpensesByCategory,
+      getTotalExpenses: expenseData.getTotalExpenses,
+      getExpensesByCategory: expenseData.getExpensesByCategory,
       updateExpense
     }}>
       {children}
