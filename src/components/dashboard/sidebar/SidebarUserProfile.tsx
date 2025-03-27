@@ -1,14 +1,16 @@
 
 import { Button } from "@/components/ui/button";
 import { ChevronRight, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/auth";
 
 interface SidebarUserProfileProps {
-  user: any; // Using any temporarily until we properly type this
   isCollapsed: boolean;
   onLogout: () => void;
 }
 
-const SidebarUserProfile = ({ user, isCollapsed, onLogout }: SidebarUserProfileProps) => {
+const SidebarUserProfile = ({ isCollapsed, onLogout }: SidebarUserProfileProps) => {
+  const { user } = useAuth();
+  
   return (
     <div className="px-4 mt-auto border-t border-border pt-4">
       {!isCollapsed ? (
@@ -29,7 +31,7 @@ const SidebarUserProfile = ({ user, isCollapsed, onLogout }: SidebarUserProfileP
             </div>
             <div>
               <p className="font-medium text-sm">{user?.name || 'User'}</p>
-              <p className="text-xs text-muted-foreground">{user?.email}</p>
+              <p className="text-xs text-muted-foreground">{user?.email || 'No email'}</p>
             </div>
             <ChevronRight className="h-4 w-4 text-secondary ml-auto" />
           </div>
