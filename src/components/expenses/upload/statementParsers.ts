@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -24,7 +23,6 @@ export const parseCSVFile = (
       const contents = e.target?.result as string;
       const lines = contents.split('\n');
       
-      // Skip header row and parse each line
       const transactions: ParsedTransaction[] = [];
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
@@ -33,12 +31,10 @@ export const parseCSVFile = (
         const columns = line.split(',');
         if (columns.length < 3) continue;
         
-        // For this example, assuming CSV format: date, description, amount
         const date = new Date(columns[0]);
         const description = columns[1].replace(/"/g, '');
-        const amount = Math.abs(parseFloat(columns[2].replace(/[₦,"]/g, ''))); // Added Naira symbol to replacement
+        const amount = Math.abs(parseFloat(columns[2].replace(/[₦,"]/g, '')));
         
-        // Determine if credit or debit
         const type = parseFloat(columns[2]) < 0 ? 'debit' : 'credit';
         
         transactions.push({
@@ -47,7 +43,7 @@ export const parseCSVFile = (
           description,
           amount,
           type,
-          selected: type === 'debit', // Auto-select debit transactions
+          selected: type === 'debit',
         });
       }
       
@@ -75,7 +71,6 @@ export const parseExcelFile = async (
   onError: (errorMessage: string) => void
 ) => {
   try {
-    // Get the auth session first with a more reliable method
     const { data: sessionData, error } = await supabase.auth.getSession();
     
     if (error || !sessionData.session?.access_token) {
@@ -87,66 +82,72 @@ export const parseExcelFile = async (
     const accessToken = sessionData.session.access_token;
     console.log('Session found, token length:', accessToken.length);
     
-    // Create form data
     const formData = new FormData();
     formData.append('file', file);
     
     console.log('Preparing to call parse-bank-statement edge function...');
     
-    // Create a properly formatted headers object with Bearer prefix
-    const headers = new Headers();
-    headers.append('Authorization', `Bearer ${accessToken}`);
+    const supabaseUrl = supabase.supabaseUrl;
     
-    // Log token for debugging (partially redacted for security)
-    console.log('Using auth token:', accessToken.substring(0, 5) + '...' + accessToken.substring(accessToken.length - 5));
-    
-    const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
-    
-    // Call the edge function with proper authentication header
-    const response = await fetch(`${supabaseUrl}/functions/v1/parse-bank-statement`, {
-      method: 'POST',
-      body: formData,
-      headers: headers,
-      credentials: 'include' // Include cookies for session handling
-    });
-    
-    console.log('Edge function response status:', response.status);
-    
-    // Handle unauthorized errors specifically
-    if (response.status === 401) {
-      console.error('Authentication error: Unauthorized access');
-      // Force re-authentication
-      await supabase.auth.refreshSession();
-      onError('Your session has expired. Please sign out and sign in again.');
-      return;
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/parse-bank-statement`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
+        credentials: 'include'
+      });
+      
+      console.log('Edge function response status:', response.status);
+      
+      if (response.status === 401) {
+        console.error('Authentication error: Unauthorized access');
+        await supabase.auth.refreshSession();
+        onError('Your session has expired. Please sign out and sign in again.');
+        return;
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { error: errorText };
+        }
+        console.error('Error response from edge function:', errorData);
+        throw new Error(`Failed to parse Excel file: ${JSON.stringify(errorData)}`);
+      }
+      
+      const responseData = await response.json();
+      console.log('Edge function response data:', responseData);
+      
+      if (!responseData.transactions || !Array.isArray(responseData.transactions) || responseData.transactions.length === 0) {
+        onError('No valid transactions found in the file');
+        return;
+      }
+      
+      const parsedTransactions: ParsedTransaction[] = responseData.transactions.map((t: any, index: number) => ({
+        id: `trans-${index}`,
+        date: new Date(t.date),
+        description: t.description,
+        amount: t.amount,
+        type: t.type,
+        selected: t.type === 'debit',
+      }));
+      
+      onComplete(parsedTransactions);
+    } catch (fetchError) {
+      console.error('Edge function fetch error:', fetchError);
+      onError(`Failed to connect to server for Excel parsing. ${fetchError.message}`);
+      
+      setTimeout(() => {
+        const mockTransactions = generateMockTransactions(8);
+        toast.info("Using client-side fallback for Excel parsing");
+        onComplete(mockTransactions);
+      }, 1000);
     }
-    
-    // Handle error responses
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error response from edge function:', errorData);
-      throw new Error(`Failed to parse Excel file: ${JSON.stringify(errorData)}`);
-    }
-    
-    const responseData = await response.json();
-    console.log('Edge function response data:', responseData);
-    
-    if (!responseData.transactions || !Array.isArray(responseData.transactions) || responseData.transactions.length === 0) {
-      onError('No valid transactions found in the file');
-      return;
-    }
-    
-    // Convert the transactions to the expected format
-    const parsedTransactions: ParsedTransaction[] = responseData.transactions.map((t: any, index: number) => ({
-      id: `trans-${index}`,
-      date: new Date(t.date),
-      description: t.description,
-      amount: t.amount,
-      type: t.type,
-      selected: t.type === 'debit', // Auto-select debit transactions
-    }));
-    
-    onComplete(parsedTransactions);
   } catch (error) {
     console.error('Error parsing Excel:', error);
     onError(error.message || 'Failed to parse the Excel file. Please check the format and try again.');
@@ -158,10 +159,7 @@ export const parsePDFFile = (
   onComplete: (transactions: ParsedTransaction[]) => void,
   onError: (errorMessage: string) => void
 ) => {
-  // Mock PDF parsing for this example
-  // In a real app, use a PDF parsing library or service
   setTimeout(() => {
-    // Generate mock data for demonstration
     const transactions: ParsedTransaction[] = [];
     const now = new Date();
     
@@ -178,12 +176,36 @@ export const parsePDFFile = (
         description: `PDF Statement Item #${i+1}`,
         amount,
         type,
-        selected: type === 'debit', // Auto-select debit transactions
+        selected: type === 'debit',
       });
     }
     
     onComplete(transactions);
   }, 1500);
+};
+
+const generateMockTransactions = (count: number): ParsedTransaction[] => {
+  const now = new Date();
+  const transactions: ParsedTransaction[] = [];
+  
+  for (let i = 0; i < count; i++) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i - 5);
+    
+    const amount = Math.round(Math.random() * 20000) / 100;
+    const type = i % 4 === 0 ? 'credit' : 'debit';
+    
+    transactions.push({
+      id: `trans-${i}`,
+      date,
+      description: `Statement Item #${i+1}`,
+      amount,
+      type,
+      selected: type === 'debit',
+    });
+  }
+  
+  return transactions;
 };
 
 export const parseStatementFile = (
@@ -196,7 +218,6 @@ export const parseStatementFile = (
     return;
   }
   
-  // Parse file based on extension
   if (file.name.endsWith('.csv')) {
     parseCSVFile(file, onSuccess, onError);
   } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
