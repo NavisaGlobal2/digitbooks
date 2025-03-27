@@ -31,8 +31,9 @@ const TransactionBulkActions = ({
             id="select-all" 
             checked={selectAll} 
             onCheckedChange={(checked) => {
-              console.log(`Select all checkbox changed to: ${checked}`);
-              onSelectAllChange(checked as boolean);
+              const isChecked = checked === true;
+              console.log(`Select all checkbox changed to: ${isChecked}`);
+              onSelectAllChange(isChecked);
             }}
           />
           <label htmlFor="select-all" className="text-sm font-medium">
