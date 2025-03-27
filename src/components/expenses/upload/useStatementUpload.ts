@@ -1,10 +1,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { parseStatementFile } from "./statementParsers";
-import { ParsedTransaction } from "./statementParsers";
-import { supabase } from "@/integrations/supabase/client";
-import { ExpenseCategory } from "@/types/expense";
+import { parseStatementFile, parseViaEdgeFunction, ParsedTransaction } from "./parsers";
 
 export const useStatementUpload = (
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void
@@ -44,7 +41,22 @@ export const useStatementUpload = (
 
     // Choose between client-side parsing or edge function
     if (useEdgeFunction && edgeFunctionAvailable) {
-      await parseViaEdgeFunction();
+      await parseViaEdgeFunction(
+        file,
+        (transactions) => {
+          setUploading(false);
+          onTransactionsParsed(transactions);
+        },
+        (errorMessage) => {
+          setError(errorMessage);
+          setUploading(false);
+          setEdgeFunctionAvailable(false); // Mark edge function as unavailable after an error
+          
+          // Fallback to client-side parsing
+          toast.info("Falling back to client-side parsing");
+          parseViaClient();
+        }
+      );
     } else {
       parseViaClient();
     }
@@ -63,87 +75,6 @@ export const useStatementUpload = (
         setUploading(false);
       }
     );
-  };
-
-  const parseViaEdgeFunction = async () => {
-    try {
-      // Get the auth token directly from the user's session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.access_token) {
-        console.error("No authentication session found", session);
-        setError("You need to be authenticated to upload files");
-        setUploading(false);
-        setUseEdgeFunction(false); // Automatically switch to client-side parsing
-        toast.info("Falling back to client-side parsing due to authentication issue");
-        parseViaClient();
-        return;
-      }
-      
-      toast.info("Processing your bank statement on the server");
-      
-      // Create form data
-      const formData = new FormData();
-      formData.append('file', file!);
-      
-      // Call the edge function using Supabase Functions invoke
-      const { data, error: functionError } = await supabase.functions.invoke(
-        'parse-bank-statement',
-        {
-          body: formData,
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
-        }
-      );
-      
-      if (functionError) {
-        console.error("Edge function error:", functionError);
-        throw new Error(functionError.message);
-      }
-      
-      if (!data) {
-        throw new Error("No data returned from edge function");
-      }
-      
-      console.log("Edge function response:", data);
-      
-      // If successful, fetch the transactions from the database
-      const { data: transactionsData, error: fetchError } = await supabase
-        .from('uploaded_bank_lines')
-        .select('*')
-        .eq('upload_batch_id', data.batchId)
-        .order('date', { ascending: false });
-      
-      if (fetchError || !transactionsData || transactionsData.length === 0) {
-        console.error("Failed to retrieve transactions or no transactions found:", fetchError);
-        throw new Error("Failed to retrieve processed transactions");
-      }
-      
-      // Convert to the format expected by the component
-      const transactions: ParsedTransaction[] = transactionsData.map((item) => ({
-        id: item.id,
-        date: new Date(item.date),
-        description: item.description,
-        amount: item.amount,
-        type: item.type as 'credit' | 'debit',
-        selected: item.type === 'debit',
-        category: item.category as ExpenseCategory | undefined
-      }));
-      
-      setUploading(false);
-      onTransactionsParsed(transactions);
-      
-    } catch (error) {
-      console.error("Error in edge function:", error);
-      setError(`Server-side processing failed: ${error instanceof Error ? error.message : "Unknown error"}`);
-      setUploading(false);
-      setEdgeFunctionAvailable(false); // Mark edge function as unavailable after an error
-      
-      // Fallback to client-side parsing
-      toast.info("Falling back to client-side parsing");
-      parseViaClient();
-    }
   };
 
   const clearFile = () => {

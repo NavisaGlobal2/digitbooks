@@ -13,7 +13,7 @@ import UploadDialogFooter from "./upload/UploadDialogFooter";
 import { useStatementUpload } from "./upload/useStatementUpload";
 import { 
   ParsedTransaction
-} from "./upload/statementParsers";
+} from "./upload/parsers";
 import { 
   saveTransactionsToDatabase,
   prepareExpensesFromTransactions 
