@@ -22,6 +22,10 @@ const AddExpenseDialog = ({ open, onOpenChange }: AddExpenseDialogProps) => {
     setCategory,
     paymentMethod,
     setPaymentMethod,
+    vendor,
+    setVendor,
+    notes,
+    setNotes,
     receiptFile,
     setReceiptFile,
     handleClose,
@@ -44,6 +48,10 @@ const AddExpenseDialog = ({ open, onOpenChange }: AddExpenseDialogProps) => {
           setCategory={setCategory}
           paymentMethod={paymentMethod}
           setPaymentMethod={setPaymentMethod}
+          vendor={vendor}
+          setVendor={setVendor}
+          notes={notes}
+          setNotes={setNotes}
           receiptFile={receiptFile}
           setReceiptFile={setReceiptFile}
         />
