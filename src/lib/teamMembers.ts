@@ -71,7 +71,7 @@ export const useTeamMembers = () => {
       
       // Create a properly typed response that matches what we'd get from a direct insert
       const typedData = {
-        id: data.id,
+        id: data?.id || '',
         user_id: user.id,
         name: teamMember.name,
         email: teamMember.email,
