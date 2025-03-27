@@ -37,16 +37,16 @@ serve(async (req) => {
     // Send the actual email
     try {
       const emailResponse = await resend.emails.send({
-        from: "DigitBooks <onboarding@resend.dev>",
+        from: "DigitBooks <noreply@digitbooks.app>",
         to: teamMember.email,
         subject: `You've been invited to join a team on DigitBooks`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-            <h2 style="color: #4f46e5;">DigitBooks Team Invitation</h2>
+            <h2 style="color: #05D166;">DigitBooks Team Invitation</h2>
             <p>Hello ${teamMember.name},</p>
             <p>You have been invited to join a team as a <strong>${teamMember.role}</strong> by ${invitedBy.name || invitedBy.email}.</p>
             <p style="margin: 25px 0;">
-              <a href="${inviteLink}" style="background-color: #4f46e5; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">
+              <a href="${inviteLink}" style="background-color: #05D166; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">
                 Accept Invitation
               </a>
             </p>
