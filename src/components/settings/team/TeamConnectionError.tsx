@@ -1,6 +1,5 @@
 
-import { AlertCircle, RefreshCw } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { WifiOff, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TeamConnectionErrorProps {
@@ -9,25 +8,16 @@ interface TeamConnectionErrorProps {
 
 export const TeamConnectionError = ({ onRetry }: TeamConnectionErrorProps) => {
   return (
-    <Alert variant="destructive" className="mb-6">
-      <AlertCircle className="h-4 w-4 mr-2" />
-      <AlertTitle>Database Connection Error</AlertTitle>
-      <AlertDescription className="space-y-4">
-        <p>Unable to connect to the database server. This could be due to:</p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Internet connection issues</li>
-          <li>The database service is temporarily unavailable</li>
-          <li>Server maintenance in progress</li>
-        </ul>
-        <Button 
-          onClick={onRetry}
-          className="mt-4 flex items-center"
-          variant="outline"
-        >
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Retry Connection
-        </Button>
-      </AlertDescription>
-    </Alert>
+    <div className="flex flex-col items-center justify-center p-6 rounded-lg border border-yellow-200 bg-yellow-50 text-yellow-800">
+      <WifiOff className="h-12 w-12 text-yellow-500 mb-4" />
+      <h3 className="text-lg font-medium mb-2">Connection Error</h3>
+      <p className="text-center text-yellow-700 mb-4">
+        Could not connect to the database. Check your internet connection and try again.
+      </p>
+      <Button onClick={onRetry} variant="outline" className="flex items-center gap-2">
+        <RefreshCw className="h-4 w-4" />
+        Retry Connection
+      </Button>
+    </div>
   );
 };

@@ -1,6 +1,5 @@
 
 import { AlertCircle, RefreshCw } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
 interface TeamErrorAlertProps {
@@ -9,21 +8,16 @@ interface TeamErrorAlertProps {
 
 export const TeamErrorAlert = ({ onRetry }: TeamErrorAlertProps) => {
   return (
-    <Alert variant="destructive" className="mb-6">
-      <AlertCircle className="h-4 w-4 mr-2" />
-      <AlertTitle>Error</AlertTitle>
-      <AlertDescription>
-        Failed to load team members. There may be an issue with the database connection.
-        <div className="mt-4">
-          <Button 
-            onClick={onRetry}
-            className="bg-destructive/10 hover:bg-destructive/20 text-destructive px-3 py-1 rounded-md text-sm transition-colors flex items-center"
-          >
-            <RefreshCw className="h-3 w-3 mr-2" />
-            Retry
-          </Button>
-        </div>
-      </AlertDescription>
-    </Alert>
+    <div className="flex flex-col items-center justify-center p-6 rounded-lg border border-red-200 bg-red-50 text-red-800">
+      <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+      <h3 className="text-lg font-medium mb-2">Failed to load team members</h3>
+      <p className="text-center text-red-600 mb-4">
+        There was an error loading your team members. Please try again.
+      </p>
+      <Button onClick={onRetry} className="flex items-center gap-2">
+        <RefreshCw className="h-4 w-4" />
+        Try Again
+      </Button>
+    </div>
   );
 };

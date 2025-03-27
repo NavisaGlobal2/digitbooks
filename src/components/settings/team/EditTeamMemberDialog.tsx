@@ -1,32 +1,31 @@
 
-import { useState } from "react";
+import { 
+  Dialog, DialogContent, DialogDescription, DialogFooter, 
+  DialogHeader, DialogTitle
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { 
-  Dialog, DialogContent, DialogDescription, DialogFooter, 
-  DialogHeader, DialogTitle 
-} from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTeamMembers } from "@/lib/teamMembers";
 import { TeamMember, TeamMemberRole } from "@/types/teamMember";
+import { useTeamMembers } from "@/lib/teamMembers";
 
-const editFormSchema = z.object({
+const teamMemberFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  role: z.enum(["Admin", "Member", "Viewer"])
+  role: z.enum(["Owner", "Admin", "Member", "Viewer"])
 });
 
-type EditFormValues = z.infer<typeof editFormSchema>;
+type TeamMemberFormValues = z.infer<typeof teamMemberFormSchema>;
 
 interface EditTeamMemberDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   teamMember: TeamMember | null;
-  onUpdate: (updatedMember: TeamMember) => void;
+  onUpdate: (member: TeamMember) => void;
 }
 
 export const EditTeamMemberDialog = ({ 
@@ -37,36 +36,35 @@ export const EditTeamMemberDialog = ({
 }: EditTeamMemberDialogProps) => {
   const { updateTeamMember } = useTeamMembers();
   
-  const form = useForm<EditFormValues>({
-    resolver: zodResolver(editFormSchema),
+  const form = useForm<TeamMemberFormValues>({
+    resolver: zodResolver(teamMemberFormSchema),
     defaultValues: {
       name: teamMember?.name || "",
       email: teamMember?.email || "",
-      role: (teamMember?.role === "Owner" ? "Admin" : teamMember?.role) as any || "Member"
+      role: (teamMember?.role as TeamMemberRole) || "Member"
     }
   });
 
-  // Update form values when member changes
-  useState(() => {
+  // Update form values when teamMember changes
+  React.useEffect(() => {
     if (teamMember) {
       form.reset({
         name: teamMember.name,
         email: teamMember.email,
-        role: teamMember.role === "Owner" ? "Admin" : teamMember.role
+        role: teamMember.role as TeamMemberRole
       });
     }
-  });
+  }, [teamMember, form]);
 
-  const handleEditMember = async (data: EditFormValues) => {
+  const handleSubmit = async (data: TeamMemberFormValues) => {
     if (!teamMember) return;
 
-    const updates = {
+    const updatedMember = await updateTeamMember(teamMember.id, {
       name: data.name,
       email: data.email,
       role: data.role as TeamMemberRole
-    };
+    });
 
-    const updatedMember = await updateTeamMember(teamMember.id, updates);
     if (updatedMember) {
       onUpdate(updatedMember);
       onOpenChange(false);
@@ -79,11 +77,11 @@ export const EditTeamMemberDialog = ({
         <DialogHeader>
           <DialogTitle>Edit Team Member</DialogTitle>
           <DialogDescription>
-            Update team member details and permissions
+            Update details for this team member.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleEditMember)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -91,7 +89,7 @@ export const EditTeamMemberDialog = ({
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="Enter name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -104,9 +102,10 @@ export const EditTeamMemberDialog = ({
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} />
+                    <Input type="email" placeholder="Enter email" disabled={true} {...field} />
                   </FormControl>
                   <FormMessage />
+                  <p className="text-xs text-muted-foreground">Email cannot be changed</p>
                 </FormItem>
               )}
             />
@@ -122,7 +121,7 @@ export const EditTeamMemberDialog = ({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -136,14 +135,10 @@ export const EditTeamMemberDialog = ({
               )}
             />
             <DialogFooter className="pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit">Update</Button>
             </DialogFooter>
           </form>
         </Form>

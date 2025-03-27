@@ -7,14 +7,15 @@ interface TeamMemberSearchProps {
   onSearchChange: (query: string) => void;
 }
 
-export const TeamMemberSearch = ({ 
-  searchQuery, 
-  onSearchChange 
+export const TeamMemberSearch = ({
+  searchQuery,
+  onSearchChange,
 }: TeamMemberSearchProps) => {
   return (
-    <div className="relative w-64">
-      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+    <div className="relative w-full md:w-64">
+      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
       <Input
+        type="search"
         placeholder="Search team members..."
         className="pl-8"
         value={searchQuery}

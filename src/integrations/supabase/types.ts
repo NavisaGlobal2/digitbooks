@@ -582,6 +582,48 @@ export type Database = {
         }
         Relationships: []
       }
+      team_invitations: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          inviter_id: string
+          name: string
+          role: string
+          status: Database["public"]["Enums"]["invitation_status"]
+          team_id: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          inviter_id: string
+          name: string
+          role: string
+          status?: Database["public"]["Enums"]["invitation_status"]
+          team_id: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          inviter_id?: string
+          name?: string
+          role?: string
+          status?: Database["public"]["Enums"]["invitation_status"]
+          team_id?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       team_members: {
         Row: {
           avatar: string | null
@@ -686,6 +728,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_team_invite: {
+        Args: {
+          p_name: string
+          p_email: string
+          p_role: string
+        }
+        Returns: Json
+      }
       get_team_member_access: {
         Args: {
           user_id: string
@@ -702,9 +752,16 @@ export type Database = {
         }
         Returns: Json
       }
+      process_team_invitation: {
+        Args: {
+          p_token: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
-      [_ in never]: never
+      invitation_status: "pending" | "accepted" | "revoked"
     }
     CompositeTypes: {
       [_ in never]: never

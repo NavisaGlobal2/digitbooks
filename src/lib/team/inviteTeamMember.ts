@@ -26,25 +26,12 @@ export const inviteTeamMember = async (teamMember: Omit<TeamMember, 'id' | 'user
   }
 
   try {
-    // Get the current user
+    // Use the database function we created
     const { supabase } = await import("@/integrations/supabase/client");
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError) {
-      throw userError;
-    }
-    
-    if (!user) {
-      toast.error("You must be logged in to invite team members");
-      return null;
-    }
-
-    // Use a direct SQL insert via RPC to bypass RLS policies
-    const { data, error } = await supabase.rpc('insert_team_member', {
+    const { data, error } = await supabase.rpc('create_team_invite', {
       p_name: teamMember.name,
       p_email: teamMember.email,
-      p_role: teamMember.role,
-      p_status: 'pending',
-      p_user_id: user.id
+      p_role: teamMember.role
     });
     
     if (error) {
@@ -52,14 +39,10 @@ export const inviteTeamMember = async (teamMember: Omit<TeamMember, 'id' | 'user
       throw error;
     }
     
-    // Fix: Cast the data to any to access the id property
-    const responseData = data as any;
-    const newId = responseData.id;
-    
-    // Create a properly typed response that matches what we'd get from a direct insert
+    // Create a properly typed response that matches what we'd expect
     const typedData = {
-      id: newId,
-      user_id: user.id,
+      id: data.id,
+      user_id: '', // This will be assigned when the invitation is accepted
       name: teamMember.name,
       email: teamMember.email,
       role: teamMember.role as TeamMemberRole,
