@@ -13,17 +13,6 @@ export const shareInvoice = async (invoiceDetails: InvoiceDetails) => {
   try {
     toast.loading("Preparing invoice for sharing...");
     
-    // Ensure invoiceItems is always an array and other properties have defaults
-    const sanitizedDetails = {
-      ...invoiceDetails,
-      invoiceItems: invoiceDetails.invoiceItems || [],
-      clientName: invoiceDetails.clientName || "Client",
-      additionalInfo: invoiceDetails.additionalInfo || "",
-      bankName: invoiceDetails.bankName || "",
-      accountName: invoiceDetails.accountName || "",
-      accountNumber: invoiceDetails.accountNumber || ""
-    };
-    
     // First try to find an existing preview element
     const previewElement = document.querySelector('.invoice-preview');
     
@@ -40,7 +29,7 @@ export const shareInvoice = async (invoiceDetails: InvoiceDetails) => {
       });
     } else {
       // If no preview element exists, create a temporary one using the same template as in downloadInvoice
-      const tempDiv = createTemporaryInvoiceElement(sanitizedDetails);
+      const tempDiv = createTemporaryInvoiceElement(invoiceDetails);
       document.body.appendChild(tempDiv);
       
       try {

@@ -38,7 +38,7 @@ serve(async (req) => {
     try {
       // Using onboarding@resend.dev as the from address to avoid domain verification issues
       const emailResponse = await resend.emails.send({
-        from: "DigitBooks <onboarding@resend.dev>", // Use Resend's default domain to avoid verification issues
+        from: "DigitBooks <onboarding@resend.dev>", // Use Resend's domain to avoid verification issues
         to: teamMember.email,
         subject: `You've been invited to join a team on DigitBooks`,
         html: `

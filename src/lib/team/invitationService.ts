@@ -21,9 +21,6 @@ export const inviteTeamMember = async (
       return null;
     }
 
-    console.log("Current user:", user.id);
-    console.log("Inviting team member:", teamMember);
-
     // Use a direct SQL insert via RPC to bypass RLS policies
     const { data, error } = await supabase.rpc('insert_team_member', {
       p_name: teamMember.name,
@@ -57,10 +54,6 @@ export const inviteTeamMember = async (
       }
     }
     
-    if (!memberId) {
-      throw new Error("Failed to get member ID from response");
-    }
-    
     // Create a properly typed response that matches what we'd get from a direct insert
     const typedData = {
       id: memberId,
@@ -73,18 +66,10 @@ export const inviteTeamMember = async (
       updated_at: new Date().toISOString()
     } as TeamMember;
     
-    try {
-      // Send the invitation email through our Edge Function
-      await sendInvitationEmail(typedData, user);
-      
-      toast.success(`Invitation sent to ${teamMember.email}`);
-    } catch (inviteError) {
-      console.error("Error sending invitation email:", inviteError);
-      // We don't throw here because the team member was already created,
-      // we just couldn't send the email
-      toast.warning("Team member added but invitation email could not be sent");
-    }
+    // Send the invitation email through our Edge Function
+    await sendInvitationEmail(typedData, user);
     
+    toast.success(`Invitation sent to ${teamMember.email}`);
     return typedData;
   } catch (error: any) {
     console.error("Error inviting team member:", error);
@@ -95,7 +80,7 @@ export const inviteTeamMember = async (
       toast.error(error.message || "Failed to invite team member");
     }
     
-    throw error;
+    return null;
   }
 };
 
@@ -122,7 +107,6 @@ const sendInvitationEmail = async (
     if (response.error) {
       console.error("Error calling invitation function:", response.error);
       toast.error("Invitation created but email sending failed. Please try again or contact support.");
-      throw response.error;
     } else {
       console.log("Invitation function response:", response.data);
     }
@@ -131,6 +115,5 @@ const sendInvitationEmail = async (
     // We don't throw here because the team member was already created,
     // we just couldn't send the email
     toast.warning("Team member added but invitation email could not be sent");
-    throw inviteError;
   }
 };

@@ -57,6 +57,17 @@ const InvoicePreview = ({
               alt="Company Logo" 
               className="h-16 w-auto object-contain" 
               crossOrigin="anonymous"
+              onError={(e) => {
+                console.error("Error loading logo in preview:", e);
+                // Fallback to Logo component if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallbackDiv = document.createElement('div');
+                fallbackDiv.className = 'h-16 w-16';
+                const logoComponent = document.createElement('div');
+                fallbackDiv.appendChild(logoComponent);
+                target.parentNode?.appendChild(fallbackDiv);
+              }}
             />
           ) : (
             <div className="h-16 w-16">
@@ -87,25 +98,17 @@ const InvoicePreview = ({
             </tr>
           </thead>
           <tbody>
-            {invoiceItems && invoiceItems.length > 0 ? (
-              invoiceItems.map((item, index) => (
-                <tr key={index} className="border-b border-gray-100">
-                  <td className="py-3">{item.description}</td>
-                  <td className="py-3 text-right">{item.quantity}</td>
-                  <td className="py-3 text-right">{formatNaira(item.price)}</td>
-                  <td className="py-3 text-right">{item.tax}%</td>
-                  <td className="py-3 text-right">
-                    {formatNaira(item.quantity * item.price)}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="py-4 text-center text-gray-500">
-                  No items added yet
+            {invoiceItems.map((item, index) => (
+              <tr key={index} className="border-b border-gray-100">
+                <td className="py-3">{item.description}</td>
+                <td className="py-3 text-right">{item.quantity}</td>
+                <td className="py-3 text-right">{formatNaira(item.price)}</td>
+                <td className="py-3 text-right">{item.tax}%</td>
+                <td className="py-3 text-right">
+                  {formatNaira(item.quantity * item.price)}
                 </td>
               </tr>
-            )}
+            ))}
           </tbody>
         </table>
       </div>
@@ -115,15 +118,15 @@ const InvoicePreview = ({
         <div className="w-64">
           <div className="flex justify-between py-1">
             <span className="text-gray-600">Subtotal:</span>
-            <span>{formatNaira(calculateSubtotal(invoiceItems || []))}</span>
+            <span>{formatNaira(calculateSubtotal(invoiceItems))}</span>
           </div>
           <div className="flex justify-between py-1">
             <span className="text-gray-600">Tax:</span>
-            <span>{formatNaira(calculateTax(invoiceItems || []))}</span>
+            <span>{formatNaira(calculateTax(invoiceItems))}</span>
           </div>
           <div className="flex justify-between py-2 font-bold border-t border-gray-200 mt-2">
             <span>Total:</span>
-            <span>{formatNaira(calculateTotal(invoiceItems || []))}</span>
+            <span>{formatNaira(calculateTotal(invoiceItems))}</span>
           </div>
         </div>
       </div>
