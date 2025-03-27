@@ -9,6 +9,7 @@ import './parsers/csvParser.test.ts';
 import './parsers/transactionDetector.test.ts';
 import './database.test.ts';
 import './formProcessor.test.ts';
+import './validation.test.ts';
 import './integration.test.ts';
 
 console.log("=== All tests completed ===");

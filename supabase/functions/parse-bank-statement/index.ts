@@ -33,30 +33,46 @@ export async function handleRequest(req: Request): Promise<Response> {
     }
     
     // Process the uploaded file and get transactions
-    const { transactions, user, batchId } = await processFormData(
-      req, 
-      authHeader.replace('Bearer ', ''), 
-      supabaseUrl
-    )
-    
-    // Save transactions to the database
-    const savedCount = await saveToDatabase(
-      transactions, 
-      batchId, 
-      user.id, 
-      supabaseUrl, 
-      supabaseServiceKey
-    )
-    
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: `Successfully processed ${savedCount} transactions`, 
-        batchId,
-        transactionCount: savedCount
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    try {
+      const { transactions, user, batchId } = await processFormData(
+        req, 
+        authHeader.replace('Bearer ', ''), 
+        supabaseUrl
+      )
+      
+      // Save transactions to the database
+      const savedCount = await saveToDatabase(
+        transactions, 
+        batchId, 
+        user.id, 
+        supabaseUrl, 
+        supabaseServiceKey
+      )
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: `Successfully processed ${savedCount} transactions`, 
+          batchId,
+          transactionCount: savedCount
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    } catch (validationError) {
+      // Handle validation errors with a 400 Bad Request status
+      console.error('Validation error:', validationError.message)
+      
+      return new Response(
+        JSON.stringify({ 
+          error: validationError.message,
+          errorType: 'validation'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      )
+    }
     
   } catch (error) {
     console.error('Error processing bank statement:', error)

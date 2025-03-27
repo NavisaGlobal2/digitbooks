@@ -4,6 +4,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import { Transaction } from './types.ts'
 import { parseFile } from './parsers/fileParser.ts'
+import { validateFile } from './validation.ts'
 
 export async function processFormData(
   req: Request, 
@@ -41,6 +42,12 @@ export async function processFormData(
   
   if (!file || !(file instanceof File)) {
     throw new Error('No file uploaded')
+  }
+  
+  // Validate the file before processing
+  const validationError = validateFile(file)
+  if (validationError) {
+    throw new Error(validationError)
   }
   
   // Generate a unique batch ID for this upload
