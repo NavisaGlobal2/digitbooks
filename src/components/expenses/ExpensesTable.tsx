@@ -8,7 +8,7 @@ import { Expense } from "@/types/expense";
 import { formatNaira } from "@/utils/invoice";
 import { getCategoryLabel } from "@/utils/expenseCategories";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useRouter } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
 import { useExpenses } from "@/contexts/ExpenseContext";

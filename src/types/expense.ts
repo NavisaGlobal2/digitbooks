@@ -22,6 +22,7 @@ export interface Expense {
   category: ExpenseCategory;
   status: ExpenseStatus;
   receiptUrl?: string;
+  hasReceipt?: boolean;
   notes?: string;
   paymentMethod: 'cash' | 'card' | 'bank transfer' | 'other';
   vendor: string;
