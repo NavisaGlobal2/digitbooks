@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Expense, ExpenseStatus } from '@/types/expense';
 import { toast } from 'sonner';
@@ -29,14 +28,11 @@ const safelyStoreExpenses = (expenses: Expense[]): boolean => {
       const expenseCopy = {...expense};
       
       if (expenseCopy.receiptUrl) {
-        delete expenseCopy.receiptUrl;
         expenseCopy.hasReceipt = true;
       }
       
-      // Store date as string for localStorage - ensure we have a proper serializable object
       return {
         ...expenseCopy,
-        // Fix: avoid calling toString() on a potentially 'never' type
         date: expense.date instanceof Date ? expense.date.toISOString() : String(expense.date)
       };
     });
@@ -52,12 +48,13 @@ const safelyStoreExpenses = (expenses: Expense[]): boolean => {
           id: expense.id,
           description: expense.description,
           amount: expense.amount,
-          // Fix: avoid calling toString() on a potentially 'never' type
           date: expense.date instanceof Date ? expense.date.toISOString() : String(expense.date),
           category: expense.category,
           status: expense.status,
           paymentMethod: expense.paymentMethod,
           vendor: expense.vendor,
+          receiptUrl: expense.receiptUrl,
+          hasReceipt: !!expense.receiptUrl
         }));
         
         localStorage.setItem('expenses', JSON.stringify(limitedExpenses));
@@ -85,8 +82,8 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         
         const processedExpenses = parsedExpenses.map((expense: any) => ({
           ...expense,
-          // Ensure we always create a new Date object from the stored string
           date: new Date(expense.date),
+          receiptUrl: expense.receiptUrl || null
         }));
         
         console.log("Loaded expenses from localStorage:", processedExpenses.length);
