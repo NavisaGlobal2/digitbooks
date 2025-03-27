@@ -33,14 +33,13 @@ export const useExpenseSync = () => {
   }, []);
 
   const syncExpenseToDatabase = async (expense: Expense) => {
-    try {
-      setIsSyncing(true);
-      
-      if (!currentUserId) {
-        console.warn("No current user ID available, cannot sync to database");
-        return false;
-      }
+    if (!currentUserId) {
+      console.warn("No current user ID available, cannot sync to database");
+      return false;
+    }
 
+    setIsSyncing(true);
+    try {
       return await expenseDatabaseOperations.syncExpense(expense, currentUserId);
     } catch (error) {
       console.error("Error syncing expense to database:", error);
@@ -50,34 +49,13 @@ export const useExpenseSync = () => {
     }
   };
 
-  const loadExpensesFromSupabase = async () => {
-    try {
-      setIsLoading(true);
-      return await expenseDatabaseOperations.loadExpenses();
-    } catch (error) {
-      console.error("Error loading expenses from Supabase:", error);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const deleteExpenseFromDatabase = async (expenseId: string) => {
-    try {
-      return await expenseDatabaseOperations.deleteExpense(expenseId);
-    } catch (error) {
-      console.error("Error deleting expense:", error);
-      return false;
-    }
-  };
-
   return {
     currentUserId,
     isLoading,
     isSyncing,
     setIsLoading,
     syncExpenseToDatabase,
-    loadExpensesFromSupabase,
-    deleteExpenseFromDatabase
+    loadExpensesFromSupabase: expenseDatabaseOperations.loadExpenses,
+    deleteExpenseFromDatabase: expenseDatabaseOperations.deleteExpense
   };
 };
