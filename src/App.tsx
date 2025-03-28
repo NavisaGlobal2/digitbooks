@@ -11,6 +11,7 @@ import { RevenueProvider } from "@/contexts/RevenueContext";
 import { BudgetProvider } from "@/contexts/BudgetContext";
 import { LedgerProvider } from "@/contexts/LedgerContext";
 import { AuthProvider } from "@/contexts/auth";
+import { VendorProvider } from "@/contexts/VendorContext"; // Add import for VendorProvider
 
 // Import all the page components
 import Index from "./pages/Index";
@@ -49,101 +50,103 @@ const App = () => (
               <RevenueProvider>
                 <BudgetProvider>
                   <LedgerProvider>
-                    <Toaster />
-                    <Sonner />
-                    <BrowserRouter>
-                      <Routes>
-                        {/* Public routes */}
-                        <Route path="/" element={<Index />} />
-                        <Route path="/features" element={<Features />} />
-                        <Route path="/pricing" element={<Pricing />} />
-                        <Route path="/about" element={<About />} />
-                        <Route path="/help" element={<Help />} />
-                        <Route path="/careers" element={<Careers />} />
-                        
-                        {/* Auth routes */}
-                        <Route path="/auth" element={<Auth />} />
-                        <Route path="/accept-invitation" element={<AcceptInvitation />} />
-                        <Route path="/onboarding" element={
-                          <RequireAuth>
-                            <Onboarding />
-                          </RequireAuth>
-                        } />
-                        
-                        {/* Protected routes that require authentication */}
-                        <Route path="/dashboard" element={
-                          <RequireAuth>
-                            <Dashboard />
-                          </RequireAuth>
-                        } />
-                        <Route path="/invoicing" element={
-                          <RequireAuth>
-                            <Invoicing />
-                          </RequireAuth>
-                        } />
-                        <Route path="/expenses" element={
-                          <RequireAuth>
-                            <Expenses />
-                          </RequireAuth>
-                        } />
-                        <Route path="/revenue" element={
-                          <RequireAuth>
-                            <Revenue />
-                          </RequireAuth>
-                        } />
-                        <Route path="/clients" element={
-                          <RequireAuth>
-                            <Clients />
-                          </RequireAuth>
-                        } />
-                        <Route path="/budget" element={
-                          <RequireAuth>
-                            <Budget />
-                          </RequireAuth>
-                        } />
-                        <Route path="/ledger" element={
-                          <RequireAuth>
-                            <Ledger />
-                          </RequireAuth>
-                        } />
-                        <Route path="/reports" element={
-                          <RequireAuth>
-                            <FinancialReports />
-                          </RequireAuth>
-                        } />
-                        <Route path="/agent" element={
-                          <RequireAuth>
-                            <Agent />
-                          </RequireAuth>
-                        } />
-                        <Route path="/settings" element={
-                          <RequireAuth>
-                            <Settings />
-                          </RequireAuth>
-                        } />
-                        <Route path="/admin/applications" element={
-                          <RequireAuth>
-                            <ApplicationsAdmin />
-                          </RequireAuth>
-                        } />
-                        
-                        {/* Vendors route */}
-                        <Route path="/vendors" element={
-                          <RequireAuth>
-                            <VendorsPage />
-                          </RequireAuth>
-                        }>
-                          <Route path=":vendorName" element={
+                    <VendorProvider>  {/* Add VendorProvider here */}
+                      <Toaster />
+                      <Sonner />
+                      <BrowserRouter>
+                        <Routes>
+                          {/* Public routes */}
+                          <Route path="/" element={<Index />} />
+                          <Route path="/features" element={<Features />} />
+                          <Route path="/pricing" element={<Pricing />} />
+                          <Route path="/about" element={<About />} />
+                          <Route path="/help" element={<Help />} />
+                          <Route path="/careers" element={<Careers />} />
+                          
+                          {/* Auth routes */}
+                          <Route path="/auth" element={<Auth />} />
+                          <Route path="/accept-invitation" element={<AcceptInvitation />} />
+                          <Route path="/onboarding" element={
+                            <RequireAuth>
+                              <Onboarding />
+                            </RequireAuth>
+                          } />
+                          
+                          {/* Protected routes that require authentication */}
+                          <Route path="/dashboard" element={
+                            <RequireAuth>
+                              <Dashboard />
+                            </RequireAuth>
+                          } />
+                          <Route path="/invoicing" element={
+                            <RequireAuth>
+                              <Invoicing />
+                            </RequireAuth>
+                          } />
+                          <Route path="/expenses" element={
+                            <RequireAuth>
+                              <Expenses />
+                            </RequireAuth>
+                          } />
+                          <Route path="/revenue" element={
+                            <RequireAuth>
+                              <Revenue />
+                            </RequireAuth>
+                          } />
+                          <Route path="/clients" element={
+                            <RequireAuth>
+                              <Clients />
+                            </RequireAuth>
+                          } />
+                          <Route path="/budget" element={
+                            <RequireAuth>
+                              <Budget />
+                            </RequireAuth>
+                          } />
+                          <Route path="/ledger" element={
+                            <RequireAuth>
+                              <Ledger />
+                            </RequireAuth>
+                          } />
+                          <Route path="/reports" element={
+                            <RequireAuth>
+                              <FinancialReports />
+                            </RequireAuth>
+                          } />
+                          <Route path="/agent" element={
+                            <RequireAuth>
+                              <Agent />
+                            </RequireAuth>
+                          } />
+                          <Route path="/settings" element={
+                            <RequireAuth>
+                              <Settings />
+                            </RequireAuth>
+                          } />
+                          <Route path="/admin/applications" element={
+                            <RequireAuth>
+                              <ApplicationsAdmin />
+                            </RequireAuth>
+                          } />
+                          
+                          {/* Vendors route */}
+                          <Route path="/vendors" element={
                             <RequireAuth>
                               <VendorsPage />
                             </RequireAuth>
-                          } />
-                        </Route>
-                        
-                        {/* Fallback route */}
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </BrowserRouter>
+                          }>
+                            <Route path=":vendorName" element={
+                              <RequireAuth>
+                                <VendorsPage />
+                              </RequireAuth>
+                            } />
+                          </Route>
+                          
+                          {/* Fallback route */}
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </BrowserRouter>
+                    </VendorProvider>  {/* Close VendorProvider */}
                   </LedgerProvider>
                 </BudgetProvider>
               </RevenueProvider>
