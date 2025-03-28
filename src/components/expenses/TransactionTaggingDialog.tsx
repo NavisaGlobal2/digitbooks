@@ -6,6 +6,7 @@ import TransactionBulkActions from "./upload/TransactionBulkActions";
 import TransactionTable from "./upload/TransactionTable";
 import TaggingDialogFooter from "./upload/TaggingDialogFooter";
 import { useTransactionTagging } from "./upload/useTransactionTagging";
+import { ExpenseCategory } from "@/types/expense";
 
 interface TransactionTaggingDialogProps {
   open: boolean;
@@ -34,7 +35,6 @@ const TransactionTaggingDialog = ({
   } = useTransactionTagging(transactions);
 
   const handleSave = () => {
-    console.log(`Saving ${selectedCount} selected transactions, ${taggedCount} with categories`);
     onTaggingComplete(taggedTransactions);
   };
 

@@ -52,10 +52,9 @@ const TransactionTable = ({
               <TableCell>
                 <Checkbox
                   checked={transaction.selected}
-                  onCheckedChange={(checked) => {
-                    console.log(`Checkbox changed for transaction ${transaction.id} to ${String(checked)}`);
-                    onSelectTransaction(transaction.id, checked as boolean);
-                  }}
+                  onCheckedChange={(checked) => 
+                    onSelectTransaction(transaction.id, checked as boolean)
+                  }
                   disabled={transaction.type === 'credit'} // Can't select credit transactions
                 />
               </TableCell>
@@ -77,10 +76,9 @@ const TransactionTable = ({
                 {transaction.type === 'debit' ? (
                   <Select
                     value={transaction.category}
-                    onValueChange={(value) => {
-                      console.log(`Category changed for transaction ${transaction.id} to ${value}`);
-                      onSetCategory(transaction.id, value as ExpenseCategory);
-                    }}
+                    onValueChange={(value) => 
+                      onSetCategory(transaction.id, value as ExpenseCategory)
+                    }
                     disabled={!transaction.selected}
                   >
                     <SelectTrigger className={`w-full ${!transaction.category && transaction.selected ? "border-red-300" : ""}`}>
