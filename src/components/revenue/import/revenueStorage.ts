@@ -40,11 +40,12 @@ export const saveTransactionsToDatabase = async (
       type: tx.type,
       source: tx.source || 'other',
       revenue_number: `REV-${Math.floor(Math.random() * 10000)}`,
+      status: 'paid', // Add the required status field
       created_at: new Date().toISOString(),
       user_id: userId
     }));
     
-    // Store in revenues table instead of revenue_transactions (which doesn't exist)
+    // Store in revenues table
     const { error: insertError } = await supabase
       .from('revenues')
       .insert(transactionsToStore);
@@ -92,7 +93,7 @@ export const prepareRevenuesFromTransactions = async (
       amount: tx.amount,
       date: new Date(tx.date),
       source: tx.source || 'other',
-      status: 'paid',
+      status: 'paid', // Add the required status field
       created_at: new Date(),
       notes: `Imported from bank statement: ${fileName}. Batch ID: ${batchId}`
     }));
