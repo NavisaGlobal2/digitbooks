@@ -26,39 +26,41 @@ export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) 
   // Selection handling
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
-    setTaggedTransactions(taggedTransactions.map(t => ({
+    setTaggedTransactions(prev => prev.map(t => ({
       ...t,
-      selected: checked && t.type === 'debit' // Only select debits
+      selected: t.type === 'debit' ? checked : false // Only select debits
     })));
   };
 
   const handleSelectTransaction = (id: string, checked: boolean) => {
     // Update only the selected transaction by ID
-    const updatedTransactions = taggedTransactions.map(t => 
-      t.id === id ? { ...t, selected: checked } : t
-    );
-    
-    setTaggedTransactions(updatedTransactions);
-    
-    // Update selectAll state based on whether all debit transactions are selected
-    const allDebitsSelected = updatedTransactions
-      .filter(t => t.type === 'debit')
-      .every(t => t.selected);
+    setTaggedTransactions(prev => {
+      const updated = prev.map(t => 
+        t.id === id ? { ...t, selected: checked } : t
+      );
       
-    setSelectAll(allDebitsSelected);
+      // Update selectAll state based on whether all debit transactions are selected
+      const allDebitsSelected = updated
+        .filter(t => t.type === 'debit')
+        .every(t => t.selected);
+        
+      setSelectAll(allDebitsSelected);
+      
+      return updated;
+    });
   };
 
   // Category assignment
   const handleSetCategory = (id: string, category: ExpenseCategory) => {
     // Update only the transaction with the matching ID
-    setTaggedTransactions(taggedTransactions.map(t => 
+    setTaggedTransactions(prev => prev.map(t => 
       t.id === id ? { ...t, category } : t
     ));
   };
 
   const handleSetCategoryForAll = (category: ExpenseCategory) => {
     // Update only selected transactions
-    setTaggedTransactions(taggedTransactions.map(t => 
+    setTaggedTransactions(prev => prev.map(t => 
       t.selected ? { ...t, category } : t
     ));
   };

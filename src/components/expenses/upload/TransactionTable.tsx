@@ -47,6 +47,7 @@ const TransactionTable = ({
             <TableRow key={transaction.id} className={!transaction.selected ? "opacity-70" : ""}>
               <TableCell>
                 <Checkbox
+                  id={`transaction-${transaction.id}`}
                   checked={transaction.selected}
                   onCheckedChange={(checked) => {
                     // Ensure we're passing a boolean value

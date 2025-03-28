@@ -28,7 +28,10 @@ const TransactionBulkActions = ({
           <Checkbox 
             id="select-all" 
             checked={selectAll} 
-            onCheckedChange={onSelectAllChange}
+            onCheckedChange={(checked) => {
+              // Ensure we're passing a boolean value
+              onSelectAllChange(checked === true || checked === "indeterminate");
+            }}
           />
           <label htmlFor="select-all" className="text-sm font-medium">
             Select all debit transactions
