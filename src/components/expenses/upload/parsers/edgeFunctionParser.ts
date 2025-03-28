@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./types";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
 
 export const parseViaEdgeFunction = async (
   file: File,
@@ -66,16 +67,25 @@ export const parseViaEdgeFunction = async (
       return [];
     }
 
+    console.log(`Raw transaction data from server:`, data.transactions);
+    console.log(`Transaction count from server: ${data.transactions.length}`);
+
+    // Generate a batch ID as a proper UUID to avoid database errors
+    const batchId = uuidv4();
+
     // Map the server response to our ParsedTransaction type
     const parsedTransactions: ParsedTransaction[] = data.transactions.map((tx: any) => ({
+      id: `transaction-${Math.random().toString(36).substr(2, 9)}`,
       date: new Date(tx.date),
       description: tx.description,
       amount: Math.abs(parseFloat(tx.amount)), // Store as positive number
       type: tx.type || (parseFloat(tx.amount) < 0 ? 'debit' : 'credit'),
       category: tx.category || null,
       selected: tx.type === 'debit', // Preselect debits
-      batchId: data.batchId
+      batchId
     }));
+
+    console.log(`Parsed ${parsedTransactions.length} transactions with batch ID: ${batchId}`);
 
     // Only include debit transactions (expenses)
     const filteredTransactions = parsedTransactions.filter(tx => tx.type === 'debit');
@@ -84,6 +94,8 @@ export const parseViaEdgeFunction = async (
       onError("No expense transactions found in the statement. Only expense transactions can be imported.");
       return [];
     }
+
+    console.log(`Found ${filteredTransactions.length} expense transactions to display`);
 
     // Call success callback with transactions
     onSuccess(filteredTransactions);

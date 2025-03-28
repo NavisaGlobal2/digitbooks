@@ -13,6 +13,7 @@ import {
 } from "./upload/transactionStorage";
 import UploadDialogContent from "./upload/components/UploadDialogContent";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
 
 interface BankStatementUploadDialogProps {
   open: boolean;
@@ -31,6 +32,7 @@ const BankStatementUploadDialog = ({
   const [processingComplete, setProcessingComplete] = useState(false);
   
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
+    console.log(`Received ${transactions.length} parsed transactions`);
     setParsedTransactions(transactions);
     setProcessingComplete(true);
     setShowTaggingDialog(true);
@@ -50,10 +52,12 @@ const BankStatementUploadDialog = ({
   } = useStatementUpload(handleTransactionsParsed);
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
-    // Generate a unique batch ID for this import
-    const batchId = `batch-${Date.now()}`;
+    // Generate a unique batch ID using UUID for this import
+    const batchId = uuidv4();
     
     try {
+      console.log(`Processing ${taggedTransactions.length} tagged transactions with batch ID: ${batchId}`);
+      
       // Save transactions to database first
       const dbSaveSuccess = await saveTransactionsToDatabase(taggedTransactions, batchId);
       
@@ -72,6 +76,8 @@ const BankStatementUploadDialog = ({
         toast.warning("No expenses to save. Please tag at least one transaction.");
         return;
       }
+      
+      console.log(`Saving ${expensesToSave.length} expenses`);
       
       // Save the expenses
       addExpenses(expensesToSave);
