@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useVendors } from "@/contexts/VendorContext";
 import { useExpenses } from "@/contexts/ExpenseContext";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 import VendorDetailView from "./detail/VendorDetailView";
 import VendorsTable from "./VendorsTable";
 import VendorsEmptyState from "./VendorsEmptyState";
@@ -18,13 +18,22 @@ const VendorsContent = ({ onAddVendor }: VendorsContentProps) => {
   const [selectedVendor, setSelectedVendor] = useState<string | null>(null);
   const location = useLocation();
   const { vendorName } = useParams<{ vendorName: string }>();
+  const navigate = useNavigate();
   
   // Handle vendor filter from route state or URL parameter
   useEffect(() => {
     // Check if we have a vendor name from the URL
     if (vendorName) {
       const decodedVendorName = decodeURIComponent(vendorName);
-      setSelectedVendor(decodedVendorName);
+      // Verify the vendor exists before selecting it
+      const vendorExists = vendors.some(v => v.name === decodedVendorName);
+      
+      if (vendorExists) {
+        setSelectedVendor(decodedVendorName);
+      } else {
+        // If vendor doesn't exist, navigate back to the main vendors page
+        navigate('/vendors');
+      }
       return;
     }
     
@@ -32,10 +41,11 @@ const VendorsContent = ({ onAddVendor }: VendorsContentProps) => {
     if (location.state?.vendorFilter) {
       setSelectedVendor(location.state.vendorFilter);
     }
-  }, [location.state, vendorName]);
+  }, [location.state, vendorName, vendors, navigate]);
   
   const handleBack = () => {
     setSelectedVendor(null);
+    navigate('/vendors');
   };
   
   // Filter vendors based on search query
@@ -69,6 +79,7 @@ const VendorsContent = ({ onAddVendor }: VendorsContentProps) => {
         const vendor = vendors.find(v => v.id === vendorId);
         if (vendor) {
           setSelectedVendor(vendor.name);
+          navigate(`/vendors/${encodeURIComponent(vendor.name)}`);
         }
       }}
       searchQuery={searchQuery}

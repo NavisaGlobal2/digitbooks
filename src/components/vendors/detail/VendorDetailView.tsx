@@ -76,6 +76,7 @@ const VendorDetailView = ({ vendorId, onBack }: VendorDetailViewProps) => {
         onOpenChange={setShowDeleteDialog}
         vendorId={vendor.id}
         vendorName={vendor.name}
+        onSuccess={onBack}
       />
     </div>
   );

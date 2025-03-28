@@ -12,19 +12,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Trash } from "lucide-react";
 
 interface DeleteVendorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vendorId: string;
   vendorName: string;
+  onSuccess?: () => void;
 }
 
-const DeleteVendorDialog = ({ open, onOpenChange, vendorId, vendorName }: DeleteVendorDialogProps) => {
+const DeleteVendorDialog = ({ open, onOpenChange, vendorId, vendorName, onSuccess }: DeleteVendorDialogProps) => {
   const { deleteVendor } = useVendors();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = async () => {
+  const handleDeleteVendor = async () => {
     try {
       setIsDeleting(true);
       const success = await deleteVendor(vendorId);
@@ -32,12 +34,15 @@ const DeleteVendorDialog = ({ open, onOpenChange, vendorId, vendorName }: Delete
       if (success) {
         toast.success("Vendor deleted successfully");
         onOpenChange(false);
+        if (onSuccess) {
+          onSuccess();
+        }
       } else {
         toast.error("Failed to delete vendor");
       }
     } catch (error) {
       console.error("Error deleting vendor:", error);
-      toast.error("Failed to delete vendor");
+      toast.error("An error occurred while deleting vendor");
     } finally {
       setIsDeleting(false);
     }
@@ -49,17 +54,31 @@ const DeleteVendorDialog = ({ open, onOpenChange, vendorId, vendorName }: Delete
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Vendor</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete <strong>{vendorName}</strong>? This action cannot be undone.
+            Are you sure you want to delete <span className="font-semibold">{vendorName}</span>? 
+            This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleDelete}
-            className="bg-red-500 hover:bg-red-600 text-white"
+            onClick={(e) => {
+              e.preventDefault();
+              handleDeleteVendor();
+            }}
             disabled={isDeleting}
+            className="bg-red-500 hover:bg-red-600 text-white"
           >
-            {isDeleting ? "Deleting..." : "Delete"}
+            {isDeleting ? (
+              <>
+                <span className="mr-2">Deleting</span>
+                <div className="animate-spin h-4 w-4 border-2 border-r-transparent rounded-full" />
+              </>
+            ) : (
+              <>
+                <Trash className="h-4 w-4 mr-2" />
+                Delete Vendor
+              </>
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
