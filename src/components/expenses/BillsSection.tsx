@@ -77,7 +77,8 @@ const BillsSection = () => {
         }
         
         if (data && data.length > 0) {
-          const formattedBills = data.map((transaction: RecurringTransaction) => {
+          // Cast the data to match the RecurringTransaction interface
+          const formattedBills = data.map((transaction) => {
             const daysLeft = transaction.next_due_date ? calculateDaysLeft(transaction.next_due_date) : 0;
             const categoryName = getCategoryName(transaction.category_id);
             
