@@ -93,6 +93,10 @@ async function processWithAnthropic(text: string): Promise<any> {
         throw new Error("Anthropic API rate limit exceeded. Please try again later.");
       }
       
+      if (error.error?.type === "overloaded_error") {
+        throw new Error("Anthropic API is currently overloaded. Please try again in a few minutes.");
+      }
+      
       throw new Error(`Anthropic API error: ${error.error?.message || "Unknown error"}`);
     }
 
@@ -116,19 +120,133 @@ async function processWithAnthropic(text: string): Promise<any> {
   }
 }
 
-// Get authenticated user from request
-async function getUserFromRequest(req: Request): Promise<any> {
+// Fallback method when AI processing fails - basic CSV parsing
+async function fallbackCSVProcessing(fileContent: string): Promise<any[]> {
   try {
-    // Extract the token from the Authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error("Missing authorization header");
+    console.log("Using fallback CSV processing method...");
+    const lines = fileContent.split('\n');
+    
+    // Skip header row and empty lines
+    const dataRows = lines.filter(line => line.trim().length > 0);
+    
+    if (dataRows.length < 2) {
+      throw new Error("Not enough data rows in CSV");
     }
     
-    return true; // Simplified for this example
+    // Try to detect date, description, and amount columns based on common patterns
+    const transactions = [];
+    
+    for (let i = 1; i < dataRows.length; i++) { // Skip header row
+      const row = dataRows[i].split(',');
+      
+      if (row.length < 3) continue; // Skip rows with too few columns
+      
+      // Simple heuristic - assume first column with date-like format is date
+      // column with longest text is description, and column with number-like format is amount
+      let dateCol = -1;
+      let descCol = -1;
+      let amountCol = -1;
+      
+      // Find potential date column
+      for (let j = 0; j < row.length; j++) {
+        const cell = row[j].trim();
+        if (/\d{1,4}[-/\.]\d{1,2}[-/\.]\d{1,4}/.test(cell)) {
+          dateCol = j;
+          break;
+        }
+      }
+      
+      // Find description column (longest text)
+      let maxLength = 0;
+      for (let j = 0; j < row.length; j++) {
+        if (j !== dateCol) {
+          const cell = row[j].trim();
+          if (cell.length > maxLength && !cell.match(/^[-+]?\d+(\.\d+)?$/)) {
+            maxLength = cell.length;
+            descCol = j;
+          }
+        }
+      }
+      
+      // Find amount column
+      for (let j = 0; j < row.length; j++) {
+        if (j !== dateCol && j !== descCol) {
+          const cell = row[j].trim().replace(/[,$]/g, '');
+          if (cell.match(/^[-+]?\d+(\.\d+)?$/)) {
+            amountCol = j;
+            break;
+          }
+        }
+      }
+      
+      // If we found all columns, extract transaction
+      if (dateCol !== -1 && descCol !== -1 && amountCol !== -1) {
+        const amount = parseFloat(row[amountCol].trim().replace(/[,$]/g, ''));
+        transactions.push({
+          date: formatDate(row[dateCol].trim()),
+          description: row[descCol].trim(),
+          amount: amount,
+          type: amount < 0 ? "debit" : "credit"
+        });
+      }
+    }
+    
+    console.log(`Fallback processing extracted ${transactions.length} transactions`);
+    return transactions;
   } catch (error) {
-    console.error("Auth error getting user:", error);
-    throw new Error("Authentication failed: " + error.message);
+    console.error("Error in fallback CSV processing:", error);
+    return []; // Return empty array if fallback fails
+  }
+}
+
+// Helper to standardize date format
+function formatDate(dateStr: string): string {
+  try {
+    // Try to parse the date string in various formats
+    let dateParts: number[] = [];
+    
+    if (dateStr.includes('/')) {
+      dateParts = dateStr.split('/').map(p => parseInt(p));
+    } else if (dateStr.includes('-')) {
+      dateParts = dateStr.split('-').map(p => parseInt(p));
+    } else if (dateStr.includes('.')) {
+      dateParts = dateStr.split('.').map(p => parseInt(p));
+    }
+    
+    if (dateParts.length !== 3) {
+      return dateStr; // Return original if we can't parse
+    }
+    
+    // Determine if format is MM/DD/YYYY or DD/MM/YYYY or YYYY/MM/DD
+    let year, month, day;
+    
+    if (dateParts[0] > 1000) { // YYYY/MM/DD
+      year = dateParts[0];
+      month = dateParts[1];
+      day = dateParts[2];
+    } else if (dateParts[2] > 1000) { // MM/DD/YYYY or DD/MM/YYYY
+      year = dateParts[2];
+      // Heuristic: if first part > 12, it's likely a day
+      if (dateParts[0] > 12) {
+        day = dateParts[0];
+        month = dateParts[1];
+      } else {
+        // Default to MM/DD/YYYY
+        month = dateParts[0];
+        day = dateParts[1];
+      }
+    } else {
+      // Just use original string if we can't determine format
+      return dateStr;
+    }
+    
+    // Pad month and day with leading zeros if needed
+    const monthStr = month.toString().padStart(2, '0');
+    const dayStr = day.toString().padStart(2, '0');
+    
+    return `${year}-${monthStr}-${dayStr}`;
+  } catch (e) {
+    return dateStr; // Return original on any error
   }
 }
 
@@ -169,9 +287,39 @@ serve(async (req) => {
     try {
       // 1. Extract text from the file
       const fileText = await extractTextFromFile(file);
+      let transactions = [];
+      let usedFallback = false;
       
-      // 2. Process with Anthropic
-      const transactions = await processWithAnthropic(fileText);
+      try {
+        // 2. Try to process with Anthropic
+        transactions = await processWithAnthropic(fileText);
+      } catch (anthropicError) {
+        console.error("Anthropic processing failed:", anthropicError);
+        
+        // Check if the file is a CSV and we can use fallback parser
+        if (file.name.toLowerCase().endsWith('.csv')) {
+          console.log("Attempting fallback CSV processing");
+          usedFallback = true;
+          transactions = await fallbackCSVProcessing(fileText);
+          
+          if (transactions.length === 0) {
+            return new Response(
+              JSON.stringify({ 
+                error: "Could not parse transactions using either AI or fallback methods. Please check the file format." 
+              }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
+            );
+          }
+        } else {
+          // For non-CSV files, we have to report the error
+          return new Response(
+            JSON.stringify({ 
+              error: `AI processing failed: ${anthropicError.message}. Please try again later or use a CSV file.` 
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 }
+          );
+        }
+      }
       
       console.log(`Parsed ${transactions.length} transactions from file`);
       
@@ -179,7 +327,9 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           transactions,
-          message: `Successfully processed ${transactions.length} transactions`, 
+          message: usedFallback 
+            ? `Successfully processed ${transactions.length} transactions using fallback method` 
+            : `Successfully processed ${transactions.length} transactions`,
           batchId
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -196,9 +346,9 @@ serve(async (req) => {
       ) {
         return new Response(
           JSON.stringify({ 
-            error: "Anthropic API key issue: " + errorMessage
+            error: "Anthropic API issue: " + errorMessage
           }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 }
         );
       }
       

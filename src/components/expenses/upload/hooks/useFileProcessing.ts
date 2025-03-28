@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { parseViaEdgeFunction, ParsedTransaction } from "../parsers";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface FileProcessingProps {
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
@@ -72,19 +73,29 @@ export const useFileProcessing = ({
           }
           
           const isAuthError = errorMessage.toLowerCase().includes('auth') || 
-                              errorMessage.toLowerCase().includes('sign in') ||
-                              errorMessage.toLowerCase().includes('token');
+                            errorMessage.toLowerCase().includes('sign in') ||
+                            errorMessage.toLowerCase().includes('token');
+                            
           const isAPIError = errorMessage.toLowerCase().includes('anthropic') ||
-                             errorMessage.toLowerCase().includes('api key');
+                           errorMessage.toLowerCase().includes('api key') || 
+                           errorMessage.toLowerCase().includes('overloaded');
           
+          // Show the error message to the user
           handleError(errorMessage);
           
-          // For auth or API errors, don't try to fallback
+          // For service overload errors with CSV files, continue with warning
+          if (isAPIError && file.name.toLowerCase().endsWith('.csv')) {
+            showFallbackMessage("AI service is currently unavailable. Using basic CSV parser as fallback.");
+            // Don't reset progress to allow fallback to continue
+            return false;
+          }
+          
+          // For auth or critical API errors, don't try to fallback
           if (isAuthError || isAPIError) {
             resetProgress();
             
-            if (isAPIError) {
-              handleError("The AI processing feature requires a valid Anthropic API key. Please contact your administrator.");
+            if (isAPIError && !file.name.toLowerCase().endsWith('.csv')) {
+              toast.error("The AI processing feature is currently unavailable. Try using a CSV file format instead.");
             }
             
             return true;
@@ -104,6 +115,11 @@ export const useFileProcessing = ({
       console.error("Edge function error:", error);
       handleError(error.message || "Error processing file on server.");
       resetProgress();
+      
+      // For CSV files, suggest using client-side parsing as fallback
+      if (file.name.toLowerCase().endsWith('.csv')) {
+        toast.info("Server processing failed. You can try uploading the file again.");
+      }
     }
   };
 

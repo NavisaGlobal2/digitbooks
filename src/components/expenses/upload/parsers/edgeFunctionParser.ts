@@ -42,7 +42,7 @@ export const parseViaEdgeFunction = async (
         error.message.includes("exceeded") ||
         error.message.includes("rate limit")
       )) {
-        const errorMsg = "Anthropic API key error: Either the key is not configured, invalid, or you've exceeded your rate limit. Please contact your administrator.";
+        const errorMsg = "Anthropic API issue: Either the service is overloaded, the key is not configured, invalid, or you've exceeded your rate limit. We'll attempt to use a simpler parser for CSV files.";
         onError(errorMsg);
         return [];
       }
@@ -71,7 +71,7 @@ export const parseViaEdgeFunction = async (
     console.log(`Transaction count from server: ${data.transactions.length}`);
 
     // Generate a batch ID as a proper UUID to avoid database errors
-    const batchId = uuidv4();
+    const batchId = data.batchId || uuidv4();
 
     // Map the server response to our ParsedTransaction type
     const parsedTransactions: ParsedTransaction[] = data.transactions.map((tx: any) => ({
