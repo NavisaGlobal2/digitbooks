@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { RecurringTransaction } from "@/types/recurringTransaction"; 
 
-// Define the Bill type
+// Define the Bill type that we'll use internally
 interface Bill {
   id: string;
   title: string;
@@ -30,6 +31,18 @@ const getCategoryIcon = (category: string) => {
     case 'office': return ShoppingBag;
     default: return CreditCard;
   }
+};
+
+// Get category name from category ID
+const getCategoryName = (categoryId: string | null): string => {
+  // We'd ideally fetch this from a categories table
+  // For now, let's use a simple mapping
+  const categoryMap: Record<string, string> = {
+    // You would populate this with actual category IDs and names
+    // This is just a placeholder
+  };
+  
+  return categoryId ? (categoryMap[categoryId] || 'Other') : 'Other';
 };
 
 const BillsSection = () => {
@@ -64,15 +77,17 @@ const BillsSection = () => {
         }
         
         if (data && data.length > 0) {
-          const formattedBills = data.map(bill => {
-            const daysLeft = bill.next_due_date ? calculateDaysLeft(bill.next_due_date) : 0;
+          const formattedBills = data.map((transaction: RecurringTransaction) => {
+            const daysLeft = transaction.next_due_date ? calculateDaysLeft(transaction.next_due_date) : 0;
+            const categoryName = getCategoryName(transaction.category_id);
+            
             return {
-              id: bill.id,
-              title: bill.description,
-              amount: bill.amount,
-              dueDate: bill.next_due_date ? new Date(bill.next_due_date).toISOString().split('T')[0] : '',
-              category: bill.category || 'other',
-              icon: getCategoryIcon(bill.category || 'other'),
+              id: transaction.id,
+              title: transaction.description,
+              amount: transaction.amount,
+              dueDate: transaction.next_due_date ? new Date(transaction.next_due_date).toISOString().split('T')[0] : '',
+              category: categoryName,
+              icon: getCategoryIcon(categoryName),
               daysLeft: daysLeft
             };
           });
