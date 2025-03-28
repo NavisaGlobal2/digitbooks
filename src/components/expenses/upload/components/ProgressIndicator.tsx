@@ -7,13 +7,15 @@ interface ProgressIndicatorProps {
   step: string;
   isVisible: boolean;
   isWaitingForServer?: boolean;
+  onCancel?: () => void;
 }
 
 const ProgressIndicator = ({ 
   progress, 
   step, 
   isVisible,
-  isWaitingForServer = false
+  isWaitingForServer = false,
+  onCancel
 }: ProgressIndicatorProps) => {
   if (!isVisible) return null;
   

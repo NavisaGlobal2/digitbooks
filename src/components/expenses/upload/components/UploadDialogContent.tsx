@@ -69,12 +69,16 @@ const UploadDialogContent = ({
 
       <div className="space-y-4">
         {uploading ? (
-          <ProgressIndicator progress={progress} step={step} onCancel={onClose} />
+          <ProgressIndicator 
+            progress={progress} 
+            step={step} 
+            isVisible={true} 
+          />
         ) : (
           <>
             <FileUploadArea 
               file={file} 
-              handleFileChange={handleFileChange} 
+              onFileChange={handleFileChange} 
               disabled={uploading} 
             />
             
