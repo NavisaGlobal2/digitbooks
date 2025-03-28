@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/utils/invoice/formatters";
 import { LucideIcon } from "lucide-react";
+import { TransactionFrequency } from "@/types/recurringTransaction";
 
 interface Bill {
   id: string;
@@ -13,15 +14,17 @@ interface Bill {
   category: string;
   icon: LucideIcon;
   daysLeft: number;
+  frequency: string;
 }
 
 interface BillsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bills: Bill[];
+  onPayBill: (billId: string, billTitle: string, amount: number, frequency: any) => void;
 }
 
-const BillsDialog = ({ open, onOpenChange, bills }: BillsDialogProps) => {
+const BillsDialog = ({ open, onOpenChange, bills, onPayBill }: BillsDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl">
@@ -59,7 +62,12 @@ const BillsDialog = ({ open, onOpenChange, bills }: BillsDialogProps) => {
                     </TableCell>
                     <TableCell className="text-right font-medium break-words">{formatNaira(bill.amount)}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" className="text-green-500">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-green-500 hover:bg-green-50"
+                        onClick={() => onPayBill(bill.id, bill.title, bill.amount, bill.frequency)}
+                      >
                         Pay bill
                       </Button>
                     </TableCell>

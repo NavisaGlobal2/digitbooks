@@ -12,6 +12,7 @@ import BillsLoadingSkeleton from "./bills/BillsLoadingSkeleton";
 import BillsDialog from "./bills/BillsDialog";
 import RecurringBillsBanner from "./bills/RecurringBillsBanner";
 import AddBillDialog from "./bills/AddBillDialog";
+import BillPaymentDialog from "./bills/BillPaymentDialog";
 import { getCategoryIcon, getCategoryName, calculateDaysLeft } from "./bills/billsUtils";
 
 // Define the Bill type that we'll use internally
@@ -23,12 +24,15 @@ interface Bill {
   category: string;
   icon: any;
   daysLeft: number;
+  frequency: string;
 }
 
 const BillsSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAllBills, setShowAllBills] = useState(false);
   const [showAddBillDialog, setShowAddBillDialog] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [selectedBill, setSelectedBill] = useState<{id: string, title: string, amount: number, frequency: any} | null>(null);
   const [bills, setBills] = useState<Bill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -60,7 +64,8 @@ const BillsSection = () => {
             dueDate: transaction.next_due_date ? new Date(transaction.next_due_date).toISOString().split('T')[0] : '',
             category: categoryName,
             icon: getCategoryIcon(categoryName),
-            daysLeft: daysLeft
+            daysLeft: daysLeft,
+            frequency: transaction.frequency
           };
         });
         setBills(formattedBills);
@@ -93,6 +98,16 @@ const BillsSection = () => {
     fetchBills();
   };
 
+  const handlePayBill = (billId: string, billTitle: string, amount: number, frequency: any) => {
+    setSelectedBill({
+      id: billId,
+      title: billTitle,
+      amount: amount,
+      frequency: frequency
+    });
+    setShowPaymentDialog(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-4">
@@ -121,7 +136,8 @@ const BillsSection = () => {
               amount={bill.amount}
               daysLeft={bill.daysLeft}
               icon={bill.icon}
-              onPayBill={() => toast.info(`Pay bill functionality for ${bill.title} will be implemented soon!`)}
+              frequency={bill.frequency}
+              onPayBill={handlePayBill}
             />
           ))}
         </div>
@@ -150,6 +166,7 @@ const BillsSection = () => {
         open={showAllBills}
         onOpenChange={setShowAllBills}
         bills={filteredBills}
+        onPayBill={handlePayBill}
       />
 
       {/* Add Bill Dialog */}
@@ -158,6 +175,19 @@ const BillsSection = () => {
         onOpenChange={setShowAddBillDialog}
         onBillAdded={handleBillAdded}
       />
+
+      {/* Payment Dialog */}
+      {selectedBill && (
+        <BillPaymentDialog
+          open={showPaymentDialog}
+          onOpenChange={setShowPaymentDialog}
+          billId={selectedBill.id}
+          billTitle={selectedBill.title}
+          amount={selectedBill.amount}
+          frequency={selectedBill.frequency}
+          onPaymentSuccess={fetchBills}
+        />
+      )}
     </div>
   );
 };

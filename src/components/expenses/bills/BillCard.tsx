@@ -3,6 +3,7 @@ import { formatNaira } from "@/utils/invoice/formatters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
+import { TransactionFrequency } from "@/types/recurringTransaction";
 
 interface BillCardProps {
   id: string;
@@ -10,10 +11,23 @@ interface BillCardProps {
   amount: number;
   daysLeft: number;
   icon: LucideIcon;
-  onPayBill?: () => void;
+  frequency: TransactionFrequency;
+  onPayBill: (id: string, title: string, amount: number, frequency: TransactionFrequency) => void;
 }
 
-const BillCard = ({ id, title, amount, daysLeft, icon: Icon, onPayBill }: BillCardProps) => {
+const BillCard = ({ 
+  id, 
+  title, 
+  amount, 
+  daysLeft, 
+  icon: Icon, 
+  frequency,
+  onPayBill 
+}: BillCardProps) => {
+  const handlePayBill = () => {
+    onPayBill(id, title, amount, frequency);
+  };
+
   return (
     <Card key={id} className="border border-border hover:border-primary/20 transition-all">
       <CardContent className="p-4">
@@ -29,8 +43,8 @@ const BillCard = ({ id, title, amount, daysLeft, icon: Icon, onPayBill }: BillCa
           <Button 
             variant="ghost" 
             size="sm" 
-            className="mt-2 text-green-500 text-xs"
-            onClick={onPayBill}
+            className="mt-2 text-green-500 text-xs hover:bg-green-50"
+            onClick={handlePayBill}
           >
             Pay bill
           </Button>

@@ -69,6 +69,13 @@ const AddBillDialog = ({ open, onOpenChange, onBillAdded }: AddBillDialogProps) 
     setIsSubmitting(true);
 
     try {
+      // Get the current user - this fixes the previous error
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData.user) {
+        throw new Error("User not authenticated");
+      }
+      
       // Set the next_due_date to the start_date initially
       const next_due_date = values.start_date;
       
@@ -84,6 +91,7 @@ const AddBillDialog = ({ open, onOpenChange, onBillAdded }: AddBillDialogProps) 
           next_due_date: next_due_date.toISOString(),
           transaction_type: "expense",
           status: "active",
+          user_id: userData.user.id, // Add the user_id from the authenticated user
         });
 
       if (error) {
