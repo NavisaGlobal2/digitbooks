@@ -34,7 +34,7 @@ export const saveTransactionsToDatabase = async (
     const transactionsToStore = selectedTransactions.map(tx => ({
       id: uuidv4(),
       batch_id: batchId,
-      transaction_date: new Date(tx.date).toISOString(),
+      date: new Date(tx.date).toISOString(),
       description: tx.description,
       amount: tx.amount,
       type: tx.type,
@@ -44,9 +44,9 @@ export const saveTransactionsToDatabase = async (
       user_id: userId
     }));
     
-    // Store in transactions table
+    // Store in revenues table instead of revenue_transactions (which doesn't exist)
     const { error: insertError } = await supabase
-      .from('revenue_transactions')
+      .from('revenues')
       .insert(transactionsToStore);
     
     if (insertError) {
@@ -64,16 +64,16 @@ export const saveTransactionsToDatabase = async (
 /**
  * Prepare revenue entries from selected transactions
  */
-export const prepareRevenuesFromTransactions = (
+export const prepareRevenuesFromTransactions = async (
   transactions: ParsedTransaction[],
   batchId: string,
   fileName: string
 ) => {
   try {
-    // Get current user
-    const { data: userData } = supabase.auth.getUser();
+    // Get current user - make sure to await the Promise
+    const { data: userData, error: userError } = await supabase.auth.getUser();
     
-    if (!userData || !userData.user) {
+    if (userError || !userData || !userData.user) {
       toast.error("Authentication error. Please sign in again.");
       return [];
     }
