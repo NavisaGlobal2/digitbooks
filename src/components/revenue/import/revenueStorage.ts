@@ -19,6 +19,15 @@ export const saveTransactionsToDatabase = async (
       return false;
     }
     
+    // Get current user ID
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    
+    if (!userId) {
+      console.error("No authenticated user found");
+      return false;
+    }
+    
     // Generate revenue number sequence for this batch
     const dateStr = format(new Date(), "yyyyMMdd");
     const batchPrefix = `RV${dateStr}`;
@@ -26,14 +35,16 @@ export const saveTransactionsToDatabase = async (
     // Prepare the transaction data for storage
     const transactionsToSave = selectedTransactions.map((tx, index) => ({
       id: uuidv4(),
-      user_id: supabase.auth.getUser()?.data?.user?.id, // Get current user ID
+      user_id: userId,
       revenue_number: `${batchPrefix}-${index + 1}`,
       description: tx.description,
       amount: tx.amount,
-      date: new Date(tx.date),
+      // Convert Date objects to ISO string format for Supabase
+      date: new Date(tx.date).toISOString(),
       source: tx.source || 'other',
       status: 'paid',
-      created_at: new Date(),
+      // Convert Date objects to ISO string format for Supabase
+      created_at: new Date().toISOString(),
       notes: `Imported from bank statement (Batch ID: ${batchId})`,
     }));
     
