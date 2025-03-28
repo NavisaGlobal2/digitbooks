@@ -17,6 +17,7 @@ export interface ParsedTransaction {
   source?: RevenueSource;
   selected?: boolean;
   sourceSuggestion?: SourceSuggestion;
+  batchId?: string;
 }
 
 export interface CSVParseResult {

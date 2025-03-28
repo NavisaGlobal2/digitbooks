@@ -1,6 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./parsers/types";
-import { Revenue } from "@/types/revenue";
+import { Revenue, RevenueSource } from "@/types/revenue";
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
 
@@ -25,19 +26,20 @@ export const saveTransactionsToDatabase = async (
     // Prepare the transaction data for storage
     const transactionsToSave = selectedTransactions.map((tx, index) => ({
       id: uuidv4(),
-      batch_id: batchId,
-      transaction_date: new Date(tx.date),
+      user_id: supabase.auth.getUser()?.data?.user?.id, // Get current user ID
+      revenue_number: `${batchPrefix}-${index + 1}`,
       description: tx.description,
       amount: tx.amount,
-      type: tx.type,
-      source: tx.source || null,
-      revenue_number: `${batchPrefix}-${index + 1}`,
+      date: new Date(tx.date),
+      source: tx.source || 'other',
+      status: 'paid',
       created_at: new Date(),
+      notes: `Imported from bank statement (Batch ID: ${batchId})`,
     }));
     
-    // Insert into the database
+    // Insert into the database using the 'revenues' table
     const { error } = await supabase
-      .from('revenue_transactions')
+      .from('revenues')
       .insert(transactionsToSave);
     
     if (error) {
@@ -45,7 +47,7 @@ export const saveTransactionsToDatabase = async (
       return false;
     }
     
-    console.log(`Saved ${selectedTransactions.length} raw transactions to database`);
+    console.log(`Saved ${selectedTransactions.length} revenue transactions to database`);
     return true;
   } catch (error) {
     console.error("Error saving transactions to database:", error);

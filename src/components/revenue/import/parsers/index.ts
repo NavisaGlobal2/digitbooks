@@ -7,7 +7,7 @@ import { parseViaEdgeFunction } from "./edgeFunctionParser";
 export const parseStatementFile = (
   file: File,
   onSuccess: (result: CSVParseResult | ParsedTransaction[]) => void,
-  onError: (errorMessage: string) => void
+  onError: (errorMessage: string) => boolean
 ) => {
   if (!file) {
     toast.error("Please select a bank statement file");
@@ -33,7 +33,7 @@ export const parseStatementFile = (
     );
   } catch (error) {
     console.error("Error in parseStatementFile:", error);
-    onError(`Unexpected error while parsing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    return onError(`Unexpected error while parsing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
 
