@@ -1,10 +1,26 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ParsedTransaction } from "../parsers/types";
 
 export const useTagSelection = (initialTransactions: ParsedTransaction[]) => {
   const [taggedTransactions, setTaggedTransactions] = useState<ParsedTransaction[]>(initialTransactions);
-  const [selectAll, setSelectAll] = useState(true);
+  const [selectAll, setSelectAll] = useState(false); // Changed to default false instead of true
+
+  // Effect to handle initial state - allow user to select transactions individually
+  useEffect(() => {
+    // Set initial transactions without automatically selecting them
+    const updatedTransactions = initialTransactions.map(t => ({
+      ...t,
+      selected: false // Don't select any by default
+    }));
+    
+    setTaggedTransactions(updatedTransactions);
+    
+    // Log counts for debugging
+    const debitCount = updatedTransactions.filter(t => t.type === 'debit').length;
+    const selectedCount = updatedTransactions.filter(t => t.selected).length;
+    console.log(`Initial transactions: ${updatedTransactions.length} total, ${debitCount} debits, ${selectedCount} selected`);
+  }, [initialTransactions]);
 
   // Derived state
   const selectedCount = taggedTransactions.filter(t => t.selected).length;
