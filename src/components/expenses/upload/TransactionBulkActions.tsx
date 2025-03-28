@@ -9,42 +9,60 @@ import {
 } from "@/components/ui/select";
 import { EXPENSE_CATEGORIES } from "@/utils/expenseCategories";
 import { ExpenseCategory } from "@/types/expense";
+import { Button } from "@/components/ui/button";
+import { Sparkles } from "lucide-react";
 
 interface TransactionBulkActionsProps {
   selectAll: boolean;
   onSelectAllChange: (checked: boolean) => void;
   onCategoryForAllChange: (category: ExpenseCategory) => void;
+  suggestedCount?: number;
+  onApplySuggestions?: () => void;
 }
 
 const TransactionBulkActions = ({
   selectAll,
   onSelectAllChange,
-  onCategoryForAllChange
+  onCategoryForAllChange,
+  suggestedCount = 0,
+  onApplySuggestions
 }: TransactionBulkActionsProps) => {
   return (
-    <div className="p-4 space-y-2 border-b">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-2">
+    <div className="px-4 py-2 border-b flex flex-wrap items-center justify-between gap-2">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Checkbox 
-            id="select-all" 
-            checked={selectAll} 
-            onCheckedChange={(checked) => {
-              // Ensure we're passing a boolean value
-              onSelectAllChange(checked === true || checked === "indeterminate");
-            }}
+            id="select-all-transactions" 
+            checked={selectAll}
+            onCheckedChange={onSelectAllChange}
           />
-          <label htmlFor="select-all" className="text-sm font-medium">
+          <label 
+            htmlFor="select-all-transactions"
+            className="text-sm cursor-pointer select-none"
+          >
             Select all debit transactions
           </label>
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-500">Set category for all selected:</span>
-          <Select 
-            onValueChange={(value) => onCategoryForAllChange(value as ExpenseCategory)}
+      </div>
+
+      <div className="flex items-center gap-3">
+        {suggestedCount > 0 && onApplySuggestions && (
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="text-xs border-yellow-500 text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700"
+            onClick={onApplySuggestions}
           >
-            <SelectTrigger className="w-40 h-8">
-              <SelectValue placeholder="Choose category" />
+            <Sparkles className="h-3.5 w-3.5 mr-1" /> 
+            Apply {suggestedCount} suggestions
+          </Button>
+        )}
+        
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-sm whitespace-nowrap">Set category for all:</span>
+          <Select onValueChange={(value) => onCategoryForAllChange(value as ExpenseCategory)}>
+            <SelectTrigger className="h-8 w-40">
+              <SelectValue placeholder="Select" />
             </SelectTrigger>
             <SelectContent>
               {EXPENSE_CATEGORIES.map((category) => (
