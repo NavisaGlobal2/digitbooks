@@ -2,7 +2,7 @@
 import { useState } from "react";
 import DashboardContainer from "@/components/dashboard/layout/DashboardContainer";
 import { Button } from "@/components/ui/button";
-import { ApplicationsTable } from "@/components/applications/ApplicationsTable";
+import ApplicationsTable from "@/components/applications/ApplicationsTable";
 
 const ApplicationsAdmin = () => {
   return (

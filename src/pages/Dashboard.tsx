@@ -16,7 +16,7 @@ const Dashboard = () => {
     <DashboardContainer>
       <div className="space-y-6">
         <FinancialOverview
-          selectedPeriod={selectedPeriod}
+          period={selectedPeriod}
           onPeriodChange={setSelectedPeriod}
         />
         
