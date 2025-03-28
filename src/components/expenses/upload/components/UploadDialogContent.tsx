@@ -2,7 +2,6 @@
 import { DialogDescription } from "@/components/ui/dialog";
 import FileUploadArea from "../FileUploadArea";
 import ErrorDisplay from "../ErrorDisplay";
-import ProcessingModeToggle from "./ProcessingModeToggle";
 import ProgressIndicator from "./ProgressIndicator";
 import SupportedFormatsInfo from "./SupportedFormatsInfo";
 import UploadDialogFooter from "../UploadDialogFooter";
@@ -12,34 +11,30 @@ interface UploadDialogContentProps {
   file: File | null;
   uploading: boolean;
   error: string | null;
-  useEdgeFunction: boolean;
-  toggleEdgeFunction: () => void;
-  edgeFunctionAvailable: boolean;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   parseFile: () => void;
   onClose: () => void;
   progress: number;
   step: string;
+  isAuthenticated: boolean | null;
 }
 
 const UploadDialogContent = ({
   file,
   uploading,
   error,
-  useEdgeFunction,
-  toggleEdgeFunction,
-  edgeFunctionAvailable,
   handleFileChange,
   parseFile,
   onClose,
   progress,
-  step
+  step,
+  isAuthenticated
 }: UploadDialogContentProps) => {
   return (
     <>
       <DialogHeader title="Upload Bank Statement" />
       <DialogDescription className="text-center text-sm text-muted-foreground">
-        Upload your bank statement to automatically create expenses
+        Upload your bank statement to automatically create expenses with AI
       </DialogDescription>
       
       <div className="space-y-4 p-4 pt-2">
@@ -52,12 +47,11 @@ const UploadDialogContent = ({
           errorState={error}
         />
         
-        <ProcessingModeToggle 
-          useEdgeFunction={useEdgeFunction}
-          toggleEdgeFunction={toggleEdgeFunction}
-          edgeFunctionAvailable={edgeFunctionAvailable}
-          disabled={uploading}
-        />
+        {!isAuthenticated && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
+            You need to be signed in to use this feature. Please sign in and try again.
+          </div>
+        )}
         
         <ProgressIndicator 
           progress={progress} 
@@ -71,7 +65,7 @@ const UploadDialogContent = ({
           onCancel={onClose}
           onParse={parseFile}
           uploading={uploading}
-          disabled={!file}
+          disabled={!file || !isAuthenticated}
           showCancelButton={uploading}
         />
       </div>
