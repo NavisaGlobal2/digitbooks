@@ -1,13 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { Search } from "lucide-react";
 import { useVendors } from "@/contexts/VendorContext";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useExpenses } from "@/contexts/ExpenseContext";
+import { useLocation, useParams } from "react-router-dom";
+import VendorDetailView from "./detail/VendorDetailView";
 import VendorsTable from "./VendorsTable";
-import VendorDetailView from "./VendorDetailView";
 import VendorsEmptyState from "./VendorsEmptyState";
-import { useLocation } from "react-router-dom";
 
 interface VendorsContentProps {
   onAddVendor: () => void;
@@ -15,91 +13,67 @@ interface VendorsContentProps {
 
 const VendorsContent = ({ onAddVendor }: VendorsContentProps) => {
   const { vendors, isLoading } = useVendors();
+  const { expenses } = useExpenses();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTab, setSelectedTab] = useState("all");
-  const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
+  const [selectedVendor, setSelectedVendor] = useState<string | null>(null);
   const location = useLocation();
+  const { vendorName } = useParams<{ vendorName: string }>();
   
-  // Check if we have a vendor filter from navigation
+  // Handle vendor filter from route state or URL parameter
   useEffect(() => {
-    const state = location.state as { vendorFilter?: string } | undefined;
-    if (state?.vendorFilter) {
-      // Find vendor by name
-      const vendor = vendors.find(v => 
-        v.name.toLowerCase() === state.vendorFilter?.toLowerCase()
-      );
-      if (vendor) {
-        setSelectedVendorId(vendor.id);
-      }
+    // Check if we have a vendor name from the URL
+    if (vendorName) {
+      const decodedVendorName = decodeURIComponent(vendorName);
+      setSelectedVendor(decodedVendorName);
+      return;
     }
-  }, [location.state, vendors]);
+    
+    // Check if we have a vendor filter from route state
+    if (location.state?.vendorFilter) {
+      setSelectedVendor(location.state.vendorFilter);
+    }
+  }, [location.state, vendorName]);
   
+  const handleBack = () => {
+    setSelectedVendor(null);
+  };
+  
+  // Filter vendors based on search query
   const filteredVendors = vendors.filter(vendor => 
     vendor.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
       </div>
     );
   }
   
+  if (selectedVendor) {
+    const vendor = vendors.find(v => v.name === selectedVendor);
+    if (vendor) {
+      return <VendorDetailView vendorId={vendor.id} onBack={handleBack} />;
+    }
+  }
+
   if (vendors.length === 0) {
     return <VendorsEmptyState onAddVendor={onAddVendor} />;
   }
-  
-  // If a vendor is selected, show the detail view
-  if (selectedVendorId) {
-    return (
-      <VendorDetailView
-        vendorId={selectedVendorId}
-        onBack={() => setSelectedVendorId(null)}
-      />
-    );
-  }
-  
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-          <Input 
-            type="search"
-            placeholder="Search vendors..."
-            className="pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      </div>
-      
-      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList>
-          <TabsTrigger value="all">All Vendors</TabsTrigger>
-          <TabsTrigger value="recent">Recent Transactions</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="all" className="mt-4">
-          <VendorsTable 
-            vendors={filteredVendors} 
-            onSelectVendor={(id) => setSelectedVendorId(id)}
-          />
-        </TabsContent>
-        
-        <TabsContent value="recent" className="mt-4">
-          <VendorsTable 
-            vendors={filteredVendors.sort((a, b) => {
-              if (!a.lastTransaction) return 1;
-              if (!b.lastTransaction) return -1;
-              return b.lastTransaction.getTime() - a.lastTransaction.getTime();
-            })}
-            onSelectVendor={(id) => setSelectedVendorId(id)}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
+    <VendorsTable
+      vendors={filteredVendors}
+      onSearch={setSearchQuery}
+      searchQuery={searchQuery}
+      onViewVendor={(vendorId) => {
+        const vendor = vendors.find(v => v.id === vendorId);
+        if (vendor) {
+          setSelectedVendor(vendor.name);
+        }
+      }}
+    />
   );
 };
 

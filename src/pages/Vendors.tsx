@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { Routes, Route } from "react-router-dom";
 import { toast } from "sonner";
 import { Plus, Upload, ArrowLeft, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,10 @@ const VendorsPage = () => {
       </header>
       
       <main className="p-4 sm:p-6">
-        <VendorsContent onAddVendor={handleAddVendor} />
+        <Routes>
+          <Route path="/" element={<VendorsContent onAddVendor={handleAddVendor} />} />
+          <Route path="/:vendorName" element={<VendorsContent onAddVendor={handleAddVendor} />} />
+        </Routes>
       </main>
       
       {/* Add Vendor Dialog */}

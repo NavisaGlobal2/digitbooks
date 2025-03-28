@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,6 +32,7 @@ import Onboarding from "./Onboarding";
 import Agent from "./pages/Agent";
 import { RequireAuth } from "./components/auth/RequireAuth";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import VendorsPage from "./pages/VendorsPage";
 
 const queryClient = new QueryClient();
 
@@ -126,6 +126,9 @@ const App = () => (
                         
                         {/* Fallback route */}
                         <Route path="*" element={<NotFound />} />
+                        <Route path="/vendors" element={<VendorsPage />}>
+                          <Route path=":vendorName" element={<VendorsPage />} />
+                        </Route>
                       </Routes>
                     </BrowserRouter>
                   </LedgerProvider>

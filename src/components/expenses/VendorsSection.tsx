@@ -28,9 +28,9 @@ const VendorsSection = ({ vendors, expenses }: VendorSectionProps) => {
     return { ...acc, [vendor]: totalSpent };
   }, {} as Record<string, number>);
 
-  // Navigate to vendors page with filter for specific vendor
+  // Navigate to vendor detail view
   const handleViewTransactions = (vendorName: string) => {
-    navigate("/vendors", { state: { vendorFilter: vendorName } });
+    navigate(`/vendors/${encodeURIComponent(vendorName)}`);
   };
 
   return (
