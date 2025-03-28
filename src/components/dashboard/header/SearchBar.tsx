@@ -35,18 +35,17 @@ const SearchBar = ({ isExpanded, toggleExpand }: SearchBarProps) => {
             onBlur={(e) => {
               // Only collapse if no value and clicked outside
               if (!e.currentTarget.value) {
-                setTimeout(() => toggleExpand(), 200);
+                toggleExpand();
               }
             }}
           />
         </form>
       ) : (
         <button 
-          className="flex items-center justify-center rounded-full w-8 h-8 text-secondary hover:bg-accent/10"
+          className="flex items-center justify-center rounded-full w-8 h-8 text-secondary hover:bg-accent"
           onClick={toggleExpand}
-          aria-label="Search"
         >
-          <Search className="h-4 sm:h-5 w-4 sm:w-5" />
+          <Search className="h-5 w-5" />
         </button>
       )}
     </>

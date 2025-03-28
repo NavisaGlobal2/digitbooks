@@ -63,12 +63,10 @@ const ExpenseFilters = ({
   
   return (
     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 items-start sm:items-center justify-between mb-4 gap-2">
-      <div className="w-full sm:w-auto">
-        <SearchInput 
-          searchQuery={searchQuery} 
-          setSearchQuery={setSearchQuery} 
-        />
-      </div>
+      <SearchInput 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+      />
       
       <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
         <FilterDropdown
@@ -76,7 +74,7 @@ const ExpenseFilters = ({
           selectedValue={selectedCategory}
           onFilterChange={(value) => onCategoryChange?.(value)}
           label="Category"
-          className="w-full xs:w-auto"
+          className="w-full sm:w-auto"
         />
         
         <FilterDropdown
@@ -84,7 +82,7 @@ const ExpenseFilters = ({
           selectedValue={selectedPaymentMethod}
           onFilterChange={(value) => onPaymentMethodChange?.(value)}
           label="Payment"
-          className="w-full xs:w-auto"
+          className="w-full sm:w-auto"
         />
         
         <DateRangeFilter 
