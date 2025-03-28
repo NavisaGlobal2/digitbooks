@@ -42,40 +42,6 @@ export const parseViaEdgeFunction = async (
 
       if (error) {
         console.error("Edge function error:", error);
-        
-        // Check for Anthropic API key error
-        if (error.message && (
-          error.message.includes("ANTHROPIC_API_KEY") ||
-          error.message.includes("Anthropic API") ||
-          error.message.includes("exceeded") ||
-          error.message.includes("rate limit")
-        )) {
-          const errorMsg = "Anthropic API issue: Either the service is overloaded, the key is not configured, invalid, or you've exceeded your rate limit. We'll attempt to use a simpler parser for CSV files.";
-          onError(errorMsg);
-          return [];
-        }
-        
-        // Check for DeepSeek API key error
-        if (error.message && (
-          error.message.includes("DEEPSEEK_API_KEY") ||
-          error.message.includes("DeepSeek API")
-        )) {
-          const errorMsg = "DeepSeek API issue: The API key is not configured correctly or is invalid. We'll attempt to use a simpler parser for CSV files.";
-          onError(errorMsg);
-          return [];
-        }
-        
-        // Check for authentication errors
-        if (error.message && (
-          error.message.includes("Auth session") ||
-          error.message.includes("authentication") ||
-          error.message.includes("unauthorized")
-        )) {
-          const errorMsg = "Authentication error: Please try signing out and signing back in to refresh your session.";
-          onError(errorMsg);
-          return [];
-        }
-        
         onError(`Server error: ${error.message}`);
         return [];
       }
@@ -98,9 +64,10 @@ export const parseViaEdgeFunction = async (
         description: tx.description,
         amount: Math.abs(parseFloat(tx.amount)), // Store as positive number
         type: tx.type || (parseFloat(tx.amount) < 0 ? 'debit' : 'credit'),
-        category: tx.category || null,
-        selected: tx.type === 'debit', // Preselect debits
-        batchId
+        category: tx.category || null, // Include categories if available
+        selected: tx.type === 'debit', // Preselect debits (expenses)
+        batchId,
+        categorySuggestion: tx.categorySuggestion || null, // Include AI category suggestions
       }));
 
       console.log(`Parsed ${parsedTransactions.length} transactions with batch ID: ${batchId}`);
@@ -109,7 +76,7 @@ export const parseViaEdgeFunction = async (
       const filteredTransactions = parsedTransactions.filter(tx => tx.type === 'debit');
       
       if (filteredTransactions.length === 0) {
-        onError("No expense transactions found in the statement. Only expense transactions can be imported.");
+        onError("No expense transactions found in the statement. Only debit transactions can be imported.");
         return [];
       }
 
@@ -119,11 +86,10 @@ export const parseViaEdgeFunction = async (
       onSuccess(filteredTransactions);
       
       // Show success message with the transaction count
-      toast.success(`Successfully parsed ${filteredTransactions.length} expenses from your statement`);
+      toast.success(`Successfully parsed ${filteredTransactions.length} expense entries from your statement`);
       
       return filteredTransactions;
     } catch (supabaseError: any) {
-      // Handle any issues with the Supabase functions.invoke call
       console.error("Supabase functions.invoke error:", supabaseError);
       if (supabaseError.message?.includes("Network")) {
         onError("Network error when calling the server. Please check your internet connection and try again.");

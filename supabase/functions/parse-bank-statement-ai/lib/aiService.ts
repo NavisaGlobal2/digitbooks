@@ -6,15 +6,15 @@ import { fallbackCSVProcessing } from "./fallbackProcessor.ts";
 /**
  * Handles provider selection and fallback logic
  */
-export async function processWithAI(text: string, fileType: string, context?: string): Promise<any[]> {
+export async function processWithAI(text: string, fileType: string, preferredProvider?: string | null, context?: string): Promise<any[]> {
   // Check which providers are available
   const hasAnthropic = !!Deno.env.get("ANTHROPIC_API_KEY");
   const hasDeepseek = !!Deno.env.get("DEEPSEEK_API_KEY");
   
-  // Get preferred provider from env or default to "anthropic"
-  const preferredProvider = Deno.env.get("PREFERRED_AI_PROVIDER") || "anthropic";
+  // Use provided preferredProvider or default to "anthropic"
+  const providerToUse = preferredProvider || "anthropic";
   
-  console.log(`AI processing: using ${preferredProvider} as preferred provider`);
+  console.log(`AI processing: using ${providerToUse} as preferred provider`);
   console.log(`Available providers: ${hasAnthropic ? 'Anthropic' : ''}${hasDeepseek ? ', DeepSeek' : ''}`);
   console.log(`Processing context: ${context || 'unknown'}`);
 
@@ -24,26 +24,26 @@ export async function processWithAI(text: string, fileType: string, context?: st
 
   // Try with preferred provider first
   try {
-    if (preferredProvider === "deepseek" && hasDeepseek) {
+    if (providerToUse === "deepseek" && hasDeepseek) {
       return await processWithDeepseek(text, context);
-    } else if (preferredProvider === "anthropic" && hasAnthropic) {
+    } else if (providerToUse === "anthropic" && hasAnthropic) {
       return await processWithAnthropic(text, context);
     } else {
       // If preferred provider is not available, throw an error to trigger fallback
-      throw new Error(`Preferred provider ${preferredProvider} is not configured`);
+      throw new Error(`Preferred provider ${providerToUse} is not configured`);
     }
   } catch (error) {
-    console.error(`Error processing with ${preferredProvider}:`, error);
+    console.error(`Error processing with ${providerToUse}:`, error);
     
     // Try fallback to the other provider
     try {
       // If we failed with Anthropic and DeepSeek is available, try DeepSeek
-      if (preferredProvider === "anthropic" && hasDeepseek) {
+      if (providerToUse === "anthropic" && hasDeepseek) {
         console.log("Falling back to DeepSeek...");
         return await processWithDeepseek(text, context);
       }
       // If we failed with DeepSeek and Anthropic is available, try Anthropic
-      else if (preferredProvider === "deepseek" && hasAnthropic) {
+      else if (providerToUse === "deepseek" && hasAnthropic) {
         console.log("Falling back to Anthropic...");
         return await processWithAnthropic(text, context);
       }

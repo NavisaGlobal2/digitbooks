@@ -18,11 +18,8 @@ serve(async (req) => {
     
     // Get the preferred AI provider from the request, if provided
     const preferredProvider = formData.get("preferredProvider")?.toString() || null;
-    if (preferredProvider) {
-      // Set the preferred provider in the environment for this request
-      Deno.env.set("PREFERRED_AI_PROVIDER", preferredProvider);
-      console.log(`Setting preferred AI provider to: ${preferredProvider}`);
-    }
+    // Store the preferred provider in a variable instead of trying to set it in env
+    console.log(`Using preferred AI provider: ${preferredProvider || "anthropic"}`);
     
     if (!file || !(file instanceof File)) {
       return new Response(
@@ -46,8 +43,8 @@ serve(async (req) => {
       let usedFallback = false;
       
       try {
-        // 2. Try to process with AI service
-        transactions = await processWithAI(fileText, fileType);
+        // 2. Try to process with AI service, passing the preferredProvider
+        transactions = await processWithAI(fileText, fileType, preferredProvider);
         
         if (transactions.length === 0) {
           throw new Error("No transactions were extracted by the AI service");
