@@ -3,6 +3,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 
 interface ProcessingModeToggleProps {
   useEdgeFunction: boolean;
@@ -10,6 +12,8 @@ interface ProcessingModeToggleProps {
   edgeFunctionAvailable: boolean;
   disabled: boolean;
   isAuthenticated?: boolean;
+  preferredAIProvider?: string;
+  setPreferredAIProvider?: (provider: string) => void;
 }
 
 const ProcessingModeToggle = ({
@@ -17,13 +21,15 @@ const ProcessingModeToggle = ({
   toggleEdgeFunction,
   edgeFunctionAvailable,
   disabled,
-  isAuthenticated = true
+  isAuthenticated = true,
+  preferredAIProvider = "anthropic",
+  setPreferredAIProvider
 }: ProcessingModeToggleProps) => {
   // Determine if server-side processing needs auth warning
   const showAuthWarning = useEdgeFunction && !isAuthenticated;
   
   return (
-    <div className="flex flex-col space-y-1">
+    <div className="flex flex-col space-y-3">
       <div className="flex items-center space-x-2">
         <Switch 
           id="server-processing" 
@@ -63,6 +69,28 @@ const ProcessingModeToggle = ({
         <p className="text-xs text-amber-500 mt-1">
           You need to be signed in to use AI-powered processing.
         </p>
+      )}
+
+      {useEdgeFunction && isAuthenticated && setPreferredAIProvider && (
+        <div className="flex flex-col space-y-1 mt-2">
+          <Label htmlFor="ai-provider" className="text-sm">Preferred AI Provider</Label>
+          <Select
+            value={preferredAIProvider}
+            onValueChange={setPreferredAIProvider}
+            disabled={disabled}
+          >
+            <SelectTrigger id="ai-provider" className="w-[200px]">
+              <SelectValue placeholder="Select AI provider" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="anthropic">Anthropic Claude (Default)</SelectItem>
+              <SelectItem value="deepseek">DeepSeek AI</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground">
+            Select your preferred AI provider for transaction extraction
+          </span>
+        </div>
       )}
     </div>
   );

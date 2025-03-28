@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders, handleCorsRequest } from "./lib/cors.ts";
 import { extractTextFromFile } from "./lib/textExtractor.ts";
-import { processWithAnthropic } from "./lib/anthropicProcessor.ts";
+import { processWithAI } from "./lib/aiService.ts";
 import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
 
 serve(async (req) => {
@@ -12,17 +12,6 @@ serve(async (req) => {
   }
 
   try {
-    // Validate that Anthropic API key exists
-    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-    if (!ANTHROPIC_API_KEY) {
-      return new Response(
-        JSON.stringify({ 
-          error: "ANTHROPIC_API_KEY is not configured. Please set up your Anthropic API key in Supabase." 
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
-    }
-
     // Parse the request body - this will contain our file
     const formData = await req.formData();
     const file = formData.get("file");
@@ -36,6 +25,9 @@ serve(async (req) => {
     
     console.log(`Processing file: ${file.name}, size: ${file.size} bytes`);
     
+    // Extract file type for potential fallback decisions
+    const fileType = file.name.split('.').pop()?.toLowerCase() || '';
+    
     // Generate batch ID for tracking
     const batchId = crypto.randomUUID();
     
@@ -46,13 +38,13 @@ serve(async (req) => {
       let usedFallback = false;
       
       try {
-        // 2. Try to process with Anthropic
-        transactions = await processWithAnthropic(fileText);
-      } catch (anthropicError) {
-        console.error("Anthropic processing failed:", anthropicError);
+        // 2. Try to process with AI service
+        transactions = await processWithAI(fileText, fileType);
+      } catch (aiError) {
+        console.error("AI processing failed:", aiError);
         
-        // Check if the file is a CSV and we can use fallback parser
-        if (file.name.toLowerCase().endsWith('.csv')) {
+        // If it's a CSV, try the fallback parser as last resort
+        if (fileType === "csv") {
           console.log("Attempting fallback CSV processing");
           usedFallback = true;
           transactions = await fallbackCSVProcessing(fileText);
@@ -66,10 +58,10 @@ serve(async (req) => {
             );
           }
         } else {
-          // For non-CSV files, we have to report the error
+          // For non-CSV files, we have to report the error since we have no fallback
           return new Response(
             JSON.stringify({ 
-              error: `AI processing failed: ${anthropicError.message}. Please try again later or use a CSV file.` 
+              error: `AI processing failed: ${aiError.message}. Please try again later or use a CSV file.` 
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 }
           );
@@ -92,23 +84,8 @@ serve(async (req) => {
     } catch (processingError) {
       console.error("Processing error:", processingError);
       
-      // Check if error is related to Anthropic API key
-      const errorMessage = processingError.message || "Unknown processing error";
-      if (
-        errorMessage.includes("Anthropic API rate limit") || 
-        errorMessage.includes("Anthropic") && 
-        errorMessage.includes("API key")
-      ) {
-        return new Response(
-          JSON.stringify({ 
-            error: "Anthropic API issue: " + errorMessage
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 }
-        );
-      }
-      
       return new Response(
-        JSON.stringify({ error: errorMessage }),
+        JSON.stringify({ error: processingError.message || "Unknown processing error" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }

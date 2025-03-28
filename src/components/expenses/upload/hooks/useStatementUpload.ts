@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { ColumnMapping } from "../parsers/columnMapper";
 import { ParsedTransaction } from "../parsers";
 import { useUploadProgress } from "./useUploadProgress";
 import { useUploadError } from "./useUploadError";
@@ -13,6 +12,7 @@ export const useStatementUpload = (
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
 
   // Check authentication status
   useEffect(() => {
@@ -55,7 +55,9 @@ export const useStatementUpload = (
 
   const {
     processServerSide,
-    isAuthenticated: fileProcessingIsAuthenticated
+    isAuthenticated: fileProcessingIsAuthenticated,
+    preferredAIProvider: processingPreferredProvider,
+    setPreferredAIProvider: processingSetPreferredProvider
   } = useFileProcessing({
     onTransactionsParsed,
     handleError,
@@ -65,6 +67,13 @@ export const useStatementUpload = (
     isCancelled,
     setIsWaitingForServer
   });
+
+  // Sync preferred AI provider between hooks
+  useEffect(() => {
+    if (processingSetPreferredProvider) {
+      processingSetPreferredProvider(preferredAIProvider);
+    }
+  }, [preferredAIProvider, processingSetPreferredProvider]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -142,6 +151,9 @@ export const useStatementUpload = (
     step,
     isWaitingForServer,
     cancelProgress,
-    isAuthenticated
+    isAuthenticated,
+    // AI provider selection
+    preferredAIProvider,
+    setPreferredAIProvider
   };
 };

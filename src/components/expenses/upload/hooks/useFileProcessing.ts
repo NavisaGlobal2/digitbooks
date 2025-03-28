@@ -24,6 +24,7 @@ export const useFileProcessing = ({
   setIsWaitingForServer
 }: FileProcessingProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
 
   // Check authentication status on mount
   useState(() => {
@@ -76,26 +77,28 @@ export const useFileProcessing = ({
                             errorMessage.toLowerCase().includes('sign in') ||
                             errorMessage.toLowerCase().includes('token');
                             
-          const isAPIError = errorMessage.toLowerCase().includes('anthropic') ||
+          const isAnthropicError = errorMessage.toLowerCase().includes('anthropic') ||
                            errorMessage.toLowerCase().includes('api key') || 
                            errorMessage.toLowerCase().includes('overloaded');
+
+          const isDeepSeekError = errorMessage.toLowerCase().includes('deepseek');
           
           // Show the error message to the user
           handleError(errorMessage);
           
           // For service overload errors with CSV files, continue with warning
-          if (isAPIError && file.name.toLowerCase().endsWith('.csv')) {
+          if ((isAnthropicError || isDeepSeekError) && file.name.toLowerCase().endsWith('.csv')) {
             showFallbackMessage("AI service is currently unavailable. Using basic CSV parser as fallback.");
             // Don't reset progress to allow fallback to continue
             return false;
           }
           
           // For auth or critical API errors, don't try to fallback
-          if (isAuthError || isAPIError) {
+          if (isAuthError || (isAnthropicError && isDeepSeekError)) {
             resetProgress();
             
-            if (isAPIError && !file.name.toLowerCase().endsWith('.csv')) {
-              toast.error("The AI processing feature is currently unavailable. Try using a CSV file format instead.");
+            if ((isAnthropicError || isDeepSeekError) && !file.name.toLowerCase().endsWith('.csv')) {
+              toast.error("Both AI processing services are currently unavailable. Try using a CSV file format instead.");
             }
             
             return true;
@@ -125,6 +128,8 @@ export const useFileProcessing = ({
 
   return {
     processServerSide,
-    isAuthenticated
+    isAuthenticated,
+    preferredAIProvider,
+    setPreferredAIProvider
   };
 };
