@@ -11,6 +11,7 @@ import EmptyBillsState from "./bills/EmptyBillsState";
 import BillsLoadingSkeleton from "./bills/BillsLoadingSkeleton";
 import BillsDialog from "./bills/BillsDialog";
 import RecurringBillsBanner from "./bills/RecurringBillsBanner";
+import AddBillDialog from "./bills/AddBillDialog";
 import { getCategoryIcon, getCategoryName, calculateDaysLeft } from "./bills/billsUtils";
 
 // Define the Bill type that we'll use internally
@@ -27,54 +28,55 @@ interface Bill {
 const BillsSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAllBills, setShowAllBills] = useState(false);
+  const [showAddBillDialog, setShowAddBillDialog] = useState(false);
   const [bills, setBills] = useState<Bill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load bills from the database
-  useEffect(() => {
-    const fetchBills = async () => {
-      setIsLoading(true);
-      try {
-        // Try to fetch bills from recurring_transactions where transaction_type is 'expense'
-        const { data, error } = await supabase
-          .from('recurring_transactions')
-          .select('*')
-          .eq('transaction_type', 'expense')
-          .order('next_due_date', { ascending: true });
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (data && data.length > 0) {
-          // Format the data to match our Bill interface
-          const formattedBills = data.map((transaction) => {
-            const daysLeft = transaction.next_due_date ? calculateDaysLeft(transaction.next_due_date) : 0;
-            const categoryName = getCategoryName(transaction.category_id);
-            
-            return {
-              id: transaction.id,
-              title: transaction.description,
-              amount: transaction.amount,
-              dueDate: transaction.next_due_date ? new Date(transaction.next_due_date).toISOString().split('T')[0] : '',
-              category: categoryName,
-              icon: getCategoryIcon(categoryName),
-              daysLeft: daysLeft
-            };
-          });
-          setBills(formattedBills);
-        } else {
-          setBills([]);
-        }
-      } catch (error) {
-        console.error("Error fetching bills:", error);
-        toast.error("Failed to load bills");
-        setBills([]);
-      } finally {
-        setIsLoading(false);
+  const fetchBills = async () => {
+    setIsLoading(true);
+    try {
+      // Try to fetch bills from recurring_transactions where transaction_type is 'expense'
+      const { data, error } = await supabase
+        .from('recurring_transactions')
+        .select('*')
+        .eq('transaction_type', 'expense')
+        .order('next_due_date', { ascending: true });
+      
+      if (error) {
+        throw error;
       }
-    };
-    
+      
+      if (data && data.length > 0) {
+        // Format the data to match our Bill interface
+        const formattedBills = data.map((transaction: any) => {
+          const daysLeft = transaction.next_due_date ? calculateDaysLeft(transaction.next_due_date) : 0;
+          const categoryName = getCategoryName(transaction.category_id);
+          
+          return {
+            id: transaction.id,
+            title: transaction.description,
+            amount: transaction.amount,
+            dueDate: transaction.next_due_date ? new Date(transaction.next_due_date).toISOString().split('T')[0] : '',
+            category: categoryName,
+            icon: getCategoryIcon(categoryName),
+            daysLeft: daysLeft
+          };
+        });
+        setBills(formattedBills);
+      } else {
+        setBills([]);
+      }
+    } catch (error) {
+      console.error("Error fetching bills:", error);
+      toast.error("Failed to load bills");
+      setBills([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchBills();
   }, []);
 
@@ -84,7 +86,11 @@ const BillsSection = () => {
   );
 
   const handleAddBill = () => {
-    toast.info("Add bill functionality will be implemented soon!");
+    setShowAddBillDialog(true);
+  };
+
+  const handleBillAdded = () => {
+    fetchBills();
   };
 
   return (
@@ -144,6 +150,13 @@ const BillsSection = () => {
         open={showAllBills}
         onOpenChange={setShowAllBills}
         bills={filteredBills}
+      />
+
+      {/* Add Bill Dialog */}
+      <AddBillDialog
+        open={showAddBillDialog}
+        onOpenChange={setShowAddBillDialog}
+        onBillAdded={handleBillAdded}
       />
     </div>
   );

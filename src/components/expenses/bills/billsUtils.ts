@@ -14,7 +14,7 @@ export const getCategoryIcon = (category: string): LucideIcon => {
 };
 
 // Get category name from category ID
-export const getCategoryName = (categoryId: string | null): string => {
+export const getCategoryName = (categoryId: string | null | undefined): string => {
   // We'd ideally fetch this from a categories table
   // For now, let's use a simple mapping
   if (!categoryId) return 'Other';
