@@ -10,22 +10,28 @@ export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) 
 
   // Effect to initialize transactions without automatically selecting them
   useEffect(() => {
-    const updatedTransactions = initialTransactions.map(t => ({
-      ...t,
-      selected: false // Don't select any by default
-    }));
-    
-    setTaggedTransactions(updatedTransactions);
-    
-    // Log counts for debugging
-    const debitCount = updatedTransactions.filter(t => t.type === 'debit').length;
-    const selectedCount = updatedTransactions.filter(t => t.selected).length;
-    console.log(`Initial transactions: ${updatedTransactions.length} total, ${debitCount} debits, ${selectedCount} selected`);
+    if (initialTransactions && initialTransactions.length > 0) {
+      const updatedTransactions = initialTransactions.map(t => ({
+        ...t,
+        selected: false, // Don't select any by default
+        id: t.id || `transaction-${Math.random().toString(36).substr(2, 9)}` // Ensure each transaction has an ID
+      }));
+      
+      setTaggedTransactions(updatedTransactions);
+      setSelectAll(false); // Reset selectAll when new transactions are loaded
+      
+      // Log counts for debugging
+      const debitCount = updatedTransactions.filter(t => t.type === 'debit').length;
+      const selectedCount = updatedTransactions.filter(t => t.selected).length;
+      console.log(`Initial transactions: ${updatedTransactions.length} total, ${debitCount} debits, ${selectedCount} selected`);
+    }
   }, [initialTransactions]);
 
   // Selection handling
   const handleSelectAll = (checked: boolean) => {
+    console.log(`Select all changed to: ${checked}`);
     setSelectAll(checked);
+    
     setTaggedTransactions(prev => prev.map(t => ({
       ...t,
       selected: t.type === 'debit' ? checked : false // Only select debits
@@ -33,6 +39,8 @@ export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) 
   };
 
   const handleSelectTransaction = (id: string, checked: boolean) => {
+    console.log(`Transaction ${id} selection changed to: ${checked}`);
+    
     // Update only the selected transaction by ID
     setTaggedTransactions(prev => {
       const updated = prev.map(t => 
@@ -40,9 +48,9 @@ export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) 
       );
       
       // Update selectAll state based on whether all debit transactions are selected
-      const allDebitsSelected = updated
-        .filter(t => t.type === 'debit')
-        .every(t => t.selected);
+      const debitTransactions = updated.filter(t => t.type === 'debit');
+      const allDebitsSelected = debitTransactions.length > 0 && 
+        debitTransactions.every(t => t.selected);
         
       setSelectAll(allDebitsSelected);
       
@@ -52,6 +60,8 @@ export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) 
 
   // Category assignment
   const handleSetCategory = (id: string, category: ExpenseCategory) => {
+    console.log(`Setting category for ${id}: ${category}`);
+    
     // Update only the transaction with the matching ID
     setTaggedTransactions(prev => prev.map(t => 
       t.id === id ? { ...t, category } : t
@@ -59,6 +69,8 @@ export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) 
   };
 
   const handleSetCategoryForAll = (category: ExpenseCategory) => {
+    console.log(`Setting category for all selected: ${category}`);
+    
     // Update only selected transactions
     setTaggedTransactions(prev => prev.map(t => 
       t.selected ? { ...t, category } : t
