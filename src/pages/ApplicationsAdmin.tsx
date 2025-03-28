@@ -5,6 +5,21 @@ import { Button } from "@/components/ui/button";
 import ApplicationsTable from "@/components/applications/ApplicationsTable";
 
 const ApplicationsAdmin = () => {
+  // Mock data for applications
+  const [applications, setApplications] = useState([]);
+
+  // Handle downloading resume
+  const handleDownloadResume = (resumeUrl: string | null, applicantName: string) => {
+    console.log("Downloading resume:", resumeUrl, "for", applicantName);
+    // Implementation would go here
+  };
+
+  // Handle status change
+  const handleStatusChange = (applicationId: string, newStatus: string) => {
+    console.log("Changing status for application", applicationId, "to", newStatus);
+    // Implementation would go here
+  };
+
   return (
     <DashboardContainer>
       <div className="space-y-6 p-6">
@@ -13,7 +28,11 @@ const ApplicationsAdmin = () => {
           <Button>Export Data</Button>
         </div>
         
-        <ApplicationsTable />
+        <ApplicationsTable 
+          applications={applications}
+          onDownloadResume={handleDownloadResume}
+          onStatusChange={handleStatusChange}
+        />
       </div>
     </DashboardContainer>
   );

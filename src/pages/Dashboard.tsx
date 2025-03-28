@@ -12,12 +12,19 @@ import FinancialChartsSection from "@/components/dashboard/FinancialChartsSectio
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   
+  // Sample financial data
+  const financialData = {
+    totalRevenue: 25000,
+    totalExpenses: 18000,
+    netCashflow: 7000,
+    positive: true
+  };
+  
   return (
     <DashboardContainer>
       <div className="space-y-6">
         <FinancialOverview
-          period={selectedPeriod}
-          onPeriodChange={setSelectedPeriod}
+          data={financialData}
         />
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
