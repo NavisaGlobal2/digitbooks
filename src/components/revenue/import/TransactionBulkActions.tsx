@@ -1,15 +1,25 @@
 
 import { RevenueSource } from "@/types/revenue";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { 
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
 import { Sparkles } from "lucide-react";
+
+interface TransactionBulkActionsProps {
+  selectAll: boolean;
+  onSelectAllChange: (checked: boolean) => void;
+  onSourceForAllChange: (source: RevenueSource) => void;
+  suggestedCount: number;
+  onApplySuggestions: () => void;
+}
 
 const REVENUE_SOURCES = [
   { value: "sales", label: "Sales" },
@@ -24,14 +34,6 @@ const REVENUE_SOURCES = [
   { value: "other", label: "Other" },
 ];
 
-interface TransactionBulkActionsProps {
-  selectAll: boolean;
-  onSelectAllChange: (checked: boolean) => void;
-  onSourceForAllChange: (source: RevenueSource) => void;
-  suggestedCount: number;
-  onApplySuggestions: () => void;
-}
-
 const TransactionBulkActions = ({
   selectAll,
   onSelectAllChange,
@@ -40,43 +42,47 @@ const TransactionBulkActions = ({
   onApplySuggestions
 }: TransactionBulkActionsProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 p-4 bg-gray-50 border-y items-center">
-      <div className="flex items-center gap-2">
+    <div className="p-4 border-b flex flex-wrap items-center gap-4 bg-white">
+      <div className="flex items-center space-x-2">
         <Checkbox 
-          id="select-all" 
+          id="selectAll" 
           checked={selectAll} 
-          onCheckedChange={onSelectAllChange} 
+          onCheckedChange={onSelectAllChange}
         />
-        <label htmlFor="select-all" className="text-sm font-medium">
-          Select all income transactions
-        </label>
+        <Label htmlFor="selectAll">Select All</Label>
       </div>
       
-      <div className="flex items-center gap-2 ml-auto">
-        <Select onValueChange={onSourceForAllChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Apply source to all" />
+      <div className="flex items-center space-x-2">
+        <Label htmlFor="bulkCategory" className="whitespace-nowrap">
+          Set source for selected:
+        </Label>
+        <Select onValueChange={(value) => onSourceForAllChange(value as RevenueSource)}>
+          <SelectTrigger className="w-[180px]" id="bulkCategory">
+            <SelectValue placeholder="Select source" />
           </SelectTrigger>
           <SelectContent>
-            {REVENUE_SOURCES.map((source) => (
-              <SelectItem key={source.value} value={source.value}>
-                {source.label}
-              </SelectItem>
-            ))}
+            <SelectGroup>
+              {REVENUE_SOURCES.map((source) => (
+                <SelectItem key={source.value} value={source.value}>
+                  {source.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
-        
-        {suggestedCount > 0 && (
-          <Button 
-            variant="outline" 
-            className="flex items-center gap-1"
-            onClick={onApplySuggestions}
-          >
-            <Sparkles className="h-4 w-4" />
-            <span>Apply {suggestedCount} suggestion{suggestedCount !== 1 ? 's' : ''}</span>
-          </Button>
-        )}
       </div>
+      
+      {suggestedCount > 0 && (
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="ml-auto border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+          onClick={onApplySuggestions}
+        >
+          <Sparkles className="h-4 w-4 mr-1 text-yellow-500" />
+          Apply AI suggestions ({suggestedCount})
+        </Button>
+      )}
     </div>
   );
 };
