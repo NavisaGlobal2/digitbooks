@@ -17,7 +17,7 @@ const VendorsPage = () => {
   };
   
   const handleBackClick = () => {
-    navigate('/vendors');
+    navigate('/dashboard');
   };
   
   return (
