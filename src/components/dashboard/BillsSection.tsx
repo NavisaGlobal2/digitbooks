@@ -61,7 +61,10 @@ const BillsSection = () => {
           daysLeft: bill.daysLeft,
           icon: bill.icon,
           frequency: "monthly", // Default frequency
-          onPayBill: () => {} // Empty handler since we're in dashboard view
+          dueDate: `2023-${new Date().getMonth() + 2}-${15 + bill.daysLeft}`, // Generate a future date
+          category: bill.title.includes("Rent") ? "rent" : 
+                   bill.title.includes("Electricity") ? "utilities" :
+                   bill.title.includes("SaaS") ? "software" : "other" // Map to appropriate categories
         }))}
         onPayBill={() => {}} // Empty handler since we're in dashboard view
       />
