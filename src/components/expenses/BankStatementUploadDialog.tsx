@@ -48,7 +48,9 @@ const BankStatementUploadDialog = ({
     progress,
     step,
     cancelProgress,
-    isAuthenticated
+    isAuthenticated,
+    preferredAIProvider,
+    setPreferredAIProvider
   } = useStatementUpload(handleTransactionsParsed);
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
@@ -56,13 +58,20 @@ const BankStatementUploadDialog = ({
     const batchId = uuidv4();
     
     try {
-      console.log(`Processing ${taggedTransactions.length} tagged transactions with batch ID: ${batchId}`);
+      const selectedCount = taggedTransactions.filter(tx => tx.selected).length;
+      console.log(`Processing ${selectedCount} selected transactions out of ${taggedTransactions.length} tagged transactions with batch ID: ${batchId}`);
+      
+      if (selectedCount === 0) {
+        toast.warning("No transactions selected. Please select at least one transaction.");
+        return;
+      }
       
       // Save transactions to database first
       const dbSaveSuccess = await saveTransactionsToDatabase(taggedTransactions, batchId);
       
       if (!dbSaveSuccess) {
-        toast.warning("There was an issue storing the bank transaction data");
+        toast.error("Failed to save bank transaction data. Please try again.");
+        return;
       }
       
       // Prepare expenses to save
@@ -77,7 +86,7 @@ const BankStatementUploadDialog = ({
         return;
       }
       
-      console.log(`Saving ${expensesToSave.length} expenses`);
+      console.log(`Saving ${expensesToSave.length} expenses to the expense tracker`);
       
       // Save the expenses
       addExpenses(expensesToSave);
@@ -126,6 +135,8 @@ const BankStatementUploadDialog = ({
             progress={progress}
             step={step}
             isAuthenticated={isAuthenticated}
+            preferredAIProvider={preferredAIProvider}
+            setPreferredAIProvider={setPreferredAIProvider}
           />
         </DialogContent>
       </Dialog>

@@ -30,29 +30,37 @@ export const saveTransactionsToDatabase = async (
       ? batchId 
       : uuidv4();
 
+    // Filter only selected transactions
+    const selectedTransactions = transactions.filter(t => t.selected);
+    console.log(`Selected ${selectedTransactions.length} transactions for database save`);
+    
+    if (selectedTransactions.length === 0) {
+      console.log('No selected transactions to save');
+      return true;
+    }
+
     // Insert transactions into uploaded_bank_lines table
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('uploaded_bank_lines')
       .insert(
-        transactions
-          .filter(t => t.selected)
-          .map(t => ({
-            user_id: userData.user.id,
-            upload_batch_id: validBatchId,
-            date: new Date(t.date).toISOString().split('T')[0],
-            description: t.description,
-            amount: t.amount,
-            type: t.type,
-            category: t.category,
-            status: 'processed'
-          }))
+        selectedTransactions.map(t => ({
+          user_id: userData.user.id,
+          upload_batch_id: validBatchId,
+          date: new Date(t.date).toISOString().split('T')[0],
+          description: t.description,
+          amount: t.amount,
+          type: t.type,
+          category: t.category,
+          status: 'processed'
+        }))
       );
 
     if (error) {
-      console.error('Error saving bank transaction:', error);
+      console.error('Error saving bank transactions:', error);
       return false;
     }
 
+    console.log(`Successfully saved ${selectedTransactions.length} transactions to database`);
     return true;
   } catch (error) {
     console.error('Error saving expenses:', error);

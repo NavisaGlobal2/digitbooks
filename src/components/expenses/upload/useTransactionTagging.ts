@@ -8,21 +8,24 @@ export const useTransactionTagging = (initialTransactions: ParsedTransaction[]) 
   const [taggedTransactions, setTaggedTransactions] = useState<ParsedTransaction[]>([]);
   const [selectAll, setSelectAll] = useState(false);
 
-  // Effect to initialize transactions without automatically selecting them
+  // Effect to initialize transactions - auto-select debit transactions by default
   useEffect(() => {
     if (initialTransactions && initialTransactions.length > 0) {
       const updatedTransactions = initialTransactions.map(t => ({
         ...t,
-        selected: false, // Don't select any by default
+        // Auto-select debit transactions by default
+        selected: t.type === 'debit',
         id: t.id || `transaction-${Math.random().toString(36).substr(2, 9)}` // Ensure each transaction has an ID
       }));
       
       setTaggedTransactions(updatedTransactions);
-      setSelectAll(false); // Reset selectAll when new transactions are loaded
       
-      // Log counts for debugging
+      // Set selectAll based on if all debit transactions are selected
       const debitCount = updatedTransactions.filter(t => t.type === 'debit').length;
       const selectedCount = updatedTransactions.filter(t => t.selected).length;
+      setSelectAll(debitCount > 0 && selectedCount === debitCount);
+      
+      // Log counts for debugging
       console.log(`Initial transactions: ${updatedTransactions.length} total, ${debitCount} debits, ${selectedCount} selected`);
     }
   }, [initialTransactions]);
