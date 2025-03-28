@@ -17,6 +17,10 @@ export async function processWithAI(text: string, fileType: string): Promise<any
   console.log(`AI processing: using ${preferredProvider} as preferred provider`);
   console.log(`Available providers: ${hasAnthropic ? 'Anthropic' : ''}${hasDeepseek ? ', DeepSeek' : ''}`);
 
+  if (!hasAnthropic && !hasDeepseek) {
+    throw new Error("No AI providers are configured. Please configure at least one AI provider in the settings.");
+  }
+
   // Try with preferred provider first
   try {
     if (preferredProvider === "deepseek" && hasDeepseek) {

@@ -48,6 +48,10 @@ serve(async (req) => {
       try {
         // 2. Try to process with AI service
         transactions = await processWithAI(fileText, fileType);
+        
+        if (transactions.length === 0) {
+          throw new Error("No transactions were extracted by the AI service");
+        }
       } catch (aiError) {
         console.error("AI processing failed:", aiError);
         
@@ -66,7 +70,22 @@ serve(async (req) => {
             );
           }
         } else {
-          // For non-CSV files, we have to report the error since we have no fallback
+          // Check if the error is from Anthropic and DeepSeek is not configured
+          const isAnthropicError = aiError.message?.includes("Anthropic") || 
+                                   aiError.message?.includes("overloaded");
+          const isDeepSeekError = aiError.message?.includes("DeepSeek");
+          
+          // If both AI services failed, provide a detailed error
+          if (isAnthropicError && isDeepSeekError) {
+            return new Response(
+              JSON.stringify({ 
+                error: `Both AI services failed. Please try again later or use a CSV file which can be processed with the fallback parser. Original error: ${aiError.message}` 
+              }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 }
+            );
+          }
+          
+          // For non-CSV files with a single AI service failure
           return new Response(
             JSON.stringify({ 
               error: `AI processing failed: ${aiError.message}. Please try again later or use a CSV file.` 
