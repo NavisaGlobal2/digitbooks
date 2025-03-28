@@ -29,9 +29,9 @@ export const prepareExpensesFromTransactions = (
     category: transaction.category!,
     vendor: inferVendorFromDescription(transaction.description),
     status: "completed",
-    payment_method: "bank_transfer",
-    from_statement: true,
-    batch_id: batchId,
+    paymentMethod: "bank transfer", // Changed from payment_method to paymentMethod
+    fromStatement: true,
+    batchId: batchId,
     notes: `Imported from bank statement: ${sourceFileName}`,
   }));
 };
