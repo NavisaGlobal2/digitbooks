@@ -28,8 +28,8 @@ export const prepareExpensesFromTransactions = (
     description: transaction.description,
     category: transaction.category!,
     vendor: inferVendorFromDescription(transaction.description),
-    status: "completed",
-    paymentMethod: "bank transfer", // Changed from payment_method to paymentMethod
+    status: "pending", // Changed from "completed" to "pending" to match ExpenseStatus type
+    paymentMethod: "bank transfer",
     fromStatement: true,
     batchId: batchId,
     notes: `Imported from bank statement: ${sourceFileName}`,
