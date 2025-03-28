@@ -1,6 +1,6 @@
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ParsedTransaction } from "./upload/parsers/types";
+import { ParsedTransaction } from "./upload/parsers";
 import TaggingDialogHeader from "./upload/TaggingDialogHeader";
 import TransactionBulkActions from "./upload/TransactionBulkActions";
 import TransactionTable from "./upload/TransactionTable";
