@@ -10,23 +10,6 @@ import { RevenueProvider } from "@/contexts/RevenueContext";
 import { BudgetProvider } from "@/contexts/BudgetContext";
 import { LedgerProvider } from "@/contexts/LedgerContext";
 import { AuthProvider } from "@/contexts/auth";
-import Index from "./pages/Index";
-import Features from "./pages/Features";
-import Pricing from "./pages/Pricing";
-import About from "./pages/About";
-import Help from "./pages/Help";
-import Careers from "./pages/Careers";
-import NotFound from "./pages/NotFound";
-import ApplicationsAdmin from "./pages/ApplicationsAdmin";
-import Dashboard from "./pages/Dashboard";
-import Invoicing from "./pages/Invoicing";
-import Expenses from "./pages/Expenses";
-import Clients from "./pages/Clients";
-import Revenue from "./pages/Revenue";
-import Budget from "./pages/Budget";
-import Ledger from "./pages/Ledger";
-import FinancialReports from "./pages/FinancialReports";
-import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import Onboarding from "./Onboarding";
 import Agent from "./pages/Agent";
@@ -124,11 +107,21 @@ const App = () => (
                           </RequireAuth>
                         } />
                         
+                        {/* Vendors route */}
+                        <Route path="/vendors" element={
+                          <RequireAuth>
+                            <VendorsPage />
+                          </RequireAuth>
+                        }>
+                          <Route path=":vendorName" element={
+                            <RequireAuth>
+                              <VendorsPage />
+                            </RequireAuth>
+                          } />
+                        </Route>
+                        
                         {/* Fallback route */}
                         <Route path="*" element={<NotFound />} />
-                        <Route path="/vendors" element={<VendorsPage />}>
-                          <Route path=":vendorName" element={<VendorsPage />} />
-                        </Route>
                       </Routes>
                     </BrowserRouter>
                   </LedgerProvider>
