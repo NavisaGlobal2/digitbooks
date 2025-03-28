@@ -2,14 +2,58 @@
 /**
  * Process extracted text with DeepSeek API
  */
-export async function processWithDeepseek(text: string): Promise<any> {
+export async function processWithDeepseek(text: string, context?: string): Promise<any> {
   const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY");
   if (!DEEPSEEK_API_KEY) {
     throw new Error("DEEPSEEK_API_KEY is not configured. Please set up your DeepSeek API key in Supabase.");
   }
 
   console.log("Sending to DeepSeek for processing...");
+  console.log(`Processing context: ${context || 'general'}`);
   
+  // Adjust the system prompt based on the context (revenue or expense)
+  let systemPrompt = `You are a financial data extraction assistant. Your task is to parse bank statement data from various formats and output a clean JSON array of transactions.`;
+  
+  if (context === "revenue") {
+    systemPrompt += `
+    
+    For each transaction, extract:
+    - date (in YYYY-MM-DD format)
+    - description (the transaction narrative)
+    - amount (as a number, negative for debits/expenses, positive for credits/revenue)
+    - type ("debit" or "credit")
+    
+    Additionally, for credit (revenue) transactions, analyze the description to suggest a source from these categories:
+    - sales: Product or service sales revenue
+    - services: Service fees, consulting
+    - investments: Interest, dividends, capital gains
+    - grants: Grants or institutional funding
+    - donations: Charitable contributions
+    - royalties: Licensing fees, intellectual property income
+    - rental: Property or equipment rental income
+    - consulting: Professional services fees
+    - affiliate: Commission from partnerships
+    - other: Miscellaneous or unclassifiable income
+    
+    For each credit transaction, add a "sourceSuggestion" object containing:
+    - "source": the suggested revenue category (from the list above)
+    - "confidence": a number between 0 and 1 indicating your confidence level
+    
+    Focus only on credit (incoming money) transactions, which represent revenue. These have positive amounts.
+    
+    Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
+  } else {
+    systemPrompt += `
+    
+    For each transaction, extract:
+    - date (in YYYY-MM-DD format)
+    - description (the transaction narrative)
+    - amount (as a number, negative for debits/expenses)
+    - type ("debit" or "credit")
+    
+    Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
+  }
+
   try {
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
@@ -22,15 +66,7 @@ export async function processWithDeepseek(text: string): Promise<any> {
         messages: [
           {
             role: "system",
-            content: `You are a financial data extraction assistant. Your task is to parse bank statement data from various formats and output a clean JSON array of transactions.
-            
-            For each transaction, extract:
-            - date (in YYYY-MM-DD format)
-            - description (the transaction narrative)
-            - amount (as a number, negative for debits/expenses)
-            - type ("debit" or "credit")
-            
-            Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`
+            content: systemPrompt
           },
           {
             role: "user",

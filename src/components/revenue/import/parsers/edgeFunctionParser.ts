@@ -60,7 +60,8 @@ export const parseViaEdgeFunction = async (
         type: tx.type || (parseFloat(tx.amount) < 0 ? 'debit' : 'credit'),
         source: tx.source || null,
         selected: tx.type === 'credit', // Preselect credits (revenue)
-        batchId
+        batchId,
+        sourceSuggestion: tx.sourceSuggestion || null, // Include AI source suggestions
       }));
 
       console.log(`Parsed ${parsedTransactions.length} transactions with batch ID: ${batchId}`);
