@@ -7,12 +7,19 @@ import { v4 as uuidv4 } from "uuid";
 export const parseViaEdgeFunction = async (
   file: File,
   onSuccess: (transactions: ParsedTransaction[]) => void,
-  onError: (errorMessage: string) => boolean
+  onError: (errorMessage: string) => boolean,
+  preferredAIProvider?: string
 ): Promise<ParsedTransaction[]> => {
   try {
     // Create a form to send the file
     const formData = new FormData();
     formData.append("file", file);
+    
+    // Add preferred AI provider if specified
+    if (preferredAIProvider) {
+      formData.append("preferredProvider", preferredAIProvider);
+      console.log(`Sending preferred AI provider: ${preferredAIProvider}`);
+    }
 
     // We now use only the AI-powered parser for all file types
     const endpoint = 'parse-bank-statement-ai';
@@ -43,6 +50,16 @@ export const parseViaEdgeFunction = async (
         error.message.includes("rate limit")
       )) {
         const errorMsg = "Anthropic API issue: Either the service is overloaded, the key is not configured, invalid, or you've exceeded your rate limit. We'll attempt to use a simpler parser for CSV files.";
+        onError(errorMsg);
+        return [];
+      }
+      
+      // Check for DeepSeek API key error
+      if (error.message && (
+        error.message.includes("DEEPSEEK_API_KEY") ||
+        error.message.includes("DeepSeek API")
+      )) {
+        const errorMsg = "DeepSeek API issue: The API key is not configured correctly or is invalid. We'll attempt to use a simpler parser for CSV files.";
         onError(errorMsg);
         return [];
       }

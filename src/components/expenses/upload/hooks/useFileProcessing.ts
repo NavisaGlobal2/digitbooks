@@ -106,7 +106,8 @@ export const useFileProcessing = ({
           
           resetProgress();
           return true;
-        }
+        },
+        preferredAIProvider
       );
     } catch (error: any) {
       if (isCancelled) return;

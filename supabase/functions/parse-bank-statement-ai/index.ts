@@ -16,6 +16,14 @@ serve(async (req) => {
     const formData = await req.formData();
     const file = formData.get("file");
     
+    // Get the preferred AI provider from the request, if provided
+    const preferredProvider = formData.get("preferredProvider")?.toString() || null;
+    if (preferredProvider) {
+      // Set the preferred provider in the environment for this request
+      Deno.env.set("PREFERRED_AI_PROVIDER", preferredProvider);
+      console.log(`Setting preferred AI provider to: ${preferredProvider}`);
+    }
+    
     if (!file || !(file instanceof File)) {
       return new Response(
         JSON.stringify({ error: "No file uploaded" }),
