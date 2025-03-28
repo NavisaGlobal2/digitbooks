@@ -53,8 +53,8 @@ export const useFinancialReports = () => {
   // Generate date range based on filter type
   const getDateRange = (filter: ReportFilters): { start: Date; end: Date } => {
     const now = new Date();
-    const end = new Date();
     let start = new Date();
+    let end = new Date();
 
     if (filter.dateRange === "custom" && filter.startDate && filter.endDate) {
       return { start: filter.startDate, end: filter.endDate };
@@ -63,26 +63,28 @@ export const useFinancialReports = () => {
     switch (filter.dateRange) {
       case "current-month":
         start = new Date(now.getFullYear(), now.getMonth(), 1);
-        end.setHours(23, 59, 59, 999);
+        // No need to modify end here, it's already set to now
         break;
       case "last-month":
         start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         end = new Date(now.getFullYear(), now.getMonth(), 0);
-        end.setHours(23, 59, 59, 999);
         break;
       case "quarter":
         const quarter = Math.floor(now.getMonth() / 3);
         start = new Date(now.getFullYear(), quarter * 3, 1);
-        end.setHours(23, 59, 59, 999);
+        // No need to modify end here, it's already set to now
         break;
       case "year":
         start = new Date(now.getFullYear(), 0, 1);
-        end.setHours(23, 59, 59, 999);
+        // No need to modify end here, it's already set to now
         break;
       default:
         start = new Date(now.getFullYear(), now.getMonth(), 1);
-        end.setHours(23, 59, 59, 999);
+        // No need to modify end here, it's already set to now
     }
+
+    // Set end time to the end of the day
+    end.setHours(23, 59, 59, 999);
 
     return { start, end };
   };
