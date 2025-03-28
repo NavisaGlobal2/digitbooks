@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import { ExpenseCategory } from "@/types/expense";
 import { getCategoryLabel } from "@/utils/expenseCategories";
+import { useNavigate } from "react-router-dom";
 
 interface ExpenseBreakdownChartProps {
   data: { category: ExpenseCategory; amount: number; percentage: string }[];
@@ -12,11 +13,20 @@ interface ExpenseBreakdownChartProps {
 const COLORS = ["#10B981", "#F87171", "#1E293B", "#93C5FD", "#9CA3AF"];
 
 const ExpenseBreakdownChart = ({ data }: ExpenseBreakdownChartProps) => {
+  const navigate = useNavigate();
+  
+  const handleSeeBreakdown = () => {
+    navigate('/expenses?tab=breakdown');
+  };
+
   return (
     <Card className="p-4 h-[350px]">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-lg font-semibold">Expense Breakdown</h2>
-        <button className="text-green-500 text-sm font-medium flex items-center">
+        <button 
+          onClick={handleSeeBreakdown}
+          className="text-green-500 text-sm font-medium flex items-center hover:text-green-600 transition-colors"
+        >
           See breakdown
           <ArrowRight className="h-4 w-4 ml-1" />
         </button>
