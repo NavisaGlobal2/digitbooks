@@ -26,28 +26,34 @@ const FinancialReportChart = ({ data }: FinancialReportChartProps) => {
         <CardTitle className="text-lg font-medium">Financial Overview</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-80 w-full">
+        <div className="h-[250px] sm:h-80 w-full overflow-hidden">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
               margin={{
                 top: 5,
-                right: 30,
-                left: 20,
+                right: 10,
+                left: 0,
                 bottom: 5,
               }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
+              <XAxis 
+                dataKey="month" 
+                tick={{ fontSize: 10 }}
+                tickMargin={5}
+              />
               <YAxis 
                 tickFormatter={(value) => {
                   if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
                   if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
                   return value;
                 }}
+                tick={{ fontSize: 10 }}
+                width={40}
               />
               <Tooltip formatter={formatTooltipValue} />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
               <Bar dataKey="revenue" name="Revenue" fill="#10B981" />
               <Bar dataKey="expenses" name="Expenses" fill="#F87171" />
               <Bar dataKey="profit" name="Net Profit" fill="#8B5CF6" />

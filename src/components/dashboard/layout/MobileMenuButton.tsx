@@ -12,7 +12,7 @@ const MobileMenuButton = ({ onClick }: MobileMenuButtonProps) => {
     <Button
       variant="ghost"
       size="icon"
-      className="md:hidden absolute left-4 top-1/2 transform -translate-y-1/2 rounded-full"
+      className="md:hidden absolute left-2 top-1/2 transform -translate-y-1/2 rounded-full"
       onClick={onClick}
       aria-label="Open mobile menu"
     >

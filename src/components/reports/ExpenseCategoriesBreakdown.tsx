@@ -35,7 +35,7 @@ const ExpenseCategoriesBreakdown = ({ data }: ExpenseCategoriesBreakdownProps) =
                   cy="50%"
                   labelLine={false}
                   outerRadius={80}
-                  innerRadius={50}
+                  innerRadius={40}
                   dataKey="amount"
                   nameKey="category"
                 >
@@ -44,38 +44,40 @@ const ExpenseCategoriesBreakdown = ({ data }: ExpenseCategoriesBreakdownProps) =
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => formatNaira(value as number)} />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
           
-          <div className="w-full md:w-1/2">
-            <table className="w-full">
-              <thead>
-                <tr>
-                  <th className="text-left text-sm font-medium text-muted-foreground">Category</th>
-                  <th className="text-right text-sm font-medium text-muted-foreground">Amount</th>
-                  <th className="text-right text-sm font-medium text-muted-foreground">%</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedData.map((item, index) => (
-                  <tr key={index} className="border-b last:border-b-0 border-gray-100">
-                    <td className="py-2">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="h-3 w-3 rounded-full"
-                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                        ></div>
-                        <span>{formatCategoryName(item.category)}</span>
-                      </div>
-                    </td>
-                    <td className="py-2 text-right">{formatNaira(item.amount)}</td>
-                    <td className="py-2 text-right">{item.percentage.toFixed(1)}%</td>
+          <div className="w-full md:w-1/2 overflow-x-auto">
+            <div className="min-w-[300px]">
+              <table className="w-full">
+                <thead>
+                  <tr>
+                    <th className="text-left text-xs sm:text-sm font-medium text-muted-foreground">Category</th>
+                    <th className="text-right text-xs sm:text-sm font-medium text-muted-foreground">Amount</th>
+                    <th className="text-right text-xs sm:text-sm font-medium text-muted-foreground">%</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {sortedData.map((item, index) => (
+                    <tr key={index} className="border-b last:border-b-0 border-gray-100">
+                      <td className="py-1 sm:py-2">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="h-3 w-3 rounded-full"
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          ></div>
+                          <span className="text-xs sm:text-sm">{formatCategoryName(item.category)}</span>
+                        </div>
+                      </td>
+                      <td className="py-1 sm:py-2 text-right text-xs sm:text-sm">{formatNaira(item.amount)}</td>
+                      <td className="py-1 sm:py-2 text-right text-xs sm:text-sm">{item.percentage.toFixed(1)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </CardContent>

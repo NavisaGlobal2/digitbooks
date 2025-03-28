@@ -8,6 +8,7 @@ import { GenerateReportDialog } from "@/components/reports/GenerateReportDialog"
 import { ReportCard } from "@/components/reports/ReportCard";
 import { toast } from "sonner";
 import MobileSidebar from "../dashboard/layout/MobileSidebar";
+import MobileMenuButton from "../dashboard/layout/MobileMenuButton";
 
 const FinancialReports = () => {
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
@@ -50,6 +51,7 @@ const FinancialReports = () => {
             <button
               className="md:hidden text-muted-foreground p-1"
               onClick={() => setIsMobileSidebarOpen(true)}
+              aria-label="Open menu"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
