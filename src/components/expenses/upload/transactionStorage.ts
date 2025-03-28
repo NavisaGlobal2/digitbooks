@@ -23,7 +23,7 @@ export const prepareExpensesFromTransactions = (
 
   return selectedAndTagged.map((transaction) => ({
     id: uuidv4(), // Generate a new ID for each expense
-    amount: transaction.amount,
+    amount: Math.abs(transaction.amount), // Ensure amount is positive
     date: new Date(transaction.date),
     description: transaction.description,
     category: transaction.category!,

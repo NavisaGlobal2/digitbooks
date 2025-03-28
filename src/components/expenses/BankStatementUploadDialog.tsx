@@ -33,7 +33,14 @@ const BankStatementUploadDialog = ({
   
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
     console.log(`Received ${transactions.length} parsed transactions`);
-    setParsedTransactions(transactions);
+    
+    // Pre-select all debit transactions by default
+    const preSelectedTransactions = transactions.map(tx => ({
+      ...tx,
+      selected: tx.type === 'debit' // Automatically select debit transactions
+    }));
+    
+    setParsedTransactions(preSelectedTransactions);
     setProcessingComplete(true);
     setShowTaggingDialog(true);
   };
@@ -47,6 +54,7 @@ const BankStatementUploadDialog = ({
     clearFile,
     progress,
     step,
+    isWaitingForServer,
     cancelProgress,
     isAuthenticated,
     preferredAIProvider,
@@ -82,14 +90,14 @@ const BankStatementUploadDialog = ({
       );
       
       if (expensesToSave.length === 0) {
-        toast.warning("No expenses to save. Please tag at least one transaction.");
+        toast.warning("No expenses to save. Please tag at least one transaction as an expense category.");
         return;
       }
       
       console.log(`Saving ${expensesToSave.length} expenses to the expense tracker`);
       
       // Save the expenses
-      addExpenses(expensesToSave);
+      await addExpenses(expensesToSave);
       
       toast.success(`${expensesToSave.length} expenses imported successfully!`);
       

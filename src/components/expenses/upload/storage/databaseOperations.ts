@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "../parsers/types";
 import { v4 as uuidv4 } from "uuid";
+import { toast } from "sonner";
 
 /**
  * Save bank statement transactions to the database
@@ -19,9 +20,10 @@ export const saveTransactionsToDatabase = async (
     console.log(`Saving ${transactions.length} transactions to database with batch ID: ${batchId}`);
 
     // Get current user
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData?.user) {
-      console.error('User not authenticated');
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) {
+      console.error('User not authenticated:', userError?.message || 'No user found');
+      toast.error('Authentication error. Please sign in again.');
       return false;
     }
 
@@ -40,7 +42,7 @@ export const saveTransactionsToDatabase = async (
     }
 
     // Insert transactions into uploaded_bank_lines table
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('uploaded_bank_lines')
       .insert(
         selectedTransactions.map(t => ({
@@ -57,13 +59,15 @@ export const saveTransactionsToDatabase = async (
 
     if (error) {
       console.error('Error saving bank transactions:', error);
+      toast.error('Failed to save transactions to database');
       return false;
     }
 
     console.log(`Successfully saved ${selectedTransactions.length} transactions to database`);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving expenses:', error);
+    toast.error(`Database error: ${error.message || 'Unknown error'}`);
     return false;
   }
 };

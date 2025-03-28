@@ -72,7 +72,8 @@ const UploadDialogContent = ({
           <ProgressIndicator 
             progress={progress} 
             step={step} 
-            isVisible={true} 
+            isVisible={true}
+            onCancel={onClose}
           />
         ) : (
           <>
