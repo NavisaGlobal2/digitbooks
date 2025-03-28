@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { useVendors } from "@/contexts/VendorContext";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import VendorsTable from "./VendorsTable";
 import VendorDetailView from "./VendorDetailView";
 import VendorsEmptyState from "./VendorsEmptyState";
+import { useLocation } from "react-router-dom";
 
 interface VendorsContentProps {
   onAddVendor: () => void;
@@ -17,6 +18,21 @@ const VendorsContent = ({ onAddVendor }: VendorsContentProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTab, setSelectedTab] = useState("all");
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
+  const location = useLocation();
+  
+  // Check if we have a vendor filter from navigation
+  useEffect(() => {
+    const state = location.state as { vendorFilter?: string } | undefined;
+    if (state?.vendorFilter) {
+      // Find vendor by name
+      const vendor = vendors.find(v => 
+        v.name.toLowerCase() === state.vendorFilter?.toLowerCase()
+      );
+      if (vendor) {
+        setSelectedVendorId(vendor.id);
+      }
+    }
+  }, [location.state, vendors]);
   
   const filteredVendors = vendors.filter(vendor => 
     vendor.name.toLowerCase().includes(searchQuery.toLowerCase())

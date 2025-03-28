@@ -1,11 +1,15 @@
 
 import { useState } from "react";
 import { useVendors } from "@/contexts/VendorContext";
-import { ArrowLeft, Building, Mail, Phone, Globe, Calendar, PieChart, MapPin, User, FileText } from "lucide-react";
+import { useExpenses } from "@/contexts/ExpenseContext";
+import { ArrowLeft, Building, Mail, Phone, Globe, Calendar, PieChart, MapPin, User, FileText, Edit, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatNaira } from "@/utils/invoice/formatters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import EditVendorDialog from "./EditVendorDialog";
+import DeleteVendorDialog from "./DeleteVendorDialog";
 
 interface VendorDetailViewProps {
   vendorId: string;
@@ -14,9 +18,17 @@ interface VendorDetailViewProps {
 
 const VendorDetailView = ({ vendorId, onBack }: VendorDetailViewProps) => {
   const { getVendorById } = useVendors();
+  const { expenses } = useExpenses();
   const [activeTab, setActiveTab] = useState("overview");
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const vendor = getVendorById(vendorId);
+  
+  // Get vendor-related expenses
+  const vendorExpenses = expenses.filter(
+    expense => expense.vendor.toLowerCase() === (vendor?.name.toLowerCase() || '')
+  );
   
   if (!vendor) {
     return (
@@ -45,10 +57,21 @@ const VendorDetailView = ({ vendorId, onBack }: VendorDetailViewProps) => {
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowEditDialog(true)}
+          >
+            <Edit className="h-4 w-4 mr-2" />
             Edit Vendor
           </Button>
-          <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 border-red-200 hover:bg-red-50">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-red-500 hover:text-red-600 border-red-200 hover:bg-red-50"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            <Trash className="h-4 w-4 mr-2" />
             Delete
           </Button>
         </div>
@@ -190,7 +213,10 @@ const VendorDetailView = ({ vendorId, onBack }: VendorDetailViewProps) => {
               <CardTitle className="text-lg">Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500">Vendor activity summary will be displayed here.</p>
+              <p className="text-gray-500">
+                {vendor.name} has been involved in {vendorExpenses.length} transactions 
+                totaling {formatNaira(vendor.totalSpent)}.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -201,7 +227,36 @@ const VendorDetailView = ({ vendorId, onBack }: VendorDetailViewProps) => {
               <CardTitle className="text-lg">Transactions</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500">Transactions with this vendor will be displayed here.</p>
+              {vendorExpenses.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {vendorExpenses.map((expense) => (
+                      <TableRow key={expense.id}>
+                        <TableCell>
+                          {expense.date instanceof Date 
+                            ? expense.date.toLocaleDateString() 
+                            : new Date(expense.date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>{expense.description}</TableCell>
+                        <TableCell>{expense.category}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatNaira(expense.amount)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-gray-500">No transactions with this vendor yet.</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -212,11 +267,28 @@ const VendorDetailView = ({ vendorId, onBack }: VendorDetailViewProps) => {
               <CardTitle className="text-lg">Documents</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500">Documents related to this vendor will be displayed here.</p>
+              <p className="text-gray-500">No documents available for this vendor.</p>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {/* Edit Vendor Dialog */}
+      {vendor && (
+        <EditVendorDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          vendor={vendor}
+        />
+      )}
+      
+      {/* Delete Vendor Dialog */}
+      <DeleteVendorDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        vendorId={vendor.id}
+        vendorName={vendor.name}
+      />
     </div>
   );
 };

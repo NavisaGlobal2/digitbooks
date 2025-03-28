@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Expense } from "@/types/expense";
 import { formatNaira } from "@/utils/invoice/formatters";
+import { useNavigate } from "react-router-dom";
 
 interface VendorSectionProps {
   vendors: string[];
@@ -13,6 +14,7 @@ interface VendorSectionProps {
 
 const VendorsSection = ({ vendors, expenses }: VendorSectionProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
   
   // Filter vendors based on search query
   const filteredVendors = vendors.filter(vendor => 
@@ -25,6 +27,11 @@ const VendorsSection = ({ vendors, expenses }: VendorSectionProps) => {
     const totalSpent = vendorExpenses.reduce((sum, e) => sum + e.amount, 0);
     return { ...acc, [vendor]: totalSpent };
   }, {} as Record<string, number>);
+
+  // Navigate to vendors page with filter for specific vendor
+  const handleViewTransactions = (vendorName: string) => {
+    navigate("/vendors", { state: { vendorFilter: vendorName } });
+  };
 
   return (
     <div className="space-y-6">
@@ -70,7 +77,10 @@ const VendorsSection = ({ vendors, expenses }: VendorSectionProps) => {
                     <span>Email not available</span>
                   </div>
                   <div className="mt-4">
-                    <button className="text-sm text-green-500 font-medium">
+                    <button 
+                      className="text-sm text-green-500 font-medium"
+                      onClick={() => handleViewTransactions(vendor)}
+                    >
                       View transactions
                     </button>
                   </div>
