@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,25 @@ import { RevenueProvider } from "@/contexts/RevenueContext";
 import { BudgetProvider } from "@/contexts/BudgetContext";
 import { LedgerProvider } from "@/contexts/LedgerContext";
 import { AuthProvider } from "@/contexts/auth";
+
+// Import all the page components
+import Index from "./pages/Index";
+import Features from "./pages/Features";
+import Pricing from "./pages/Pricing";
+import About from "./pages/About";
+import Help from "./pages/Help";
+import Careers from "./pages/Careers";
+import Dashboard from "./pages/Dashboard";
+import Invoicing from "./pages/Invoicing";
+import Expenses from "./pages/Expenses";
+import Revenue from "./pages/Revenue";
+import Clients from "./pages/Clients";
+import Budget from "./pages/Budget";
+import Ledger from "./pages/Ledger";
+import FinancialReports from "./pages/FinancialReports";
+import Settings from "./pages/Settings";
+import ApplicationsAdmin from "./pages/ApplicationsAdmin";
+import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Onboarding from "./Onboarding";
 import Agent from "./pages/Agent";

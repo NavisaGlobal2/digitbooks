@@ -65,14 +65,14 @@ const VendorsContent = ({ onAddVendor }: VendorsContentProps) => {
   return (
     <VendorsTable
       vendors={filteredVendors}
-      onSearch={setSearchQuery}
-      searchQuery={searchQuery}
       onViewVendor={(vendorId) => {
         const vendor = vendors.find(v => v.id === vendorId);
         if (vendor) {
           setSelectedVendor(vendor.name);
         }
       }}
+      searchQuery={searchQuery}
+      onSearch={setSearchQuery}
     />
   );
 };
