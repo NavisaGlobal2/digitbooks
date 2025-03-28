@@ -4,7 +4,7 @@ import { Plus, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { RecurringTransaction } from "@/types/recurringTransaction";
+import { RecurringTransaction, TransactionFrequency } from "@/types/recurringTransaction";
 import BillsSearchBar from "./bills/BillsSearchBar";
 import BillCard from "./bills/BillCard";
 import EmptyBillsState from "./bills/EmptyBillsState";
@@ -24,7 +24,7 @@ interface Bill {
   category: string;
   icon: any;
   daysLeft: number;
-  frequency: string;
+  frequency: TransactionFrequency;
 }
 
 const BillsSection = () => {
@@ -32,7 +32,7 @@ const BillsSection = () => {
   const [showAllBills, setShowAllBills] = useState(false);
   const [showAddBillDialog, setShowAddBillDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [selectedBill, setSelectedBill] = useState<{id: string, title: string, amount: number, frequency: any} | null>(null);
+  const [selectedBill, setSelectedBill] = useState<{id: string, title: string, amount: number, frequency: TransactionFrequency} | null>(null);
   const [bills, setBills] = useState<Bill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -65,7 +65,7 @@ const BillsSection = () => {
             category: categoryName,
             icon: getCategoryIcon(categoryName),
             daysLeft: daysLeft,
-            frequency: transaction.frequency
+            frequency: transaction.frequency as TransactionFrequency
           };
         });
         setBills(formattedBills);
@@ -98,7 +98,7 @@ const BillsSection = () => {
     fetchBills();
   };
 
-  const handlePayBill = (billId: string, billTitle: string, amount: number, frequency: any) => {
+  const handlePayBill = (billId: string, billTitle: string, amount: number, frequency: TransactionFrequency) => {
     setSelectedBill({
       id: billId,
       title: billTitle,

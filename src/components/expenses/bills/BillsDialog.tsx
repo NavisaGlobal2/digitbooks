@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -14,14 +13,14 @@ interface Bill {
   category: string;
   icon: LucideIcon;
   daysLeft: number;
-  frequency: string;
+  frequency: TransactionFrequency;
 }
 
 interface BillsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bills: Bill[];
-  onPayBill: (billId: string, billTitle: string, amount: number, frequency: any) => void;
+  onPayBill: (billId: string, billTitle: string, amount: number, frequency: TransactionFrequency) => void;
 }
 
 const BillsDialog = ({ open, onOpenChange, bills, onPayBill }: BillsDialogProps) => {
