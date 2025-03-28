@@ -52,9 +52,13 @@ const TransactionTable = ({
               <TableCell>
                 <Checkbox
                   checked={transaction.selected}
-                  onCheckedChange={(checked) => 
-                    onSelectTransaction(transaction.id, checked as boolean)
-                  }
+                  onCheckedChange={(checked) => {
+                    // Ensure we're passing a boolean value
+                    onSelectTransaction(
+                      transaction.id, 
+                      checked === true || checked === "indeterminate"
+                    );
+                  }}
                   disabled={transaction.type === 'credit'} // Can't select credit transactions
                   className="cursor-pointer"
                   aria-label={`Select transaction ${transaction.description}`}

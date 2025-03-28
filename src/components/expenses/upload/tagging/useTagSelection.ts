@@ -35,9 +35,21 @@ export const useTagSelection = (initialTransactions: ParsedTransaction[]) => {
   };
 
   const handleSelectTransaction = (id: string, checked: boolean) => {
+    // This is the key fix - we need to only update the selected transaction by ID
     setTaggedTransactions(taggedTransactions.map(t => 
       t.id === id ? { ...t, selected: checked } : t
     ));
+    
+    // Update selectAll state based on whether all debit transactions are selected
+    const updatedTransactions = taggedTransactions.map(t => 
+      t.id === id ? { ...t, selected: checked } : t
+    );
+    
+    const allDebitsSelected = updatedTransactions
+      .filter(t => t.type === 'debit')
+      .every(t => t.selected);
+      
+    setSelectAll(allDebitsSelected);
   };
 
   return {
