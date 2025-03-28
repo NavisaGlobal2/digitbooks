@@ -56,6 +56,8 @@ const TransactionTable = ({
                     onSelectTransaction(transaction.id, checked as boolean)
                   }
                   disabled={transaction.type === 'credit'} // Can't select credit transactions
+                  className="cursor-pointer"
+                  aria-label={`Select transaction ${transaction.description}`}
                 />
               </TableCell>
               <TableCell className="font-mono text-xs">
