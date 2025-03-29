@@ -26,7 +26,7 @@ const BillsSection = () => {
         </Button>
       </CardHeader>
       <CardContent className="px-4 md:px-6 pb-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {bills.map((bill, index) => (
             <Card key={index} className="p-4 border border-border hover:border-primary/20 transition-all">
               <div className="flex flex-col items-center text-center">
