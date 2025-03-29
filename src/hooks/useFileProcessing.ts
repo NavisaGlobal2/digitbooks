@@ -98,6 +98,16 @@ export const useFileProcessing = () => {
       const provider = preferredProvider || preferredAIProvider;
       console.log(`Processing with preferred AI provider: ${provider}`);
       
+      // Create options object with preferredProvider
+      const options = {
+        preferredProvider: provider
+      };
+      
+      // For PDFs, ensure Vision API is used by default
+      if (file.name.toLowerCase().endsWith('.pdf')) {
+        options.useVision = true;
+      }
+      
       // Now process with edge function
       const { parseViaEdgeFunction } = await import("../components/expenses/upload/parsers/edge-function");
       
@@ -161,7 +171,7 @@ export const useFileProcessing = () => {
           
           return onError(errorMessage);
         },
-        provider
+        options
       );
     } catch (error: any) {
       if (isCancelled) return;
