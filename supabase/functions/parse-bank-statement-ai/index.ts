@@ -58,9 +58,9 @@ serve(async (req) => {
     if (contentType.includes('application/json')) {
       bodyData = await req.json();
       
-      // Handle job-based processing
-      if (bodyData.job_id) {
-        return await processJobBasedRequest(bodyData, user.id, supabase, corsHeaders);
+      // Handle file path based processing
+      if (bodyData.filePath) {
+        return await processFileFromStorage(bodyData, user.id, supabase, corsHeaders);
       }
     } else if (contentType.includes('multipart/form-data')) {
       return await processFormDataRequest(req, user.id, supabase, corsHeaders);
@@ -80,45 +80,30 @@ serve(async (req) => {
   }
 });
 
-async function processJobBasedRequest(bodyData: any, userId: string, supabase: any, corsHeaders: any) {
+async function processFileFromStorage(bodyData: any, userId: string, supabase: any, corsHeaders: any) {
   try {
-    const { job_id, context = 'general' } = bodyData;
-    
-    // Get the job record
-    const { data: job, error: jobError } = await supabase
-      .from('revenue_import_jobs')
-      .select('*')
-      .eq('id', job_id)
-      .eq('user_id', userId)
-      .single();
-      
-    if (jobError || !job) {
-      return new Response(JSON.stringify({ error: 'Job not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    const { filePath, fileName, context = 'general', jobId } = bodyData;
     
     // Get the file from storage
     const { data: fileData, error: fileError } = await supabase.storage
       .from('revenue_imports')
-      .download(job.file_path);
+      .download(filePath);
       
     if (fileError || !fileData) {
-      return new Response(JSON.stringify({ error: 'File not found' }), {
+      return new Response(JSON.stringify({ error: 'File not found in storage' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
     
     // Extract text from file
-    const fileExt = job.file_name.split('.').pop()?.toLowerCase();
+    const fileExt = fileName.split('.').pop()?.toLowerCase();
     const isPdf = fileExt === 'pdf';
     
     // Process the file based on context
     let transactions = [];
     const fileBlob = new Blob([fileData]);
-    const file = new File([fileBlob], job.file_name, { type: isPdf ? 'application/pdf' : 'text/csv' });
+    const file = new File([fileBlob], fileName, { type: isPdf ? 'application/pdf' : 'text/csv' });
     
     // Extract text from the file
     const extractedText = await extractTextFromFile(file);
@@ -143,27 +128,17 @@ async function processJobBasedRequest(bodyData: any, userId: string, supabase: a
       }
     }
     
-    // Update job with processed data
-    await supabase
-      .from('revenue_import_jobs')
-      .update({
-        status: 'processed',
-        extracted_data: transactions,
-        completed_at: new Date().toISOString()
-      })
-      .eq('id', job_id);
-    
     return new Response(JSON.stringify({ 
       success: true,
       transactions,
-      batchId: job_id
+      batchId: jobId
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    console.error('Error processing job request:', error);
-    return new Response(JSON.stringify({ error: error.message || 'Failed to process job' }), {
+    console.error('Error processing file from storage:', error);
+    return new Response(JSON.stringify({ error: error.message || 'Failed to process file' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

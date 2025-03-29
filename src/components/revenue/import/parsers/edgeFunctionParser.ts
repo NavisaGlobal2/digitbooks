@@ -44,29 +44,17 @@ export const parseViaEdgeFunction = async (
         return [];
       }
       
-      // Create a job record
-      const { data: jobData, error: jobError } = await supabase
-        .from('revenue_import_jobs')
-        .insert({
-          user_id: authData.session.user.id,
-          file_path: filePath,
-          file_name: fileName,
-          status: 'pending'
-        })
-        .select('id')
-        .single();
-      
-      if (jobError) {
-        console.error("Job creation error:", jobError);
-        onError(`Database error: ${jobError.message}`);
-        return [];
-      }
+      // Generate a job tracking ID
+      const jobId = uuidv4();
+      const batchId = jobId;
 
       // Call the serverless function with error handling
       const { data, error } = await supabase.functions.invoke(endpoint, {
         body: {
-          job_id: jobData.id,
-          context
+          filePath,
+          fileName,
+          context,
+          jobId
         },
       });
 
@@ -77,25 +65,12 @@ export const parseViaEdgeFunction = async (
       }
 
       if (!data || !data.transactions || !Array.isArray(data.transactions)) {
-        // Update job status
-        await supabase
-          .from('revenue_import_jobs')
-          .update({
-            status: 'failed',
-            error: 'Invalid response from server',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', jobData.id);
-            
         onError("Invalid response from server. No transactions found in the response.");
         return [];
       }
 
       console.log(`Raw transaction data from server:`, data.transactions);
       console.log(`Transaction count from server: ${data.transactions.length}`);
-
-      // Generate a batch ID as a proper UUID to avoid database errors
-      const batchId = data.batchId || jobData.id;
 
       // Map the server response to our ParsedTransaction type
       const parsedTransactions: ParsedTransaction[] = data.transactions.map((tx: any) => ({
@@ -116,17 +91,6 @@ export const parseViaEdgeFunction = async (
       const filteredTransactions = context === 'revenue' 
         ? parsedTransactions.filter(tx => tx.type === 'credit')
         : parsedTransactions.filter(tx => tx.type === 'debit');
-      
-      // Update job status and data
-      await supabase
-        .from('revenue_import_jobs')
-        .update({
-          status: 'completed',
-          extracted_data: data.transactions,
-          completed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', jobData.id);
       
       if (filteredTransactions.length === 0) {
         onError(`No ${context} transactions found in the statement.`);
