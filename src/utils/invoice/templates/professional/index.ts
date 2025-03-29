@@ -28,6 +28,8 @@ export const renderProfessionalTemplate = (doc: jsPDF, props: InvoiceTemplatePro
     accountNumber,
     accountName,
     clientName,
+    clientEmail,
+    clientAddress,
     invoiceNumber,
     subtotal,
     tax,
@@ -48,7 +50,7 @@ export const renderProfessionalTemplate = (doc: jsPDF, props: InvoiceTemplatePro
   let yPos = 50;
   
   // Billing and date information with two-column layout
-  yPos = renderBillingInfo(doc, clientName, invoiceDate, dueDate, yPos, config, pageWidth);
+  yPos = renderBillingInfo(doc, clientName, clientEmail, clientAddress, invoiceDate, dueDate, yPos, config, pageWidth);
   
   // Invoice items table
   yPos = renderItemsTable(doc, invoiceItems, yPos + 10, config.margins);
