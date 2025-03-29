@@ -2,7 +2,7 @@
 /**
  * Extract text from various file types
  */
-export async function extractTextFromFile(file: File): Promise<string> {
+export async function extractTextFromFile(file: File, options: any = {}): Promise<string> {
   const fileType = file.name.split('.').pop()?.toLowerCase();
   
   if (fileType === 'pdf') {
@@ -10,14 +10,20 @@ export async function extractTextFromFile(file: File): Promise<string> {
       // For PDFs, create a more detailed instruction set for the AI that emphasizes real data extraction
       const fileName = file.name;
       const fileSize = Math.round(file.size / 1024) + ' KB';
+      const useGoogleVision = options?.useVision !== false;
+      const forceRealData = options?.forceRealData === true;
       
-      // First try to extract real data using Google Vision API
-      try {
-        const pdfText = await extractTextWithGoogleVision(file);
-        
-        if (pdfText && pdfText.length > 100) {
-          console.log('Successfully extracted text from PDF with Google Vision API');
-          return `[PDF BANK STATEMENT EXTRACTED WITH GOOGLE VISION API: ${fileName} (${fileSize})]
+      console.log(`Processing file: ${fileName}, size: ${fileSize}, type: application/pdf, isRealData: ${forceRealData}, useGoogleVision: ${useGoogleVision}`);
+      
+      // First try to extract real data using Google Vision API if enabled
+      if (useGoogleVision) {
+        try {
+          const pdfText = await extractTextWithGoogleVision(file);
+          
+          if (pdfText && pdfText.length > 100) {
+            console.log('Successfully extracted text from PDF with Google Vision API');
+            
+            return `[PDF BANK STATEMENT EXTRACTED WITH GOOGLE VISION API: ${fileName} (${fileSize})]
 
 ACTUAL STATEMENT TEXT FOLLOWS:
 ${pdfText}
@@ -28,13 +34,22 @@ CRITICAL INSTRUCTION FOR AI: This is REAL text extracted from an ACTUAL bank sta
 3. For amounts, preserve negative values for debits and positive values for credits
 4. Return ONLY genuine transactions found in this text, NEVER invent data
 5. If you can't clearly identify transactions, return an empty array
-6. The user's financial decisions depend on this data being accurate`;
+6. The user's financial decisions depend on this data being accurate
+7. DO NOT generate fictional or placeholder transactions under ANY circumstances`;
+          }
+        } catch (visionError) {
+          console.error("Google Vision extraction failed, falling back to AI prompt:", visionError);
         }
-      } catch (visionError) {
-        console.error("Google Vision extraction failed, falling back to AI prompt:", visionError);
       }
       
-      // Fallback to the original method if Google Vision fails
+      // Fallback to the original method if Google Vision fails or is disabled
+      const realDataEmphasis = forceRealData ? `
+
+CRITICAL NOTICE: YOU MUST ONLY EXTRACT REAL TRANSACTIONS FROM THE DOCUMENT.
+NEVER GENERATE FICTIONAL TRANSACTIONS, EVEN IF YOU CANNOT CLEARLY IDENTIFY ANY.
+RETURNING AN EMPTY ARRAY IS BETTER THAN GENERATING FICTIONAL DATA.
+THE USER RELIES ON THIS DATA FOR FINANCIAL DECISIONS - ACCURACY IS CRITICAL.` : '';
+
       return `[PDF BANK STATEMENT: ${fileName} (${fileSize})]
 
 CRITICAL INSTRUCTION FOR AI: You are extracting REAL financial data from an ACTUAL bank statement PDF.
@@ -45,7 +60,7 @@ CRITICAL INSTRUCTION FOR AI: You are extracting REAL financial data from an ACTU
 5. When extracting, look for patterns like dates, descriptions, and amounts that represent real transactions
 6. Format dates as YYYY-MM-DD, preserve complete descriptions, and represent amounts as numbers
 7. Mark negative values as debits and positive values as credits
-8. The user's financial decisions depend on this data being accurate
+8. The user's financial decisions depend on this data being accurate${realDataEmphasis}
 
 RESPOND ONLY with a valid JSON array of real transactions extracted from the statement.`;
     } catch (error) {

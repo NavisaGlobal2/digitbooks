@@ -19,10 +19,10 @@ export const parseViaEdgeFunction = async (
   file: File,
   onSuccess: (transactions: ParsedTransaction[]) => void,
   onError: (errorMessage: string) => boolean,
-  preferredProvider: string = "anthropic"
+  options: any = {}
 ): Promise<boolean> => {
   try {
-    console.log(`Parsing file via edge function: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
+    console.log(`Parsing file via edge function: ${file.name}, size: ${file.size} bytes, type: ${file.type}`, options);
     
     // Get auth token
     const { token, error: authError } = await getAuthToken();
@@ -32,23 +32,30 @@ export const parseViaEdgeFunction = async (
       return onError(authError || "Authentication error occurred");
     }
     
-    // Create FormData with file and provider preference
+    // Create FormData with file and options
     const formData = new FormData();
     formData.append("file", file);
     
-    // For PDF files, add a special flag to help with processing
+    // For PDF files, add special flags to help with processing
     const isPdf = file.name.toLowerCase().endsWith('.pdf');
     
     if (isPdf) {
       formData.append("fileType", "pdf");
       console.log("PDF file detected. Adding special handling flags.");
-      // Add a special flag to ensure we're getting real data
+      
+      // Add special flags to ensure we're getting real data
       formData.append("extractRealData", "true");
+      formData.append("useVision", options?.useVision ? "true" : "false");
+      formData.append("forceRealData", options?.forceRealData ? "true" : "false");
+      
+      if (options?.context) {
+        formData.append("context", options.context);
+      }
     }
     
-    if (preferredProvider) {
-      formData.append("preferredProvider", preferredProvider);
-      console.log(`Using preferred AI provider: ${preferredProvider}`);
+    if (options?.preferredProvider) {
+      formData.append("preferredProvider", options.preferredProvider);
+      console.log(`Using preferred AI provider: ${options.preferredProvider}`);
     }
     
     // Make sure we're using the correct URL format

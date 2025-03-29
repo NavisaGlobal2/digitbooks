@@ -14,7 +14,14 @@ export const parsePDFFile = (
   // Log the file details for debugging
   console.log(`Starting PDF parsing for: ${file.name} (${file.size} bytes) with context: ${context}`);
   
-  // Send the file directly to the edge function with special PDF handling flag and context
+  // Add a flag to force real data extraction
+  const options = {
+    useVision: true,
+    forceRealData: true,
+    context: context
+  };
+  
+  // Send the file directly to the edge function with special PDF handling flag
   parseViaEdgeFunction(
     file,
     (transactions) => {
@@ -61,6 +68,7 @@ export const parsePDFFile = (
       
       if (hasSuspiciousTransactions) {
         console.warn("Warning: Detected potential placeholder transactions in AI output");
+        toast.warning("The system may have generated example data instead of extracting real transactions. Please try again or use a different file format.");
       }
       
       // Log data for better debugging
@@ -85,6 +93,6 @@ export const parsePDFFile = (
       }
       return true;
     },
-    context // Pass context to the edge function to identify revenue vs expense PDFs
+    options
   );
 };

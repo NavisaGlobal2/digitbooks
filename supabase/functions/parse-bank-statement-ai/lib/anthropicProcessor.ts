@@ -4,7 +4,8 @@
  */
 export async function processWithAnthropic(
   text: string, 
-  context?: string
+  context?: string,
+  options?: any
 ): Promise<any> {
   const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
   if (!ANTHROPIC_API_KEY) {
@@ -24,6 +25,16 @@ Your task is to analyze the content and extract actual transactions that would a
 This is NOT a simulation or test - a user has uploaded their real bank statement.
 If you cannot determine clear transaction patterns, return an empty array rather than inventing fake transactions.
 NEVER create fictional data - only extract what appears to be genuine financial transactions.`;
+  }
+  
+  if (options?.forceRealData) {
+    systemPrompt += `
+
+EXTREMELY IMPORTANT: The user is receiving placeholder/dummy transactions instead of their real data.
+This is causing a severe problem in their financial tracking application.
+DO NOT GENERATE ANY FICTIONAL TRANSACTIONS under any circumstances.
+If you can't extract real transactions, return an empty array [].
+The user's financial decisions depend on this data being accurate.`;
   }
   
   if (context === "revenue") {
@@ -75,6 +86,7 @@ NEVER create fictional data - only extract what appears to be genuine financial 
   }
 
   try {
+    console.log("Sending to Anthropic for processing...");
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {

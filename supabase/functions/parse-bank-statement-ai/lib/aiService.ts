@@ -13,6 +13,7 @@ export async function processWithAI(
     isSpecialPdfFormat?: boolean;
     fileName?: string;
     fileSize?: number;
+    forceRealData?: boolean;
   }
 ): Promise<any> {
   // Check available AI providers
@@ -38,12 +39,19 @@ export async function processWithAI(
 5. Dates must be in ISO format (YYYY-MM-DD) regardless of how they appear in the statement
 6. Include ALL transaction details in the description field
 7. Return ONLY valid transaction data in JSON format
+8. IF YOU CANNOT IDENTIFY ANY REAL TRANSACTIONS, RETURN AN EMPTY ARRAY - NEVER GENERATE FICTIONAL DATA
 
 This is REAL bank statement data that needs accurate extraction, not dummy data generation.
 `;
 
     if (context === "revenue") {
       enhancedText += "\nSince the context is revenue tracking, pay special attention to incoming payments and credits.";
+    }
+    
+    if (options?.forceRealData) {
+      enhancedText += `\n\nEXTREMELY IMPORTANT: This is REAL FINANCIAL DATA. The user is receiving placeholder/dummy transactions instead of their real data. 
+DO NOT GENERATE ANY FICTIONAL TRANSACTIONS under any circumstances. 
+If you can't extract real transactions, return an empty array [].`;
     }
   }
   
