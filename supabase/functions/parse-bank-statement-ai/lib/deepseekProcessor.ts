@@ -22,11 +22,13 @@ export async function processWithDeepseek(
   // Adjust the system prompt based on the context (revenue or expense)
   let systemPrompt = `You are a financial data extraction assistant specialized in accurately extracting transaction data from bank statements.`;
   
-  if (options?.isSpecialPdfFormat) {
+  if (text.includes('[PDF BANK STATEMENT:')) {
     systemPrompt += `
     
-IMPORTANT: You are processing a PDF bank statement. You must extract the REAL transactions that appear in the statement.
-DO NOT generate fictional or sample transactions. Only return actual transaction data from the document.`;
+CRITICAL INSTRUCTION: You are processing a REAL PDF bank statement.
+You MUST extract ONLY the ACTUAL transactions that appear in the statement.
+DO NOT generate fictional or sample transactions. Only return actual transaction data.
+If no transactions are visible, return an empty array instead of making up data.`;
   }
   
   if (context === "revenue") {
@@ -66,9 +68,10 @@ DO NOT generate fictional or sample transactions. Only return actual transaction
     - amount (as a number, negative for debits/expenses, positive for credits/income)
     - type ("debit" or "credit")
     
-    Extract ALL transactions visible in the statement. Do not skip any transactions.
+    Extract ONLY REAL transactions visible in the statement. DO NOT create fictional transactions.
+    If no transactions are visible, return an empty array.
     
-    Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
+    Respond ONLY with a valid JSON array of transactions, with NO additional text or explanation.`;
   }
 
   try {
@@ -90,7 +93,7 @@ DO NOT generate fictional or sample transactions. Only return actual transaction
             content: text
           }
         ],
-        temperature: 0.1,
+        temperature: 0.1, // Lower temperature for more deterministic results
         max_tokens: 4000
       }),
     });

@@ -7,7 +7,7 @@ export async function extractTextFromFile(file: File): Promise<string> {
   
   if (fileType === 'pdf') {
     try {
-      // For PDFs, we need to create a detailed instruction set for the AI
+      // For PDFs, we create a detailed instruction set for the AI
       // since we can't directly extract text without stack overflow errors
       const fileName = file.name;
       const fileSize = Math.round(file.size / 1024) + ' KB';
@@ -15,7 +15,7 @@ export async function extractTextFromFile(file: File): Promise<string> {
       return `[PDF BANK STATEMENT: ${fileName} (${fileSize})]
 
 CRITICAL INSTRUCTION: This is a REAL bank statement PDF that needs ACCURATE data extraction.
-DO NOT generate fictional or placeholder transactions.
+THIS IS NOT A DRILL OR TEST. DO NOT generate fictional or placeholder transactions.
 
 You MUST:
 1. Extract ONLY the ACTUAL transactions visible in the document
@@ -23,6 +23,8 @@ You MUST:
 3. Keep complete and accurate transaction descriptions with all details
 4. Use precise transaction amounts (negative for withdrawals/debits, positive for deposits/credits)
 5. Correctly identify each transaction as "debit" or "credit"
+6. DO NOT make up any data that is not present in the statement
+7. IF NO TRANSACTIONS ARE VISIBLE, return an empty array - do not invent sample data
 
 Your output MUST be formatted as a valid JSON array of transactions with NO additional text.
 The data you extract should reflect REAL financial transactions from the statement.

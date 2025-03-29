@@ -16,6 +16,12 @@ export const parsePDFFile = (
     (transactions) => {
       console.log(`PDF successfully parsed with ${transactions.length} transactions`);
       
+      if (transactions.length === 0) {
+        toast.warning("No transactions were found in your PDF. Please try a different file or format.");
+        onError("No transactions found in PDF. Please try a different file.");
+        return;
+      }
+      
       // Ensure transactions have proper dates
       const processedTransactions = transactions.map(tx => {
         if (tx.date) {
@@ -43,12 +49,6 @@ export const parsePDFFile = (
         return tx;
       });
       
-      if (processedTransactions.length === 0) {
-        toast.warning("No transactions were found in your PDF. Please try a different file or format.");
-        onError("No transactions found in PDF. Please try a different file.");
-        return;
-      }
-      
       // Log data for better debugging
       console.log("PDF transactions after processing:", processedTransactions);
       
@@ -63,6 +63,9 @@ export const parsePDFFile = (
           errorMessage.includes("sandbox environment internal error")) {
         toast.warning("Technical issue with PDF processing. Please try uploading a CSV version if available.");
         onError("Technical limitation: PDF processing cannot extract text directly. Please try uploading the PDF again or use a CSV format if possible.");
+      } else if (errorMessage.includes("No transactions found") || errorMessage.includes("empty array")) {
+        toast.warning("No transactions were found in your PDF. Please check if this statement contains transaction data.");
+        onError("No transactions found in PDF. Please verify this is a bank statement with transaction data.");
       } else {
         onError(`PDF parsing failed: ${errorMessage}`);
       }

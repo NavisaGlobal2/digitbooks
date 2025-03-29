@@ -29,7 +29,8 @@ CRITICAL INSTRUCTION: You are processing a REAL PDF bank statement.
 You must extract ONLY the ACTUAL transactions that appear in the statement.
 DO NOT generate fictional or placeholder transactions.
 DO NOT make up any data or create sample transactions.
-Only extract real transaction data that is visible in the document.`;
+Only extract real transaction data that is visible in the document.
+IF NO TRANSACTIONS ARE VISIBLE, return an empty array - do not invent sample data.`;
   }
   
   if (context === "revenue") {
@@ -70,6 +71,7 @@ Only extract real transaction data that is visible in the document.`;
     - type ("debit" or "credit")
     
     Extract ONLY REAL transactions visible in the statement. DO NOT generate fictional data.
+    If you cannot find any transactions, return an empty array - do not invent data.
     
     Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.
     Sample format:
@@ -100,6 +102,7 @@ Only extract real transaction data that is visible in the document.`;
       body: JSON.stringify({
         model: "claude-3-haiku-20240307",
         max_tokens: 4000,
+        temperature: 0.1, // Lower temperature for more deterministic results
         system: systemPrompt,
         messages: [
           {

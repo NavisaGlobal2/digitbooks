@@ -15,6 +15,7 @@ export const useStatementUpload = (
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
   const [processingAttempts, setProcessingAttempts] = useState(0);
+  const [processingInProgress, setProcessingInProgress] = useState(false);
 
   // Check authentication status
   useEffect(() => {
@@ -107,12 +108,19 @@ export const useStatementUpload = (
   };
 
   const parseFile = async () => {
+    // Prevent double processing
+    if (processingInProgress) {
+      console.log("Processing already in progress, ignoring duplicate request");
+      return;
+    }
+
     if (!file) {
       handleError("Please select a bank statement file");
       return;
     }
 
     setUploading(true);
+    setProcessingInProgress(true);
     clearError();
     setProcessingAttempts(prev => prev + 1);
 
@@ -125,15 +133,18 @@ export const useStatementUpload = (
         handleError("Processing requires authentication. Please sign in to use this feature.");
         resetProgress();
         setUploading(false);
+        setProcessingInProgress(false);
         return;
       }
       
       console.log(`Starting file processing with edge function (Attempt #${processingAttempts + 1})`);
+      console.log(`File type: ${file.type}, name: ${file.name}`);
       
       await processServerSide(
         file,
         (transactions) => {
           setUploading(false);
+          setProcessingInProgress(false);
           if (transactions && transactions.length > 0) {
             console.log(`Received ${transactions.length} parsed transactions`);
             onTransactionsParsed(transactions);
@@ -144,6 +155,7 @@ export const useStatementUpload = (
         },
         (errorMessage) => {
           setUploading(false);
+          setProcessingInProgress(false);
           
           const isAuthError = errorMessage.toLowerCase().includes('auth') || 
                             errorMessage.toLowerCase().includes('sign in') ||
@@ -164,7 +176,7 @@ export const useStatementUpload = (
                errorMessage.includes("Maximum call stack size exceeded"))) {
             
             // If we haven't tried too many times, suggest trying again
-            if (processingAttempts < 1) {
+            if (processingAttempts < 1 && !processingInProgress) {
               toast.info("PDF processing requires another attempt. Trying again automatically...");
               
               // Wait a moment then try again
@@ -202,6 +214,7 @@ export const useStatementUpload = (
       console.error("Unexpected error in parseFile:", error);
       handleError("An unexpected error occurred. Please try again.");
       setUploading(false);
+      setProcessingInProgress(false);
     }
   };
 
@@ -211,6 +224,7 @@ export const useStatementUpload = (
     setUploading(false);
     resetProgress();
     setProcessingAttempts(0);
+    setProcessingInProgress(false);
     
     // Clear PDF attempt counter from localStorage
     localStorage.removeItem('pdf_attempt_count');
