@@ -27,8 +27,9 @@ export async function processWithDeepseek(
     
 CRITICAL INSTRUCTION: You are processing a REAL PDF bank statement.
 You MUST extract ONLY the ACTUAL transactions that appear in the statement.
-DO NOT generate fictional or sample transactions. Only return actual transaction data.
-If no transactions are visible, return an empty array instead of making up data.`;
+DO NOT generate fictional, sample or placeholder transactions under any circumstances.
+If no transactions are visible, return an empty array instead of making up data.
+NEVER invent data - only extract what is actually present in the document.`;
   }
   
   if (context === "revenue") {
@@ -58,6 +59,9 @@ If no transactions are visible, return an empty array instead of making up data.
     
     Focus only on credit (incoming money) transactions, which represent revenue. These have positive amounts.
     
+    IMPORTANT: Only include ACTUAL transactions from the document. If you can't see any transactions, return an empty array.
+    DO NOT generate sample, example, or fictional transactions.
+    
     Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
   } else {
     systemPrompt += `
@@ -70,6 +74,8 @@ If no transactions are visible, return an empty array instead of making up data.
     
     Extract ONLY REAL transactions visible in the statement. DO NOT create fictional transactions.
     If no transactions are visible, return an empty array.
+    
+    IMPORTANT: NEVER generate placeholder transactions or examples. Only extract actual data from the document.
     
     Respond ONLY with a valid JSON array of transactions, with NO additional text or explanation.`;
   }

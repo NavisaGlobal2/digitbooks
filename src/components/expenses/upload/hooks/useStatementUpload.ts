@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ParsedTransaction } from "../parsers";
 import { useUploadProgress } from "./useUploadProgress";
 import { useUploadError } from "./useUploadError";
@@ -16,6 +16,9 @@ export const useStatementUpload = (
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
   const [processingAttempts, setProcessingAttempts] = useState(0);
   const [processingInProgress, setProcessingInProgress] = useState(false);
+  
+  // Use a ref to track the current file being processed
+  const processingFileRef = useRef<string | null>(null);
 
   // Check authentication status
   useEffect(() => {
@@ -80,6 +83,13 @@ export const useStatementUpload = (
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       console.log("File selected:", selectedFile.name, selectedFile.type, selectedFile.size);
+      
+      // Check if we're already processing a file
+      if (processingInProgress) {
+        console.log("Processing already in progress, ignoring new file selection");
+        return;
+      }
+      
       setFile(selectedFile);
       clearError();
       
@@ -118,11 +128,20 @@ export const useStatementUpload = (
       handleError("Please select a bank statement file");
       return;
     }
+    
+    // Check if we're already processing this exact file
+    if (processingFileRef.current === `${file.name}-${file.size}-${file.lastModified}`) {
+      console.log("This exact file is already being processed, preventing duplicate processing");
+      return;
+    }
 
     setUploading(true);
     setProcessingInProgress(true);
     clearError();
     setProcessingAttempts(prev => prev + 1);
+    
+    // Set the current processing file reference
+    processingFileRef.current = `${file.name}-${file.size}-${file.lastModified}`;
 
     try {
       // Start progress simulation
@@ -134,6 +153,7 @@ export const useStatementUpload = (
         resetProgress();
         setUploading(false);
         setProcessingInProgress(false);
+        processingFileRef.current = null;
         return;
       }
       
@@ -145,6 +165,8 @@ export const useStatementUpload = (
         (transactions) => {
           setUploading(false);
           setProcessingInProgress(false);
+          processingFileRef.current = null;
+          
           if (transactions && transactions.length > 0) {
             console.log(`Received ${transactions.length} parsed transactions`);
             onTransactionsParsed(transactions);
@@ -156,6 +178,7 @@ export const useStatementUpload = (
         (errorMessage) => {
           setUploading(false);
           setProcessingInProgress(false);
+          processingFileRef.current = null;
           
           const isAuthError = errorMessage.toLowerCase().includes('auth') || 
                             errorMessage.toLowerCase().includes('sign in') ||
@@ -215,6 +238,7 @@ export const useStatementUpload = (
       handleError("An unexpected error occurred. Please try again.");
       setUploading(false);
       setProcessingInProgress(false);
+      processingFileRef.current = null;
     }
   };
 
@@ -225,6 +249,7 @@ export const useStatementUpload = (
     resetProgress();
     setProcessingAttempts(0);
     setProcessingInProgress(false);
+    processingFileRef.current = null;
     
     // Clear PDF attempt counter from localStorage
     localStorage.removeItem('pdf_attempt_count');

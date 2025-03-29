@@ -10,6 +10,9 @@ export const parsePDFFile = (
 ) => {
   toast.info("Processing PDF statement using AI. This may take a moment...");
   
+  // Log the file details for debugging
+  console.log(`Starting PDF parsing for: ${file.name} (${file.size} bytes)`);
+  
   // Send the file directly to the edge function with special PDF handling flag
   parseViaEdgeFunction(
     file,
@@ -48,6 +51,16 @@ export const parsePDFFile = (
         
         return tx;
       });
+      
+      // Additional validation - check for placeholder data indicators
+      const suspiciousTerms = ['placeholder', 'example', 'sample', 'dummy', 'test transaction', 'demo'];
+      const hasSuspiciousTransactions = processedTransactions.some(tx => 
+        suspiciousTerms.some(term => tx.description.toLowerCase().includes(term))
+      );
+      
+      if (hasSuspiciousTransactions) {
+        console.warn("Warning: Detected potential placeholder transactions in AI output");
+      }
       
       // Log data for better debugging
       console.log("PDF transactions after processing:", processedTransactions);

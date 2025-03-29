@@ -25,9 +25,10 @@ You MUST:
 5. Correctly identify each transaction as "debit" or "credit"
 6. DO NOT make up any data that is not present in the statement
 7. IF NO TRANSACTIONS ARE VISIBLE, return an empty array - do not invent sample data
+8. NEVER return placeholder, example, or fictional transactions
 
 Your output MUST be formatted as a valid JSON array of transactions with NO additional text.
-The data you extract should reflect REAL financial transactions from the statement.
+The data you extract should reflect REAL financial transactions from the statement ONLY.
 `;
     } catch (error) {
       console.error("Error creating PDF prompt:", error);
