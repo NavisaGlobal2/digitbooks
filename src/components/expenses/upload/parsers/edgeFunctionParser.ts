@@ -207,7 +207,7 @@ export const parseViaEdgeFunction = async (
                 toast.success("Using local CSV parser as fallback due to server connectivity issues");
                 
                 // Convert parsed data to the expected format
-                const transactions: ParsedTransaction[] = result.data.map((row: any) => ({
+                const transactions: ParsedTransaction[] = result.transactions.map((row: any) => ({
                   date: row.date || new Date().toISOString(),
                   description: row.description || row.payee || row.memo || "Unknown transaction",
                   amount: parseFloat(row.amount || row.debit || row.credit || "0"),
