@@ -1,19 +1,16 @@
 
-import html2canvas from "html2canvas";
+import { saveAs } from "file-saver";
+import { format } from "date-fns";
 import { toast } from "sonner";
+import html2canvas from "html2canvas";
 
 /**
- * Captures the invoice as an image (PNG format)
+ * Function to capture and download the invoice as an image
  */
-export const captureInvoiceAsImage = async (
-  invoiceElement: HTMLElement, 
-  clientName: string
-): Promise<boolean> => {
+export const captureInvoiceAsImage = async (element: HTMLElement, clientName: string = "Client") => {
   try {
-    toast.loading("Capturing invoice as image...");
-    
-    // Use html2canvas to capture the invoice element
-    const canvas = await html2canvas(invoiceElement, {
+    // Use html2canvas to capture the element
+    const canvas = await html2canvas(element, {
       scale: 2, // Higher scale for better quality
       logging: false,
       useCORS: true, // Enable CORS for images
@@ -21,35 +18,24 @@ export const captureInvoiceAsImage = async (
       backgroundColor: "#ffffff"
     });
     
-    // Convert canvas to a blob
+    // Convert the canvas to a blob
     const blob = await new Promise<Blob>((resolve) => {
       canvas.toBlob((blob) => {
         resolve(blob as Blob);
       }, 'image/png', 1.0);
     });
     
-    // Create a filename
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const safeName = clientName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const fileName = `Invoice-${safeName}-${dateStr}.png`;
+    // Generate filename
+    const dateStr = format(new Date(), "yyyyMMdd");
+    const fileName = `Invoice-${clientName.replace(/\s+/g, '_').toLowerCase()}-${dateStr}.png`;
     
-    // Create a download link and trigger it
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Download the file
+    saveAs(blob, fileName);
     
-    // Clean up the URL object
-    URL.revokeObjectURL(url);
-    
-    toast.success("Invoice captured as image!");
     return true;
   } catch (error) {
-    console.error("Error capturing invoice as image:", error);
-    toast.error("Failed to capture invoice as image");
+    console.error("Error capturing invoice:", error);
+    toast.error("Failed to capture invoice. Please try again.");
     return false;
   }
 };

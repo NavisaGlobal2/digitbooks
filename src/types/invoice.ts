@@ -12,7 +12,6 @@ export interface Invoice {
   id: string;
   clientName: string;
   clientAddress?: string;
-  clientEmail?: string;
   invoiceNumber: string;
   issuedDate: Date;
   dueDate: Date;
@@ -21,7 +20,6 @@ export interface Invoice {
   items: InvoiceItem[];
   logoUrl?: string | null;
   additionalInfo?: string;
-  template?: string;
   bankDetails: {
     accountName: string;
     accountNumber: string;

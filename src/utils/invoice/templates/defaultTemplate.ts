@@ -1,4 +1,3 @@
-
 /**
  * Default invoice template with modern, clean design
  */
@@ -20,8 +19,6 @@ export const renderDefaultTemplate = (doc: jsPDF, props: InvoiceTemplateProps): 
     accountNumber,
     accountName,
     clientName,
-    clientEmail,
-    clientAddress,
     invoiceNumber,
     subtotal,
     tax,
@@ -42,7 +39,7 @@ export const renderDefaultTemplate = (doc: jsPDF, props: InvoiceTemplateProps): 
   yPos += 30;
   
   // Invoice dates and client information
-  yPos = renderDateAndClientInfo(doc, clientName, clientEmail, clientAddress, invoiceDate, dueDate, yPos, colors, margins);
+  yPos = renderDateAndClientInfo(doc, clientName, invoiceDate, dueDate, yPos, colors, margins);
   yPos += 15;
   
   // Invoice items table
@@ -74,7 +71,7 @@ export const renderDefaultTemplate = (doc: jsPDF, props: InvoiceTemplateProps): 
 const renderHeader = (
   doc: jsPDF,
   logoPreview: string | null,
-  invoiceNumber: string | undefined,
+  invoiceNumber: string,
   yPos: number,
   colors: any,
   margins: any
@@ -131,8 +128,6 @@ const renderHeader = (
 const renderDateAndClientInfo = (
   doc: jsPDF,
   clientName: string,
-  clientEmail: string | undefined,
-  clientAddress: string | undefined,
   invoiceDate: Date | undefined,
   dueDate: Date | undefined,
   yPos: number,
@@ -153,19 +148,6 @@ const renderDateAndClientInfo = (
   doc.setFont('helvetica', 'normal');
   doc.text(clientName, margins.left, yPos + 18);
   
-  // Add client address if available
-  let addressYPos = yPos + 18;
-  if (clientAddress) {
-    addressYPos += 8;
-    doc.text(clientAddress, margins.left, addressYPos);
-  }
-  
-  // Add client email if available
-  if (clientEmail) {
-    addressYPos += 8;
-    doc.text(clientEmail, margins.left, addressYPos);
-  }
-  
   // Date information on the right
   const rightCol = doc.internal.pageSize.width - margins.right - 80;
   
@@ -181,7 +163,7 @@ const renderDateAndClientInfo = (
   doc.setFont('helvetica', 'normal');
   doc.text(dueDateStr, doc.internal.pageSize.width - margins.right, yPos + 18, { align: 'right' });
   
-  return Math.max(addressYPos + 5, yPos + 25);
+  return yPos + 25;
 };
 
 /**

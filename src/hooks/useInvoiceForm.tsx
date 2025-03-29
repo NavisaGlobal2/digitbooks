@@ -19,7 +19,6 @@ export const useInvoiceForm = () => {
   const [additionalInfo, setAdditionalInfo] = useState("Payment can be made directly to the bank account provided.");
   const [isAccountVerified, setIsAccountVerified] = useState(false);
   const [clientName, setClientName] = useState("");
-  const [clientEmail, setClientEmail] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   
   // Bank details
@@ -31,13 +30,8 @@ export const useInvoiceForm = () => {
     setInvoiceItems([...invoiceItems, { description: '', quantity: 1, price: 0, tax: 7.5 }]);
   };
 
-  const handleClientSelect = (name: string, email?: string, address?: string) => {
+  const handleClientSelect = (name: string, address?: string) => {
     setClientName(name);
-    if (email) {
-      setClientEmail(email);
-    } else {
-      setClientEmail("");
-    }
     if (address) {
       setClientAddress(address);
     } else {
@@ -70,7 +64,6 @@ export const useInvoiceForm = () => {
     // Create and save the invoice
     addInvoice({
       clientName,
-      clientEmail,
       clientAddress,
       issuedDate: invoiceDate,
       dueDate: dueDate,
@@ -79,7 +72,6 @@ export const useInvoiceForm = () => {
       items: [...invoiceItems],
       logoUrl: logoPreview,
       additionalInfo,
-      template: selectedTemplate,
       bankDetails: {
         accountName,
         accountNumber,
@@ -119,7 +111,6 @@ export const useInvoiceForm = () => {
     isAccountVerified,
     setIsAccountVerified,
     clientName,
-    clientEmail,
     clientAddress,
     handleClientSelect,
     accountName,
