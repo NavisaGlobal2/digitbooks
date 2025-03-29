@@ -6,9 +6,6 @@ import { processWithAI } from "./lib/aiService.ts";
 import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
 
 serve(async (req) => {
-  // Log request information
-  console.log(`Received ${req.method} request from origin: ${req.headers.get("origin") || "unknown"}`);
-  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return handleCorsRequest();
@@ -48,7 +45,7 @@ serve(async (req) => {
     const batchId = crypto.randomUUID();
     
     try {
-      // Special handling for PDF files
+      // Special handling for PDF files to avoid stack overflow
       if (fileType === "pdf" || fileTypeHint === "pdf") {
         console.log("Processing PDF file with special handling");
         
@@ -98,13 +95,12 @@ Return ONLY a valid JSON array of transactions.`;
       }
       
       // For non-PDF files, use the standard extraction approach
-      // 1. Extract text from the file
       const fileText = await extractTextFromFile(file);
       let transactions = [];
       let usedFallback = false;
       
       try {
-        // 2. Try to process with AI service
+        // Process with AI service
         transactions = await processWithAI(fileText, fileType, context);
         
         if (transactions.length === 0) {
@@ -128,22 +124,6 @@ Return ONLY a valid JSON array of transactions.`;
             );
           }
         } else {
-          // Check if the error is from Anthropic and DeepSeek is not configured
-          const isAnthropicError = aiError.message?.includes("Anthropic") || 
-                                   aiError.message?.includes("overloaded");
-          const isDeepSeekError = aiError.message?.includes("DeepSeek");
-          
-          // If both AI services failed, provide a detailed error
-          if (isAnthropicError && isDeepSeekError) {
-            return new Response(
-              JSON.stringify({ 
-                error: `Both AI services failed. Please try again later or use a CSV file which can be processed with the fallback parser. Original error: ${aiError.message}` 
-              }),
-              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 }
-            );
-          }
-          
-          // For non-CSV files with a single AI service failure
           return new Response(
             JSON.stringify({ 
               error: `AI processing failed: ${aiError.message}. Please try again later or use a CSV file.` 
@@ -166,6 +146,7 @@ Return ONLY a valid JSON array of transactions.`;
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+      
     } catch (processingError) {
       console.error("Processing error:", processingError);
       

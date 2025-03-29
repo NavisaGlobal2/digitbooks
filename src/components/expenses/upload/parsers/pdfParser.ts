@@ -10,7 +10,8 @@ export const parsePDFFile = (
 ) => {
   toast.info("Processing PDF statement using AI. This may take a moment...");
   
-  // We'll use the edge function approach directly for PDF files
+  // Bypass text extraction completely for PDF files
+  // Instead send the file directly to the edge function with a special flag
   parseViaEdgeFunction(
     file,
     (transactions) => {
@@ -35,10 +36,12 @@ export const parsePDFFile = (
     (errorMessage) => {
       console.error("PDF parsing error:", errorMessage);
       
+      // For typical stack overflow errors, provide clear guidance
       if (errorMessage.includes("Maximum call stack size exceeded") || 
-          errorMessage.includes("operation is not supported")) {
-        toast.warning("PDF processing requires special handling. Please try again and the system will process it differently on second attempt.");
-        onError("This PDF requires a second attempt due to its complexity. Please try uploading again.");
+          errorMessage.includes("operation is not supported") ||
+          errorMessage.includes("sandbox environment internal error")) {
+        toast.warning("We're experiencing a technical issue with PDF processing. Please try uploading a CSV version if available.");
+        onError("Technical limitation: PDF parsing in this environment is encountering issues. Please try a different format if possible.");
       } else {
         onError(`PDF parsing failed: ${errorMessage}`);
       }

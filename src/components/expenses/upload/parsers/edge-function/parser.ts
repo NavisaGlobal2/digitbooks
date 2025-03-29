@@ -109,17 +109,20 @@ export const parseViaEdgeFunction = async (
         if (isPdf && (error.isPdfError || 
             (error.message && (
               error.message.includes("operation is not supported") ||
-              error.message.includes("Maximum call stack size exceeded")
+              error.message.includes("Maximum call stack size exceeded") ||
+              error.message.includes("sandbox environment internal error")
             )))) {
           console.log('PDF processing error detected.');
           
-          if (retryCount === 0) {
-            // For PDF files, we expect this error on first attempt
-            // Increment retry counter and continue
-            retryCount++;
-            console.log('Retrying PDF processing with different approach...');
-            continue;
+          if (retryCount === MAX_RETRIES) {
+            // For PDF files that consistently fail, provide a clear error message
+            return onError("We're experiencing technical limitations with PDF processing in this environment. Please try using a CSV or Excel format if available.");
           }
+          
+          // Try again with a different approach
+          retryCount++;
+          console.log('Retrying PDF processing with different approach...');
+          continue;
         }
         
         // Check specifically for network-related errors

@@ -7,8 +7,8 @@ export async function extractTextFromFile(file: File): Promise<string> {
   
   if (fileType === 'pdf') {
     try {
-      // For PDFs, we create a structured prompt for the AI
-      // We don't extract text since this causes stack overflow
+      // For PDFs, we completely avoid text extraction and just return a structured prompt
+      // This avoids the stack overflow errors
       return `[PDF BANK STATEMENT: ${file.name}]
 
 This is a bank statement in PDF format that needs transaction extraction.
@@ -19,10 +19,8 @@ Please extract all financial transactions with careful attention to:
 3. Exact transaction amounts (negative values for withdrawals/debits, positive for deposits/credits)
 4. Identify each transaction as "debit" or "credit" based on amount and context
 
-Format your response as a structured JSON array of transaction objects with date, description, amount, and type fields.
-Please ensure dates are in YYYY-MM-DD format and amounts are numeric values.
-
-Example of expected output:
+Format your response ONLY as a valid JSON array of transactions with no additional text.
+Example format:
 [
   {
     "date": "2023-04-15",
