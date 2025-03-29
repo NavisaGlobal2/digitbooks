@@ -91,7 +91,12 @@ export const addPDFOptions = (
   
   // Add special flags to ensure we're getting real data
   formData.append("extractRealData", "true");
-  formData.append("useVision", options?.useVision ? "true" : "false");
+  
+  // Ensure useVision flag is explicitly set to true
+  const useVision = options?.useVision !== false; // Default to true unless explicitly set to false
+  formData.append("useVision", useVision ? "true" : "false");
+  console.log(`Setting useVision flag to: ${useVision}`);
+  
   formData.append("forceRealData", options?.forceRealData ? "true" : "false");
   
   if (options?.context) {

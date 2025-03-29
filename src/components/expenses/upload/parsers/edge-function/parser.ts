@@ -1,4 +1,3 @@
-
 import { ParsedTransaction } from "../types";
 import { getAuthToken, MAX_RETRIES, sleep } from "./index";
 import { trackSuccessfulConnection, trackFailedConnection } from "./connectionStats";
@@ -25,6 +24,12 @@ export const parseViaEdgeFunction = async (
       console.error("Authentication error:", authError);
       trackFailedConnection('auth_token_error', { message: authError });
       return onError(authError || "Authentication error occurred");
+    }
+    
+    // For PDFs, ensure Vision API is used by default unless explicitly disabled
+    if (file.name.toLowerCase().endsWith('.pdf') && options.useVision !== false) {
+      options.useVision = true;
+      console.log("Vision API enabled for PDF processing");
     }
     
     // Prepare form data

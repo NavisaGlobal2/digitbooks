@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { ParsedTransaction } from "./types";
 import { parseViaEdgeFunction } from "./edge-function";
@@ -14,15 +13,17 @@ export const parsePDFFile = (
   // Log the file details for debugging
   console.log(`Starting PDF parsing for: ${file.name} (${file.size} bytes) with context: ${context}`);
   
-  // ALWAYS force real data extraction and add safe processing mode to prevent stack overflows
+  // ALWAYS ensure Vision API is enabled for PDFs for better results
   const options = {
-    useVision: true,
+    useVision: true, // Explicitly set to true to ensure Vision API is used
     forceRealData: true,
     context: context,
     extractRealData: true,
     noDummyData: true,
     safeProcessing: true // Added safe processing mode
   };
+  
+  console.log("PDF processing options:", options);
   
   // Send the file directly to the edge function with special PDF handling flag
   parseViaEdgeFunction(

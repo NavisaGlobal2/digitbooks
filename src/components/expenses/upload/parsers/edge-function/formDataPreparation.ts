@@ -19,6 +19,14 @@ export const prepareFormData = (
   if (isPdf) {
     pdfAttemptCount = trackPDFAttempt();
     addPDFOptions(formData, options, pdfAttemptCount);
+    
+    // Log the options being used for debugging
+    console.log("PDF processing options being sent:", {
+      isPdf,
+      useVision: options?.useVision === true ? "true" : "false",
+      pdfAttemptCount,
+      safeProcessing: options?.safeProcessing === true ? "true" : "false"
+    });
   } else {
     // Reset PDF attempt counter for non-PDF files
     resetPDFAttemptCounter();
