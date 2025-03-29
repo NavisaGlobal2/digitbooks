@@ -20,6 +20,10 @@ export const parseViaEdgeFunction = async (
     }
     
     const token = authData.session.access_token;
+    if (!token) {
+      console.error("No access token found in session");
+      return onError("Authentication token is missing. Please sign in again.");
+    }
     
     // Create FormData with file and provider preference
     const formData = new FormData();
@@ -40,7 +44,6 @@ export const parseViaEdgeFunction = async (
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
         },
         body: formData,
       }

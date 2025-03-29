@@ -62,103 +62,8 @@ export const useStatementUpload = (
   } = useUploadError();
 
   const {
-    processBankStatementFile
+    processServerSide
   } = useFileProcessing();
-
-  const processServerSide = async (file: File) => {
-    try {
-      setUploading(true);
-      
-      // If we're waiting for server, update the UI
-      if (setIsWaitingForServer) {
-        setIsWaitingForServer(true);
-      }
-      
-      // Check authentication before starting the server request
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      if (!sessionData.session || !sessionData.session.access_token) {
-        handleError("You need to be signed in to use server-side processing. Please sign in and try again.");
-        resetProgress();
-        if (setIsWaitingForServer) {
-          setIsWaitingForServer(false);
-        }
-        setUploading(false);
-        return;
-      }
-      
-      // Import the edge function parser dynamically to ensure it's available
-      const { parseViaEdgeFunction } = await import("../parsers/edgeFunctionParser");
-      
-      // Now process with edge function
-      await parseViaEdgeFunction(
-        file,
-        (transactions) => {
-          if (isCancelled) return;
-          completeProgress();
-          if (setIsWaitingForServer) {
-            setIsWaitingForServer(false);
-          }
-          setUploading(false);
-          onTransactionsParsed(transactions);
-        },
-        (errorMessage) => {
-          if (isCancelled) return true;
-          
-          setUploading(false);
-          
-          if (setIsWaitingForServer) {
-            setIsWaitingForServer(false);
-          }
-          
-          const isAuthError = errorMessage.toLowerCase().includes('auth') || 
-                            errorMessage.toLowerCase().includes('sign in') ||
-                            errorMessage.toLowerCase().includes('token');
-                            
-          const isAnthropicError = errorMessage.toLowerCase().includes('anthropic') ||
-                           errorMessage.toLowerCase().includes('api key') || 
-                           errorMessage.toLowerCase().includes('overloaded');
-
-          const isDeepSeekError = errorMessage.toLowerCase().includes('deepseek');
-          
-          // Show the error message to the user
-          handleError(errorMessage);
-          
-          // For auth or critical API errors, don't try to fallback
-          if (isAuthError || (isAnthropicError && isDeepSeekError)) {
-            resetProgress();
-            
-            if ((isAnthropicError || isDeepSeekError) && !file.name.toLowerCase().endsWith('.csv')) {
-              toast.error("Both AI processing services are currently unavailable. Try using a CSV file format instead.");
-            }
-            
-            return true;
-          }
-          
-          resetProgress();
-          return true;
-        },
-        preferredAIProvider
-      );
-    } catch (error: any) {
-      if (isCancelled) return;
-      
-      setUploading(false);
-      
-      if (setIsWaitingForServer) {
-        setIsWaitingForServer(false);
-      }
-      
-      console.error("Edge function error:", error);
-      handleError(error.message || "Error processing file on server.");
-      resetProgress();
-      
-      // For CSV files, suggest using client-side parsing as fallback
-      if (file.name.toLowerCase().endsWith('.csv')) {
-        toast.info("Server processing failed. You can try uploading the file again.");
-      }
-    }
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log("File input change event received");
@@ -215,7 +120,49 @@ export const useStatementUpload = (
       }
       
       console.log("Starting file processing with edge function");
-      await processServerSide(file);
+      
+      await processServerSide(
+        file,
+        (transactions) => {
+          setUploading(false);
+          onTransactionsParsed(transactions);
+        },
+        (errorMessage) => {
+          setUploading(false);
+          
+          const isAuthError = errorMessage.toLowerCase().includes('auth') || 
+                            errorMessage.toLowerCase().includes('sign in') ||
+                            errorMessage.toLowerCase().includes('token');
+                            
+          const isAnthropicError = errorMessage.toLowerCase().includes('anthropic') ||
+                           errorMessage.toLowerCase().includes('api key') || 
+                           errorMessage.toLowerCase().includes('overloaded');
+
+          const isDeepSeekError = errorMessage.toLowerCase().includes('deepseek');
+          
+          // Show the error message to the user
+          handleError(errorMessage);
+          
+          // For auth or critical API errors, don't try to fallback
+          if (isAuthError || (isAnthropicError && isDeepSeekError)) {
+            resetProgress();
+            
+            if ((isAnthropicError || isDeepSeekError) && !file.name.toLowerCase().endsWith('.csv')) {
+              toast.error("Both AI processing services are currently unavailable. Try using a CSV file format instead.");
+            }
+            
+            return true;
+          }
+          
+          resetProgress();
+          return true;
+        },
+        resetProgress,
+        completeProgress,
+        isCancelled,
+        setIsWaitingForServer,
+        preferredAIProvider
+      );
     } catch (error) {
       console.error("Unexpected error in parseFile:", error);
       handleError("An unexpected error occurred. Please try again.");

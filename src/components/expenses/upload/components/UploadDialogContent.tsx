@@ -1,7 +1,7 @@
 
 import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, AlertTriangle } from "lucide-react";
 import FileUploadArea from "../FileUploadArea";
 import ErrorDisplay from "../ErrorDisplay";
 import ProgressIndicator from "./ProgressIndicator";
@@ -109,7 +109,8 @@ const UploadDialogContent = ({
             
             {!isAuthenticated && (
               <div className="bg-yellow-50 text-yellow-600 p-3 rounded-md flex items-start space-x-2">
-                <p className="text-sm">You need to be signed in to upload bank statements.</p>
+                <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <p className="text-sm">You need to be signed in to upload bank statements. Please sign in and try again.</p>
               </div>
             )}
             

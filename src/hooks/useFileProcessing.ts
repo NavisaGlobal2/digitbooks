@@ -68,12 +68,75 @@ export const useFileProcessing = () => {
     });
   };
 
+  // This is the function being used in useStatementUpload
+  const processServerSide = async (file: File, 
+    onSuccess: (transactions: any[]) => void, 
+    onError: (errorMessage: string) => boolean,
+    resetProgress: () => void,
+    completeProgress: () => void,
+    isCancelled: boolean,
+    setIsWaitingForServer?: (isWaiting: boolean) => void,
+    preferredProvider?: string
+  ) => {
+    try {
+      setProcessing(true);
+      
+      // If we're waiting for server, update the UI
+      if (setIsWaitingForServer) {
+        setIsWaitingForServer(true);
+      }
+      
+      // Now process with edge function
+      const { parseViaEdgeFunction } = await import("../components/expenses/upload/parsers/edgeFunctionParser");
+      
+      await parseViaEdgeFunction(
+        file,
+        (transactions) => {
+          if (isCancelled) return;
+          completeProgress();
+          if (setIsWaitingForServer) {
+            setIsWaitingForServer(false);
+          }
+          setProcessing(false);
+          onSuccess(transactions);
+        },
+        (errorMessage) => {
+          if (isCancelled) return true;
+          
+          setProcessing(false);
+          
+          if (setIsWaitingForServer) {
+            setIsWaitingForServer(false);
+          }
+          
+          // Call the provided error handler
+          return onError(errorMessage);
+        },
+        preferredProvider || preferredAIProvider
+      );
+    } catch (error: any) {
+      if (isCancelled) return;
+      
+      setProcessing(false);
+      
+      if (setIsWaitingForServer) {
+        setIsWaitingForServer(false);
+      }
+      
+      console.error("Edge function error:", error);
+      onError(error.message || "Error processing file on server.");
+      resetProgress();
+    }
+  };
+
   return {
     processing,
     error,
     processReceiptFile,
     processBankStatementFile,
+    processServerSide,
     isAuthenticated,
+    setIsAuthenticated,
     preferredAIProvider,
     setPreferredAIProvider
   };
