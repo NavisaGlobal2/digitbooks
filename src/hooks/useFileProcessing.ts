@@ -7,6 +7,7 @@ export const useFileProcessing = () => {
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
+  const [processingStatus, setProcessingStatus] = useState<string | null>(null);
 
   const processReceiptFile = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -27,19 +28,23 @@ export const useFileProcessing = () => {
 
   const processBankStatementFile = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
-      // Simple validation for file types
-      const validTypes = [
-        'text/csv', 
-        'application/vnd.ms-excel', 
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/pdf'
-      ];
+      // File type validation with more reliable detection
+      const validateFileType = () => {
+        const fileExt = file.name.split('.').pop()?.toLowerCase();
+        const validExts = ['csv', 'xlsx', 'xls', 'pdf'];
+        
+        // Check MIME type first, fallback to extension
+        const isValidMimeType = [
+          'text/csv', 
+          'application/vnd.ms-excel', 
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'application/pdf'
+        ].includes(file.type);
+        
+        return isValidMimeType || validExts.includes(fileExt || '');
+      };
       
-      // Check file extension as fallback
-      const fileExt = file.name.split('.').pop()?.toLowerCase();
-      const validExts = ['csv', 'xlsx', 'xls', 'pdf'];
-      
-      if (!validTypes.includes(file.type) && !validExts.includes(fileExt || '')) {
+      if (!validateFileType()) {
         toast.error("Unsupported file format. Please upload CSV, Excel, or PDF files");
         reject("Unsupported file format");
         return;
@@ -54,8 +59,6 @@ export const useFileProcessing = () => {
       
       setProcessing(true);
       
-      // For bank statements, we don't need to read the content yet
-      // Just validate and return the file
       try {
         resolve(file);
       } catch (err) {
@@ -81,6 +84,12 @@ export const useFileProcessing = () => {
     try {
       setProcessing(true);
       
+      // Set processing status based on file type
+      const fileType = file.name.split('.').pop()?.toLowerCase();
+      setProcessingStatus(fileType === 'pdf' 
+        ? "Extracting data from PDF statement..." 
+        : "Processing statement data...");
+      
       // If we're waiting for server, update the UI
       if (setIsWaitingForServer) {
         setIsWaitingForServer(true);
@@ -93,23 +102,40 @@ export const useFileProcessing = () => {
         file,
         (transactions) => {
           if (isCancelled) return;
+          
+          // Validate the received transactions
+          if (!Array.isArray(transactions) || transactions.length === 0) {
+            if (setIsWaitingForServer) {
+              setIsWaitingForServer(false);
+            }
+            setProcessing(false);
+            onError("No valid transactions found in the statement. Please try a different file or format.");
+            resetProgress();
+            return;
+          }
+          
+          // Log transaction data for debugging
+          console.log(`Received ${transactions.length} transactions from server`, 
+            transactions.slice(0, 2));
+          
           completeProgress();
           if (setIsWaitingForServer) {
             setIsWaitingForServer(false);
           }
           setProcessing(false);
+          setProcessingStatus(null);
           onSuccess(transactions);
         },
         (errorMessage) => {
           if (isCancelled) return true;
           
           setProcessing(false);
+          setProcessingStatus(null);
           
           if (setIsWaitingForServer) {
             setIsWaitingForServer(false);
           }
           
-          // Call the provided error handler
           return onError(errorMessage);
         },
         preferredProvider || preferredAIProvider
@@ -118,6 +144,7 @@ export const useFileProcessing = () => {
       if (isCancelled) return;
       
       setProcessing(false);
+      setProcessingStatus(null);
       
       if (setIsWaitingForServer) {
         setIsWaitingForServer(false);
@@ -138,6 +165,7 @@ export const useFileProcessing = () => {
     isAuthenticated,
     setIsAuthenticated,
     preferredAIProvider,
-    setPreferredAIProvider
+    setPreferredAIProvider,
+    processingStatus
   };
 };

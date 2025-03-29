@@ -19,14 +19,24 @@ export async function processWithAI(text: string, fileType: string, context?: st
   // Handle PDF files with more detailed instructions
   let enhancedText = text;
   if (fileType === 'pdf') {
-    enhancedText += `\n\nThis document is a PDF bank statement. Pay special attention to:
-1. Tables containing transaction data
-2. Date formats which may vary (MM/DD/YYYY, DD/MM/YYYY, etc.)
-3. Negative amounts which may be indicated by parentheses, minus signs, or DR/CR markers
-4. Transaction descriptions which may include reference numbers, codes, or merchant names
-5. Balance information which may appear at the beginning/end of statement sections
+    enhancedText += `\n\nIMPORTANT INSTRUCTIONS FOR PDF BANK STATEMENT PROCESSING:
+1. Focus EXCLUSIVELY on extracting the actual transactions from the PDF statement
+2. Extract EVERY transaction with exact dates, descriptions, and amounts
+3. For transaction amounts:
+   - Use NEGATIVE numbers for withdrawals/debits (money leaving the account)
+   - Use POSITIVE numbers for deposits/credits (money entering the account)
+4. Dates must be in ISO format (YYYY-MM-DD) regardless of how they appear in the statement
+5. Include ALL transaction details in the description field
+6. Return ONLY valid transaction data, ignoring headers, footers, and marketing content
+7. Format your response as a JSON array of transaction objects with the schema:
+   [{"date": "YYYY-MM-DD", "description": "Transaction description", "amount": 123.45, "type": "credit|debit"}]
 
-Please extract ALL transactions with accurate dates, descriptions, and amounts.`;
+If you are unsure about any transaction, do your best to extract the information accurately rather than skipping it.
+`;
+
+    if (context === "revenue") {
+      enhancedText += "\nSince the context is revenue tracking, pay special attention to incoming payments and credits.";
+    }
   }
   
   // First try the preferred provider

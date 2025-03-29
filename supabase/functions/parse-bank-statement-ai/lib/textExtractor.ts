@@ -17,11 +17,16 @@ export async function extractTextFromFile(file: File): Promise<string> {
       return `[PDF CONTENT EXTRACTED FROM: ${file.name}]
 
 This is a bank statement in PDF format that has been converted to text.
-Please extract all financial transactions found in this document with their dates, descriptions, and amounts.
-Format debits as negative numbers and credits as positive numbers.
-Identify the transaction type as "debit" or "credit" based on the amount and context.
+Please extract all financial transactions with PRECISE attention to:
+1. Transaction dates in the exact format shown (MM/DD/YYYY, DD/MM/YYYY, etc.)
+2. Complete transaction descriptions including merchant names, reference numbers
+3. Exact transaction amounts (use negative values for debits/withdrawals)
+4. Transaction types (categorize as "debit" or "credit" based on amount and context)
+5. Any account or reference numbers associated with transactions
 
-The PDF content may not be perfectly structured due to extraction limitations.
+Focus EXCLUSIVELY on extracting the tabular data of transactions with dates, descriptions, and amounts.
+Ignore headers, footers, account summaries, and marketing content.
+Format your response as a structured array of transaction objects with date, description, amount, and type fields.
 `;
     } catch (error) {
       console.error("Error processing PDF:", error);
@@ -32,7 +37,6 @@ The PDF content may not be perfectly structured due to extraction limitations.
     return await file.text();
   } else if (fileType === 'xlsx' || fileType === 'xls') {
     // For Excel files, we would use a library to extract data
-    // Again, for now we'll just note it's an Excel file
     return `[THIS IS AN EXCEL FILE: ${file.name}]\n\nPlease extract financial transactions from this Excel bank statement.`;
   } else {
     throw new Error(`Unsupported file type: ${fileType}`);
