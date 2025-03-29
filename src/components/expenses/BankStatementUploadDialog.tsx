@@ -58,8 +58,10 @@ const BankStatementUploadDialog = ({
     cancelProgress,
     isAuthenticated,
     preferredAIProvider,
-    setPreferredAIProvider
-  } = useStatementUpload(handleTransactionsParsed);
+    setPreferredAIProvider,
+    useVisionApi,
+    setUseVisionApi
+  } = useStatementUpload({ handleTransactionsParsed });
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
     // Generate a unique batch ID using UUID for this import
@@ -145,6 +147,9 @@ const BankStatementUploadDialog = ({
             isAuthenticated={isAuthenticated}
             preferredAIProvider={preferredAIProvider}
             setPreferredAIProvider={setPreferredAIProvider}
+            isWaitingForServer={isWaitingForServer}
+            useVisionApi={useVisionApi}
+            setUseVisionApi={setUseVisionApi}
           />
         </DialogContent>
       </Dialog>

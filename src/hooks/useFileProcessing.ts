@@ -81,7 +81,8 @@ export const useFileProcessing = () => {
       setProcessing(true);
       
       const fileType = file.name.split('.').pop()?.toLowerCase();
-      setProcessingStatus(fileType === 'pdf' 
+      const isPdf = fileType === 'pdf';
+      setProcessingStatus(isPdf 
         ? "Extracting data from PDF statement..." 
         : "Processing statement data...");
       
@@ -95,9 +96,12 @@ export const useFileProcessing = () => {
         preferredProvider: options?.preferredProvider || preferredAIProvider
       };
       
-      // Always enable Vision API for PDFs
-      if (file.name.toLowerCase().endsWith('.pdf')) {
-        processingOptions.useVision = true;
+      // Handle Vision API option for PDFs
+      if (isPdf) {
+        // Use the explicit useVision option if provided, otherwise default to true
+        const useVision = options?.useVision !== undefined ? options.useVision : true;
+        processingOptions.useVision = useVision;
+        console.log(`Setting useVision flag to: ${useVision}`);
       }
       
       // Add any additional options

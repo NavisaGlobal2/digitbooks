@@ -27,7 +27,7 @@ export const useStatementProcessor = ({
 }: StatementProcessorProps) => {
   const { processServerSide } = useFileProcessing();
 
-  const processStatement = async (file: File, preferredAIProvider: string, isAuthenticated: boolean) => {
+  const processStatement = async (file: File, preferredAIProvider: string, isAuthenticated: boolean, useVisionApi: boolean = true) => {
     // Prevent double processing
     if (!file) {
       onError("Please select a bank statement file");
@@ -44,13 +44,13 @@ export const useStatementProcessor = ({
     
     try {
       console.log(`Starting file processing with edge function`);
-      console.log(`File type: ${file.type}, name: ${file.name}, using provider: ${preferredAIProvider}`);
+      console.log(`File type: ${file.type}, name: ${file.name}, using provider: ${preferredAIProvider}, Vision API: ${useVisionApi}`);
       
       // Create proper options object with all necessary flags
       const processingOptions = {
         preferredProvider: preferredAIProvider,
-        // Always enable Vision API for PDFs
-        useVision: file.name.toLowerCase().endsWith('.pdf'),
+        // Use Vision API based on user preference, default to true for PDFs
+        useVision: file.name.toLowerCase().endsWith('.pdf') ? useVisionApi : false,
         // Force real data extraction
         forceRealData: true,
         extractRealData: true,

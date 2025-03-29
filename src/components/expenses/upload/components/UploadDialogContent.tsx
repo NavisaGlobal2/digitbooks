@@ -23,6 +23,8 @@ interface UploadDialogContentProps {
   preferredAIProvider?: string;
   setPreferredAIProvider?: (provider: string) => void;
   isWaitingForServer?: boolean;
+  useVisionApi?: boolean;
+  setUseVisionApi?: (useVision: boolean) => void;
 }
 
 const UploadDialogContent = ({
@@ -37,7 +39,9 @@ const UploadDialogContent = ({
   isAuthenticated,
   preferredAIProvider,
   setPreferredAIProvider,
-  isWaitingForServer = false
+  isWaitingForServer = false,
+  useVisionApi = true,
+  setUseVisionApi
 }: UploadDialogContentProps) => {
   const [useEdgeFunction, setUseEdgeFunction] = useState(true);
   const [edgeFunctionAvailable, setEdgeFunctionAvailable] = useState(true);
@@ -45,6 +49,9 @@ const UploadDialogContent = ({
   const toggleEdgeFunction = () => {
     setUseEdgeFunction(!useEdgeFunction);
   };
+  
+  // Check if the file is a PDF
+  const isPdfFile = file && file.name.toLowerCase().endsWith('.pdf');
   
   // Check if the CSV file has been selected
   const isCsvFile = file && file.name.toLowerCase().endsWith('.csv');
@@ -99,7 +106,7 @@ const UploadDialogContent = ({
               disabled={uploading} 
             />
             
-            {/* Show the AI provider selection for all file types, including PDF */}
+            {/* Show the AI provider selection and Vision API toggle when a file is selected */}
             {file && (
               <ProcessingModeToggle 
                 useEdgeFunction={useEdgeFunction} 
@@ -109,6 +116,9 @@ const UploadDialogContent = ({
                 isAuthenticated={isAuthenticated}
                 preferredAIProvider={preferredAIProvider}
                 setPreferredAIProvider={setPreferredAIProvider}
+                useVisionApi={useVisionApi}
+                setUseVisionApi={setUseVisionApi}
+                isPdfFile={isPdfFile}
               />
             )}
             

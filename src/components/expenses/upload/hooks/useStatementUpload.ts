@@ -1,141 +1,108 @@
 
-import { useRef } from "react";
-import { ParsedTransaction } from "../parsers";
+import { useState, useCallback } from "react";
+import { parseStatementFile, ParsedTransaction } from "../parsers";
+import { useStatementProcessor } from "./useStatementProcessor";
+import { useProcessingState } from "./useProcessingState";
 import { useUploadProgress } from "./useUploadProgress";
-import { useUploadError } from "./useUploadError";
 import { useStatementAuth } from "./useStatementAuth";
 import { useFileValidation } from "./useFileValidation";
-import { useProcessingState } from "./useProcessingState";
-import { useStatementProcessor } from "./useStatementProcessor";
-import { toast } from "sonner";
 
-export const useStatementUpload = (
-  onTransactionsParsed: (transactions: ParsedTransaction[]) => void
-) => {
-  const {
-    isAuthenticated,
-    preferredAIProvider,
-    setPreferredAIProvider
-  } = useStatementAuth();
+interface StatementUploadHookProps {
+  onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
+}
 
-  const {
-    file,
-    setFile,
-    processingAttempts,
-    incrementAttempts,
-    clearFile,
-    validateFile,
-    validationError,
-    setValidationError
-  } = useFileValidation();
+export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHookProps) => {
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isWaitingForServer, setIsWaitingForServer] = useState<boolean>(false);
+  const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
+  const [useVisionApi, setUseVisionApi] = useState<boolean>(true);
 
-  const {
-    uploading,
-    processingInProgress,
-    startProcessing,
-    stopProcessing,
-    isProcessingFile
-  } = useProcessingState();
-
-  const {
-    progress,
-    step,
-    isCancelled,
-    isWaitingForServer,
-    setIsWaitingForServer,
-    startProgress,
-    resetProgress,
-    completeProgress,
-    cancelProgress,
+  const { verifyAuth, isAuthenticated } = useStatementAuth();
+  const { validateFile } = useFileValidation();
+  const { 
+    progress, 
+    step, 
+    startProgress, 
+    completeProgress, 
+    resetProgress, 
+    isCancelled, 
+    setCancelled 
   } = useUploadProgress();
-
-  const {
-    error,
-    setError,
-    handleError,
-    clearError
-  } = useUploadError();
-
-  const {
-    processStatement
-  } = useStatementProcessor({
+  
+  const onError = useCallback((errorMessage: string): boolean => {
+    setError(errorMessage);
+    setUploading(false);
+    resetProgress();
+    return true;
+  }, [resetProgress]);
+  
+  const { processStatement } = useStatementProcessor({
     onTransactionsParsed,
-    onError: handleError,
+    onError,
     startProgress,
     resetProgress,
     completeProgress,
     isCancelled,
     setIsWaitingForServer,
-    startProcessing,
-    stopProcessing
+    startProcessing: () => setUploading(true),
+    stopProcessing: () => setUploading(false)
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("File input change event received");
-    
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      console.log("File selected:", selectedFile.name, selectedFile.type, selectedFile.size);
-      
-      // Check if we're already processing a file
-      if (processingInProgress) {
-        console.log("Processing already in progress, ignoring new file selection");
-        return;
-      }
-      
-      clearError();
-      
-      if (validateFile(selectedFile)) {
-        setFile(selectedFile);
-      }
-      
-      // If not authenticated, warn the user
-      if (!isAuthenticated) {
-        setError('Processing requires authentication. Please sign in to use this feature.');
-      }
-    } else {
-      console.log("No file selected in the event");
-    }
-  };
-
-  const parseFile = async () => {
-    // Prevent double processing
-    if (processingInProgress) {
-      console.log("Processing already in progress, ignoring duplicate request");
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) {
       return;
     }
+    
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+    setError(null);
+    
+    // Validate the file format
+    const validationError = validateFile(selectedFile);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+  }, [validateFile]);
 
+  const parseFile = useCallback(async () => {
+    // Verify auth first
+    const authError = await verifyAuth();
+    if (authError) {
+      setError(authError);
+      return;
+    }
+    
+    // Validate the file again just to be sure
     if (!file) {
-      handleError("Please select a bank statement file");
+      setError("Please select a bank statement file");
       return;
     }
     
-    // Check if we're already processing this exact file
-    if (isProcessingFile(file)) {
-      console.log("This exact file is already being processed, preventing duplicate processing");
+    const validationError = validateFile(file);
+    if (validationError) {
+      setError(validationError);
       return;
     }
+    
+    // Process the file
+    await processStatement(file, preferredAIProvider, isAuthenticated, useVisionApi);
+  }, [file, verifyAuth, validateFile, processStatement, preferredAIProvider, isAuthenticated, useVisionApi]);
 
-    clearError();
-    incrementAttempts();
-    
-    try {
-      // If not authenticated, show error
-      if (!isAuthenticated) {
-        handleError("Processing requires authentication. Please sign in to use this feature.");
-        return;
-      }
-      
-      console.log(`Starting file processing with edge function (Attempt #${processingAttempts + 1})`);
-      
-      await processStatement(file, preferredAIProvider, isAuthenticated);
-      
-    } catch (error: any) {
-      console.error("Unexpected error in parseFile:", error);
-      handleError("An unexpected error occurred. Please try again.");
-      stopProcessing();
-    }
-  };
+  const clearFile = useCallback(() => {
+    setFile(null);
+    setError(null);
+    resetProgress();
+  }, [resetProgress]);
+
+  const cancelProgress = useCallback(() => {
+    setCancelled(true);
+    setUploading(false);
+    setIsWaitingForServer(false);
+    resetProgress();
+  }, [setCancelled, resetProgress]);
 
   return {
     file,
@@ -144,14 +111,14 @@ export const useStatementUpload = (
     handleFileChange,
     parseFile,
     clearFile,
-    // Progress related
     progress,
     step,
-    isWaitingForServer,
     cancelProgress,
+    isWaitingForServer,
     isAuthenticated,
-    // AI provider selection
     preferredAIProvider,
-    setPreferredAIProvider
+    setPreferredAIProvider,
+    useVisionApi,
+    setUseVisionApi
   };
 };
