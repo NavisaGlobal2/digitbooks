@@ -6,22 +6,23 @@ import { parseViaEdgeFunction } from "./edge-function";
 export const parsePDFFile = (
   file: File, 
   onComplete: (transactions: ParsedTransaction[]) => void,
-  onError: (errorMessage: string) => void
+  onError: (errorMessage: string) => void,
+  context: "revenue" | "expense" = "expense" // Add context parameter with default
 ) => {
   toast.info("Processing PDF statement using AI. This may take a moment...");
   
   // Log the file details for debugging
-  console.log(`Starting PDF parsing for: ${file.name} (${file.size} bytes)`);
+  console.log(`Starting PDF parsing for: ${file.name} (${file.size} bytes) with context: ${context}`);
   
-  // Send the file directly to the edge function with special PDF handling flag
+  // Send the file directly to the edge function with special PDF handling flag and context
   parseViaEdgeFunction(
     file,
     (transactions) => {
       console.log(`PDF successfully parsed with ${transactions.length} transactions`);
       
       if (transactions.length === 0) {
-        toast.warning("No transactions were found in your PDF. Please try a different file or format.");
-        onError("No transactions found in PDF. Please try a different file.");
+        toast.warning(`No ${context} transactions were found in your PDF. Please try a different file or format.`);
+        onError(`No ${context} transactions found in PDF. Please try a different file.`);
         return;
       }
       
@@ -63,7 +64,7 @@ export const parsePDFFile = (
       }
       
       // Log data for better debugging
-      console.log("PDF transactions after processing:", processedTransactions);
+      console.log(`${context} PDF transactions after processing:`, processedTransactions);
       
       onComplete(processedTransactions);
     },
@@ -77,13 +78,13 @@ export const parsePDFFile = (
         toast.warning("Technical issue with PDF processing. Please try uploading a CSV version if available.");
         onError("Technical limitation: PDF processing cannot extract text directly. Please try uploading the PDF again or use a CSV format if possible.");
       } else if (errorMessage.includes("No transactions found") || errorMessage.includes("empty array")) {
-        toast.warning("No transactions were found in your PDF. Please check if this statement contains transaction data.");
-        onError("No transactions found in PDF. Please verify this is a bank statement with transaction data.");
+        toast.warning(`No ${context} transactions were found in your PDF. Please check if this statement contains transaction data.`);
+        onError(`No ${context} transactions found in PDF. Please verify this is a bank statement with transaction data.`);
       } else {
         onError(`PDF parsing failed: ${errorMessage}`);
       }
       return true;
     },
-    "anthropic" // Use Anthropic as default for PDFs as it tends to handle them better
+    context // Pass context to the edge function to identify revenue vs expense PDFs
   );
 };

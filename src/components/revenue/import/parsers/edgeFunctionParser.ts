@@ -28,10 +28,46 @@ export const parseViaEdgeFunction = async (
       return [];
     }
     
-    // Call the serverless function with error handling
     try {
+      // First upload file to storage for more reliable processing
+      const filePath = `${context}_imports/${authData.session.user.id}/${uuidv4()}`;
+      const fileName = file.name;
+      
+      // Upload file to storage
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from('revenue_imports')
+        .upload(filePath, file);
+        
+      if (storageError) {
+        console.error("Storage upload error:", storageError);
+        onError(`Storage error: ${storageError.message}`);
+        return [];
+      }
+      
+      // Create a job record
+      const { data: jobData, error: jobError } = await supabase
+        .from('revenue_import_jobs')
+        .insert({
+          user_id: authData.session.user.id,
+          file_path: filePath,
+          file_name: fileName,
+          status: 'pending'
+        })
+        .select('id')
+        .single();
+      
+      if (jobError) {
+        console.error("Job creation error:", jobError);
+        onError(`Database error: ${jobError.message}`);
+        return [];
+      }
+
+      // Call the serverless function with error handling
       const { data, error } = await supabase.functions.invoke(endpoint, {
-        body: formData,
+        body: {
+          job_id: jobData.id,
+          context
+        },
       });
 
       if (error) {
@@ -41,6 +77,16 @@ export const parseViaEdgeFunction = async (
       }
 
       if (!data || !data.transactions || !Array.isArray(data.transactions)) {
+        // Update job status
+        await supabase
+          .from('revenue_import_jobs')
+          .update({
+            status: 'failed',
+            error: 'Invalid response from server',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', jobData.id);
+            
         onError("Invalid response from server. No transactions found in the response.");
         return [];
       }
@@ -49,7 +95,7 @@ export const parseViaEdgeFunction = async (
       console.log(`Transaction count from server: ${data.transactions.length}`);
 
       // Generate a batch ID as a proper UUID to avoid database errors
-      const batchId = data.batchId || uuidv4();
+      const batchId = data.batchId || jobData.id;
 
       // Map the server response to our ParsedTransaction type
       const parsedTransactions: ParsedTransaction[] = data.transactions.map((tx: any) => ({
@@ -66,25 +112,38 @@ export const parseViaEdgeFunction = async (
 
       console.log(`Parsed ${parsedTransactions.length} transactions with batch ID: ${batchId}`);
 
-      // Only include credit transactions (revenue)
-      const filteredTransactions = parsedTransactions.filter(tx => tx.type === 'credit');
+      // Only include transactions based on context
+      const filteredTransactions = context === 'revenue' 
+        ? parsedTransactions.filter(tx => tx.type === 'credit')
+        : parsedTransactions.filter(tx => tx.type === 'debit');
+      
+      // Update job status and data
+      await supabase
+        .from('revenue_import_jobs')
+        .update({
+          status: 'completed',
+          extracted_data: data.transactions,
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', jobData.id);
       
       if (filteredTransactions.length === 0) {
-        onError("No revenue transactions found in the statement. Only income transactions can be imported.");
+        onError(`No ${context} transactions found in the statement.`);
         return [];
       }
 
-      console.log(`Found ${filteredTransactions.length} revenue transactions to display`);
+      console.log(`Found ${filteredTransactions.length} ${context} transactions to display`);
 
       // Call success callback with transactions
       onSuccess(filteredTransactions);
       
       // Show success message with the transaction count
-      toast.success(`Successfully parsed ${filteredTransactions.length} revenue entries from your statement`);
+      toast.success(`Successfully parsed ${filteredTransactions.length} ${context} entries from your statement`);
       
       return filteredTransactions;
     } catch (supabaseError: any) {
-      console.error("Supabase functions.invoke error:", supabaseError);
+      console.error("Supabase error:", supabaseError);
       if (supabaseError.message?.includes("Network")) {
         onError("Network error when calling the server. Please check your internet connection and try again.");
       } else {

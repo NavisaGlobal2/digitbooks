@@ -1,22 +1,16 @@
 
 /**
- * Process extracted text with Anthropic Claude API
+ * Process extracted text with Anthropic API
  */
 export async function processWithAnthropic(
   text: string, 
-  context?: string,
-  options?: {
-    isSpecialPdfFormat?: boolean;
-    fileName?: string;
-    fileSize?: number;
-  }
+  context?: string
 ): Promise<any> {
   const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
   if (!ANTHROPIC_API_KEY) {
     throw new Error("ANTHROPIC_API_KEY is not configured. Please set up your Anthropic API key in Supabase.");
   }
 
-  console.log("Sending to Anthropic for processing...");
   console.log(`Processing context: ${context || 'general'}`);
   
   // Adjust the system prompt based on the context (revenue or expense)
@@ -25,12 +19,11 @@ export async function processWithAnthropic(
   if (text.includes('[PDF BANK STATEMENT:')) {
     systemPrompt += `
     
-CRITICAL INSTRUCTION: You are processing a REAL PDF bank statement. 
-You must extract ONLY the ACTUAL transactions that appear in the statement.
-DO NOT generate fictional or placeholder transactions.
-DO NOT make up any data or create sample transactions.
-Only extract real transaction data that is visible in the document.
-IF NO TRANSACTIONS ARE VISIBLE, return an empty array - do not invent sample data.`;
+CRITICAL INSTRUCTION: You are processing a REAL PDF bank statement.
+You MUST extract ONLY the ACTUAL transactions that appear in the statement.
+DO NOT generate fictional, sample or placeholder transactions under any circumstances.
+If no transactions are visible, return an empty array instead of making up data.
+NEVER invent data - only extract what is actually present in the document.`;
   }
   
   if (context === "revenue") {
@@ -60,6 +53,9 @@ IF NO TRANSACTIONS ARE VISIBLE, return an empty array - do not invent sample dat
     
     Focus only on credit (incoming money) transactions, which represent revenue. These have positive amounts.
     
+    IMPORTANT: Only include ACTUAL transactions from the document. If you can't see any transactions, return an empty array.
+    DO NOT generate sample, example, or fictional transactions.
+    
     Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
   } else {
     systemPrompt += `
@@ -70,25 +66,12 @@ IF NO TRANSACTIONS ARE VISIBLE, return an empty array - do not invent sample dat
     - amount (as a number, negative for debits/expenses, positive for credits/income)
     - type ("debit" or "credit")
     
-    Extract ONLY REAL transactions visible in the statement. DO NOT generate fictional data.
-    If you cannot find any transactions, return an empty array - do not invent data.
+    Extract ONLY REAL transactions visible in the statement. DO NOT create fictional transactions.
+    If no transactions are visible, return an empty array.
     
-    Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.
-    Sample format:
-    [
-      {
-        "date": "2023-05-15",
-        "description": "GROCERY STORE PURCHASE",
-        "amount": -58.97,
-        "type": "debit"
-      },
-      {
-        "date": "2023-05-17",
-        "description": "SALARY PAYMENT",
-        "amount": 1500.00,
-        "type": "credit"
-      }
-    ]`;
+    IMPORTANT: NEVER generate placeholder transactions or examples. Only extract actual data from the document.
+    
+    Respond ONLY with a valid JSON array of transactions, with NO additional text or explanation.`;
   }
 
   try {
@@ -97,39 +80,23 @@ IF NO TRANSACTIONS ARE VISIBLE, return an empty array - do not invent sample dat
       headers: {
         "Content-Type": "application/json",
         "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01"
+        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
         model: "claude-3-haiku-20240307",
         max_tokens: 4000,
-        temperature: 0.1, // Lower temperature for more deterministic results
+        temperature: 0.1,
         system: systemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: text
-          }
-        ]
+        messages: [{
+          role: "user", 
+          content: text
+        }]
       }),
     });
 
     if (!response.ok) {
       const error = await response.json();
       console.error("Anthropic API error:", error);
-      
-      // Handle authentication error specifically
-      if (error.error?.type === "authentication_error") {
-        throw new Error("Anthropic API authentication error: Please check your API key.");
-      }
-      
-      if (error.error?.type === "rate_limit_error") {
-        throw new Error("Anthropic API rate limit exceeded. Please try again later.");
-      }
-      
-      if (error.error?.type === "overloaded_error") {
-        throw new Error("Anthropic API is currently overloaded. Please try again in a few minutes.");
-      }
-      
       throw new Error(`Anthropic API error: ${error.error?.message || "Unknown error"}`);
     }
 
@@ -140,8 +107,15 @@ IF NO TRANSACTIONS ARE VISIBLE, return an empty array - do not invent sample dat
       throw new Error("No content returned from Anthropic");
     }
 
-    // Parse the JSON response - Anthropic should return only JSON
+    // Try to parse JSON response
     try {
+      // Find JSON array in the response
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      
+      // Try parsing the whole response
       return JSON.parse(content);
     } catch (parseError) {
       console.error("Error parsing Anthropic response:", content);
