@@ -36,10 +36,10 @@ export const parseViaEdgeFunction = async (
     
     console.log(`Calling parse-bank-statement-ai edge function with ${file.name}`);
     
-    // Get the Supabase URL from the environment
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    // Get the Supabase URL directly from the client configuration
+    const supabaseUrl = supabase.supabaseUrl;
     if (!supabaseUrl) {
-      console.error("VITE_SUPABASE_URL is not defined");
+      console.error("Supabase URL is not available from client");
       return onError("Server configuration error. Please contact support.");
     }
     
