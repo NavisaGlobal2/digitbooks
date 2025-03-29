@@ -7,6 +7,7 @@ import ErrorDisplay from "../ErrorDisplay";
 import ProgressIndicator from "./ProgressIndicator";
 import ProcessingModeToggle from "./ProcessingModeToggle";
 import SupportedFormatsInfo from "./SupportedFormatsInfo";
+import ConnectionStatistics from "./ConnectionStatistics";
 import { useState, useEffect } from "react";
 
 interface UploadDialogContentProps {
@@ -124,6 +125,8 @@ const UploadDialogContent = ({
                 Process Statement
               </Button>
             </div>
+            
+            <ConnectionStatistics />
           </>
         )}
       </div>
