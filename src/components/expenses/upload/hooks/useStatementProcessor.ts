@@ -50,7 +50,7 @@ export const useStatementProcessor = ({
       const processingOptions = {
         preferredProvider: preferredAIProvider,
         // Always enable Vision API for PDFs
-        useVision: file.name.toLowerCase().endsWith('.pdf') ? true : undefined,
+        useVision: file.name.toLowerCase().endsWith('.pdf'),
         // Force real data extraction
         forceRealData: true,
         extractRealData: true,

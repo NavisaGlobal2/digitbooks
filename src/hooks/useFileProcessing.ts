@@ -95,7 +95,7 @@ export const useFileProcessing = () => {
         preferredProvider: options?.preferredProvider || preferredAIProvider
       };
       
-      // Ensure Vision API is always enabled for PDFs
+      // Always enable Vision API for PDFs
       if (file.name.toLowerCase().endsWith('.pdf')) {
         processingOptions.useVision = true;
       }

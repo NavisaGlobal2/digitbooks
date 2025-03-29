@@ -99,7 +99,8 @@ const UploadDialogContent = ({
               disabled={uploading} 
             />
             
-            {file && isCsvFile && (
+            {/* Show the AI provider selection for all file types, including PDF */}
+            {file && (
               <ProcessingModeToggle 
                 useEdgeFunction={useEdgeFunction} 
                 toggleEdgeFunction={toggleEdgeFunction}
