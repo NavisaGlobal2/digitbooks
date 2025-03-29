@@ -14,13 +14,14 @@ export const parsePDFFile = (
   // Log the file details for debugging
   console.log(`Starting PDF parsing for: ${file.name} (${file.size} bytes) with context: ${context}`);
   
-  // ALWAYS force real data extraction
+  // ALWAYS force real data extraction and add safe processing mode to prevent stack overflows
   const options = {
     useVision: true,
     forceRealData: true,
     context: context,
     extractRealData: true,
-    noDummyData: true
+    noDummyData: true,
+    safeProcessing: true // Added safe processing mode
   };
   
   // Send the file directly to the edge function with special PDF handling flag

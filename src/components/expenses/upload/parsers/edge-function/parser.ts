@@ -52,8 +52,8 @@ export const parseViaEdgeFunction = async (
         formData.append("context", options.context);
       }
       
-      // Add new option to disable recursive processing for large PDFs
-      formData.append("safeProcessing", "true");
+      // Add safe processing option to prevent stack overflows
+      formData.append("safeProcessing", options?.safeProcessing ? "true" : "false");
     }
     
     if (options?.preferredProvider) {
@@ -145,12 +145,18 @@ export const parseViaEdgeFunction = async (
             (error.message && (
               error.message.includes("operation is not supported") ||
               error.message.includes("Maximum call stack size exceeded") ||
-              error.message.includes("sandbox environment internal error")
+              error.message.includes("sandbox environment internal error") ||
+              error.message.includes("PDF processing error")
             )))) {
           console.log('PDF processing error detected.');
           
+          // If we're already in safe mode and still failing, don't retry
+          if (options?.safeProcessing && retryCount > 0) {
+            return onError("We're experiencing technical limitations with PDF processing. Please try using a CSV or Excel format if available.");
+          }
+          
+          // If this is our last retry, give a clear message to the user
           if (retryCount === MAX_RETRIES) {
-            // For PDF files that consistently fail, provide a clear error message
             return onError("We're experiencing technical limitations with PDF processing. Please try uploading the PDF again or use a CSV or Excel format if available.");
           }
           
