@@ -37,17 +37,18 @@ export const usePaymentDialog = ({
       const existingTotal = paymentsWithIds.reduce((sum, payment) => sum + payment.amount, 0);
       setTotalPaid(existingTotal);
     } else {
-      // Initialize with a single default payment
+      // Initialize with a single default payment with zero amount
+      // This ensures we don't show as paid until user sets amount
       setPayments([
         { 
           id: crypto.randomUUID(), 
-          amount: invoiceAmount, 
+          amount: 0, // Initialize with zero instead of full invoice amount
           date: new Date(), 
           method: "bank transfer", 
           receiptUrl: null 
         }
       ]);
-      setTotalPaid(invoiceAmount);
+      setTotalPaid(0); // Set total paid to zero initially
     }
   }, [existingPayments, invoiceAmount]);
 

@@ -10,14 +10,15 @@ export const PaymentSummary = ({ totalPaid, invoiceAmount }: PaymentSummaryProps
   // Calculate payment status and formatting
   const isPaid = totalPaid >= invoiceAmount;
   const isPartiallyPaid = totalPaid > 0 && totalPaid < invoiceAmount;
-  const isOverpaid = totalPaid > invoiceAmount;
+  const isOverpaid = totalPaid > invoiceAmount && totalPaid > 0; // Add check for actual payment
   
   const difference = Math.abs(totalPaid - invoiceAmount);
   
   // Determine status color
   const statusColor = isPartiallyPaid ? "text-orange-600" : 
                       isOverpaid ? "text-blue-600" : 
-                      "text-green-600";
+                      (isPaid && totalPaid > 0) ? "text-green-600" : 
+                      "text-muted-foreground";
   
   return (
     <div className="rounded-lg border p-4">
@@ -36,9 +37,10 @@ export const PaymentSummary = ({ totalPaid, invoiceAmount }: PaymentSummaryProps
       <div className="flex justify-between items-center mt-1">
         <span className="text-sm text-muted-foreground">Difference:</span>
         <span className={cn("text-sm", statusColor)}>
-          {totalPaid === invoiceAmount ? "None" : 
+          {totalPaid === 0 ? "No payments" :
+           totalPaid === invoiceAmount ? "None" : 
            isPartiallyPaid ? `-₦${difference.toLocaleString()} (Partially Paid)` :
-           `+₦${difference.toLocaleString()} (Overpaid)`}
+           isOverpaid ? `+₦${difference.toLocaleString()} (Overpaid)` : "None"}
         </span>
       </div>
     </div>
