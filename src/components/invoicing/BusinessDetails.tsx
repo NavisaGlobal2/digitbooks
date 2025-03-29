@@ -14,7 +14,7 @@ interface BusinessDetailsProps {
   dueDate: Date | undefined;
   setDueDate: (date: Date | undefined) => void;
   clientName: string;
-  handleClientSelect: (name: string, email?: string, address?: string) => void;
+  handleClientSelect: (name: string, address?: string) => void;
 }
 
 const BusinessDetails = ({
@@ -34,7 +34,7 @@ const BusinessDetails = ({
         <div className="space-y-2">
           <Label htmlFor="clientName">Client</Label>
           <ClientSelector 
-            selectedClientName={clientName || ""}
+            selectedClientName={clientName}
             onClientSelect={handleClientSelect}
           />
         </div>
@@ -54,7 +54,7 @@ const BusinessDetails = ({
                   {invoiceDate ? format(invoiceDate, "PPP") : "Select date"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-white z-50">
+              <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
                   selected={invoiceDate}
@@ -79,7 +79,7 @@ const BusinessDetails = ({
                   {dueDate ? format(dueDate, "PPP") : "Select date"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-white z-50">
+              <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
                   selected={dueDate}

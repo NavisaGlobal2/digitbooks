@@ -3,82 +3,50 @@ import jsPDF from "jspdf";
 import { format } from "date-fns";
 
 /**
- * Renders billing information in a two-column layout
+ * Renders the billing and date information for the professional template
  */
 export const renderBillingInfo = (
   doc: jsPDF,
   clientName: string,
   clientEmail: string | undefined,
-  clientAddress: string | undefined,
   invoiceDate: Date | undefined,
   dueDate: Date | undefined,
-  startY: number,
+  yPos: number,
   config: any,
   pageWidth: number
 ): number => {
-  const { margins, colors } = config;
+  const dateFormat = "dd MMM yyyy";
+  const issuedDateStr = invoiceDate ? format(invoiceDate, dateFormat) : format(new Date(), dateFormat);
+  const dueDateStr = dueDate ? format(dueDate, dateFormat) : "N/A";
   
-  // Format dates
-  const issueDateFormatted = invoiceDate ? format(invoiceDate, "PPP") : "Not specified";
-  const dueDateFormatted = dueDate ? format(dueDate, "PPP") : "Not specified";
-  
-  // Set up styling
+  // Set styling for this section
   doc.setFontSize(11);
+  doc.setTextColor(50, 50, 50);
+  
+  // Background for the billing section
+  doc.setFillColor(248, 248, 250);
+  doc.rect(0, yPos, pageWidth, 50, 'F');
+  
+  // Client information on the left
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 0, 0);
-  
-  // Left column - Client information
-  let yPos = startY + 8;
-  
-  // Client section title
-  doc.setFontSize(12);
-  doc.text("Bill To:", margins.left, yPos);
-  yPos += 8;
-  
-  // Client details
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text(clientName, margins.left, yPos);
-  yPos += 6;
-  
+  doc.text("Bill To:", config.margins.left, yPos + 15);
   doc.setFont('helvetica', 'normal');
-  if (clientAddress) {
-    const addressLines = clientAddress.split(',');
-    for (const line of addressLines) {
-      doc.text(line.trim(), margins.left, yPos);
-      yPos += 5;
-    }
-  }
+  doc.text(clientName, config.margins.left, yPos + 25);
   
   if (clientEmail) {
-    doc.text(clientEmail, margins.left, yPos);
-    yPos += 5;
+    doc.text(clientEmail, config.margins.left, yPos + 35);
   }
   
-  // Right column - Date information
-  const rightColX = pageWidth / 2 + 10;
-  let rightYPos = startY + 8;
+  // Date information on the right in a clean column layout
+  const rightCol = pageWidth - config.margins.right - 80;
   
-  // Date section title
-  doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text("Date Information:", rightColX, rightYPos);
-  rightYPos += 8;
+  doc.text("Issue Date:", rightCol, yPos + 15);
+  doc.text("Due Date:", rightCol, yPos + 25);
   
-  // Date details
-  doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
+  doc.text(issuedDateStr, pageWidth - config.margins.right, yPos + 15, { align: 'right' });
+  doc.text(dueDateStr, pageWidth - config.margins.right, yPos + 25, { align: 'right' });
   
-  // Issue date
-  doc.text("Issue Date:", rightColX, rightYPos);
-  doc.text(issueDateFormatted, rightColX + 60, rightYPos, { align: "left" });
-  rightYPos += 6;
-  
-  // Due date
-  doc.text("Due Date:", rightColX, rightYPos);
-  doc.text(dueDateFormatted, rightColX + 60, rightYPos, { align: "left" });
-  rightYPos += 6;
-  
-  // Return the maximum Y position between the two columns
-  return Math.max(yPos, rightYPos);
+  return yPos + 50;
 };
