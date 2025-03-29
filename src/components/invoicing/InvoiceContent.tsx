@@ -44,8 +44,8 @@ const InvoiceContent = ({
     setIsProcessingPayment(true);
     
     try {
-      // Add a small delay to avoid UI glitches
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Add a delay to ensure proper state updates and prevent UI glitches
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       markInvoiceAsPaid(invoiceId, payments);
       toast.success("Payment recorded successfully");
@@ -53,10 +53,10 @@ const InvoiceContent = ({
       console.error("Error marking invoice as paid:", error);
       toast.error("Failed to record payment");
     } finally {
-      // Add a small delay before resetting the processing state
+      // Add a delay before resetting the processing state
       setTimeout(() => {
         setIsProcessingPayment(false);
-      }, 300);
+      }, 500);
     }
   }, [markInvoiceAsPaid, isProcessingPayment]);
   

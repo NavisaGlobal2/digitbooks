@@ -10,8 +10,8 @@ import { createReceiptElement } from "./receiptElementFactory";
  * Function to download the receipt for a paid invoice
  */
 export const downloadReceipt = async (invoice: Invoice) => {
-  if (invoice.status !== 'paid') {
-    toast.error("Only paid invoices can be downloaded as receipts");
+  if (invoice.status !== 'paid' && invoice.status !== 'partially-paid') {
+    toast.error("Only paid or partially paid invoices can be downloaded as receipts");
     return false;
   }
 
@@ -22,6 +22,9 @@ export const downloadReceipt = async (invoice: Invoice) => {
     // Create a temporary receipt element
     const tempDiv = createReceiptElement(invoice);
     document.body.appendChild(tempDiv);
+    
+    // Wait a short time to ensure any images load
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     try {
       // Capture the temporary element

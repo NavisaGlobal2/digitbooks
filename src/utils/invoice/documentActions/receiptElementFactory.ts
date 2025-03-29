@@ -21,12 +21,17 @@ export const createReceiptElement = (invoice: Invoice): HTMLDivElement => {
   // Process the logo for the temporary element
   let logoHtml = '';
   if (invoice.logoUrl) {
+    // Include crossOrigin attribute and ensure it's loaded properly
     logoHtml = `<img 
       src="${invoice.logoUrl}" 
       style="height: 60px; width: auto; object-fit: contain;" 
       crossorigin="anonymous" 
       alt="Company Logo"
+      onerror="this.style.display='none'; this.parentNode.innerHTML += '<div style=\\'background-color: #05d166; color: white; height: 60px; width: 120px; display: flex; align-items: center; justify-content: center; font-weight: bold;\\'>DigitBooks</div>';"
     />`;
+  } else {
+    // Add a default logo placeholder if no logo is provided
+    logoHtml = `<div style="background-color: #05d166; color: white; height: 60px; width: 120px; display: flex; align-items: center; justify-content: center; font-weight: bold;">DigitBooks</div>`;
   }
   
   // Calculate payment totals
@@ -56,7 +61,9 @@ export const createReceiptElement = (invoice: Invoice): HTMLDivElement => {
             <span style="font-weight: 500;">Receipt Date:</span> ${paidDate}
           </p>
         </div>
-        ${logoHtml}
+        <div style="flex-shrink: 0;">
+          ${logoHtml}
+        </div>
       </div>
       
       <div style="margin-bottom: 20px; padding: 10px; background-color: #f9fafb; border-radius: 4px;">
