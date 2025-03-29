@@ -25,6 +25,16 @@ export const handleResponseError = async (response: Response): Promise<any> => {
     console.error("Failed to read error response:", e);
   }
   
+  // Add special handling for PDF-specific errors
+  if (errorMessage.includes("operation is not supported") || 
+      errorMessage.includes("The operation is not supported")) {
+    return {
+      message: "PDF processing requires multiple attempts. Please try uploading again.", 
+      status: response.status,
+      isPdfError: true
+    };
+  }
+  
   return { 
     message: errorMessage, 
     status: response.status 

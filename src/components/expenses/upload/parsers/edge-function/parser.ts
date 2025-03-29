@@ -36,9 +36,14 @@ export const parseViaEdgeFunction = async (
     const formData = new FormData();
     formData.append("file", file);
     
-    if (preferredProvider) {
+    // For PDF files, don't send preferredProvider to avoid env variable error
+    const isPdf = file.name.toLowerCase().endsWith('.pdf');
+    
+    if (preferredProvider && !isPdf) {
       formData.append("preferredProvider", preferredProvider);
       console.log(`Using preferred AI provider: ${preferredProvider}`);
+    } else if (isPdf) {
+      console.log("PDF file detected. Skipping AI provider preference to avoid environment variable error.");
     }
     
     // Make sure we're using the correct URL format for production
@@ -82,8 +87,8 @@ export const parseViaEdgeFunction = async (
         
         // Handle non-successful responses
         if (!response.ok) {
-          const errorMessage = await handleResponseError(response);
-          throw errorMessage;
+          const errorData = await handleResponseError(response);
+          throw errorData;
         }
         
         // Process successful response
@@ -96,6 +101,18 @@ export const parseViaEdgeFunction = async (
       } catch (error: any) {
         lastError = error;
         console.error(`Error in attempt ${retryCount + 1}:`, error);
+        
+        // Special handling for PDF errors
+        if (isPdf && (error.isPdfError || 
+            (error.message && error.message.includes("operation is not supported")))) {
+          console.log('PDF processing error detected. This is expected on the first attempt.');
+          
+          if (retryCount === 0) {
+            // First PDF attempt - show user a message but don't count as a retry
+            onError("PDF processing requires a second attempt. Please upload the PDF file again.");
+            return false;
+          }
+        }
         
         // Check specifically for network-related errors
         const isNetworkError = error.name === 'AbortError' || 

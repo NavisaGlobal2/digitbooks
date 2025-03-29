@@ -21,10 +21,18 @@ serve(async (req) => {
     
     // Get the preferred AI provider from the request, if provided
     const preferredProvider = formData.get("preferredProvider")?.toString() || null;
+    
+    // Only try to set the environment variable if explicitly provided
+    // This avoids the "operation not supported" error for PDF files
     if (preferredProvider) {
-      // Set the preferred provider in the environment for this request
-      Deno.env.set("PREFERRED_AI_PROVIDER", preferredProvider);
-      console.log(`Setting preferred AI provider to: ${preferredProvider}`);
+      try {
+        console.log(`Setting preferred AI provider to: ${preferredProvider}`);
+        Deno.env.set("PREFERRED_AI_PROVIDER", preferredProvider);
+      } catch (envError) {
+        // Log but don't fail if we can't set the environment variable
+        console.log(`Could not set preferred AI provider: ${envError.message}`);
+        // Continue processing without failing
+      }
     }
     
     if (!file || !(file instanceof File)) {
