@@ -11,3 +11,7 @@
 # Add Node.js version to ensure compatibility
 [build.environment]
   NODE_VERSION = "18"
+
+# Disable automatic deploys
+[build.lifecycle]
+  auto_deploy = false
