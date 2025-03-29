@@ -16,6 +16,7 @@ interface ActionButtonsProps {
   accountNumber: string;
   accountName: string;
   clientName: string;
+  clientEmail?: string;
   clientAddress?: string;
   selectedTemplate: string;
 }
@@ -30,6 +31,7 @@ const ActionButtons = ({
   accountNumber,
   accountName,
   clientName,
+  clientEmail,
   clientAddress,
   selectedTemplate
 }: ActionButtonsProps) => {
@@ -46,6 +48,7 @@ const ActionButtons = ({
         accountNumber,
         accountName,
         clientName,
+        clientEmail,
         clientAddress,
         selectedTemplate,
         invoiceNumber: "INV-2023-001"
@@ -69,6 +72,7 @@ const ActionButtons = ({
         accountNumber,
         accountName,
         clientName,
+        clientEmail,
         clientAddress,
         selectedTemplate,
         invoiceNumber: "INV-2023-001"

@@ -26,9 +26,10 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
       accountNumber: invoice.bankDetails.accountNumber,
       accountName: invoice.bankDetails.accountName,
       clientName: invoice.clientName,
+      clientEmail: invoice.clientEmail || "",
       clientAddress: invoice.clientAddress,
       invoiceNumber: invoice.invoiceNumber,
-      selectedTemplate: "default" // Adding the default template
+      selectedTemplate: invoice.template || "default"
     });
   };
   
@@ -43,9 +44,10 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
       accountNumber: invoice.bankDetails.accountNumber,
       accountName: invoice.bankDetails.accountName,
       clientName: invoice.clientName,
+      clientEmail: invoice.clientEmail || "",
       clientAddress: invoice.clientAddress,
       invoiceNumber: invoice.invoiceNumber,
-      selectedTemplate: "default" // Adding the default template
+      selectedTemplate: invoice.template || "default"
     });
   };
 

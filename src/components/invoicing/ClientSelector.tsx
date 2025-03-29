@@ -1,134 +1,81 @@
 
 import React, { useState, useEffect } from 'react';
-import { Check, ChevronDown, User, Plus } from "lucide-react";
-import { useClients } from '@/contexts/ClientContext';
-import { 
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Client } from '@/types/client';
+import { Check, ChevronsUpDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/utils";
+
+// Simulated client data - Replace with actual data fetching from your API
+const clients = [
+  { id: 1, name: "Acme Corp", email: "contact@acmecorp.com", address: "123 Business Ave, Lagos" },
+  { id: 2, name: "TechVision Inc", email: "info@techvision.com", address: "456 Tech Park, Port Harcourt" },
+  { id: 3, name: "Global Traders", email: "sales@globaltraders.com", address: "789 Commerce St, Abuja" },
+  { id: 4, name: "Creative Media", email: "hello@creativemedia.com", address: "101 Design Blvd, Kano" },
+  { id: 5, name: "Sunshine Farms", email: "info@sunshinefarms.com", address: "202 Rural Road, Ibadan" },
+];
 
 interface ClientSelectorProps {
   selectedClientName: string;
-  onClientSelect: (clientName: string, clientAddress?: string) => void;
+  onClientSelect: (name: string, email?: string, address?: string) => void;
 }
 
 const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorProps) => {
-  const { clients } = useClients();
-  const [isCustomClient, setIsCustomClient] = useState(!clients.some(client => client.name === selectedClientName) && selectedClientName !== '');
-  const [customClientName, setCustomClientName] = useState(isCustomClient ? selectedClientName : '');
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
 
-  // Update state when the selected client changes externally
   useEffect(() => {
-    if (selectedClientName && !isCustomClient) {
-      const clientExists = clients.some(client => client.name === selectedClientName);
-      if (!clientExists) {
-        setIsCustomClient(true);
-        setCustomClientName(selectedClientName);
-      }
+    if (selectedClientName) {
+      setValue(selectedClientName);
     }
-  }, [selectedClientName, clients, isCustomClient]);
-
-  const handleClientSelect = (value: string) => {
-    if (value === "custom") {
-      setIsCustomClient(true);
-      setCustomClientName('');
-    } else {
-      setIsCustomClient(false);
-      
-      // Find client to get their address
-      const selectedClient = clients.find(client => client.name === value);
-      if (selectedClient) {
-        onClientSelect(value, selectedClient.address);
-      } else {
-        onClientSelect(value);
-      }
-    }
-  };
-
-  const handleCustomClientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setCustomClientName(value);
-    onClientSelect(value);
-  };
-
-  const handleAddCustomClient = () => {
-    setIsCustomClient(true);
-    setCustomClientName('');
-  };
+  }, [selectedClientName]);
 
   return (
-    <div className="space-y-3">
-      {!isCustomClient ? (
-        <>
-          <Select 
-            onValueChange={handleClientSelect} 
-            value={selectedClientName || undefined}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a client" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Existing Clients</SelectLabel>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.name}>
-                    <div className="flex items-center">
-                      <User className="mr-2 h-4 w-4" />
-                      {client.name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-              <SelectItem value="custom">
-                <div className="flex items-center text-blue-600">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add a custom client
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          
-          {clients.length === 0 && (
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              className="mt-2 text-sm"
-              onClick={handleAddCustomClient}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add custom client
-            </Button>
-          )}
-        </>
-      ) : (
-        <div className="space-y-2">
-          <Input
-            value={customClientName}
-            onChange={handleCustomClientChange}
-            placeholder="Enter client name"
-            className="w-full"
-          />
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="sm" 
-            className="text-sm"
-            onClick={() => setIsCustomClient(false)}
-          >
-            Select from existing clients
-          </Button>
-        </div>
-      )}
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between"
+        >
+          {value || "Select client..."}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0">
+        <Command>
+          <CommandInput placeholder="Search client..." />
+          <CommandEmpty>No client found.</CommandEmpty>
+          <CommandGroup>
+            {clients.map((client) => (
+              <CommandItem
+                key={client.id}
+                value={client.name}
+                onSelect={(currentValue) => {
+                  const selectedClient = clients.find(c => c.name.toLowerCase() === currentValue.toLowerCase());
+                  setValue(currentValue);
+                  onClientSelect(
+                    currentValue, 
+                    selectedClient?.email,
+                    selectedClient?.address
+                  );
+                  setOpen(false);
+                }}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    value === client.name ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                {client.name}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };
 

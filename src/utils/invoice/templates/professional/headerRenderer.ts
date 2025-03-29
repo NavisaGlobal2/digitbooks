@@ -1,54 +1,46 @@
 
-/**
- * Header component for professional invoice template
- */
 import jsPDF from "jspdf";
-import { TemplateConfig } from "../types";
+import { PROFESSIONAL_TEMPLATE_CONFIG } from "../templateConfig";
 
 /**
- * Render the header section of the professional template
+ * Renders the professional template header
  */
-export const renderHeader = (
-  doc: jsPDF, 
-  logoPreview: string | null, 
-  invoiceNumber: string | undefined,
-  config: TemplateConfig
-): void => {
+export const renderHeader = (doc: jsPDF, logoPreview: string | null, invoiceNumber: string | undefined, config: any): void => {
+  // Set up header styling
   const { colors, margins } = config;
   const pageWidth = doc.internal.pageSize.width;
   
-  // Add header background
+  // Draw header background
   doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   doc.rect(0, 0, pageWidth, 40, 'F');
   
-  // Add logo or company name
+  // Add "INVOICE" title
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(255, 255, 255);
+  doc.text("INVOICE", margins.left, 25);
+  
+  // Add invoice number below the title in a more professional style
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Ref: ${invoiceNumber || 'Draft'}`, margins.left, 35);
+  
+  // Add logo if available
   if (logoPreview && logoPreview.startsWith('data:image')) {
     try {
-      doc.addImage(logoPreview, 'JPEG', margins.left, 10, 30, 15);
+      const rightPosX = pageWidth - margins.right - 50;
+      doc.addImage(logoPreview, 'JPEG', rightPosX, 10, 40, 20);
     } catch (error) {
-      renderCompanyName(doc, margins.left, 10, colors);
+      console.error("Error adding logo:", error);
+      
+      // Add a fallback colored rectangle if logo fails
+      const rightPosX = pageWidth - margins.right - 50;
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(rightPosX, 10, 40, 20, 2, 2, 'F');
+      
+      doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+      doc.setFontSize(14);
+      doc.text("DigitBooks", rightPosX + 20, 23, { align: 'center' });
     }
-  } else {
-    renderCompanyName(doc, margins.left, 10, colors);
   }
-  
-  // Add invoice title on header
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(22);
-  doc.setTextColor(255, 255, 255);
-  doc.text("INVOICE", pageWidth - margins.right, 20, { align: 'right' });
-  
-  // Add invoice number
-  doc.setFontSize(12);
-  doc.text(`#${invoiceNumber}`, pageWidth - margins.right, 30, { align: 'right' });
-};
-
-/**
- * Render company name when logo is not available
- */
-export const renderCompanyName = (doc: jsPDF, x: number, y: number, colors: any): void => {
-  doc.setFontSize(16);
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.text("DigitBooks", x, y + 10);
 };
