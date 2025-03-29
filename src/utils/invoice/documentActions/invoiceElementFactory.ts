@@ -22,7 +22,7 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
   let logoHtml = '';
   if (invoiceDetails.logoPreview) {
     logoHtml = `
-      <div style="display: flex; align-items: center; justify-content: center; height: 60px; min-width: 120px;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 60px; min-width: 120px; margin-bottom: 10px;">
         <img 
           src="${invoiceDetails.logoPreview}" 
           style="max-height: 60px; max-width: 120px; object-fit: contain;" 
@@ -32,28 +32,41 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
         />
       </div>
     `;
+  } else {
+    // Add a fallback colored logo container if no logo provided
+    logoHtml = `
+      <div style="display: flex; align-items: center; justify-content: center; height: 60px; min-width: 120px; margin-bottom: 10px;">
+        <div style="background-color: #05d166; color: white; height: 60px; width: 120px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px;">
+          DigitBooks
+        </div>
+      </div>
+    `;
   }
   
-  // Create a simplified invoice layout
+  // Create a simplified invoice layout with improved styling based on template
+  const headerStyle = invoiceDetails.selectedTemplate === 'professional' ? 
+    'background-color: #05d166; color: white; padding: 15px; margin-bottom: 20px;' : '';
+
+  // Create the HTML structure
   tempDiv.innerHTML = `
-    <div style="font-family: Arial, sans-serif;">
+    <div style="font-family: Arial, sans-serif; ${headerStyle}">
       <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
         <div>
-          <h2 style="font-size: 24px; margin-bottom: 5px;">INVOICE</h2>
-          <p style="font-size: 14px; color: #666;">
+          <h2 style="font-size: 24px; margin-bottom: 5px; ${invoiceDetails.selectedTemplate === 'professional' ? 'color: white;' : ''}">INVOICE</h2>
+          <p style="font-size: 14px; ${invoiceDetails.selectedTemplate === 'professional' ? 'color: white;' : 'color: #666;'}">
             ${invoiceDetails.invoiceNumber ? `<span style="font-weight: 500;">Invoice No:</span> ${invoiceDetails.invoiceNumber}` : ''}
           </p>
-          <p style="font-size: 14px; color: #666;">
+          <p style="font-size: 14px; ${invoiceDetails.selectedTemplate === 'professional' ? 'color: white;' : 'color: #666;'}">
             <span style="font-weight: 500;">Issue Date:</span> ${invoiceDetails.invoiceDate ? format(invoiceDetails.invoiceDate, "dd MMM yyyy") : ""}
           </p>
-          <p style="font-size: 14px; color: #666;">
+          <p style="font-size: 14px; ${invoiceDetails.selectedTemplate === 'professional' ? 'color: white;' : 'color: #666;'}">
             <span style="font-weight: 500;">Due Date:</span> ${invoiceDetails.dueDate ? format(invoiceDetails.dueDate, "dd MMM yyyy") : ""}
           </p>
         </div>
         ${logoHtml}
       </div>
       
-      <div style="margin-bottom: 20px;">
+      <div style="margin-bottom: 20px; ${invoiceDetails.selectedTemplate === 'minimalist' ? 'border-left: 3px solid #eee; padding-left: 10px;' : ''}">
         <h3 style="font-size: 16px; margin-bottom: 5px;">Bill To:</h3>
         <p style="font-weight: 500;">${invoiceDetails.clientName || "Client"}</p>
         <p style="color: #666;">${invoiceDetails.clientEmail || ""}</p>
@@ -62,7 +75,7 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
       
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
         <thead>
-          <tr style="border-bottom: 1px solid #ddd;">
+          <tr style="${invoiceDetails.selectedTemplate === 'professional' ? 'background-color: #05d166; color: white;' : 'border-bottom: 1px solid #ddd;'}">
             <th style="text-align: left; padding: 8px;">Description</th>
             <th style="text-align: right; padding: 8px;">Qty</th>
             <th style="text-align: right; padding: 8px;">Price</th>
@@ -84,7 +97,7 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
       </table>
       
       <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
-        <div style="width: 200px;">
+        <div style="width: 200px; ${invoiceDetails.selectedTemplate === 'professional' ? 'background-color: #f9f9f9; padding: 10px; border-radius: 4px;' : ''}">
           <div style="display: flex; justify-content: space-between; padding: 5px 0;">
             <span style="color: #666;">Subtotal:</span>
             <span>₦${calculateSubtotal(invoiceDetails.invoiceItems).toLocaleString()}</span>
@@ -100,7 +113,7 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
         </div>
       </div>
       
-      <div style="margin-bottom: 20px;">
+      <div style="margin-bottom: 20px; ${invoiceDetails.selectedTemplate === 'minimalist' ? 'border-top: 1px solid #eee; padding-top: 15px;' : ''}">
         <h3 style="font-size: 16px; margin-bottom: 5px;">Bank Details</h3>
         <p style="font-size: 14px;"><span style="font-weight: 500;">Bank Name:</span> ${invoiceDetails.bankName || ""}</p>
         <p style="font-size: 14px;"><span style="font-weight: 500;">Account Name:</span> ${invoiceDetails.accountName || ""}</p>
@@ -113,6 +126,10 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
           <p style="font-size: 14px; color: #666;">${invoiceDetails.additionalInfo}</p>
         </div>
       ` : ""}
+
+      <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #999;">
+        <p>Thank you for your business</p>
+      </div>
     </div>
   `;
   

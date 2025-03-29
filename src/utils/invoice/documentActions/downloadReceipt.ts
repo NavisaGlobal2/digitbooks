@@ -19,12 +19,56 @@ export const downloadReceipt = async (invoice: Invoice) => {
   const toastId = toast.loading("Generating receipt...");
   
   try {
+    // First, process the logo if it exists to avoid CORS issues
+    let processedLogo = invoice.logoUrl;
+    if (invoice.logoUrl && typeof invoice.logoUrl === 'string') {
+      try {
+        // Create a new Image to properly load the logo with CORS handling
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        
+        // Wait for the image to load before proceeding
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error("Logo load timeout")), 3000);
+          img.onload = () => {
+            clearTimeout(timeout);
+            resolve(null);
+          };
+          img.onerror = () => {
+            clearTimeout(timeout);
+            reject(new Error("Failed to load logo"));
+          };
+          img.src = invoice.logoUrl;
+        });
+        
+        // Update the invoice details with the properly loaded image
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          // Replace the logo with a clean base64 version
+          processedLogo = canvas.toDataURL("image/png");
+        }
+      } catch (error) {
+        console.error("Error preprocessing logo:", error);
+        processedLogo = null;
+      }
+    }
+    
+    // Create a modified invoice with the processed logo
+    const modifiedInvoice = {
+      ...invoice,
+      logoUrl: processedLogo
+    };
+    
     // Create a temporary receipt element
-    const tempDiv = createReceiptElement(invoice);
+    const tempDiv = createReceiptElement(modifiedInvoice);
     document.body.appendChild(tempDiv);
     
     // Wait a bit longer to ensure any images load properly
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 1200));
     
     try {
       // Capture the temporary element with better settings
