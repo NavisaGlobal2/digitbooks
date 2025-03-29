@@ -95,6 +95,9 @@ export const useFileProcessing = () => {
         setIsWaitingForServer(true);
       }
       
+      const provider = preferredProvider || preferredAIProvider;
+      console.log(`Processing with preferred AI provider: ${provider}`);
+      
       // Now process with edge function
       const { parseViaEdgeFunction } = await import("../components/expenses/upload/parsers/edgeFunctionParser");
       
@@ -109,14 +112,26 @@ export const useFileProcessing = () => {
               setIsWaitingForServer(false);
             }
             setProcessing(false);
+            setProcessingStatus(null);
             onError("No valid transactions found in the statement. Please try a different file or format.");
             resetProgress();
             return;
           }
           
+          // Convert dates to proper format if needed
+          const processedTransactions = transactions.map(tx => {
+            if (tx.date && typeof tx.date === 'string') {
+              // Ensure date is in YYYY-MM-DD format
+              const dateObj = new Date(tx.date);
+              if (!isNaN(dateObj.getTime())) {
+                tx.date = dateObj.toISOString().split('T')[0];
+              }
+            }
+            return tx;
+          });
+          
           // Log transaction data for debugging
-          console.log(`Received ${transactions.length} transactions from server`, 
-            transactions.slice(0, 2));
+          console.log(`Received ${processedTransactions.length} transactions from server`);
           
           completeProgress();
           if (setIsWaitingForServer) {
@@ -124,7 +139,7 @@ export const useFileProcessing = () => {
           }
           setProcessing(false);
           setProcessingStatus(null);
-          onSuccess(transactions);
+          onSuccess(processedTransactions);
         },
         (errorMessage) => {
           if (isCancelled) return true;
@@ -136,9 +151,17 @@ export const useFileProcessing = () => {
             setIsWaitingForServer(false);
           }
           
+          // If it's a PDF and mentions "second attempt" - this is expected
+          const isPdfRetryError = file.name.toLowerCase().endsWith('.pdf') && 
+                                errorMessage.toLowerCase().includes('second attempt');
+          
+          if (isPdfRetryError) {
+            toast.warning("PDF processing requires a second attempt. Please try again.");
+          }
+          
           return onError(errorMessage);
         },
-        preferredProvider || preferredAIProvider
+        provider
       );
     } catch (error: any) {
       if (isCancelled) return;

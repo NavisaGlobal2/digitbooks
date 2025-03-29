@@ -36,14 +36,17 @@ export const parseViaEdgeFunction = async (
     const formData = new FormData();
     formData.append("file", file);
     
-    // For PDF files, don't send preferredProvider to avoid env variable error
+    // For PDF files, add a special flag to help with processing
     const isPdf = file.name.toLowerCase().endsWith('.pdf');
     
-    if (preferredProvider && !isPdf) {
+    if (isPdf) {
+      formData.append("fileType", "pdf");
+      console.log("PDF file detected. Adding special handling flags.");
+    }
+    
+    if (preferredProvider) {
       formData.append("preferredProvider", preferredProvider);
       console.log(`Using preferred AI provider: ${preferredProvider}`);
-    } else if (isPdf) {
-      console.log("PDF file detected. Skipping AI provider preference to avoid environment variable error.");
     }
     
     // Make sure we're using the correct URL format for production
@@ -104,13 +107,18 @@ export const parseViaEdgeFunction = async (
         
         // Special handling for PDF errors
         if (isPdf && (error.isPdfError || 
-            (error.message && error.message.includes("operation is not supported")))) {
-          console.log('PDF processing error detected. This is expected on the first attempt.');
+            (error.message && (
+              error.message.includes("operation is not supported") ||
+              error.message.includes("Maximum call stack size exceeded")
+            )))) {
+          console.log('PDF processing error detected.');
           
           if (retryCount === 0) {
-            // First PDF attempt - show user a message but don't count as a retry
-            onError("PDF processing requires a second attempt. Please upload the PDF file again.");
-            return false;
+            // For PDF files, we expect this error on first attempt
+            // Increment retry counter and continue
+            retryCount++;
+            console.log('Retrying PDF processing...');
+            continue;
           }
         }
         
