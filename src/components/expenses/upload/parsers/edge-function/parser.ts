@@ -42,7 +42,6 @@ export const parseViaEdgeFunction = async (
     }
     
     // Make sure we're using the correct URL format for production
-    // Format should be: https://{project-id}.supabase.co/functions/v1/{function-name}
     const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
     const edgeFunctionEndpoint = `${supabaseUrl}/functions/v1/parse-bank-statement-ai`;
     
@@ -114,11 +113,10 @@ export const parseViaEdgeFunction = async (
           // For CSV files, try fallback immediately for network errors
           if (file.name.toLowerCase().endsWith('.csv')) {
             console.log('CSV file detected, attempting local fallback');
-            // The key fix is here - we need to await this promise and return its result
             return await handleCSVFallback(file, onSuccess, onError, error);
           }
         } else {
-          // Fix: await the async call and directly return its result
+          // Handle other errors
           return await handleOtherErrors(error, file, onSuccess, onError, edgeFunctionEndpoint);
         }
       }
@@ -148,7 +146,6 @@ export const parseViaEdgeFunction = async (
 
 /**
  * Handle non-network errors
- * Fix: Make this function async since it returns a Promise
  */
 const handleOtherErrors = async (
   error: any, 
@@ -173,7 +170,6 @@ const handleOtherErrors = async (
     // For CSV files with server errors, try fallback
     if (file.name.toLowerCase().endsWith('.csv')) {
       console.log('Server error with CSV file, attempting local fallback');
-      // Fix: await the handleCSVFallback call and return its result
       return await handleCSVFallback(file, onSuccess, onError, error);
     }
     

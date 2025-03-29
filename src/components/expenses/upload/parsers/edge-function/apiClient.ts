@@ -1,9 +1,6 @@
 
 import { ParsedTransaction } from "../types";
-import { 
-  trackSuccessfulConnection,
-  trackFailedConnection
-} from "./connectionStats";
+import { trackSuccessfulConnection, trackFailedConnection } from "./connectionStats";
 
 /**
  * Handle response error from the edge function
