@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { CheckCircle, Download, ExternalLink, MoreVertical } from "lucide-react";
 import { Invoice } from "@/types/invoice";
 import { formatNaira } from "@/utils/invoice/formatters";
-import { downloadInvoice, shareInvoice } from "@/utils/invoice";
+import { downloadInvoice, shareInvoice } from "@/utils/invoice/documentActions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -26,7 +26,9 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
       accountNumber: invoice.bankDetails.accountNumber,
       accountName: invoice.bankDetails.accountName,
       clientName: invoice.clientName,
-      invoiceNumber: invoice.invoiceNumber
+      clientAddress: invoice.clientAddress,
+      invoiceNumber: invoice.invoiceNumber,
+      selectedTemplate: "default" // Adding the default template
     });
   };
   
@@ -41,7 +43,9 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
       accountNumber: invoice.bankDetails.accountNumber,
       accountName: invoice.bankDetails.accountName,
       clientName: invoice.clientName,
-      invoiceNumber: invoice.invoiceNumber
+      clientAddress: invoice.clientAddress,
+      invoiceNumber: invoice.invoiceNumber,
+      selectedTemplate: "default" // Adding the default template
     });
   };
 
