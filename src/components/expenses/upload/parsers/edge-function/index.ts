@@ -8,3 +8,7 @@ export { getAuthToken } from './authHandler';
 export { parseViaEdgeFunction } from './parser';
 export { callEdgeFunction, handleResponseError } from './apiClient';
 export { processSuccessfulResult } from './responseProcessor';
+export { handleNetworkError, handleOtherErrors } from './errorHandlers';
+export { prepareFormData, createRequestConfig } from './formDataPreparation';
+export { handlePDFError, trackPDFAttempt, resetPDFAttemptCounter, handlePDFRetry, addPDFOptions } from './pdfHandler';
+export { sendRequestWithRetry, makeEdgeFunctionRequest } from './requestHandler';
