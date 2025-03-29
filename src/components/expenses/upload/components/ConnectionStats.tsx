@@ -27,7 +27,7 @@ export const ConnectionStats = () => {
     return () => clearInterval(interval);
   }, []);
   
-  const hasFailures = stats.failures > 0;
+  const hasFailures = stats.failureCount > 0;
   
   return (
     <Card className={hasFailures ? "border-orange-300" : "border-green-300"}>
@@ -66,14 +66,14 @@ export const ConnectionStats = () => {
           
           <div className="flex justify-between">
             <span>Total attempts:</span>
-            <span>{stats.attempts}</span>
+            <span>{stats.total}</span>
           </div>
           
           {hasFailures && (
             <>
               <div className="flex justify-between">
                 <span>Failed attempts:</span>
-                <span className="text-orange-500">{stats.failures}</span>
+                <span className="text-orange-500">{stats.failureCount}</span>
               </div>
               
               {stats.lastFailure && (
