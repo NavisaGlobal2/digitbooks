@@ -1,6 +1,7 @@
+
 import { format } from "date-fns";
 import { CheckCircle, Download, ExternalLink, MoreVertical, Receipt } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Invoice } from "@/types/invoice";
 import { formatNaira } from "@/utils/invoice/formatters";
 import { downloadInvoice, downloadReceipt, shareInvoice } from "@/utils/invoice/documentActions";
@@ -14,23 +15,46 @@ import { toast } from "sonner";
 interface InvoiceTableProps {
   invoices: Invoice[];
   onMarkAsPaid: (invoiceId: string, payments: any[]) => void;
+  isProcessingPayment?: boolean;
 }
 
-const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
+const InvoiceTable = ({ invoices, onMarkAsPaid, isProcessingPayment = false }: InvoiceTableProps) => {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [isPaidDialogOpen, setIsPaidDialogOpen] = useState(false);
+  
+  // Close dialog when isProcessingPayment changes
+  useEffect(() => {
+    if (isProcessingPayment) {
+      return;
+    }
+    
+    // Wait a bit before allowing to select a new invoice
+    const timer = setTimeout(() => {
+      if (!isPaidDialogOpen) {
+        setSelectedInvoiceId(null);
+      }
+    }, 200);
+    
+    return () => clearTimeout(timer);
+  }, [isProcessingPayment, isPaidDialogOpen]);
   
   const selectedInvoice = invoices.find(invoice => invoice.id === selectedInvoiceId);
 
   const handleMarkAsPaid = (invoiceId: string) => {
+    if (isProcessingPayment) return;
+    
     setSelectedInvoiceId(invoiceId);
-    setIsPaidDialogOpen(true);
+    // Add a small delay to avoid UI glitches
+    setTimeout(() => {
+      setIsPaidDialogOpen(true);
+    }, 50);
   };
 
   const handlePaidDialogClose = () => {
+    // Wait a bit before clearing the selected invoice
     setTimeout(() => {
       setSelectedInvoiceId(null);
-    }, 150);
+    }, 200);
   };
 
   const handleDownloadInvoice = async (invoice: Invoice) => {
@@ -121,7 +145,11 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleDownloadInvoice(invoice)} className="cursor-pointer">
+                      <DropdownMenuItem 
+                        onClick={() => handleDownloadInvoice(invoice)} 
+                        className="cursor-pointer"
+                        disabled={isProcessingPayment}
+                      >
                         {invoice.status === 'paid' || invoice.status === 'partially-paid' ? (
                           <>
                             <Receipt className="h-4 w-4 mr-2" />
@@ -134,12 +162,20 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
                           </>
                         )}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleShareInvoice(invoice)} className="cursor-pointer">
+                      <DropdownMenuItem 
+                        onClick={() => handleShareInvoice(invoice)} 
+                        className="cursor-pointer"
+                        disabled={isProcessingPayment}
+                      >
                         <ExternalLink className="h-4 w-4 mr-2" />
                         Share
                       </DropdownMenuItem>
                       {(invoice.status === 'pending' || invoice.status === 'partially-paid') && (
-                        <DropdownMenuItem onClick={() => handleMarkAsPaid(invoice.id)} className="cursor-pointer">
+                        <DropdownMenuItem 
+                          onClick={() => handleMarkAsPaid(invoice.id)} 
+                          className="cursor-pointer"
+                          disabled={isProcessingPayment}
+                        >
                           <CheckCircle className="h-4 w-4 mr-2" />
                           {invoice.status === 'partially-paid' ? 'Update Payment' : 'Mark as Paid'}
                         </DropdownMenuItem>

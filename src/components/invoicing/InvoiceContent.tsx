@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import InvoiceEmptyState from "./InvoiceEmptyState";
@@ -20,6 +21,7 @@ const InvoiceContent = ({
 }: InvoiceContentProps) => {
   const { invoices, markInvoiceAsPaid } = useInvoices();
   const [filteredInvoices, setFilteredInvoices] = useState(invoices);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -36,15 +38,27 @@ const InvoiceContent = ({
     setFilteredInvoices(filtered);
   }, [invoices, searchQuery]);
   
-  const handleMarkAsPaid = useCallback((invoiceId: string, payments: PaymentRecord[]) => {
+  const handleMarkAsPaid = useCallback(async (invoiceId: string, payments: PaymentRecord[]) => {
+    if (isProcessingPayment) return;
+    
+    setIsProcessingPayment(true);
+    
     try {
+      // Add a small delay to avoid UI glitches
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       markInvoiceAsPaid(invoiceId, payments);
       toast.success("Payment recorded successfully");
     } catch (error) {
       console.error("Error marking invoice as paid:", error);
       toast.error("Failed to record payment");
+    } finally {
+      // Add a small delay before resetting the processing state
+      setTimeout(() => {
+        setIsProcessingPayment(false);
+      }, 300);
     }
-  }, [markInvoiceAsPaid]);
+  }, [markInvoiceAsPaid, isProcessingPayment]);
   
   if (invoices.length === 0) {
     return <InvoiceEmptyState onCreateInvoice={() => setIsCreatingInvoice(true)} />;
@@ -66,6 +80,7 @@ const InvoiceContent = ({
             <InvoiceTable 
               invoices={filteredInvoices}
               onMarkAsPaid={handleMarkAsPaid}
+              isProcessingPayment={isProcessingPayment}
             />
           </div>
         </div>

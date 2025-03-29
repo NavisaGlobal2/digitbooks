@@ -57,7 +57,7 @@ export const usePaymentDialog = ({
     setIsSubmitting(false);
   }, []);
 
-  const handleAddPayment = () => {
+  const handleAddPayment = useCallback(() => {
     const newPayment = {
       id: crypto.randomUUID(),
       amount: 0,
@@ -67,35 +67,40 @@ export const usePaymentDialog = ({
     };
     
     setPayments(prevPayments => [...prevPayments, newPayment]);
-  };
+  }, []);
 
-  const handleRemovePayment = (id: string) => {
-    const updatedPayments = payments.filter(payment => payment.id !== id);
-    setPayments(updatedPayments);
-    
-    // Recalculate total
-    const newTotal = updatedPayments.reduce((sum, payment) => sum + payment.amount, 0);
-    setTotalPaid(newTotal);
-  };
-
-  const handlePaymentChange = (id: string, field: keyof PaymentRecord, value: any) => {
-    const updatedPayments = payments.map(payment => {
-      if (payment.id === id) {
-        return { ...payment, [field]: value };
-      }
-      return payment;
-    });
-    
-    setPayments(updatedPayments);
-    
-    // Recalculate total if amount changed
-    if (field === 'amount') {
+  const handleRemovePayment = useCallback((id: string) => {
+    setPayments(prevPayments => {
+      const updatedPayments = prevPayments.filter(payment => payment.id !== id);
+      
+      // Recalculate total
       const newTotal = updatedPayments.reduce((sum, payment) => sum + payment.amount, 0);
       setTotalPaid(newTotal);
-    }
-  };
+      
+      return updatedPayments;
+    });
+  }, []);
 
-  const handleFileUpload = async (id: string, file: File) => {
+  const handlePaymentChange = useCallback((id: string, field: keyof PaymentRecord, value: any) => {
+    setPayments(prevPayments => {
+      const updatedPayments = prevPayments.map(payment => {
+        if (payment.id === id) {
+          return { ...payment, [field]: value };
+        }
+        return payment;
+      });
+      
+      // Recalculate total if amount changed
+      if (field === 'amount') {
+        const newTotal = updatedPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+        setTotalPaid(newTotal);
+      }
+      
+      return updatedPayments;
+    });
+  }, []);
+
+  const handleFileUpload = useCallback(async (id: string, file: File) => {
     try {
       // In a real application, we would upload the file to storage
       // For now, we'll just create a local URL
@@ -107,9 +112,9 @@ export const usePaymentDialog = ({
       console.error("Failed to upload receipt:", error);
       toast.error("Failed to upload receipt");
     }
-  };
+  }, [handlePaymentChange]);
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (totalPaid === 0) {
       toast.error("Total payment amount cannot be zero");
       return;
@@ -135,14 +140,18 @@ export const usePaymentDialog = ({
       setTimeout(() => {
         onMarkAsPaid(invoiceId, paymentRecords);
         onOpenChange(false);
-        setIsSubmitting(false);
-      }, 100);
+        
+        // Wait a bit before clearing state to avoid UI glitches
+        setTimeout(() => {
+          setIsSubmitting(false);
+        }, 200);
+      }, 200);
     } catch (error) {
       console.error("Error marking invoice as paid:", error);
       toast.error("Failed to mark invoice as paid");
       setIsSubmitting(false);
     }
-  };
+  }, [invoiceId, invoiceAmount, payments, totalPaid, onMarkAsPaid, onOpenChange]);
 
   return {
     payments,

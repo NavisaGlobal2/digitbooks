@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
-import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PaymentRecord } from "@/types/invoice";
@@ -47,6 +46,7 @@ export const PaymentDialog = ({
   // Reset state when dialog opens or closes
   useEffect(() => {
     if (!open) {
+      // Use setTimeout to ensure dialog closing animation completes before state reset
       setTimeout(resetState, 300);
     }
   }, [open, resetState]);
