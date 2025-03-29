@@ -101,9 +101,12 @@ const UploadDialogContent = ({
             {error && <ErrorDisplay error={error} />}
             
             {!isAuthenticated && (
-              <div className="bg-yellow-50 text-yellow-600 p-3 rounded-md flex items-start space-x-2">
+              <div className="bg-yellow-50 text-yellow-600 p-3 rounded-md flex items-start space-x-2 border border-yellow-200">
                 <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <p className="text-sm">You need to be signed in to upload bank statements. Please sign in and try again.</p>
+                <div>
+                  <p className="text-sm font-medium">Authentication Required</p>
+                  <p className="text-sm">You need to be signed in to upload bank statements. Please sign in and try again.</p>
+                </div>
               </div>
             )}
             
