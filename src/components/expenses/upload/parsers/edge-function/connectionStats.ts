@@ -1,46 +1,45 @@
 
-import { toast } from "sonner";
+// Track connection success/failure for edge functions
+let successCount = 0;
+let failureCount = 0;
+let failureReasons: Record<string, number> = {};
 
-// Track connection statistics
-const connectionStats = {
-  attempts: 0,
-  failures: 0,
-  lastFailure: null as Date | null,
-  failureReasons: {} as Record<string, number>
+/**
+ * Track a successful connection to the edge function
+ */
+export const trackSuccessfulConnection = () => {
+  successCount++;
 };
 
 /**
- * Get connection statistics for edge function calls
+ * Track a failed connection to the edge function
+ */
+export const trackFailedConnection = (reason: string = 'unknown') => {
+  failureCount++;
+  failureReasons[reason] = (failureReasons[reason] || 0) + 1;
+};
+
+/**
+ * Get the connection stats for the edge function
  */
 export const getConnectionStats = () => {
+  const total = successCount + failureCount;
+  const successRate = total > 0 ? (successCount / total) * 100 : 0;
+  
   return {
-    ...connectionStats,
-    failureRate: connectionStats.attempts > 0 
-      ? Math.round((connectionStats.failures / connectionStats.attempts) * 100) 
-      : 0
+    successCount,
+    failureCount,
+    successRate: Math.round(successRate),
+    failureReasons,
+    total
   };
 };
 
 /**
- * Track a successful connection attempt
+ * Show a fallback message to the user when appropriate
  */
-export const trackSuccessfulConnection = () => {
-  connectionStats.attempts++;
+export const showFallbackMessage = (toast: any, message?: string) => {
+  const defaultMessage = "Using local CSV parser as fallback due to server connectivity issues";
+  toast.info(message || defaultMessage);
 };
 
-/**
- * Track a failed connection attempt with a reason
- */
-export const trackFailedConnection = (reason: string) => {
-  connectionStats.attempts++;
-  connectionStats.failures++;
-  connectionStats.lastFailure = new Date();
-  connectionStats.failureReasons[reason] = (connectionStats.failureReasons[reason] || 0) + 1;
-};
-
-/**
- * Show a toast message for fallback processing
- */
-export const showFallbackMessage = (message: string = "Using local CSV parser as fallback") => {
-  toast.success(message);
-};
