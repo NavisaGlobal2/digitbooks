@@ -1,5 +1,5 @@
 
-export type InvoiceStatus = 'pending' | 'paid' | 'overdue';
+export type InvoiceStatus = 'pending' | 'paid' | 'overdue' | 'partially-paid';
 
 export interface InvoiceItem {
   description: string;

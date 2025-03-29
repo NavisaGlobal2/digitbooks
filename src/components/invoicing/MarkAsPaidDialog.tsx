@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CalendarIcon, Plus, Trash2, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -18,14 +18,51 @@ interface MarkAsPaidDialogProps {
   invoiceId: string;
   invoiceAmount: number;
   onMarkAsPaid: (invoiceId: string, payments: PaymentRecord[]) => void;
+  existingPayments?: PaymentRecord[];
 }
 
-const MarkAsPaidDialog = ({ open, onOpenChange, invoiceId, invoiceAmount, onMarkAsPaid }: MarkAsPaidDialogProps) => {
-  const [payments, setPayments] = useState<(PaymentRecord & { id: string })[]>([
-    { id: crypto.randomUUID(), amount: invoiceAmount, date: new Date(), method: "bank transfer", receiptUrl: null }
-  ]);
-  const [totalPaid, setTotalPaid] = useState(invoiceAmount);
+const MarkAsPaidDialog = ({ 
+  open, 
+  onOpenChange, 
+  invoiceId, 
+  invoiceAmount, 
+  onMarkAsPaid,
+  existingPayments = []
+}: MarkAsPaidDialogProps) => {
+  const [payments, setPayments] = useState<(PaymentRecord & { id: string })[]>([]);
+  const [totalPaid, setTotalPaid] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Initialize with existing payments or a default payment
+  useEffect(() => {
+    if (open) {
+      if (existingPayments && existingPayments.length > 0) {
+        // Convert existing payments to internal format with id
+        const paymentsWithIds = existingPayments.map(payment => ({
+          ...payment,
+          id: crypto.randomUUID(),
+          date: new Date(payment.date)
+        }));
+        setPayments(paymentsWithIds);
+        
+        // Calculate total from existing payments
+        const existingTotal = paymentsWithIds.reduce((sum, payment) => sum + payment.amount, 0);
+        setTotalPaid(existingTotal);
+      } else {
+        // Initialize with a single default payment
+        setPayments([
+          { 
+            id: crypto.randomUUID(), 
+            amount: invoiceAmount, 
+            date: new Date(), 
+            method: "bank transfer", 
+            receiptUrl: null 
+          }
+        ]);
+        setTotalPaid(invoiceAmount);
+      }
+    }
+  }, [open, existingPayments, invoiceAmount]);
 
   const handleAddPayment = () => {
     const newPayment = {
@@ -75,6 +112,11 @@ const MarkAsPaidDialog = ({ open, onOpenChange, invoiceId, invoiceAmount, onMark
   };
 
   const handleSubmit = () => {
+    if (totalPaid === 0) {
+      toast.error("Total payment amount cannot be zero");
+      return;
+    }
+    
     if (totalPaid < invoiceAmount) {
       if (!confirm("Total payment amount is less than invoice amount. This will mark the invoice as partially paid. Continue?")) {
         return;
@@ -105,9 +147,14 @@ const MarkAsPaidDialog = ({ open, onOpenChange, invoiceId, invoiceAmount, onMark
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Mark Invoice as Paid</DialogTitle>
+          <DialogTitle>
+            {existingPayments?.length ? 'Update Payment Records' : 'Mark Invoice as Paid'}
+          </DialogTitle>
           <DialogDescription>
-            Record payment details for this invoice. Add multiple payments if the invoice was paid in installments.
+            {existingPayments?.length 
+              ? 'Update payment details for this invoice. Add additional payments as needed.'
+              : 'Record payment details for this invoice. Add multiple payments if the invoice was paid in installments.'
+            }
           </DialogDescription>
         </DialogHeader>
         
@@ -273,7 +320,7 @@ const MarkAsPaidDialog = ({ open, onOpenChange, invoiceId, invoiceAmount, onMark
             onClick={handleSubmit} 
             disabled={isSubmitting || totalPaid === 0}
           >
-            {isSubmitting ? "Saving..." : "Mark as Paid"}
+            {isSubmitting ? "Saving..." : "Save Payment Records"}
           </Button>
         </DialogFooter>
       </DialogContent>

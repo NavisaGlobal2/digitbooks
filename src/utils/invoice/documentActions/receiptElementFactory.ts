@@ -38,12 +38,17 @@ export const createReceiptElement = (invoice: Invoice): HTMLDivElement => {
     format(invoice.paidDate, "dd MMM yyyy") : 
     format(new Date(), "dd MMM yyyy");
   
+  // Determine if partially or fully paid
+  const isPartiallyPaid = invoice.status === 'partially-paid';
+  const receiptTitle = isPartiallyPaid ? "PARTIAL PAYMENT RECEIPT" : "RECEIPT";
+  const receiptStatusColor = isPartiallyPaid ? "#f59e0b" : "#15803d"; // amber-500 for partial, green-700 for paid
+  
   // Create a receipt layout
   tempDiv.innerHTML = `
     <div style="font-family: Arial, sans-serif;">
       <div style="display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;">
         <div>
-          <h2 style="font-size: 24px; margin-bottom: 5px; color: #15803d;">RECEIPT</h2>
+          <h2 style="font-size: 24px; margin-bottom: 5px; color: ${receiptStatusColor};">${receiptTitle}</h2>
           <p style="font-size: 14px; color: #666;">
             ${invoice.invoiceNumber ? `<span style="font-weight: 500;">Original Invoice No:</span> ${invoice.invoiceNumber}` : ''}
           </p>
@@ -86,7 +91,7 @@ export const createReceiptElement = (invoice: Invoice): HTMLDivElement => {
       
       <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
         <div style="width: 48%;">
-          <h3 style="font-size: 16px; margin-bottom: 10px; color: #15803d; border-bottom: 1px solid #15803d; padding-bottom: 5px;">Payment Information</h3>
+          <h3 style="font-size: 16px; margin-bottom: 10px; color: ${receiptStatusColor}; border-bottom: 1px solid ${receiptStatusColor}; padding-bottom: 5px;">Payment Information</h3>
           <table style="width: 100%; border-collapse: collapse;">
             <thead>
               <tr style="background-color: #f3f4f6;">
@@ -133,10 +138,16 @@ export const createReceiptElement = (invoice: Invoice): HTMLDivElement => {
               <span>Total:</span>
               <span>₦${calculateTotal(invoice.items).toLocaleString()}</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 5px 0; color: #15803d; font-weight: bold; border-top: 1px solid #ddd; margin-top: 5px;">
-              <span>PAID IN FULL</span>
+            <div style="display: flex; justify-content: space-between; padding: 5px 0; color: ${receiptStatusColor}; font-weight: bold; border-top: 1px solid #ddd; margin-top: 5px;">
+              <span>${isPartiallyPaid ? "PARTIALLY PAID" : "PAID IN FULL"}</span>
               <span>${paidDate}</span>
             </div>
+            ${isPartiallyPaid ? `
+              <div style="display: flex; justify-content: space-between; padding: 5px 0; color: #666; border-top: 1px solid #ddd; margin-top: 5px;">
+                <span style="font-weight: 500;">Balance Due:</span>
+                <span style="font-weight: bold;">₦${(invoice.amount - totalPaid).toLocaleString()}</span>
+              </div>
+            ` : ''}
           </div>
         </div>
       </div>
@@ -156,7 +167,12 @@ export const createReceiptElement = (invoice: Invoice): HTMLDivElement => {
       ` : ""}
 
       <div style="text-align: center; margin-top: 30px; padding-top: 10px; border-top: 1px solid #eee;">
-        <p style="font-size: 14px; color: #15803d; font-weight: bold;">Thank you for your payment!</p>
+        <p style="font-size: 14px; color: ${receiptStatusColor}; font-weight: bold;">
+          ${isPartiallyPaid 
+            ? "Thank you for your partial payment! Remaining balance due." 
+            : "Thank you for your payment!"
+          }
+        </p>
         <p style="font-size: 12px; color: #666;">This receipt serves as confirmation of payment received.</p>
       </div>
     </div>

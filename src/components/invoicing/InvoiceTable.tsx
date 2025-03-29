@@ -4,7 +4,7 @@ import { CheckCircle, Download, ExternalLink, MoreVertical, Receipt } from "luci
 import { useState } from "react";
 import { Invoice } from "@/types/invoice";
 import { formatNaira } from "@/utils/invoice/formatters";
-import { downloadInvoice, downloadReceipt, shareInvoice } from "@/utils/invoice/documentActions";
+import { downloadInvoice, downloadReceipt, shareInvoice, captureInvoiceAsImage } from "@/utils/invoice/documentActions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -29,7 +29,7 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
   };
 
   const handleDownloadInvoice = async (invoice: Invoice) => {
-    if (invoice.status === 'paid') {
+    if (invoice.status === 'paid' || invoice.status === 'partially-paid') {
       await downloadReceipt(invoice);
       return;
     }
@@ -52,7 +52,7 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
   
   const handleShareInvoice = async (invoice: Invoice) => {
     try {
-      if (invoice.status === 'paid') {
+      if (invoice.status === 'paid' || invoice.status === 'partially-paid') {
         toast.error("Sharing paid invoices as receipts is not yet supported");
         return;
       }
@@ -112,7 +112,7 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleDownloadInvoice(invoice)} className="cursor-pointer">
-                        {invoice.status === 'paid' ? (
+                        {invoice.status === 'paid' || invoice.status === 'partially-paid' ? (
                           <>
                             <Receipt className="h-4 w-4 mr-2" />
                             Download Receipt
@@ -128,10 +128,10 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
                         <ExternalLink className="h-4 w-4 mr-2" />
                         Share
                       </DropdownMenuItem>
-                      {invoice.status !== 'paid' && (
+                      {(invoice.status === 'pending' || invoice.status === 'partially-paid') && (
                         <DropdownMenuItem onClick={() => handleMarkAsPaid(invoice.id)} className="cursor-pointer">
                           <CheckCircle className="h-4 w-4 mr-2" />
-                          Mark as Paid
+                          {invoice.status === 'partially-paid' ? 'Update Payment' : 'Mark as Paid'}
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>
@@ -150,6 +150,7 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
           invoiceId={selectedInvoice.id}
           invoiceAmount={selectedInvoice.amount}
           onMarkAsPaid={onMarkAsPaid}
+          existingPayments={selectedInvoice.payments || []}
         />
       )}
     </>

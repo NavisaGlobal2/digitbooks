@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Invoice, InvoiceItem, InvoiceStatus, PaymentRecord } from '@/types/invoice';
 
@@ -23,14 +22,12 @@ export const useInvoices = () => {
 export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
-  // Load invoices from localStorage on mount
   useEffect(() => {
     const storedInvoices = localStorage.getItem('invoices');
     if (storedInvoices) {
       try {
         const parsedInvoices = JSON.parse(storedInvoices);
         
-        // Convert string dates back to Date objects
         const processedInvoices = parsedInvoices.map((invoice: any) => ({
           ...invoice,
           issuedDate: new Date(invoice.issuedDate),
@@ -51,7 +48,6 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, []);
 
-  // Save invoices to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('invoices', JSON.stringify(invoices));
   }, [invoices]);
@@ -97,9 +93,13 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setInvoices(prev => 
       prev.map(invoice => {
         if (invoice.id === invoiceId) {
+          const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+          
+          const status = totalPaid >= invoice.amount ? 'paid' : 'partially-paid';
+          
           return { 
             ...invoice, 
-            status: 'paid',
+            status,
             payments: payments,
             paidDate: new Date()
           };
