@@ -25,6 +25,8 @@ export const parseViaEdgeFunction = async (
     // Get auth token
     const { token, error: authError } = await getAuthToken();
     if (authError || !token) {
+      console.error("Authentication error:", authError);
+      trackFailedConnection('auth_token_error');
       return onError(authError || "Authentication error occurred");
     }
     
@@ -41,6 +43,9 @@ export const parseViaEdgeFunction = async (
     
     // Use a hardcoded URL format since we know the project ID
     const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
+    const edgeFunctionEndpoint = `${supabaseUrl}/functions/v1/parse-bank-statement-ai`;
+    
+    console.log(`Full endpoint URL: ${edgeFunctionEndpoint}`);
     
     // Implement retry logic
     let retryCount = 0;
@@ -49,7 +54,7 @@ export const parseViaEdgeFunction = async (
     while (retryCount <= MAX_RETRIES) {
       try {
         // Add a clear log message before making the fetch request
-        console.log(`Attempt ${retryCount + 1}: Fetching from ${supabaseUrl}/functions/v1/parse-bank-statement-ai...`);
+        console.log(`Attempt ${retryCount + 1}: Fetching from ${edgeFunctionEndpoint}...`);
         
         // Track that we're attempting to connect
         trackSuccessfulConnection();
@@ -58,8 +63,12 @@ export const parseViaEdgeFunction = async (
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
         
+        console.log("Request headers:", {
+          Authorization: `Bearer ${token.substring(0, 10)}...` // Only log part of the token for security
+        });
+        
         const response = await fetch(
-          `${supabaseUrl}/functions/v1/parse-bank-statement-ai`,
+          edgeFunctionEndpoint,
           {
             method: "POST",
             headers: {
@@ -80,6 +89,7 @@ export const parseViaEdgeFunction = async (
         }
         
         const result = await response.json();
+        console.log("Edge function response data:", result);
         return processSuccessfulResult(result, onSuccess);
       } catch (error: any) {
         lastError = error;
@@ -94,6 +104,7 @@ export const parseViaEdgeFunction = async (
                               ));
         
         console.error(`Attempt ${retryCount + 1} failed:`, error.message || error);
+        console.error("Error details:", error);
         
         if (isNetworkError) {
           console.log('Network-related error detected, will attempt retry if retries remaining');
