@@ -17,7 +17,7 @@ const QuickActions = () => {
     <Card className="border-none shadow-sm">
       <div className="p-4 md:p-6">
         <h2 className="text-lg font-semibold mb-3">Quick Actions</h2>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 md:gap-3">
           {actions.map((action, index) => (
             <Card key={index} className="p-0 border border-border shadow-sm hover:shadow-md transition-all hover:border-primary/20 hover:translate-y-[-2px]">
               <Button 
@@ -27,7 +27,7 @@ const QuickActions = () => {
               >
                 <Link to={action.path}>
                   <action.icon className="h-4 w-4 text-primary mb-1" />
-                  <span className="text-[10px] font-medium text-center">{action.label}</span>
+                  <span className="text-[10px] sm:text-xs font-medium text-center">{action.label}</span>
                 </Link>
               </Button>
             </Card>

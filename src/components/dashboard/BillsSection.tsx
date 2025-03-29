@@ -17,7 +17,7 @@ const BillsSection = () => {
   ];
 
   return (
-    <Card className="border-none shadow-sm">
+    <Card className="border-none shadow-sm h-full">
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 pt-4 md:pt-6 px-4 md:px-6">
         <CardTitle className="text-lg font-semibold mb-2 sm:mb-0">Upcoming Bills</CardTitle>
         <Button variant="outline" size="sm" className="text-sm gap-2 h-9 w-full sm:w-auto">
