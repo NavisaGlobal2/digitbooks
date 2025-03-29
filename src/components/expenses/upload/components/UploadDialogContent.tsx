@@ -54,13 +54,6 @@ const UploadDialogContent = ({
       setUseEdgeFunction(true);
     }
   }, [file]);
-  
-  // Check authentication status for displaying warnings
-  useEffect(() => {
-    if (isAuthenticated === false) {
-      console.log("Warning: User is not authenticated, edge function may not work");
-    }
-  }, [isAuthenticated]);
 
   return (
     <>

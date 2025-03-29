@@ -36,10 +36,17 @@ export const parseViaEdgeFunction = async (
     
     console.log(`Calling parse-bank-statement-ai edge function with ${file.name}`);
     
+    // Get the Supabase URL from the environment
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl) {
+      console.error("VITE_SUPABASE_URL is not defined");
+      return onError("Server configuration error. Please contact support.");
+    }
+    
     // Custom fetch to edge function instead of using supabase.functions.invoke
     // This gives us more control over the request and response
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/parse-bank-statement-ai`,
+      `${supabaseUrl}/functions/v1/parse-bank-statement-ai`,
       {
         method: "POST",
         headers: {
