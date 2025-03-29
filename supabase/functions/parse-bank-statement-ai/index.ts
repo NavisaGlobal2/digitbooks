@@ -47,21 +47,18 @@ serve(async (req) => {
     try {
       // Special handling for PDF files to avoid stack overflow
       if (fileType === "pdf" || fileTypeHint === "pdf") {
-        console.log("Processing PDF file with special handling");
+        console.log("Processing PDF file with specialized AI handling");
         
         try {
-          // Use a simpler approach for PDFs that won't try to extract text
-          // This avoids the stack overflow error
-          const pdfPrompt = `This is a bank statement in PDF format named ${file.name}.
-Please extract all financial transactions including:
-1. Transaction dates in YYYY-MM-DD format
-2. Transaction descriptions
-3. Transaction amounts (negative for debits, positive for credits)
-4. Transaction types (debit/credit)
-
-Return ONLY a valid JSON array of transactions.`;
+          // Use specialized prompt approach for PDFs
+          const pdfPrompt = await extractTextFromFile(file);
           
-          const transactions = await processWithAI(pdfPrompt, "pdf", context);
+          // Process with AI using enhanced instructions
+          const transactions = await processWithAI(pdfPrompt, "pdf", context, {
+            isSpecialPdfFormat: true,
+            fileName: file.name,
+            fileSize: file.size
+          });
           
           if (!Array.isArray(transactions) || transactions.length === 0) {
             return new Response(

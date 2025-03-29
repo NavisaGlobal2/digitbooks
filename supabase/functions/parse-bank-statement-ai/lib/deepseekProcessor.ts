@@ -2,7 +2,15 @@
 /**
  * Process extracted text with DeepSeek API
  */
-export async function processWithDeepseek(text: string, context?: string): Promise<any> {
+export async function processWithDeepseek(
+  text: string, 
+  context?: string,
+  options?: {
+    isSpecialPdfFormat?: boolean;
+    fileName?: string;
+    fileSize?: number;
+  }
+): Promise<any> {
   const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY");
   if (!DEEPSEEK_API_KEY) {
     throw new Error("DEEPSEEK_API_KEY is not configured. Please set up your DeepSeek API key in Supabase.");
@@ -12,7 +20,14 @@ export async function processWithDeepseek(text: string, context?: string): Promi
   console.log(`Processing context: ${context || 'general'}`);
   
   // Adjust the system prompt based on the context (revenue or expense)
-  let systemPrompt = `You are a financial data extraction assistant. Your task is to parse bank statement data from various formats and output a clean JSON array of transactions.`;
+  let systemPrompt = `You are a financial data extraction assistant specialized in accurately extracting transaction data from bank statements.`;
+  
+  if (options?.isSpecialPdfFormat) {
+    systemPrompt += `
+    
+IMPORTANT: You are processing a PDF bank statement. You must extract the REAL transactions that appear in the statement.
+DO NOT generate fictional or sample transactions. Only return actual transaction data from the document.`;
+  }
   
   if (context === "revenue") {
     systemPrompt += `
@@ -47,9 +62,11 @@ export async function processWithDeepseek(text: string, context?: string): Promi
     
     For each transaction, extract:
     - date (in YYYY-MM-DD format)
-    - description (the transaction narrative)
-    - amount (as a number, negative for debits/expenses)
+    - description (the complete transaction narrative with all details)
+    - amount (as a number, negative for debits/expenses, positive for credits/income)
     - type ("debit" or "credit")
+    
+    Extract ALL transactions visible in the statement. Do not skip any transactions.
     
     Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
   }
