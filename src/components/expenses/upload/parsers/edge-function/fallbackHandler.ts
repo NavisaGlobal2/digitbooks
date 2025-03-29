@@ -40,7 +40,7 @@ export const handleCSVFallback = async (
         amount: parseFloat(row.amount || row.debit || row.credit || "0"),
         type: (row.amount && parseFloat(row.amount) < 0) || row.debit ? "debit" : "credit",
         selected: (row.amount && parseFloat(row.amount) < 0) || row.debit,
-        category: "",
+        category: undefined, // Changed from empty string to undefined since it's optional
         source: "CSV Fallback Parser"
       }));
       
