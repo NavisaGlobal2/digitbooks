@@ -39,8 +39,11 @@ const ActionButtons = ({
 }: ActionButtonsProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   const handleDownload = async () => {
+    if (isDownloading) return; // Prevent multiple clicks
+    
     try {
       setIsDownloading(true);
       await downloadInvoice({
@@ -60,13 +63,14 @@ const ActionButtons = ({
       });
     } catch (error) {
       console.error('Error downloading invoice:', error);
-      toast.error('Failed to download invoice');
     } finally {
       setIsDownloading(false);
     }
   };
 
   const handleShare = async () => {
+    if (isSharing) return; // Prevent multiple clicks
+    
     try {
       setIsSharing(true);
       await shareInvoice({
@@ -86,21 +90,28 @@ const ActionButtons = ({
       });
     } catch (error) {
       console.error('Error sharing invoice:', error);
-      toast.error('Failed to share invoice');
     } finally {
       setIsSharing(false);
     }
   };
 
   const handleCaptureAsImage = async () => {
+    if (isCapturing) return; // Prevent multiple clicks
+    
+    setIsCapturing(true);
+    
     const invoiceElement = document.querySelector('.invoice-preview');
     if (invoiceElement) {
-      const success = await captureInvoiceAsImage(invoiceElement as HTMLElement, clientName);
-      if (success) {
-        toast.success('Invoice captured and downloaded as image');
+      try {
+        await captureInvoiceAsImage(invoiceElement as HTMLElement, clientName);
+      } catch (error) {
+        console.error('Error capturing invoice as image:', error);
+      } finally {
+        setIsCapturing(false);
       }
     } else {
       toast.error('Invoice preview not found');
+      setIsCapturing(false);
     }
   };
 
@@ -130,9 +141,10 @@ const ActionButtons = ({
         variant="outline"
         className="flex-1"
         onClick={handleCaptureAsImage}
+        disabled={isCapturing}
       >
         <Download className="h-4 w-4 mr-2" />
-        Download as Image
+        {isCapturing ? 'Downloading...' : 'Download as Image'}
       </Button>
     </div>
   );

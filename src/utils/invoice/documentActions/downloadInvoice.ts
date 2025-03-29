@@ -11,9 +11,10 @@ import { calculateSubtotal, calculateTax, calculateTotal } from "../calculations
  * Function to download the invoice using image capture and PDF conversion
  */
 export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
+  // Prevent multiple generation attempts
+  const toastId = toast.loading("Generating PDF...");
+  
   try {
-    toast.loading("Generating PDF...");
-    
     // Process the logo if it exists to avoid CORS issues
     if (invoiceDetails.logoPreview) {
       try {
@@ -39,8 +40,10 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
         invoiceDetails.logoPreview = canvas.toDataURL("image/png");
       } catch (error) {
         console.error("Error preprocessing logo:", error);
-        // If there's an error with the logo, we continue but without it
-        toast.error("Could not process logo, continuing without it");
+        // Only show error if we are still processing (avoid duplicate toasts)
+        toast.error("Could not process logo, continuing without it", {
+          id: toastId
+        });
       }
     }
     
@@ -76,7 +79,9 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
       // Save the PDF
       pdf.save(fileName);
       
-      toast.success("Invoice downloaded successfully!");
+      toast.success("Invoice downloaded successfully!", {
+        id: toastId
+      });
       return true;
     } else {
       // If no preview element exists, create a temporary one
@@ -112,7 +117,9 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
         // Save the PDF
         pdf.save(fileName);
         
-        toast.success("Invoice downloaded successfully!");
+        toast.success("Invoice downloaded successfully!", {
+          id: toastId
+        });
         return true;
       } finally {
         // Always remove the temporary element
@@ -121,7 +128,9 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
     }
   } catch (error) {
     console.error("Error downloading invoice:", error);
-    toast.error("Failed to download invoice. Please try again.");
+    toast.error("Failed to download invoice. Please try again.", {
+      id: toastId
+    });
     return false;
   }
 };

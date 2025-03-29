@@ -76,28 +76,28 @@ export const useInvoiceForm = () => {
   };
 
   const handleSaveInvoice = () => {
-    // Validate required fields
+    const toastId = toast.loading("Creating invoice...");
+    
     if (!clientName.trim()) {
-      toast.error("Please select or enter a client name");
+      toast.error("Please select or enter a client name", { id: toastId });
       return;
     }
 
     if (!invoiceDate || !dueDate) {
-      toast.error("Please set both invoice date and due date");
+      toast.error("Please set both invoice date and due date", { id: toastId });
       return;
     }
 
     if (invoiceItems.some(item => !item.description.trim() || item.quantity <= 0 || item.price <= 0)) {
-      toast.error("Please complete all invoice items with valid quantities and prices");
+      toast.error("Please complete all invoice items with valid quantities and prices", { id: toastId });
       return;
     }
 
     if (!accountName || !accountNumber || !bankName) {
-      toast.error("Please complete the bank details");
+      toast.error("Please complete the bank details", { id: toastId });
       return;
     }
 
-    // Create and save the invoice
     addInvoice({
       clientName,
       clientEmail,
@@ -116,9 +116,8 @@ export const useInvoiceForm = () => {
       }
     });
 
-    toast.success("Invoice created successfully!");
+    toast.success("Invoice created successfully!", { id: toastId });
     
-    // Dispatch event to notify that an invoice was created
     window.dispatchEvent(new CustomEvent('invoiceCreated'));
   };
 
