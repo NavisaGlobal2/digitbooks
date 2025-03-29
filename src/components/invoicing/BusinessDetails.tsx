@@ -14,7 +14,7 @@ interface BusinessDetailsProps {
   dueDate: Date | undefined;
   setDueDate: (date: Date | undefined) => void;
   clientName: string;
-  handleClientSelect: (name: string, address?: string) => void;
+  handleClientSelect: (name: string, email?: string, address?: string) => void;
 }
 
 const BusinessDetails = ({
@@ -34,7 +34,7 @@ const BusinessDetails = ({
         <div className="space-y-2">
           <Label htmlFor="clientName">Client</Label>
           <ClientSelector 
-            selectedClientName={clientName}
+            selectedClientName={clientName || ""}
             onClientSelect={handleClientSelect}
           />
         </div>
