@@ -1,23 +1,25 @@
 
-import React from 'react';
-import { Download, Share, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { InvoiceItem } from "@/types/invoice";
-import { downloadInvoice, captureInvoiceAsImage, shareInvoice } from "@/utils/invoice/documentActions";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { Download, Share } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { InvoiceItem } from '@/types/invoice';
+import { downloadInvoice, shareInvoice, captureInvoiceAsImage } from '@/utils/invoice/documentActions';
 
 interface ActionButtonsProps {
   logoPreview: string | null;
   invoiceItems: InvoiceItem[];
-  invoiceDate: Date | undefined;
-  dueDate: Date | undefined;
+  invoiceDate?: Date;
+  dueDate?: Date;
   additionalInfo: string;
   bankName: string;
   accountNumber: string;
   accountName: string;
   clientName: string;
+  clientEmail?: string;
   clientAddress?: string;
   selectedTemplate: string;
+  invoiceNumber?: string;
 }
 
 const ActionButtons = ({
@@ -30,12 +32,17 @@ const ActionButtons = ({
   accountNumber,
   accountName,
   clientName,
+  clientEmail,
   clientAddress,
-  selectedTemplate
+  selectedTemplate,
+  invoiceNumber
 }: ActionButtonsProps) => {
-  
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+
   const handleDownload = async () => {
     try {
+      setIsDownloading(true);
       await downloadInvoice({
         logoPreview,
         invoiceItems,
@@ -46,19 +53,22 @@ const ActionButtons = ({
         accountNumber,
         accountName,
         clientName,
+        clientEmail,
         clientAddress,
         selectedTemplate,
-        invoiceNumber: "INV-2023-001"
+        invoiceNumber
       });
-      toast.success("Invoice downloaded successfully!");
     } catch (error) {
-      console.error("Error downloading invoice:", error);
-      toast.error("Failed to download invoice");
+      console.error('Error downloading invoice:', error);
+      toast.error('Failed to download invoice');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
   const handleShare = async () => {
     try {
+      setIsSharing(true);
       await shareInvoice({
         logoPreview,
         invoiceItems,
@@ -69,50 +79,60 @@ const ActionButtons = ({
         accountNumber,
         accountName,
         clientName,
+        clientEmail,
         clientAddress,
         selectedTemplate,
-        invoiceNumber: "INV-2023-001"
+        invoiceNumber
       });
-      toast.success("Invoice ready to share!");
     } catch (error) {
-      console.error("Error sharing invoice:", error);
-      toast.error("Failed to prepare invoice for sharing");
+      console.error('Error sharing invoice:', error);
+      toast.error('Failed to share invoice');
+    } finally {
+      setIsSharing(false);
     }
   };
 
-  const handleCapture = async () => {
-    try {
-      // Find the invoice preview element
-      const previewElement = document.querySelector('.invoice-preview') as HTMLElement;
-      
-      if (!previewElement) {
-        toast.error("Invoice preview not found");
-        return;
+  const handleCaptureAsImage = async () => {
+    const invoiceElement = document.querySelector('.invoice-preview');
+    if (invoiceElement) {
+      const success = await captureInvoiceAsImage(invoiceElement as HTMLElement, clientName);
+      if (success) {
+        toast.success('Invoice captured and downloaded as image');
       }
-      
-      // Pass the element to captureInvoiceAsImage
-      await captureInvoiceAsImage(previewElement, clientName);
-      
-      toast.success("Invoice saved as image!");
-    } catch (error) {
-      console.error("Error capturing invoice:", error);
-      toast.error("Failed to save invoice as image");
+    } else {
+      toast.error('Invoice preview not found');
     }
   };
 
   return (
-    <div className="grid grid-cols-3 gap-3">
-      <Button variant="outline" className="w-full" onClick={handleDownload}>
+    <div className="flex flex-col sm:flex-row gap-2">
+      <Button
+        variant="outline"
+        className="flex-1"
+        onClick={handleDownload}
+        disabled={isDownloading}
+      >
         <Download className="h-4 w-4 mr-2" />
-        Download
+        {isDownloading ? 'Downloading...' : 'Download PDF'}
       </Button>
-      <Button variant="outline" className="w-full" onClick={handleShare}>
+      
+      <Button
+        variant="outline"
+        className="flex-1"
+        onClick={handleShare}
+        disabled={isSharing}
+      >
         <Share className="h-4 w-4 mr-2" />
-        Share
+        {isSharing ? 'Sharing...' : 'Share Invoice'}
       </Button>
-      <Button variant="outline" className="w-full" onClick={handleCapture}>
-        <FileText className="h-4 w-4 mr-2" />
-        Save as Image
+      
+      <Button
+        variant="outline"
+        className="flex-1"
+        onClick={handleCaptureAsImage}
+      >
+        <Download className="h-4 w-4 mr-2" />
+        Download as Image
       </Button>
     </div>
   );

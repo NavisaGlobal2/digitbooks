@@ -11,6 +11,7 @@ export interface InvoiceDetails {
   accountNumber: string;
   accountName: string;
   clientName: string;
+  clientEmail?: string;
   clientAddress?: string;
   selectedTemplate: string;
   invoiceNumber?: string;

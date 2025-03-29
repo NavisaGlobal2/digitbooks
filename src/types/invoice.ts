@@ -11,6 +11,7 @@ export interface InvoiceItem {
 export interface Invoice {
   id: string;
   clientName: string;
+  clientEmail?: string;
   clientAddress?: string;
   invoiceNumber: string;
   issuedDate: Date;

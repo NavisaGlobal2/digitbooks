@@ -48,8 +48,8 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
       <div style="margin-bottom: 20px;">
         <h3 style="font-size: 16px; margin-bottom: 5px;">Bill To:</h3>
         <p style="font-weight: 500;">${invoiceDetails.clientName || "Client"}</p>
-        <p style="color: #666;">client@example.com</p>
-        <p style="color: #666;">Client Address, City</p>
+        <p style="color: #666;">${invoiceDetails.clientEmail || "client@example.com"}</p>
+        <p style="color: #666;">${invoiceDetails.clientAddress || "Client Address, City"}</p>
       </div>
       
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
