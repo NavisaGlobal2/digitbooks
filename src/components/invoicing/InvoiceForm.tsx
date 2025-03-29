@@ -129,6 +129,7 @@ const InvoiceForm = () => {
       clientName={clientName}
       clientEmail={clientEmail}
       clientAddress={clientAddress}
+      selectedTemplate={selectedTemplate}
     />
   );
 

@@ -15,6 +15,9 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
   tempDiv.style.padding = '20px';
   tempDiv.style.width = '800px';
   
+  // Add template class for CSS styling
+  tempDiv.classList.add(`template-${invoiceDetails.selectedTemplate || 'default'}`);
+  
   // Process the logo for the temporary element
   let logoHtml = '';
   if (invoiceDetails.logoPreview) {
@@ -48,8 +51,8 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
       <div style="margin-bottom: 20px;">
         <h3 style="font-size: 16px; margin-bottom: 5px;">Bill To:</h3>
         <p style="font-weight: 500;">${invoiceDetails.clientName || "Client"}</p>
-        <p style="color: #666;">${invoiceDetails.clientEmail || "client@example.com"}</p>
-        <p style="color: #666;">${invoiceDetails.clientAddress || "Client Address, City"}</p>
+        <p style="color: #666;">${invoiceDetails.clientEmail || ""}</p>
+        <p style="color: #666;">${invoiceDetails.clientAddress || ""}</p>
       </div>
       
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
