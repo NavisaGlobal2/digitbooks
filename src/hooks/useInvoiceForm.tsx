@@ -1,11 +1,13 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import { InvoiceItem, InvoiceStatus } from "@/types/invoice";
 import { calculateTotal } from "@/utils/invoice";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
 
 export const useInvoiceForm = () => {
+  const { user } = useAuth();
   const { addInvoice } = useInvoices();
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([
     { description: 'Website design service', quantity: 1, price: 50000, tax: 7.5 }
@@ -27,6 +29,34 @@ export const useInvoiceForm = () => {
   const [accountNumber, setAccountNumber] = useState("");
   const [bankName, setBankName] = useState("");
   
+  // Fetch business profile data on component mount
+  useEffect(() => {
+    const fetchBusinessProfile = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('logo_url, business_name')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching business profile:', error);
+          return;
+        }
+        
+        if (data && data.logo_url) {
+          setLogoPreview(data.logo_url);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+    
+    fetchBusinessProfile();
+  }, [user]);
+
   const addInvoiceItem = () => {
     setInvoiceItems([...invoiceItems, { description: '', quantity: 1, price: 0, tax: 7.5 }]);
   };
