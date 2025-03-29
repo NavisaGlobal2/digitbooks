@@ -48,18 +48,22 @@ const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorPr
           <CommandInput placeholder="Search client..." />
           <CommandEmpty>No client found.</CommandEmpty>
           <CommandGroup>
-            {clients.map((client) => (
+            {clients && clients.map((client) => (
               <CommandItem
                 key={client.id}
                 value={client.name}
                 onSelect={(currentValue) => {
                   const selectedClient = clients.find(c => c.name.toLowerCase() === currentValue.toLowerCase());
                   setValue(currentValue);
-                  onClientSelect(
-                    currentValue, 
-                    selectedClient?.email,
-                    selectedClient?.address
-                  );
+                  if (selectedClient) {
+                    onClientSelect(
+                      currentValue, 
+                      selectedClient.email,
+                      selectedClient.address
+                    );
+                  } else {
+                    onClientSelect(currentValue);
+                  }
                   setOpen(false);
                 }}
               >
