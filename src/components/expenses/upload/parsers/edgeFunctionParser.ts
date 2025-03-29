@@ -40,6 +40,9 @@ export const parseViaEdgeFunction = async (
     const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
     
     try {
+      // Add some debugging logs to help diagnose the issue
+      console.log("Starting fetch request to edge function...");
+      
       // Custom fetch to edge function instead of using supabase.functions.invoke
       // This gives us more control over the request and response
       const response = await fetch(
@@ -52,6 +55,8 @@ export const parseViaEdgeFunction = async (
           body: formData,
         }
       );
+      
+      console.log(`Edge function response status: ${response.status}`);
       
       if (!response.ok) {
         console.error(`Server responded with status: ${response.status}`);
@@ -83,6 +88,7 @@ export const parseViaEdgeFunction = async (
       }
       
       const result = await response.json();
+      console.log("Edge function result:", result);
       
       if (!result.success) {
         console.error("Edge function returned error:", result.error);
@@ -109,10 +115,26 @@ export const parseViaEdgeFunction = async (
       onSuccess(transactions);
       return true;
     } catch (fetchError: any) {
-      console.error("Fetch error:", fetchError);
-      // More specific error message for network issues
+      console.error("Fetch error details:", fetchError);
+      
+      // Check if it's a network error
+      if (fetchError.message && fetchError.message.includes("Failed to fetch")) {
+        console.error("Network error detected. This may be due to CORS, network connectivity, or the edge function being unavailable.");
+        
+        // Try to get more details about the error
+        console.error("Error name:", fetchError.name);
+        console.error("Error message:", fetchError.message);
+        console.error("Error stack:", fetchError.stack);
+        
+        // More specific error message for network issues
+        return onError(
+          "Could not connect to the server. Please check your internet connection and try again. If the problem persists, the service might be temporarily unavailable."
+        );
+      }
+      
+      // Generic error message for other types of errors
       return onError(
-        "Could not connect to the server. Please check your internet connection and try again. If the problem persists, the service might be temporarily unavailable."
+        fetchError.message || "Failed to process file with server"
       );
     }
   } catch (error: any) {

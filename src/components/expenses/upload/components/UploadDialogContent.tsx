@@ -80,6 +80,18 @@ const UploadDialogContent = ({
           />
         ) : (
           <>
+            {!isAuthenticated && (
+              <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded mb-4">
+                <div className="flex items-start">
+                  <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5 mr-2" />
+                  <div>
+                    <p className="font-bold">Authentication Required</p>
+                    <p>You need to be signed in to upload bank statements. Please sign in and try again.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <FileUploadArea 
               file={file} 
               onFileChange={handleFileChange} 
@@ -99,16 +111,6 @@ const UploadDialogContent = ({
             )}
             
             {error && <ErrorDisplay error={error} />}
-            
-            {!isAuthenticated && (
-              <div className="bg-yellow-50 text-yellow-600 p-3 rounded-md flex items-start space-x-2 border border-yellow-200">
-                <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Authentication Required</p>
-                  <p className="text-sm">You need to be signed in to upload bank statements. Please sign in and try again.</p>
-                </div>
-              </div>
-            )}
             
             <SupportedFormatsInfo />
             
