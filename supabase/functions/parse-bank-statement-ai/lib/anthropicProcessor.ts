@@ -14,14 +14,19 @@ export async function processWithAnthropic(
 
   console.log(`Processing context: ${context || 'general'}`);
   
-  // Adjust the system prompt based on the context (revenue or expense)
-  let systemPrompt = `You are a financial data extraction assistant specialized in bank statement analysis.`;
+  // Create a stronger system prompt to prevent dummy data generation
+  let systemPrompt = `You are a financial data extraction assistant specialized in bank statement analysis.
+  
+YOUR SOLE PURPOSE IS TO EXTRACT ACTUAL TRANSACTIONS FROM REAL FINANCIAL STATEMENTS.
+DO NOT INVENT, GENERATE OR HALLUCINATE ANY TRANSACTIONS UNDER ANY CIRCUMSTANCES.
+
+If you cannot clearly identify transactions from the input text, return an empty array [].`;
   
   if (text.includes('[PDF BANK STATEMENT:') || text.includes('ACTUAL STATEMENT TEXT FOLLOWS:')) {
     systemPrompt += `
     
 CRITICAL INSTRUCTION: You are processing a REAL PDF bank statement that was uploaded by a user.
-Your task is to analyze the content and extract actual transactions that would appear in a bank statement.
+Your task is to analyze the content and extract ONLY actual transactions that appear in this bank statement.
 This is NOT a simulation or test - a user has uploaded their real bank statement.
 If you cannot determine clear transaction patterns, return an empty array rather than inventing fake transactions.
 NEVER create fictional data - only extract what appears to be genuine financial transactions.`;
@@ -97,11 +102,13 @@ The user's financial decisions depend on this data being accurate.`;
       body: JSON.stringify({
         model: "claude-3-haiku-20240307",
         max_tokens: 4000,
-        temperature: 0.1,
+        temperature: 0,  // Using 0 temperature for maximum determinism
         system: systemPrompt,
         messages: [{
           role: "user", 
-          content: text
+          content: `EXTRACT ONLY REAL TRANSACTIONS FROM THIS TEXT. IF YOU CAN'T FIND ANY CLEAR TRANSACTIONS, RETURN AN EMPTY ARRAY [].
+          
+${text}`
         }]
       }),
     });
@@ -124,11 +131,15 @@ The user's financial decisions depend on this data being accurate.`;
       // Find JSON array in the response
       const jsonMatch = content.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const parsedData = JSON.parse(jsonMatch[0]);
+        console.log(`Extracted ${parsedData.length} transactions from Anthropic response`);
+        return parsedData;
       }
       
       // Try parsing the whole response
-      return JSON.parse(content);
+      const parsedContent = JSON.parse(content);
+      console.log(`Parsed entire content with ${parsedContent.length} transactions`);
+      return parsedContent;
     } catch (parseError) {
       console.error("Error parsing Anthropic response:", content);
       throw new Error("Could not parse transactions from Anthropic response");

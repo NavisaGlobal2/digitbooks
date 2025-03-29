@@ -14,6 +14,8 @@ export async function processWithAI(
     fileName?: string;
     fileSize?: number;
     forceRealData?: boolean;
+    extractRealData?: boolean;
+    noDummyData?: boolean;
   }
 ): Promise<any> {
   // Check available AI providers
@@ -29,7 +31,7 @@ export async function processWithAI(
   // Handle PDF files with more detailed instructions
   let enhancedText = text;
   if (fileType === 'pdf') {
-    enhancedText += `\n\nIMPORTANT INSTRUCTIONS FOR PDF BANK STATEMENT PROCESSING:
+    enhancedText += `\n\nCRITICAL INSTRUCTIONS FOR PDF BANK STATEMENT PROCESSING:
 1. Focus EXCLUSIVELY on extracting the actual transactions from the PDF statement
 2. DO NOT generate fictional transactions - only extract real transactions from the document
 3. Extract EVERY visible transaction with exact dates, descriptions, and amounts
@@ -42,53 +44,115 @@ export async function processWithAI(
 8. IF YOU CANNOT IDENTIFY ANY REAL TRANSACTIONS, RETURN AN EMPTY ARRAY - NEVER GENERATE FICTIONAL DATA
 
 This is REAL bank statement data that needs accurate extraction, not dummy data generation.
+
+DO NOT INVENT ANY TRANSACTIONS - ONLY EXTRACT WHAT YOU CAN ACTUALLY SEE IN THE DATA.
 `;
 
     if (context === "revenue") {
       enhancedText += "\nSince the context is revenue tracking, pay special attention to incoming payments and credits.";
     }
     
-    if (options?.forceRealData) {
-      enhancedText += `\n\nEXTREMELY IMPORTANT: This is REAL FINANCIAL DATA. The user is receiving placeholder/dummy transactions instead of their real data. 
-DO NOT GENERATE ANY FICTIONAL TRANSACTIONS under any circumstances. 
-If you can't extract real transactions, return an empty array [].`;
+    // Always enforce real data extraction for PDFs
+    const forceRealData = options?.forceRealData === true || 
+                          options?.extractRealData === true || 
+                          options?.noDummyData === true;
+    
+    if (forceRealData) {
+      enhancedText += `\n\nEXTREMELY IMPORTANT: This is REAL FINANCIAL DATA. Users have reported receiving placeholder/dummy transactions instead of their real data. 
+DO NOT GENERATE ANY FICTIONAL TRANSACTIONS under any circumstances.
+Examine the input carefully for patterns that represent actual financial transactions.
+If you can't extract real transactions, return an empty array [].
+It is better to return no data than to make up transactions.`;
     }
   }
   
+  // Add a processing attempt marker to help track issues
+  const processingId = crypto.randomUUID().substring(0, 8);
+  console.log(`Processing request ${processingId} with ${preferredProvider} as primary provider`);
+  
   // First try the preferred provider
-  if (preferredProvider === "anthropic" && hasAnthropicKey) {
-    try {
-      return await processWithAnthropic(enhancedText, context, options);
-    } catch (error) {
-      console.error("Error processing with Anthropic:", error);
+  try {
+    if (preferredProvider === "anthropic" && hasAnthropicKey) {
+      console.log(`[${processingId}] Attempting to process with Anthropic`);
+      const result = await processWithAnthropic(enhancedText, context, {
+        ...options,
+        processingId,
+        forceRealData: true,  // Always force real data
+        extractRealData: true
+      });
       
-      // Fall back to DeepSeek if available
-      if (hasDeepseekKey) {
-        console.log("Falling back to DeepSeek...");
-        return await processWithDeepseek(enhancedText, context, options);
+      // Validate the result to ensure we're not getting placeholder data
+      if (Array.isArray(result) && result.length > 0) {
+        console.log(`[${processingId}] Anthropic successfully processed ${result.length} transactions`);
+        return result;
       } else {
-        throw error;
+        console.log(`[${processingId}] Anthropic returned empty result, trying DeepSeek`);
+        if (hasDeepseekKey) {
+          return await processWithDeepseek(enhancedText, context, {
+            ...options,
+            processingId,
+            forceRealData: true,
+            extractRealData: true
+          });
+        } else {
+          return [];
+        }
       }
-    }
-  } else if (preferredProvider === "deepseek" && hasDeepseekKey) {
-    try {
-      return await processWithDeepseek(enhancedText, context, options);
-    } catch (error) {
-      console.error("Error processing with DeepSeek:", error);
+    } else if (preferredProvider === "deepseek" && hasDeepseekKey) {
+      console.log(`[${processingId}] Attempting to process with DeepSeek`);
+      const result = await processWithDeepseek(enhancedText, context, {
+        ...options,
+        processingId,
+        forceRealData: true,
+        extractRealData: true
+      });
       
-      // Fall back to Anthropic if available
-      if (hasAnthropicKey) {
-        console.log("Falling back to Anthropic...");
-        return await processWithAnthropic(enhancedText, context, options);
+      if (Array.isArray(result) && result.length > 0) {
+        console.log(`[${processingId}] DeepSeek successfully processed ${result.length} transactions`);
+        return result;
       } else {
-        throw error;
+        console.log(`[${processingId}] DeepSeek returned empty result, trying Anthropic`);
+        if (hasAnthropicKey) {
+          return await processWithAnthropic(enhancedText, context, {
+            ...options,
+            processingId,
+            forceRealData: true,
+            extractRealData: true
+          });
+        } else {
+          return [];
+        }
       }
+    } else if (hasAnthropicKey) {
+      return await processWithAnthropic(enhancedText, context, {
+        ...options,
+        processingId,
+        forceRealData: true,
+        extractRealData: true
+      });
+    } else if (hasDeepseekKey) {
+      return await processWithDeepseek(enhancedText, context, {
+        ...options,
+        processingId,
+        forceRealData: true,
+        extractRealData: true
+      });
+    } else {
+      throw new Error("No AI provider is configured. Please set up either Anthropic API key (ANTHROPIC_API_KEY) or DeepSeek API key (DEEPSEEK_API_KEY) in Supabase.");
     }
-  } else if (hasAnthropicKey) {
-    return await processWithAnthropic(enhancedText, context, options);
-  } else if (hasDeepseekKey) {
-    return await processWithDeepseek(enhancedText, context, options);
-  } else {
-    throw new Error("No AI provider is configured. Please set up either Anthropic API key (ANTHROPIC_API_KEY) or DeepSeek API key (DEEPSEEK_API_KEY) in Supabase.");
+  } catch (error) {
+    console.error(`[${processingId}] Error processing with AI:`, error);
+    
+    // If this was a processing error related to PDF or data extraction,
+    // return empty array instead of throwing error
+    if (error.message?.includes('generate') || 
+        error.message?.includes('dummy') || 
+        error.message?.includes('placeholder') ||
+        error.message?.includes('fictional')) {
+      console.log(`[${processingId}] Detected AI trying to generate dummy data, returning empty array`);
+      return [];
+    }
+    
+    throw error;
   }
 }

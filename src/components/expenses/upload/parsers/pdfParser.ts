@@ -14,11 +14,13 @@ export const parsePDFFile = (
   // Log the file details for debugging
   console.log(`Starting PDF parsing for: ${file.name} (${file.size} bytes) with context: ${context}`);
   
-  // Add a flag to force real data extraction
+  // ALWAYS force real data extraction
   const options = {
     useVision: true,
     forceRealData: true,
-    context: context
+    context: context,
+    extractRealData: true,
+    noDummyData: true
   };
   
   // Send the file directly to the edge function with special PDF handling flag
@@ -61,14 +63,46 @@ export const parsePDFFile = (
       });
       
       // Additional validation - check for placeholder data indicators
-      const suspiciousTerms = ['placeholder', 'example', 'sample', 'dummy', 'test transaction', 'demo'];
+      const suspiciousTerms = [
+        'placeholder', 'example', 'sample', 'dummy', 'test transaction', 'demo',
+        'john doe', 'jane doe', 'grocery', 'coffee', 'netflix', 'amazon', 'uber', 
+        'walmart', 'target', 'starbucks', 'restaurant', 'gas station'
+      ];
+      
       const hasSuspiciousTransactions = processedTransactions.some(tx => 
-        suspiciousTerms.some(term => tx.description.toLowerCase().includes(term))
+        suspiciousTerms.some(term => tx.description.toLowerCase().includes(term.toLowerCase()))
       );
       
       if (hasSuspiciousTransactions) {
         console.warn("Warning: Detected potential placeholder transactions in AI output");
-        toast.warning("The system may have generated example data instead of extracting real transactions. Please try again or use a different file format.");
+        toast.error("The system generated example data instead of extracting real transactions. Please try again or use a CSV file format.");
+        onError("AI returned placeholder data instead of real transactions. Please try again with a different file format.");
+        return;
+      }
+      
+      // Reject if all transaction dates are perfectly sequential (likely fake data)
+      if (processedTransactions.length > 3) {
+        let sequentialDateCount = 0;
+        const sortedTxs = [...processedTransactions].sort((a, b) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+        
+        for (let i = 1; i < sortedTxs.length; i++) {
+          const prevDate = new Date(sortedTxs[i-1].date);
+          const currDate = new Date(sortedTxs[i].date);
+          const diffDays = (currDate.getTime() - prevDate.getTime()) / (1000 * 3600 * 24);
+          
+          if (diffDays === 1 || diffDays === 7 || diffDays === 30) {
+            sequentialDateCount++;
+          }
+        }
+        
+        if (sequentialDateCount > sortedTxs.length * 0.7) {
+          console.warn("Warning: Detected suspiciously sequential dates in transactions");
+          toast.error("The system appears to have generated example data. Please try again with a different file format.");
+          onError("AI returned placeholder data with sequential dates. Please try again with a CSV file if available.");
+          return;
+        }
       }
       
       // Log data for better debugging

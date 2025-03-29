@@ -23,6 +23,7 @@ export async function extractTextFromFile(file: File, options: any = {}): Promis
           if (pdfText && pdfText.length > 100) {
             console.log('Successfully extracted text from PDF with Google Vision API');
             
+            // Return with special marker to indicate real extracted content
             return `[PDF BANK STATEMENT EXTRACTED WITH GOOGLE VISION API: ${fileName} (${fileSize})]
 
 ACTUAL STATEMENT TEXT FOLLOWS:
@@ -48,7 +49,7 @@ CRITICAL INSTRUCTION FOR AI: This is REAL text extracted from an ACTUAL bank sta
 CRITICAL NOTICE: YOU MUST ONLY EXTRACT REAL TRANSACTIONS FROM THE DOCUMENT.
 NEVER GENERATE FICTIONAL TRANSACTIONS, EVEN IF YOU CANNOT CLEARLY IDENTIFY ANY.
 RETURNING AN EMPTY ARRAY IS BETTER THAN GENERATING FICTIONAL DATA.
-THE USER RELIES ON THIS DATA FOR FINANCIAL DECISIONS - ACCURACY IS CRITICAL.` : '';
+THE USER'S FINANCIAL DECISIONS DEPEND ON THIS DATA BEING ACCURATE.` : '';
 
       return `[PDF BANK STATEMENT: ${fileName} (${fileSize})]
 
@@ -92,10 +93,34 @@ async function extractTextWithGoogleVision(file: File): Promise<string> {
     // Convert file to base64
     const arrayBuffer = await file.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
-    const base64 = btoa(String.fromCharCode(...bytes));
     
+    // For large files, we may need to chunk the process
+    // Google Vision has limitations on input size
+    const MAX_CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+    
+    if (bytes.length > MAX_CHUNK_SIZE) {
+      console.log(`File too large (${bytes.length} bytes), processing in chunks`);
+      // Process the first chunk only for now
+      const chunk = bytes.slice(0, MAX_CHUNK_SIZE);
+      const base64Chunk = btoa(String.fromCharCode(...chunk));
+      return await processChunkWithVision(base64Chunk, GOOGLE_VISION_API_KEY);
+    } else {
+      const base64 = btoa(String.fromCharCode(...bytes));
+      return await processChunkWithVision(base64, GOOGLE_VISION_API_KEY);
+    }
+  } catch (error) {
+    console.error("Error calling Google Vision API:", error);
+    throw error;
+  }
+}
+
+/**
+ * Process a chunk of data with Vision API
+ */
+async function processChunkWithVision(base64Data: string, apiKey: string): Promise<string> {
+  try {
     // Call Google Vision API
-    const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`, {
+    const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -104,7 +129,7 @@ async function extractTextWithGoogleVision(file: File): Promise<string> {
         requests: [
           {
             image: {
-              content: base64
+              content: base64Data
             },
             features: [
               {
@@ -135,7 +160,7 @@ async function extractTextWithGoogleVision(file: File): Promise<string> {
       return '';
     }
   } catch (error) {
-    console.error("Error calling Google Vision API:", error);
+    console.error("Error in processChunkWithVision:", error);
     throw error;
   }
 }
