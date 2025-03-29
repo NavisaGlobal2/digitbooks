@@ -29,7 +29,7 @@ export const parsePDFFile = (
     (transactions) => {
       console.log(`PDF successfully parsed with ${transactions.length} transactions`);
       
-      if (transactions.length === 0) {
+      if (!Array.isArray(transactions) || transactions.length === 0) {
         toast.warning(`No ${context} transactions were found in your PDF. Please try a different file or format.`);
         onError(`No ${context} transactions found in PDF. Please try a different file.`);
         return;
@@ -70,7 +70,7 @@ export const parsePDFFile = (
       ];
       
       const hasSuspiciousTransactions = processedTransactions.some(tx => 
-        suspiciousTerms.some(term => tx.description.toLowerCase().includes(term.toLowerCase()))
+        suspiciousTerms.some(term => tx.description?.toLowerCase().includes(term.toLowerCase()))
       );
       
       if (hasSuspiciousTransactions) {
@@ -83,13 +83,19 @@ export const parsePDFFile = (
       // Reject if all transaction dates are perfectly sequential (likely fake data)
       if (processedTransactions.length > 3) {
         let sequentialDateCount = 0;
-        const sortedTxs = [...processedTransactions].sort((a, b) => 
-          new Date(a.date).getTime() - new Date(b.date).getTime()
-        );
+        const sortedTxs = [...processedTransactions].sort((a, b) => {
+          if (!a.date || !b.date) return 0;
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        });
         
         for (let i = 1; i < sortedTxs.length; i++) {
+          if (!sortedTxs[i-1].date || !sortedTxs[i].date) continue;
+          
           const prevDate = new Date(sortedTxs[i-1].date);
           const currDate = new Date(sortedTxs[i].date);
+          
+          if (isNaN(prevDate.getTime()) || isNaN(currDate.getTime())) continue;
+          
           const diffDays = (currDate.getTime() - prevDate.getTime()) / (1000 * 3600 * 24);
           
           if (diffDays === 1 || diffDays === 7 || diffDays === 30) {

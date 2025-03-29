@@ -18,7 +18,8 @@ export async function extractTextFromFile(file: File, options: any = {}): Promis
       // First try to extract real data using Google Vision API if enabled
       if (useGoogleVision) {
         try {
-          const pdfText = await extractTextWithGoogleVision(file);
+          // Use a non-recursive approach to handle Vision API processing
+          const pdfText = await extractTextWithGoogleVisionSafe(file);
           
           if (pdfText && pdfText.length > 100) {
             console.log('Successfully extracted text from PDF with Google Vision API');
@@ -80,9 +81,9 @@ RESPOND ONLY with a valid JSON array of real transactions extracted from the sta
 }
 
 /**
- * Extract text from PDF using Google Vision API
+ * Extract text from PDF using Google Vision API - safe implementation that avoids stack overflow
  */
-async function extractTextWithGoogleVision(file: File): Promise<string> {
+async function extractTextWithGoogleVisionSafe(file: File): Promise<string> {
   const GOOGLE_VISION_API_KEY = Deno.env.get("GOOGLE_VISION_API_KEY");
   
   if (!GOOGLE_VISION_API_KEY) {
@@ -90,22 +91,45 @@ async function extractTextWithGoogleVision(file: File): Promise<string> {
   }
 
   try {
-    // Convert file to base64
+    // Convert file to base64 without recursive calls
     const arrayBuffer = await file.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
     
-    // For large files, we may need to chunk the process
+    // For large files, we need to chunk the process
     // Google Vision has limitations on input size
     const MAX_CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
     
+    // Handle large files safely
     if (bytes.length > MAX_CHUNK_SIZE) {
-      console.log(`File too large (${bytes.length} bytes), processing in chunks`);
-      // Process the first chunk only for now
+      console.log(`File too large (${bytes.length} bytes), processing first chunk only`);
+      
+      // Process the first chunk only using a safe approach
       const chunk = bytes.slice(0, MAX_CHUNK_SIZE);
-      const base64Chunk = btoa(String.fromCharCode(...chunk));
+      
+      // Convert to base64 in a safe way that won't cause stack overflow
+      let base64Chunk = '';
+      const binaryChunks = [];
+      const SAFE_CHUNK_SIZE = 1024 * 1024; // 1MB sub-chunks for string conversion
+      
+      for (let i = 0; i < chunk.length; i += SAFE_CHUNK_SIZE) {
+        const subChunk = chunk.slice(i, Math.min(i + SAFE_CHUNK_SIZE, chunk.length));
+        binaryChunks.push(String.fromCharCode.apply(null, subChunk));
+      }
+      
+      base64Chunk = btoa(binaryChunks.join(''));
       return await processChunkWithVision(base64Chunk, GOOGLE_VISION_API_KEY);
     } else {
-      const base64 = btoa(String.fromCharCode(...bytes));
+      // For smaller files, convert to base64 in a safe way
+      let base64 = '';
+      const binaryChunks = [];
+      const SAFE_CHUNK_SIZE = 1024 * 1024; // 1MB chunks for string conversion
+      
+      for (let i = 0; i < bytes.length; i += SAFE_CHUNK_SIZE) {
+        const chunk = bytes.slice(i, Math.min(i + SAFE_CHUNK_SIZE, bytes.length));
+        binaryChunks.push(String.fromCharCode.apply(null, chunk));
+      }
+      
+      base64 = btoa(binaryChunks.join(''));
       return await processChunkWithVision(base64, GOOGLE_VISION_API_KEY);
     }
   } catch (error) {

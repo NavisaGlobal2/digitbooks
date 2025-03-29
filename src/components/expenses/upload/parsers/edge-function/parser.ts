@@ -51,6 +51,9 @@ export const parseViaEdgeFunction = async (
       if (options?.context) {
         formData.append("context", options.context);
       }
+      
+      // Add new option to disable recursive processing for large PDFs
+      formData.append("safeProcessing", "true");
     }
     
     if (options?.preferredProvider) {
@@ -153,7 +156,10 @@ export const parseViaEdgeFunction = async (
           
           // Try again with a different approach
           retryCount++;
-          console.log('Retrying PDF processing with different approach...');
+          
+          // Add a pause before retrying to give the service time to recover
+          console.log('Retrying PDF processing with different approach after short delay...');
+          await sleep(2000); // Wait 2 seconds before retry
           continue;
         }
         
