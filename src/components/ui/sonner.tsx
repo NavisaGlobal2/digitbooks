@@ -19,10 +19,10 @@ function Toaster({ ...props }: ToasterProps) {
         },
         duration: 4000, // 4 seconds instead of default long duration
         closeButton: true,
-        richColors: true,
       }}
-      // Passing position directly to Sonner component instead of inside toastOptions
+      // These props need to be passed directly to the Sonner component, not inside toastOptions
       position="top-right"
+      richColors={true}
       {...props}
     />
   );
