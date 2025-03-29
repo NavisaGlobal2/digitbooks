@@ -8,7 +8,6 @@ import TransactionsSection from "@/components/dashboard/TransactionsSection";
 import QuickActions from "@/components/dashboard/QuickActions";
 import AIInsights from "@/components/dashboard/AIInsights";
 import FinancialChartsSection from "@/components/dashboard/FinancialChartsSection";
-import MainContentSection from "@/components/dashboard/sections/MainContentSection";
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("month");
@@ -28,22 +27,19 @@ const Dashboard = () => {
           data={financialData}
         />
         
-        <MainContentSection 
-          leftContent={
-            <>
-              <CashflowSection />
-              <FinancialChartsSection />
-            </>
-          }
-          rightContent={
-            <>
-              <QuickActions />
-              <AIInsights />
-              <BillsSection />
-              <TransactionsSection />
-            </>
-          }
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <CashflowSection />
+            <FinancialChartsSection />
+          </div>
+          
+          <div className="space-y-6">
+            <QuickActions />
+            <AIInsights />
+            <BillsSection />
+            <TransactionsSection />
+          </div>
+        </div>
       </div>
     </DashboardContainer>
   );
