@@ -43,12 +43,12 @@ const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorPr
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0 bg-white">
-        <Command>
-          <CommandInput placeholder="Search client..." />
+      <PopoverContent className="w-full p-0 bg-white z-50">
+        <Command className="bg-white rounded-md">
+          <CommandInput placeholder="Search client..." className="h-9" />
           <CommandEmpty>No client found.</CommandEmpty>
-          <CommandGroup>
-            {clients && clients.map((client) => (
+          <CommandGroup className="max-h-[200px] overflow-auto">
+            {Array.isArray(clients) && clients.map((client) => (
               <CommandItem
                 key={client.id}
                 value={client.name}
