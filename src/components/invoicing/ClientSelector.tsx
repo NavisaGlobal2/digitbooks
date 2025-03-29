@@ -23,6 +23,7 @@ const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorPr
     }
   }, [selectedClientName]);
 
+  // Ensure we always have a valid array to work with
   const clientList = Array.isArray(clients) ? clients : [];
 
   return (
