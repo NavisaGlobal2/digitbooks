@@ -21,6 +21,7 @@ interface UploadDialogContentProps {
   isAuthenticated?: boolean;
   preferredAIProvider?: string;
   setPreferredAIProvider?: (provider: string) => void;
+  isWaitingForServer?: boolean;
 }
 
 const UploadDialogContent = ({
@@ -34,7 +35,8 @@ const UploadDialogContent = ({
   step,
   isAuthenticated,
   preferredAIProvider,
-  setPreferredAIProvider
+  setPreferredAIProvider,
+  isWaitingForServer = false
 }: UploadDialogContentProps) => {
   const [useEdgeFunction, setUseEdgeFunction] = useState(true);
   const [edgeFunctionAvailable, setEdgeFunctionAvailable] = useState(true);
@@ -52,6 +54,13 @@ const UploadDialogContent = ({
       setUseEdgeFunction(true);
     }
   }, [file]);
+  
+  // Check authentication status for displaying warnings
+  useEffect(() => {
+    if (isAuthenticated === false) {
+      console.log("Warning: User is not authenticated, edge function may not work");
+    }
+  }, [isAuthenticated]);
 
   return (
     <>
@@ -73,6 +82,7 @@ const UploadDialogContent = ({
             progress={progress} 
             step={step} 
             isVisible={true}
+            isWaitingForServer={isWaitingForServer}
             onCancel={onClose}
           />
         ) : (
@@ -97,12 +107,18 @@ const UploadDialogContent = ({
             
             {error && <ErrorDisplay error={error} />}
             
+            {!isAuthenticated && (
+              <div className="bg-yellow-50 text-yellow-600 p-3 rounded-md flex items-start space-x-2">
+                <p className="text-sm">You need to be signed in to upload bank statements.</p>
+              </div>
+            )}
+            
             <SupportedFormatsInfo />
             
             <div className="flex justify-end">
               <Button
                 type="button"
-                disabled={!file || uploading}
+                disabled={!file || uploading || !isAuthenticated}
                 onClick={parseFile}
                 className="bg-green-500 hover:bg-green-600 text-white"
               >

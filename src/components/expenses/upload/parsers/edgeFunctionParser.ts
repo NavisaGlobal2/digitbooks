@@ -15,6 +15,7 @@ export const parseViaEdgeFunction = async (
     // Get auth token
     const { data: authData, error: authError } = await supabase.auth.getSession();
     if (authError || !authData.session) {
+      console.error("Authentication error:", authError?.message || "No active session");
       return onError(authError?.message || "You need to be signed in to use this feature");
     }
     
@@ -39,22 +40,30 @@ export const parseViaEdgeFunction = async (
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
         },
         body: formData,
       }
     );
     
     if (!response.ok) {
-      const errorText = await response.text();
+      console.error(`Server responded with status: ${response.status}`);
       let errorMessage = "Error processing file on server";
       
       try {
         // Try to parse error response as JSON
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.error || errorMessage;
+        const errorText = await response.text();
+        console.error("Error text:", errorText);
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If parsing fails, use the raw error text
+          errorMessage = errorText || errorMessage;
+        }
       } catch (e) {
-        // If parsing fails, use the raw error text
-        errorMessage = errorText || errorMessage;
+        console.error("Failed to read error response:", e);
       }
       
       console.error(`Server error (${response.status}):`, errorMessage);

@@ -29,9 +29,15 @@ const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadArea
     if (disabled) return;
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      // Create a synthetic event to pass to onFileChange
       const fileInput = document.createElement('input');
       fileInput.type = 'file';
-      fileInput.files = e.dataTransfer.files;
+      
+      // Create a new DataTransfer object and add the file
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(e.dataTransfer.files[0]);
+      fileInput.files = dataTransfer.files;
+      
       const event = { target: fileInput } as unknown as React.ChangeEvent<HTMLInputElement>;
       onFileChange(event);
     }

@@ -5,6 +5,8 @@ import { toast } from "sonner";
 export const useFileProcessing = () => {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
 
   const processReceiptFile = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -70,6 +72,9 @@ export const useFileProcessing = () => {
     processing,
     error,
     processReceiptFile,
-    processBankStatementFile
+    processBankStatementFile,
+    isAuthenticated,
+    preferredAIProvider,
+    setPreferredAIProvider
   };
 };
