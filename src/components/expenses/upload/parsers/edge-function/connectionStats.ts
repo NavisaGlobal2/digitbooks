@@ -4,21 +4,45 @@ let successCount = 0;
 let failureCount = 0;
 let failureReasons: Record<string, number> = {};
 let lastFailure: number | null = null;
+let lastError: any = null;
+let endpoint: string | null = null;
 
 /**
  * Track a successful connection to the edge function
  */
-export const trackSuccessfulConnection = () => {
+export const trackSuccessfulConnection = (url?: string) => {
   successCount++;
+  if (url) {
+    endpoint = url;
+  }
 };
 
 /**
  * Track a failed connection to the edge function
  */
-export const trackFailedConnection = (reason: string = 'unknown') => {
+export const trackFailedConnection = (reason: string = 'unknown', error?: any, url?: string) => {
   failureCount++;
   failureReasons[reason] = (failureReasons[reason] || 0) + 1;
   lastFailure = Date.now();
+  
+  if (error) {
+    lastError = error;
+  }
+  
+  if (url) {
+    endpoint = url;
+  }
+};
+
+/**
+ * Reset connection stats
+ */
+export const resetConnectionStats = () => {
+  successCount = 0;
+  failureCount = 0;
+  failureReasons = {};
+  lastFailure = null;
+  lastError = null;
 };
 
 /**
@@ -38,7 +62,9 @@ export const getConnectionStats = () => {
     total,
     attempts: total,
     failures: failureCount,
-    lastFailure
+    lastFailure,
+    lastError,
+    endpoint
   };
 };
 

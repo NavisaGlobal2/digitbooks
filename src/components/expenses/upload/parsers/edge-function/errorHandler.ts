@@ -11,6 +11,7 @@ export const handleEdgeFunctionError = (
   message: string;
   shouldRetry: boolean;
   errorType: string;
+  details?: any;
 } => {
   // Network error handling
   if (error.name === "AbortError") {
@@ -19,7 +20,8 @@ export const handleEdgeFunctionError = (
     return {
       message: "Request timed out. The server might be overloaded. Please try again later.",
       shouldRetry: true,
-      errorType: 'timeout_error'
+      errorType: 'timeout_error',
+      details: { name: error.name, message: error.message }
     };
   }
   
@@ -31,7 +33,8 @@ export const handleEdgeFunctionError = (
     return {
       message: "Could not connect to the server. Please check your internet connection and try again.",
       shouldRetry: true,
-      errorType: 'network_error'
+      errorType: 'network_error',
+      details: { message: error.message, stack: error.stack }
     };
   }
   
@@ -42,7 +45,8 @@ export const handleEdgeFunctionError = (
     return {
       message: "Authentication error. Please sign in again and try one more time.",
       shouldRetry: false,
-      errorType: 'unauthorized'
+      errorType: 'unauthorized',
+      details: { status: responseStatus }
     };
   }
 
@@ -53,7 +57,8 @@ export const handleEdgeFunctionError = (
     return {
       message: `Server error (${responseStatus}). Please try again later.`,
       shouldRetry: true,
-      errorType: `http_${responseStatus}`
+      errorType: `http_${responseStatus}`,
+      details: { status: responseStatus }
     };
   }
   
@@ -63,6 +68,7 @@ export const handleEdgeFunctionError = (
   return {
     message: error.message || "Unknown error occurred",
     shouldRetry: false,
-    errorType: 'other_error'
+    errorType: 'other_error',
+    details: { error: JSON.stringify(error) }
   };
 };

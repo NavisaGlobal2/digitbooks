@@ -26,7 +26,7 @@ export const parseViaEdgeFunction = async (
     const { token, error: authError } = await getAuthToken();
     if (authError || !token) {
       console.error("Authentication error:", authError);
-      trackFailedConnection('auth_token_error');
+      trackFailedConnection('auth_token_error', { message: authError });
       return onError(authError || "Authentication error occurred");
     }
     
@@ -57,7 +57,7 @@ export const parseViaEdgeFunction = async (
         console.log(`Attempt ${retryCount + 1}: Fetching from ${edgeFunctionEndpoint}...`);
         
         // Track that we're attempting to connect
-        trackSuccessfulConnection();
+        trackSuccessfulConnection(edgeFunctionEndpoint);
         
         // Custom fetch to edge function with explicit timeout
         const controller = new AbortController();
@@ -108,7 +108,7 @@ export const parseViaEdgeFunction = async (
         
         if (isNetworkError) {
           console.log('Network-related error detected, will attempt retry if retries remaining');
-          trackFailedConnection('network_error');
+          trackFailedConnection('network_error', error, edgeFunctionEndpoint);
           
           // For CSV files, try fallback immediately for network errors
           if (file.name.toLowerCase().endsWith('.csv')) {
@@ -120,8 +120,8 @@ export const parseViaEdgeFunction = async (
           }
         } else {
           // For non-network errors, process through the error handler
-          const { message, shouldRetry, errorType } = handleEdgeFunctionError(error, error.status);
-          trackFailedConnection(errorType);
+          const { message, shouldRetry, errorType, details } = handleEdgeFunctionError(error, error.status);
+          trackFailedConnection(errorType, details || error, edgeFunctionEndpoint);
           
           if (!shouldRetry) {
             return onError(message);
@@ -130,7 +130,7 @@ export const parseViaEdgeFunction = async (
         
         // If we've exhausted all retries, return the last error
         if (retryCount >= MAX_RETRIES) {
-          trackFailedConnection('max_retries_exceeded');
+          trackFailedConnection('max_retries_exceeded', lastError, edgeFunctionEndpoint);
           return onError(
             lastError?.message || "Failed to process file after multiple attempts. Please try again later."
           );
@@ -146,7 +146,7 @@ export const parseViaEdgeFunction = async (
   } catch (error: any) {
     console.error("Error in parseViaEdgeFunction:", error);
     
-    trackFailedConnection('unexpected_error');
+    trackFailedConnection('unexpected_error', error);
     
     return onError(error.message || "Failed to process file with server");
   }
@@ -162,12 +162,12 @@ const processSuccessfulResult = (
   console.log("Edge function result:", result);
   
   if (!result.success) {
-    trackFailedConnection('processing_error');
+    trackFailedConnection('processing_error', { result });
     throw new Error(result.error || "Unknown error processing file");
   }
   
   if (!result.transactions || !Array.isArray(result.transactions) || result.transactions.length === 0) {
-    trackFailedConnection('no_transactions');
+    trackFailedConnection('no_transactions', { result });
     throw new Error("No transactions were found in the uploaded file");
   }
   
