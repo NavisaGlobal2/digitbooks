@@ -34,12 +34,10 @@ const Dashboard = () => {
           </div>
           
           <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-6">
-              <QuickActions />
-              <AIInsights />
-              <BillsSection />
-              <TransactionsSection />
-            </div>
+            <QuickActions />
+            <AIInsights />
+            <BillsSection />
+            <TransactionsSection />
           </div>
         </div>
       </div>
