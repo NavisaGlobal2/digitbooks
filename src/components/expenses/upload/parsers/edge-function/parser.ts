@@ -42,6 +42,8 @@ export const parseViaEdgeFunction = async (
     if (isPdf) {
       formData.append("fileType", "pdf");
       console.log("PDF file detected. Adding special handling flags.");
+      // Add a special flag to ensure we're getting real data
+      formData.append("extractRealData", "true");
     }
     
     if (preferredProvider) {
@@ -55,9 +57,27 @@ export const parseViaEdgeFunction = async (
     
     console.log(`Full endpoint URL: ${edgeFunctionEndpoint}`);
     
-    // Implement retry logic
+    // Implement retry logic with a count of already attempted PDFs to avoid endless loops
     let retryCount = 0;
     let lastError = null;
+    let pdfAttemptCount = localStorage.getItem('pdf_attempt_count') ? 
+                           parseInt(localStorage.getItem('pdf_attempt_count') || '0') : 0;
+
+    // If this is a PDF and we've already tried multiple times, use a different approach
+    if (isPdf) {
+      pdfAttemptCount++;
+      localStorage.setItem('pdf_attempt_count', pdfAttemptCount.toString());
+      console.log(`PDF attempt count: ${pdfAttemptCount}`);
+      
+      // After multiple attempts with the same PDF, try a different approach
+      if (pdfAttemptCount > 3) {
+        console.log("Multiple PDF attempts detected, using enhanced PDF handling");
+        formData.append("enhancedPdfMode", "true");
+      }
+    } else {
+      // Reset PDF attempt counter for non-PDF files
+      localStorage.removeItem('pdf_attempt_count');
+    }
 
     while (retryCount <= MAX_RETRIES) {
       try {
@@ -69,7 +89,7 @@ export const parseViaEdgeFunction = async (
         const timeoutId = setTimeout(() => {
           console.log("Request timeout reached, aborting...");
           controller.abort();
-        }, 30000); // 30-second timeout
+        }, 60000); // 60-second timeout for PDFs
         
         // Make the request to the edge function
         console.log("Making fetch request to edge function...");
@@ -98,6 +118,11 @@ export const parseViaEdgeFunction = async (
         const result = await response.json();
         console.log("Edge function response data:", result);
         
+        // Reset PDF attempt counter on success
+        if (isPdf) {
+          localStorage.removeItem('pdf_attempt_count');
+        }
+        
         if (processSuccessfulResult(result, onSuccess)) {
           return true; // Successfully processed
         }
@@ -116,7 +141,7 @@ export const parseViaEdgeFunction = async (
           
           if (retryCount === MAX_RETRIES) {
             // For PDF files that consistently fail, provide a clear error message
-            return onError("We're experiencing technical limitations with PDF processing in this environment. Please try using a CSV or Excel format if available.");
+            return onError("We're experiencing technical limitations with PDF processing. Please try uploading the PDF again or use a CSV or Excel format if available.");
           }
           
           // Try again with a different approach

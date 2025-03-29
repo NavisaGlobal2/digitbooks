@@ -14,17 +14,18 @@ export async function extractTextFromFile(file: File): Promise<string> {
       
       return `[PDF BANK STATEMENT: ${fileName} (${fileSize})]
 
-This is an actual bank statement in PDF format that needs accurate transaction extraction.
-The PDF contains real financial transactions that need to be precisely identified.
+CRITICAL INSTRUCTION: This is a REAL bank statement PDF that needs ACCURATE data extraction.
+DO NOT generate fictional or placeholder transactions.
 
-Please extract ALL transactions with detailed attention to:
-1. Exact transaction dates in YYYY-MM-DD format
-2. Complete and accurate transaction descriptions preserving all merchant names and reference numbers
-3. Precise transaction amounts (use negative values for withdrawals/debits, positive for deposits/credits)
-4. Correctly identify each transaction as "debit" or "credit" based on the transaction type
+You MUST:
+1. Extract ONLY the ACTUAL transactions visible in the document
+2. Preserve exact dates in YYYY-MM-DD format
+3. Keep complete and accurate transaction descriptions with all details
+4. Use precise transaction amounts (negative for withdrawals/debits, positive for deposits/credits)
+5. Correctly identify each transaction as "debit" or "credit"
 
-DO NOT generate fictional or placeholder transactions. Only extract the actual transactions visible in the document.
-Format your response ONLY as a valid JSON array of transactions with no additional text.
+Your output MUST be formatted as a valid JSON array of transactions with NO additional text.
+The data you extract should reflect REAL financial transactions from the statement.
 `;
     } catch (error) {
       console.error("Error creating PDF prompt:", error);

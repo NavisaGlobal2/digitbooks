@@ -22,11 +22,14 @@ export async function processWithAnthropic(
   // Adjust the system prompt based on the context (revenue or expense)
   let systemPrompt = `You are a financial data extraction assistant specialized in accurately extracting transaction data from bank statements.`;
   
-  if (options?.isSpecialPdfFormat) {
+  if (text.includes('[PDF BANK STATEMENT:')) {
     systemPrompt += `
     
-IMPORTANT: You are processing a PDF bank statement. You must extract the REAL transactions that appear in the statement.
-DO NOT generate fictional or sample transactions. Only return actual transaction data from the document.`;
+CRITICAL INSTRUCTION: You are processing a REAL PDF bank statement. 
+You must extract ONLY the ACTUAL transactions that appear in the statement.
+DO NOT generate fictional or placeholder transactions.
+DO NOT make up any data or create sample transactions.
+Only extract real transaction data that is visible in the document.`;
   }
   
   if (context === "revenue") {
@@ -66,7 +69,7 @@ DO NOT generate fictional or sample transactions. Only return actual transaction
     - amount (as a number, negative for debits/expenses, positive for credits/income)
     - type ("debit" or "credit")
     
-    Extract ALL transactions visible in the statement. Do not skip any transactions.
+    Extract ONLY REAL transactions visible in the statement. DO NOT generate fictional data.
     
     Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.
     Sample format:

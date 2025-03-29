@@ -1,162 +1,135 @@
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { corsHeaders, handleCorsRequest } from "./lib/cors.ts";
-import { extractTextFromFile } from "./lib/textExtractor.ts";
-import { processWithAI } from "./lib/aiService.ts";
-import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
+import { extractTextFromFile } from "./lib/textExtractor.ts"
+import { processWithAI } from "./lib/aiService.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return handleCorsRequest();
+  if (req.method === 'OPTIONS') {
+    console.log("Handling CORS preflight request with expanded headers");
+    return new Response(null, { headers: corsHeaders });
   }
-
+  
   try {
-    // Parse the request body - this will contain our file
+    const origin = req.headers.get("origin");
+    console.log(`Received ${req.method} request from origin: ${origin}`);
+    
+    // Get preferred AI provider if specified
     const formData = await req.formData();
-    const file = formData.get("file");
+    const file = formData.get("file") as File;
+    let preferredProvider = formData.get("preferredProvider") as string;
+    const fileTypeHint = formData.get("fileType") as string;
+    const extractRealData = formData.get("extractRealData") === "true";
+    const enhancedPdfMode = formData.get("enhancedPdfMode") === "true";
     
-    // Get the preferred AI provider from the request, if provided
-    const preferredProvider = formData.get("preferredProvider")?.toString() || null;
+    // Set preferred provider if specified
+    try {
+      console.log(`Setting preferred AI provider to: ${preferredProvider}`);
+      Deno.env.set("PREFERRED_AI_PROVIDER", preferredProvider);
+    } catch (err) {
+      console.log(`Could not set preferred AI provider: ${err.message}`);
+    }
     
-    // Get file type hint if provided
-    const fileTypeHint = formData.get("fileType")?.toString() || null;
-    
-    if (!file || !(file instanceof File)) {
-      return new Response(
-        JSON.stringify({ error: "No file uploaded" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+    if (!file) {
+      throw new Error("No file uploaded");
     }
     
     console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
-    console.log(`File type hint: ${fileTypeHint || "none"}`);
     
-    // Extract file type for potential fallback decisions
-    const fileType = file.name.split('.').pop()?.toLowerCase() || '';
-    
-    // Get processing context if provided
-    const context = formData.get("context")?.toString() || null;
-    if (context) {
-      console.log(`Processing context: ${context}`);
-    }
-    
-    // Generate batch ID for tracking
-    const batchId = crypto.randomUUID();
-    
-    try {
-      // Special handling for PDF files to avoid stack overflow
-      if (fileType === "pdf" || fileTypeHint === "pdf") {
-        console.log("Processing PDF file with specialized AI handling");
-        
-        try {
-          // Use specialized prompt approach for PDFs
-          const pdfPrompt = await extractTextFromFile(file);
-          
-          // Process with AI using enhanced instructions
-          const transactions = await processWithAI(pdfPrompt, "pdf", context, {
-            isSpecialPdfFormat: true,
-            fileName: file.name,
-            fileSize: file.size
-          });
-          
-          if (!Array.isArray(transactions) || transactions.length === 0) {
-            return new Response(
-              JSON.stringify({ error: "No valid transactions found in the PDF" }),
-              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
-            );
-          }
-          
-          console.log(`Parsed ${transactions.length} transactions from PDF file`);
-          
-          return new Response(
-            JSON.stringify({ 
-              success: true, 
-              transactions,
-              message: `Successfully processed ${transactions.length} transactions from PDF`,
-              batchId
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        } catch (pdfError) {
-          console.error("PDF processing error:", pdfError);
-          
-          return new Response(
-            JSON.stringify({ 
-              error: `PDF processing failed: ${pdfError.message}`, 
-              isPdfError: true 
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-          );
-        }
-      }
-      
-      // For non-PDF files, use the standard extraction approach
-      const fileText = await extractTextFromFile(file);
-      let transactions = [];
-      let usedFallback = false;
+    // Handle PDF files with special processing
+    if (fileTypeHint === "pdf" || file.name.toLowerCase().endsWith('.pdf')) {
+      console.log(enhancedPdfMode ? "Processing PDF file with specialized AI handling" : "Processing PDF file with special handling");
       
       try {
-        // Process with AI service
-        transactions = await processWithAI(fileText, fileType, context);
+        // Extract text from the file - for PDFs this creates a detailed prompt
+        const extractedText = await extractTextFromFile(file);
         
-        if (transactions.length === 0) {
-          throw new Error("No transactions were extracted by the AI service");
-        }
-      } catch (aiError) {
-        console.error("AI processing failed:", aiError);
+        // Additional context for PDF processing
+        const options = {
+          isSpecialPdfFormat: true,
+          fileName: file.name,
+          fileSize: file.size,
+          extractRealData,
+          enhancedPdfMode
+        };
         
-        // If it's a CSV, try the fallback parser as last resort
-        if (fileType === "csv") {
-          console.log("Attempting fallback CSV processing");
-          usedFallback = true;
-          transactions = await fallbackCSVProcessing(fileText);
-          
-          if (transactions.length === 0) {
-            return new Response(
-              JSON.stringify({ 
-                error: "Could not parse transactions using either AI or fallback methods. Please check the file format." 
-              }),
-              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
-            );
+        // Process with AI
+        const transactions = await processWithAI(extractedText, "general", options);
+        
+        console.log(`Parsed ${transactions.length} transactions from PDF file`);
+        
+        // Return the processed transactions
+        return new Response(
+          JSON.stringify({
+            success: true,
+            transactions,
+            message: `Successfully processed ${transactions.length} transactions from PDF`,
+            batchId: crypto.randomUUID()
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
           }
-        } else {
-          return new Response(
-            JSON.stringify({ 
-              error: `AI processing failed: ${aiError.message}. Please try again later or use a CSV file.` 
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 }
-          );
-        }
+        );
+      } catch (pdfError) {
+        console.error("Error processing PDF:", pdfError);
+        
+        // Create an error object that can be identified as a PDF error
+        const errorObj = {
+          message: `Failed to process PDF file: ${pdfError.message}`,
+          isPdfError: true
+        };
+        
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: errorObj
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
       }
-      
-      console.log(`Parsed ${transactions.length} transactions from file`);
-      
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          transactions,
-          message: usedFallback 
-            ? `Successfully processed ${transactions.length} transactions using fallback method` 
-            : `Successfully processed ${transactions.length} transactions`,
-          batchId
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-      
-    } catch (processingError) {
-      console.error("Processing error:", processingError);
-      
-      return new Response(
-        JSON.stringify({ error: processingError.message || "Unknown processing error" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
     }
-  } catch (error) {
-    console.error("Server error:", error);
+    
+    // For non-PDF files, continue with standard processing
+    const extractedText = await extractTextFromFile(file);
+    
+    // Process the text with AI
+    const transactions = await processWithAI(extractedText);
+    
+    console.log(`Parsed ${transactions.length} transactions from file`);
+    
+    // Return the JSON response
     return new Response(
-      JSON.stringify({ error: error.message || "Unknown server error" }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      JSON.stringify({
+        success: true,
+        transactions,
+        message: `Successfully processed ${transactions.length} transactions`,
+        batchId: crypto.randomUUID()
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      }
+    );
+  } catch (error) {
+    console.error("Processing error:", error);
+    
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message || "Unknown error occurred"
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      }
     );
   }
 });

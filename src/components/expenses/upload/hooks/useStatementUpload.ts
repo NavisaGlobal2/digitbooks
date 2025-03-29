@@ -14,6 +14,7 @@ export const useStatementUpload = (
   const [uploading, setUploading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
+  const [processingAttempts, setProcessingAttempts] = useState(0);
 
   // Check authentication status
   useEffect(() => {
@@ -65,6 +66,13 @@ export const useStatementUpload = (
     processServerSide
   } = useFileProcessing();
 
+  // Clear processing attempts when file changes
+  useEffect(() => {
+    if (file) {
+      setProcessingAttempts(0);
+    }
+  }, [file]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log("File input change event received");
     
@@ -106,6 +114,7 @@ export const useStatementUpload = (
 
     setUploading(true);
     clearError();
+    setProcessingAttempts(prev => prev + 1);
 
     try {
       // Start progress simulation
@@ -119,13 +128,19 @@ export const useStatementUpload = (
         return;
       }
       
-      console.log("Starting file processing with edge function");
+      console.log(`Starting file processing with edge function (Attempt #${processingAttempts + 1})`);
       
       await processServerSide(
         file,
         (transactions) => {
           setUploading(false);
-          onTransactionsParsed(transactions);
+          if (transactions && transactions.length > 0) {
+            console.log(`Received ${transactions.length} parsed transactions`);
+            onTransactionsParsed(transactions);
+          } else {
+            handleError("No transactions were found in the file. Please try a different file or format.");
+            resetProgress();
+          }
         },
         (errorMessage) => {
           setUploading(false);
@@ -142,6 +157,26 @@ export const useStatementUpload = (
           
           // Show the error message to the user
           handleError(errorMessage);
+          
+          // If it's a PDF and a specific error, suggest trying again immediately
+          if (file.name.toLowerCase().endsWith('.pdf') && 
+              (errorMessage.includes("sandbox environment internal error") || 
+               errorMessage.includes("Maximum call stack size exceeded"))) {
+            
+            // If we haven't tried too many times, suggest trying again
+            if (processingAttempts < 1) {
+              toast.info("PDF processing requires another attempt. Trying again automatically...");
+              
+              // Wait a moment then try again
+              setTimeout(() => {
+                parseFile();
+              }, 1000);
+              
+              return false; // Don't reset progress yet
+            } else {
+              toast.warning("PDF processing is having technical difficulties. Please try a CSV version of this statement if available.");
+            }
+          }
           
           // For auth or critical API errors, don't try to fallback
           if (isAuthError || (isAnthropicError && isDeepSeekError)) {
@@ -175,6 +210,10 @@ export const useStatementUpload = (
     clearError();
     setUploading(false);
     resetProgress();
+    setProcessingAttempts(0);
+    
+    // Clear PDF attempt counter from localStorage
+    localStorage.removeItem('pdf_attempt_count');
   };
 
   return {

@@ -15,6 +15,7 @@ export const parsePDFFile = (
     file,
     (transactions) => {
       console.log(`PDF successfully parsed with ${transactions.length} transactions`);
+      
       // Ensure transactions have proper dates
       const processedTransactions = transactions.map(tx => {
         if (tx.date) {
@@ -28,6 +29,17 @@ export const parsePDFFile = (
             console.warn("Could not format date:", tx.date);
           }
         }
+        
+        // Validate each transaction to ensure it has required fields
+        if (!tx.description || tx.description.trim() === '') {
+          tx.description = 'Unspecified transaction';
+        }
+        
+        if (isNaN(parseFloat(String(tx.amount)))) {
+          console.warn("Invalid amount detected:", tx.amount);
+          tx.amount = 0;
+        }
+        
         return tx;
       });
       
@@ -36,6 +48,9 @@ export const parsePDFFile = (
         onError("No transactions found in PDF. Please try a different file.");
         return;
       }
+      
+      // Log data for better debugging
+      console.log("PDF transactions after processing:", processedTransactions);
       
       onComplete(processedTransactions);
     },
@@ -47,7 +62,7 @@ export const parsePDFFile = (
           errorMessage.includes("operation is not supported") ||
           errorMessage.includes("sandbox environment internal error")) {
         toast.warning("Technical issue with PDF processing. Please try uploading a CSV version if available.");
-        onError("Technical limitation: PDF processing cannot extract text directly. Please try a different format if possible.");
+        onError("Technical limitation: PDF processing cannot extract text directly. Please try uploading the PDF again or use a CSV format if possible.");
       } else {
         onError(`PDF parsing failed: ${errorMessage}`);
       }
