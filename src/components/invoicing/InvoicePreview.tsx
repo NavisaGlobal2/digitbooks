@@ -17,6 +17,7 @@ interface InvoicePreviewProps {
   calculateTax: (items: InvoiceItem[]) => number;
   calculateTotal: (items: InvoiceItem[]) => number;
   clientName: string;
+  clientAddress?: string;
 }
 
 const InvoicePreview = ({
@@ -31,7 +32,8 @@ const InvoicePreview = ({
   calculateSubtotal,
   calculateTax,
   calculateTotal,
-  clientName
+  clientName,
+  clientAddress
 }: InvoicePreviewProps) => {
   return (
     <div className="invoice-preview bg-white rounded-lg border border-border p-8 shadow-sm">
@@ -81,8 +83,9 @@ const InvoicePreview = ({
       <div className="mb-8">
         <h3 className="text-lg font-semibold mb-2">Bill To:</h3>
         <p className="font-medium">{clientName || "Client Name"}</p>
+        {clientAddress && <p className="text-gray-600">{clientAddress}</p>}
         <p className="text-gray-600">client@example.com</p>
-        <p className="text-gray-600">Client Address, City</p>
+        {!clientAddress && <p className="text-gray-600">Client Address, City</p>}
       </div>
       
       {/* Invoice Items */}

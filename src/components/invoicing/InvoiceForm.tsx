@@ -29,7 +29,8 @@ const InvoiceForm = () => {
     isAccountVerified,
     setIsAccountVerified,
     clientName,
-    setClientName,
+    clientAddress,
+    handleClientSelect,
     accountName,
     setAccountName,
     accountNumber,
@@ -49,7 +50,7 @@ const InvoiceForm = () => {
         dueDate={dueDate}
         setDueDate={setDueDate}
         clientName={clientName}
-        setClientName={setClientName}
+        handleClientSelect={handleClientSelect}
       />
 
       {/* Template Selection */}
@@ -103,6 +104,7 @@ const InvoiceForm = () => {
           accountNumber={accountNumber}
           accountName={accountName}
           clientName={clientName}
+          clientAddress={clientAddress}
           selectedTemplate={selectedTemplate}
         />
       </div>
@@ -123,6 +125,7 @@ const InvoiceForm = () => {
       calculateTax={calculateTax}
       calculateTotal={calculateTotal}
       clientName={clientName}
+      clientAddress={clientAddress}
     />
   );
 

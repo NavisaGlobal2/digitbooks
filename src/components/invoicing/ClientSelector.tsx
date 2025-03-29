@@ -13,10 +13,11 @@ import {
 } from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Client } from '@/types/client';
 
 interface ClientSelectorProps {
   selectedClientName: string;
-  onClientSelect: (clientName: string) => void;
+  onClientSelect: (clientName: string, clientAddress?: string) => void;
 }
 
 const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorProps) => {
@@ -41,7 +42,14 @@ const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorPr
       setCustomClientName('');
     } else {
       setIsCustomClient(false);
-      onClientSelect(value);
+      
+      // Find client to get their address
+      const selectedClient = clients.find(client => client.name === value);
+      if (selectedClient) {
+        onClientSelect(value, selectedClient.address);
+      } else {
+        onClientSelect(value);
+      }
     }
   };
 
