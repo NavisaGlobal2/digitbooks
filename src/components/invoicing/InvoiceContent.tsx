@@ -1,11 +1,12 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import InvoiceEmptyState from "./InvoiceEmptyState";
 import InvoiceStatCards from "./InvoiceStatCards";
 import InvoiceSearchBar from "./InvoiceSearchBar";
 import InvoiceTable from "./InvoiceTable";
 import { PaymentRecord } from "@/types/invoice";
+import { toast } from "sonner";
 
 interface InvoiceContentProps {
   searchQuery: string;
@@ -36,9 +37,15 @@ const InvoiceContent = ({
     setFilteredInvoices(filtered);
   }, [invoices, searchQuery]);
   
-  const handleMarkAsPaid = (invoiceId: string, payments: PaymentRecord[]) => {
-    markInvoiceAsPaid(invoiceId, payments);
-  };
+  const handleMarkAsPaid = useCallback((invoiceId: string, payments: PaymentRecord[]) => {
+    try {
+      markInvoiceAsPaid(invoiceId, payments);
+      toast.success("Payment recorded successfully");
+    } catch (error) {
+      console.error("Error marking invoice as paid:", error);
+      toast.error("Failed to record payment");
+    }
+  }, [markInvoiceAsPaid]);
   
   if (invoices.length === 0) {
     return <InvoiceEmptyState onCreateInvoice={() => setIsCreatingInvoice(true)} />;

@@ -61,6 +61,11 @@ const MarkAsPaidDialog = ({
         ]);
         setTotalPaid(invoiceAmount);
       }
+    } else {
+      // Reset state when dialog is closed
+      setPayments([]);
+      setTotalPaid(0);
+      setIsSubmitting(false);
     }
   }, [open, existingPayments, invoiceAmount]);
 
@@ -73,7 +78,7 @@ const MarkAsPaidDialog = ({
       receiptUrl: null
     };
     
-    setPayments([...payments, newPayment]);
+    setPayments(prevPayments => [...prevPayments, newPayment]);
   };
 
   const handleRemovePayment = (id: string) => {
@@ -103,12 +108,17 @@ const MarkAsPaidDialog = ({
   };
 
   const handleFileUpload = async (id: string, file: File) => {
-    // In a real application, we would upload the file to storage
-    // For now, we'll just create a local URL
-    const receiptUrl = URL.createObjectURL(file);
-    
-    handlePaymentChange(id, 'receiptUrl', receiptUrl);
-    toast.success(`Receipt uploaded for payment`);
+    try {
+      // In a real application, we would upload the file to storage
+      // For now, we'll just create a local URL
+      const receiptUrl = URL.createObjectURL(file);
+      
+      handlePaymentChange(id, 'receiptUrl', receiptUrl);
+      toast.success(`Receipt uploaded for payment`);
+    } catch (error) {
+      console.error("Failed to upload receipt:", error);
+      toast.error("Failed to upload receipt");
+    }
   };
 
   const handleSubmit = () => {
@@ -129,16 +139,19 @@ const MarkAsPaidDialog = ({
     
     setIsSubmitting(true);
     
-    // Remove the internal id property before sending to parent
-    const paymentRecords: PaymentRecord[] = payments.map(({ id, ...rest }) => rest);
-    
     try {
-      onMarkAsPaid(invoiceId, paymentRecords);
-      onOpenChange(false);
+      // Remove the internal id property before sending to parent
+      const paymentRecords: PaymentRecord[] = payments.map(({ id, ...rest }) => rest);
+      
+      // Call the parent handler with a small delay to allow state to settle
+      setTimeout(() => {
+        onMarkAsPaid(invoiceId, paymentRecords);
+        onOpenChange(false);
+        setIsSubmitting(false);
+      }, 100);
     } catch (error) {
       console.error("Error marking invoice as paid:", error);
       toast.error("Failed to mark invoice as paid");
-    } finally {
       setIsSubmitting(false);
     }
   };

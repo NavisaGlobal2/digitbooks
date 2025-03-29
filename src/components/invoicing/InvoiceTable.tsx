@@ -1,10 +1,9 @@
-
 import { format } from "date-fns";
 import { CheckCircle, Download, ExternalLink, MoreVertical, Receipt } from "lucide-react";
 import { useState } from "react";
 import { Invoice } from "@/types/invoice";
 import { formatNaira } from "@/utils/invoice/formatters";
-import { downloadInvoice, downloadReceipt, shareInvoice, captureInvoiceAsImage } from "@/utils/invoice/documentActions";
+import { downloadInvoice, downloadReceipt, shareInvoice } from "@/utils/invoice/documentActions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -28,26 +27,37 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
     setIsPaidDialogOpen(true);
   };
 
-  const handleDownloadInvoice = async (invoice: Invoice) => {
-    if (invoice.status === 'paid' || invoice.status === 'partially-paid') {
-      await downloadReceipt(invoice);
-      return;
-    }
+  const handlePaidDialogClose = () => {
+    setTimeout(() => {
+      setSelectedInvoiceId(null);
+    }, 150);
+  };
 
-    await downloadInvoice({
-      logoPreview: invoice.logoUrl || null,
-      invoiceItems: invoice.items,
-      invoiceDate: invoice.issuedDate,
-      dueDate: invoice.dueDate,
-      additionalInfo: invoice.additionalInfo || "",
-      bankName: invoice.bankDetails.bankName,
-      accountNumber: invoice.bankDetails.accountNumber,
-      accountName: invoice.bankDetails.accountName,
-      clientName: invoice.clientName,
-      clientAddress: invoice.clientAddress,
-      invoiceNumber: invoice.invoiceNumber,
-      selectedTemplate: "default" // Adding the default template
-    });
+  const handleDownloadInvoice = async (invoice: Invoice) => {
+    try {
+      if (invoice.status === 'paid' || invoice.status === 'partially-paid') {
+        await downloadReceipt(invoice);
+        return;
+      }
+
+      await downloadInvoice({
+        logoPreview: invoice.logoUrl || null,
+        invoiceItems: invoice.items,
+        invoiceDate: invoice.issuedDate,
+        dueDate: invoice.dueDate,
+        additionalInfo: invoice.additionalInfo || "",
+        bankName: invoice.bankDetails.bankName,
+        accountNumber: invoice.bankDetails.accountNumber,
+        accountName: invoice.bankDetails.accountName,
+        clientName: invoice.clientName,
+        clientAddress: invoice.clientAddress,
+        invoiceNumber: invoice.invoiceNumber,
+        selectedTemplate: "default" // Adding the default template
+      });
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      toast.error("Failed to download invoice");
+    }
   };
   
   const handleShareInvoice = async (invoice: Invoice) => {
@@ -146,7 +156,10 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
       {selectedInvoice && (
         <MarkAsPaidDialog
           open={isPaidDialogOpen}
-          onOpenChange={setIsPaidDialogOpen}
+          onOpenChange={(open) => {
+            setIsPaidDialogOpen(open);
+            if (!open) handlePaidDialogClose();
+          }}
           invoiceId={selectedInvoice.id}
           invoiceAmount={selectedInvoice.amount}
           onMarkAsPaid={onMarkAsPaid}

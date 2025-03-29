@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Invoice, InvoiceItem, InvoiceStatus, PaymentRecord } from '@/types/invoice';
 
@@ -49,7 +50,11 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('invoices', JSON.stringify(invoices));
+    try {
+      localStorage.setItem('invoices', JSON.stringify(invoices));
+    } catch (error) {
+      console.error("Failed to store invoices:", error);
+    }
   }, [invoices]);
 
   const getNextInvoiceNumber = () => {
@@ -101,7 +106,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             ...invoice, 
             status,
             payments: payments,
-            paidDate: new Date()
+            paidDate: status === 'paid' ? new Date() : invoice.paidDate
           };
         }
         return invoice;
