@@ -36,12 +36,8 @@ export const parseViaEdgeFunction = async (
     
     console.log(`Calling parse-bank-statement-ai edge function with ${file.name}`);
     
-    // Get the Supabase URL directly from the client configuration
-    const supabaseUrl = supabase.supabaseUrl;
-    if (!supabaseUrl) {
-      console.error("Supabase URL is not available from client");
-      return onError("Server configuration error. Please contact support.");
-    }
+    // Use a hardcoded URL format since we know the project ID
+    const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
     
     // Custom fetch to edge function instead of using supabase.functions.invoke
     // This gives us more control over the request and response
