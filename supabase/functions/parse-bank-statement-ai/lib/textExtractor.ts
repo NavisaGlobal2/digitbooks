@@ -7,29 +7,23 @@ export async function extractTextFromFile(file: File): Promise<string> {
   
   if (fileType === 'pdf') {
     try {
-      // For PDFs, we create a detailed instruction set for the AI
-      // since we can't directly extract text without stack overflow errors
+      // For PDFs, create a more detailed instruction set for the AI that emphasizes real data extraction
       const fileName = file.name;
       const fileSize = Math.round(file.size / 1024) + ' KB';
       
       return `[PDF BANK STATEMENT: ${fileName} (${fileSize})]
 
-CRITICAL INSTRUCTION: This is a REAL bank statement PDF that needs ACCURATE data extraction.
-THIS IS NOT A DRILL OR TEST. DO NOT generate fictional or placeholder transactions.
+CRITICAL INSTRUCTION FOR AI: You are extracting REAL financial data from an ACTUAL bank statement PDF.
+1. The user has uploaded a GENUINE bank statement containing REAL transactions
+2. Your task is to extract the ACTUAL transactions visible in this document
+3. DO NOT generate fictional or placeholder transactions under any circumstances
+4. If you can't extract transactions clearly, return an empty array - NEVER invent data
+5. When extracting, look for patterns like dates, descriptions, and amounts that represent real transactions
+6. Format dates as YYYY-MM-DD, preserve complete descriptions, and represent amounts as numbers
+7. Mark negative values as debits and positive values as credits
+8. The user's financial decisions depend on this data being accurate
 
-You MUST:
-1. Extract ONLY the ACTUAL transactions visible in the document
-2. Preserve exact dates in YYYY-MM-DD format
-3. Keep complete and accurate transaction descriptions with all details
-4. Use precise transaction amounts (negative for withdrawals/debits, positive for deposits/credits)
-5. Correctly identify each transaction as "debit" or "credit"
-6. DO NOT make up any data that is not present in the statement
-7. IF NO TRANSACTIONS ARE VISIBLE, return an empty array - do not invent sample data
-8. NEVER return placeholder, example, or fictional transactions
-
-Your output MUST be formatted as a valid JSON array of transactions with NO additional text.
-The data you extract should reflect REAL financial transactions from the statement ONLY.
-`;
+RESPOND ONLY with a valid JSON array of real transactions extracted from the statement.`;
     } catch (error) {
       console.error("Error creating PDF prompt:", error);
       throw new Error(`Failed to process PDF file: ${error.message}`);

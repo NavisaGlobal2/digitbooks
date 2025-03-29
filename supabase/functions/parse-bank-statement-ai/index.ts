@@ -82,7 +82,7 @@ serve(async (req) => {
 
 async function processFileFromStorage(bodyData: any, userId: string, supabase: any, corsHeaders: any) {
   try {
-    const { filePath, fileName, context = 'general', jobId } = bodyData;
+    const { filePath, fileName, context = 'general', jobId, processingMode = 'standard', fileType } = bodyData;
     
     // Get the file from storage
     const { data: fileData, error: fileError } = await supabase.storage
@@ -100,6 +100,8 @@ async function processFileFromStorage(bodyData: any, userId: string, supabase: a
     const fileExt = fileName.split('.').pop()?.toLowerCase();
     const isPdf = fileExt === 'pdf';
     
+    console.log(`Processing ${isPdf ? 'PDF' : fileExt} file with ${context === 'revenue' ? 'revenue' : 'general'} context in ${processingMode} mode`);
+    
     // Process the file based on context
     let transactions = [];
     const fileBlob = new Blob([fileData]);
@@ -108,18 +110,25 @@ async function processFileFromStorage(bodyData: any, userId: string, supabase: a
     // Extract text from the file
     const extractedText = await extractTextFromFile(file);
     
+    // Log some details about the extracted text for debugging
+    if (isPdf) {
+      console.log(`Extracted text from PDF (first 100 chars): ${extractedText.substring(0, 100)}...`);
+    }
+    
     // Process the text based on preferred provider
     let preferredProvider = 'anthropic'; // Default to Anthropic for PDFs
     
     try {
       // Try Anthropic first (better for PDF extraction)
+      console.log("Processing with Anthropic...");
       transactions = await processWithAnthropic(extractedText, context);
-      console.log(`Parsed ${transactions.length} transactions from ${isPdf ? 'PDF' : fileExt} file`);
+      console.log(`Parsed ${transactions.length} transactions from ${isPdf ? 'PDF' : fileExt} file with Anthropic`);
     } catch (anthropicError) {
       console.error('Anthropic processing error:', anthropicError);
       
       // Fallback to DeepSeek
       try {
+        console.log("Falling back to DeepSeek...");
         transactions = await processWithDeepseek(extractedText, context);
         console.log(`Fallback: Parsed ${transactions.length} transactions using DeepSeek`);
       } catch (deepseekError) {
@@ -150,6 +159,7 @@ async function processFormDataRequest(req: Request, userId: string, supabase: an
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const context = formData.get('context') as string || 'general';
+    const isRealData = formData.get('isRealData') as string === 'true';
     
     if (!file) {
       return new Response(JSON.stringify({ error: 'No file provided' }), {
@@ -163,7 +173,7 @@ async function processFormDataRequest(req: Request, userId: string, supabase: an
     const isPdf = fileExt === 'pdf';
     
     // Extract text from the file
-    console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
+    console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}, isRealData: ${isRealData}`);
     
     if (isPdf) {
       console.log(`Processing PDF file with ${context === 'revenue' ? 'revenue' : 'general'} context`);

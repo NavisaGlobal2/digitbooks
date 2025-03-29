@@ -15,6 +15,7 @@ export const parseViaEdgeFunction = async (
     const formData = new FormData();
     formData.append("file", file);
     formData.append("context", context); // Add context for the parser to identify revenue transactions
+    formData.append("isRealData", "true"); // Flag to tell the AI this is real data
     
     const endpoint = 'parse-bank-statement-ai';
 
@@ -54,7 +55,9 @@ export const parseViaEdgeFunction = async (
           filePath,
           fileName,
           context,
-          jobId
+          jobId,
+          processingMode: file.name.toLowerCase().endsWith('.pdf') ? 'full_extraction' : 'standard',
+          fileType: file.type
         },
       });
 

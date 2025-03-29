@@ -14,16 +14,16 @@ export async function processWithAnthropic(
   console.log(`Processing context: ${context || 'general'}`);
   
   // Adjust the system prompt based on the context (revenue or expense)
-  let systemPrompt = `You are a financial data extraction assistant specialized in accurately extracting transaction data from bank statements.`;
+  let systemPrompt = `You are a financial data extraction assistant specialized in bank statement analysis.`;
   
   if (text.includes('[PDF BANK STATEMENT:')) {
     systemPrompt += `
     
-CRITICAL INSTRUCTION: You are processing a REAL PDF bank statement.
-You MUST extract ONLY the ACTUAL transactions that appear in the statement.
-DO NOT generate fictional, sample or placeholder transactions under any circumstances.
-If no transactions are visible, return an empty array instead of making up data.
-NEVER invent data - only extract what is actually present in the document.`;
+CRITICAL INSTRUCTION: You are processing a REAL PDF bank statement that was uploaded by a user.
+Your task is to analyze the content and extract actual transactions that would appear in a bank statement.
+This is NOT a simulation or test - a user has uploaded their real bank statement.
+If you cannot determine clear transaction patterns, return an empty array rather than inventing fake transactions.
+NEVER create fictional data - only extract what appears to be genuine financial transactions.`;
   }
   
   if (context === "revenue") {
@@ -53,8 +53,8 @@ NEVER invent data - only extract what is actually present in the document.`;
     
     Focus only on credit (incoming money) transactions, which represent revenue. These have positive amounts.
     
-    IMPORTANT: Only include ACTUAL transactions from the document. If you can't see any transactions, return an empty array.
-    DO NOT generate sample, example, or fictional transactions.
+    IMPORTANT: Only include transactions that appear to be real based on the input. If you don't see clear transaction data, return an empty array.
+    DO NOT generate any fictional transactions.
     
     Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
   } else {
@@ -66,10 +66,10 @@ NEVER invent data - only extract what is actually present in the document.`;
     - amount (as a number, negative for debits/expenses, positive for credits/income)
     - type ("debit" or "credit")
     
-    Extract ONLY REAL transactions visible in the statement. DO NOT create fictional transactions.
-    If no transactions are visible, return an empty array.
+    Only return transactions that appear to be real based on the input.
+    If you don't see clear transaction data, return an empty array.
     
-    IMPORTANT: NEVER generate placeholder transactions or examples. Only extract actual data from the document.
+    IMPORTANT: NEVER generate fictional transactions. Only extract data that appears genuine.
     
     Respond ONLY with a valid JSON array of transactions, with NO additional text or explanation.`;
   }
