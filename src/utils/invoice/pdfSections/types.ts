@@ -1,8 +1,4 @@
 
-/**
- * Types for PDF invoice generation
- */
-
 import { InvoiceItem } from "@/types/invoice";
 
 export interface InvoiceDetails {
@@ -14,7 +10,8 @@ export interface InvoiceDetails {
   bankName: string;
   accountNumber: string;
   accountName: string;
-  clientName?: string;
+  clientName: string;
+  clientAddress?: string;
+  selectedTemplate: string;
   invoiceNumber?: string;
-  selectedTemplate?: string;
 }

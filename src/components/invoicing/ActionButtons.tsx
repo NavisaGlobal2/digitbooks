@@ -3,7 +3,7 @@ import React from 'react';
 import { Download, Share, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InvoiceItem } from "@/types/invoice";
-import { downloadInvoice, captureInvoice, shareInvoice } from "@/utils/invoice/documentActions";
+import { downloadInvoice, captureInvoiceAsImage, shareInvoice } from "@/utils/invoice/documentActions";
 import { toast } from "sonner";
 
 interface ActionButtonsProps {
@@ -82,20 +82,17 @@ const ActionButtons = ({
 
   const handleCapture = async () => {
     try {
-      await captureInvoice({
-        logoPreview,
-        invoiceItems,
-        invoiceDate,
-        dueDate,
-        additionalInfo,
-        bankName,
-        accountNumber,
-        accountName,
-        clientName,
-        clientAddress,
-        selectedTemplate,
-        invoiceNumber: "INV-2023-001"
-      });
+      // Find the invoice preview element
+      const previewElement = document.querySelector('.invoice-preview') as HTMLElement;
+      
+      if (!previewElement) {
+        toast.error("Invoice preview not found");
+        return;
+      }
+      
+      // Pass the element to captureInvoiceAsImage
+      await captureInvoiceAsImage(previewElement, clientName);
+      
       toast.success("Invoice saved as image!");
     } catch (error) {
       console.error("Error capturing invoice:", error);
