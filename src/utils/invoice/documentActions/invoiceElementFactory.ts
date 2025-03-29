@@ -6,7 +6,7 @@ import { calculateSubtotal, calculateTax, calculateTotal } from "../calculations
 /**
  * Creates a temporary invoice HTML element for rendering to PDF/image
  */
-export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): HTMLElement => {
+export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): HTMLDivElement => {
   const tempDiv = document.createElement('div');
   tempDiv.className = 'invoice-preview-temp';
   tempDiv.style.position = 'absolute';

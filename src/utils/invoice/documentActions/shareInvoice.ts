@@ -29,6 +29,7 @@ export const shareInvoice = async (invoiceDetails: InvoiceDetails) => {
     if (previewElement) {
       elementToCapture = previewElement as HTMLElement;
     } else {
+      // Create a temporary element that's explicitly typed as HTMLDivElement
       tempDiv = createTemporaryInvoiceElement(invoiceDetails);
       document.body.appendChild(tempDiv);
       elementToCapture = tempDiv;

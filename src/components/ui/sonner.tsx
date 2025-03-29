@@ -18,10 +18,11 @@ function Toaster({ ...props }: ToasterProps) {
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
         duration: 4000, // 4 seconds instead of default long duration
-        position: "top-right",
         closeButton: true,
         richColors: true,
       }}
+      // Passing position directly to Sonner component instead of inside toastOptions
+      position="top-right"
       {...props}
     />
   );
