@@ -11,15 +11,14 @@ import TransactionsSection from "@/components/dashboard/TransactionsSection";
 import BillsSection from "@/components/dashboard/BillsSection";
 import AIInsights from "@/components/dashboard/AIInsights";
 import MainContentSection from "@/components/dashboard/sections/MainContentSection";
-import { Skeleton } from "@/components/ui/skeleton";
 import AIChatBot from "@/components/dashboard/AIChatBot";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const { fetchInvoices } = useInvoices();
   const { fetchExpenses } = useExpenses();
   const { fetchRevenues } = useRevenues();
 
-  const [isLoading, setIsLoading] = useState(true);
   const [financialData, setFinancialData] = useState({
     totalRevenue: 0,
     totalExpenses: 0,
@@ -49,11 +48,7 @@ const Dashboard = () => {
         });
       } catch (error) {
         console.error("Error loading dashboard data:", error);
-      } finally {
-        // Simulating longer loading for demonstration
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 1000);
+        toast.error("Failed to load dashboard data");
       }
     };
 
@@ -69,57 +64,24 @@ const Dashboard = () => {
       </div>
       
       <div className="mb-3 sm:mb-4 md:mb-6">
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-24 sm:h-28 md:h-32 rounded-lg" />
-            ))}
-          </div>
-        ) : (
-          <FinancialOverview data={financialData} />
-        )}
+        <FinancialOverview data={financialData} />
       </div>
 
       <div className="mb-3 sm:mb-4 md:mb-6">
         <MainContentSection 
           leftContent={
             <>
-              {isLoading ? (
-                <div className="space-y-3 sm:space-y-4 md:space-y-6">
-                  <Skeleton className="h-[250px] sm:h-[300px] md:h-[350px] rounded-lg" />
-                  <Skeleton className="h-[250px] sm:h-[300px] md:h-[350px] rounded-lg" />
-                </div>
-              ) : (
-                <>
-                  <CashflowSection />
-                  <FinancialChartsSection />
-                </>
-              )}
+              <CashflowSection />
+              <FinancialChartsSection />
             </>
           }
-          rightContent={
-            isLoading ? (
-              <Skeleton className="h-[250px] sm:h-[300px] md:h-[400px] rounded-lg" />
-            ) : (
-              <TransactionsSection />
-            )
-          }
-          bottomContent={
-            isLoading ? (
-              <Skeleton className="h-[150px] sm:h-[180px] md:h-[200px] rounded-lg" />
-            ) : (
-              <AIInsights />
-            )
-          }
+          rightContent={<TransactionsSection />}
+          bottomContent={<AIInsights />}
         />
       </div>
       
       <div className="mb-3 sm:mb-4 md:mb-6">
-        {isLoading ? (
-          <Skeleton className="h-[150px] sm:h-[180px] md:h-[200px] rounded-lg" />
-        ) : (
-          <BillsSection />
-        )}
+        <BillsSection />
       </div>
 
       {/* AI Chatbot */}
