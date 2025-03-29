@@ -20,18 +20,24 @@ export const createReceiptElement = (invoice: Invoice): HTMLDivElement => {
   
   // Process the logo for the temporary element
   let logoHtml = '';
+  
+  // Improved logo handling with better fallback mechanism
   if (invoice.logoUrl) {
-    // Include crossOrigin attribute and ensure it's loaded properly
-    logoHtml = `<img 
-      src="${invoice.logoUrl}" 
-      style="height: 60px; width: auto; object-fit: contain;" 
-      crossorigin="anonymous" 
-      alt="Company Logo"
-      onerror="this.style.display='none'; this.parentNode.innerHTML += '<div style=\\'background-color: #05d166; color: white; height: 60px; width: 120px; display: flex; align-items: center; justify-content: center; font-weight: bold;\\'>DigitBooks</div>';"
-    />`;
+    // Create a more robust logo with better error handling and fallback
+    logoHtml = `
+      <div style="display: flex; align-items: center; justify-content: center; height: 60px; min-width: 120px;">
+        <img 
+          src="${invoice.logoUrl}" 
+          style="max-height: 60px; max-width: 120px; object-fit: contain;" 
+          crossorigin="anonymous" 
+          alt="Company Logo"
+          onerror="this.style.display='none'; this.parentNode.innerHTML = '<div style=\\'background-color: #05d166; color: white; height: 60px; width: 120px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px;\\'>DigitBooks</div>';"
+        />
+      </div>
+    `;
   } else {
-    // Add a default logo placeholder if no logo is provided
-    logoHtml = `<div style="background-color: #05d166; color: white; height: 60px; width: 120px; display: flex; align-items: center; justify-content: center; font-weight: bold;">DigitBooks</div>`;
+    // Add a default logo placeholder with better styling
+    logoHtml = `<div style="background-color: #05d166; color: white; height: 60px; width: 120px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px;">DigitBooks</div>`;
   }
   
   // Calculate payment totals

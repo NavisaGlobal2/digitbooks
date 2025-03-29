@@ -112,22 +112,28 @@ const InvoicePreview = ({
         
         <div className="flex-shrink-0">
           {logoPreview ? (
-            <img 
-              src={logoPreview} 
-              alt="Company Logo" 
-              className="h-16 w-auto object-contain" 
-              crossOrigin="anonymous"
-              onError={(e) => {
-                console.error("Error loading logo in preview:", e);
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                const fallbackDiv = document.createElement('div');
-                fallbackDiv.className = 'h-16 w-16';
-                const logoComponent = document.createElement('div');
-                fallbackDiv.appendChild(logoComponent);
-                target.parentNode?.appendChild(fallbackDiv);
-              }}
-            />
+            <div className="h-16 w-auto">
+              <img 
+                src={logoPreview} 
+                alt="Company Logo" 
+                className="h-16 w-auto object-contain" 
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  console.error("Error loading logo in preview:", e);
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  
+                  // Add fallback logo
+                  const parent = target.parentNode as HTMLElement;
+                  if (parent) {
+                    const fallback = document.createElement('div');
+                    fallback.className = 'bg-green-500 text-white h-16 w-32 flex items-center justify-center font-bold rounded';
+                    fallback.textContent = 'DigiBooks';
+                    parent.appendChild(fallback);
+                  }
+                }}
+              />
+            </div>
           ) : (
             <div className="h-16 w-16">
               <Logo className="w-full h-full" />

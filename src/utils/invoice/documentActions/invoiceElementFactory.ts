@@ -18,15 +18,20 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
   // Add template class for CSS styling
   tempDiv.classList.add(`template-${invoiceDetails.selectedTemplate || 'default'}`);
   
-  // Process the logo for the temporary element
+  // Process the logo for the temporary element with improved error handling
   let logoHtml = '';
   if (invoiceDetails.logoPreview) {
-    logoHtml = `<img 
-      src="${invoiceDetails.logoPreview}" 
-      style="height: 60px; width: auto; object-fit: contain;" 
-      crossorigin="anonymous" 
-      alt="Company Logo"
-    />`;
+    logoHtml = `
+      <div style="display: flex; align-items: center; justify-content: center; height: 60px; min-width: 120px;">
+        <img 
+          src="${invoiceDetails.logoPreview}" 
+          style="max-height: 60px; max-width: 120px; object-fit: contain;" 
+          crossorigin="anonymous" 
+          alt="Company Logo"
+          onerror="this.style.display='none'; this.parentNode.innerHTML = '<div style=\\'background-color: #05d166; color: white; height: 60px; width: 120px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px;\\'>DigitBooks</div>';"
+        />
+      </div>
+    `;
   }
   
   // Create a simplified invoice layout

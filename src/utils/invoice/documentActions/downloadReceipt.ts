@@ -23,17 +23,25 @@ export const downloadReceipt = async (invoice: Invoice) => {
     const tempDiv = createReceiptElement(invoice);
     document.body.appendChild(tempDiv);
     
-    // Wait a short time to ensure any images load
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Wait a bit longer to ensure any images load properly
+    await new Promise(resolve => setTimeout(resolve, 800));
     
     try {
-      // Capture the temporary element
+      // Capture the temporary element with better settings
       const canvas = await html2canvas(tempDiv, {
         scale: 2,
         logging: false,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: "#ffffff"
+        backgroundColor: "#ffffff",
+        onclone: (clonedDoc) => {
+          // Find all images and make sure they load
+          const images = clonedDoc.getElementsByTagName('img');
+          for (let i = 0; i < images.length; i++) {
+            const img = images[i];
+            img.crossOrigin = "anonymous";
+          }
+        }
       });
       
       // Create a new PDF document
