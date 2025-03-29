@@ -104,6 +104,7 @@ const UploadDialogContent = ({
                 type="button"
                 disabled={!file || uploading}
                 onClick={parseFile}
+                className="bg-green-500 hover:bg-green-600 text-white"
               >
                 Process Statement
               </Button>
