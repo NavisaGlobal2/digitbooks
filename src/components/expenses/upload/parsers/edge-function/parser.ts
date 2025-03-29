@@ -49,7 +49,7 @@ export const parseViaEdgeFunction = async (
       console.log(`Using preferred AI provider: ${preferredProvider}`);
     }
     
-    // Make sure we're using the correct URL format for production
+    // Make sure we're using the correct URL format
     const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
     const edgeFunctionEndpoint = `${supabaseUrl}/functions/v1/parse-bank-statement-ai`;
     
@@ -117,7 +117,7 @@ export const parseViaEdgeFunction = async (
             // For PDF files, we expect this error on first attempt
             // Increment retry counter and continue
             retryCount++;
-            console.log('Retrying PDF processing...');
+            console.log('Retrying PDF processing with different approach...');
             continue;
           }
         }

@@ -99,7 +99,7 @@ export const useFileProcessing = () => {
       console.log(`Processing with preferred AI provider: ${provider}`);
       
       // Now process with edge function
-      const { parseViaEdgeFunction } = await import("../components/expenses/upload/parsers/edgeFunctionParser");
+      const { parseViaEdgeFunction } = await import("../components/expenses/upload/parsers/edge-function");
       
       await parseViaEdgeFunction(
         file,
