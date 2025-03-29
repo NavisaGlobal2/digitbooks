@@ -9,6 +9,8 @@ import {
   showFallbackMessage
 } from "./index";
 import { handleCSVFallback } from "./fallbackHandler";
+import { callEdgeFunction, handleResponseError } from "./apiClient";
+import { processSuccessfulResult } from "./responseProcessor";
 
 /**
  * Parse a bank statement file via the Supabase edge function
@@ -89,7 +91,7 @@ export const parseViaEdgeFunction = async (
         const result = await response.json();
         console.log("Edge function response data:", result);
         
-        if (processResult(result, onSuccess)) {
+        if (processSuccessfulResult(result, onSuccess)) {
           return true; // Successfully processed
         }
       } catch (error: any) {
@@ -112,13 +114,12 @@ export const parseViaEdgeFunction = async (
           // For CSV files, try fallback immediately for network errors
           if (file.name.toLowerCase().endsWith('.csv')) {
             console.log('CSV file detected, attempting local fallback');
-            return handleCSVFallback(file, onSuccess, onError, error);
+            // The key fix is here - we need to await this promise and return its result
+            return await handleCSVFallback(file, onSuccess, onError, error);
           }
         } else {
-          const shouldContinue = handleOtherErrors(error, file, onSuccess, onError, edgeFunctionEndpoint);
-          if (!shouldContinue) {
-            return false;
-          }
+          // Fix: await the async call and directly return its result
+          return await handleOtherErrors(error, file, onSuccess, onError, edgeFunctionEndpoint);
         }
       }
       
@@ -146,86 +147,22 @@ export const parseViaEdgeFunction = async (
 };
 
 /**
- * Process the result from the edge function
- */
-const processResult = (
-  result: any, 
-  onSuccess: (transactions: ParsedTransaction[]) => void
-): boolean => {
-  if (!result.success) {
-    trackFailedConnection('processing_error', { result });
-    throw new Error(result.error || "Unknown error processing file");
-  }
-  
-  if (!result.transactions || !Array.isArray(result.transactions) || result.transactions.length === 0) {
-    trackFailedConnection('no_transactions', { result });
-    throw new Error("No transactions were found in the uploaded file");
-  }
-  
-  console.log(`Successfully parsed ${result.transactions.length} transactions`);
-  
-  // Process the transactions
-  const transactions: ParsedTransaction[] = result.transactions.map((tx: any) => ({
-    id: `tx-${Math.random().toString(36).substr(2, 9)}`,
-    date: tx.date,
-    description: tx.description,
-    amount: tx.amount,
-    type: tx.type || (tx.amount < 0 ? "debit" : "credit"),
-    selected: tx.type === "debit", // Pre-select debits by default
-    category: tx.category || "",
-    source: tx.source || ""
-  }));
-  
-  onSuccess(transactions);
-  return true;
-};
-
-/**
- * Handle response error from the edge function
- */
-const handleResponseError = async (response: Response): Promise<any> => {
-  console.error(`Server responded with status: ${response.status}`);
-  let errorMessage = "Error processing file on server";
-  
-  try {
-    // Try to parse error response as JSON
-    const errorText = await response.text();
-    console.error("Error text:", errorText);
-    
-    try {
-      const errorData = JSON.parse(errorText);
-      errorMessage = errorData.error || errorMessage;
-    } catch (e) {
-      // If parsing fails, use the raw error text
-      errorMessage = errorText || errorMessage;
-    }
-  } catch (e) {
-    console.error("Failed to read error response:", e);
-  }
-  
-  return { 
-    message: errorMessage, 
-    status: response.status 
-  };
-};
-
-/**
  * Handle non-network errors
+ * Fix: Make this function async since it returns a Promise
  */
-const handleOtherErrors = (
+const handleOtherErrors = async (
   error: any, 
   file: File,
   onSuccess: (transactions: ParsedTransaction[]) => void,
   onError: (errorMessage: string) => boolean,
   endpoint: string
-): boolean => {
+): Promise<boolean> => {
   // Handle authentication errors
   if (error.status === 401 || 
       (error.message && error.message.toLowerCase().includes('auth'))) {
     console.error("Authentication error:", error);
     trackFailedConnection('auth_error', error, endpoint);
-    onError("Authentication error. Please sign in again and try once more.");
-    return false;
+    return onError("Authentication error. Please sign in again and try once more.");
   }
   
   // Handle server errors
@@ -236,16 +173,15 @@ const handleOtherErrors = (
     // For CSV files with server errors, try fallback
     if (file.name.toLowerCase().endsWith('.csv')) {
       console.log('Server error with CSV file, attempting local fallback');
-      return handleCSVFallback(file, onSuccess, onError, error);
+      // Fix: await the handleCSVFallback call and return its result
+      return await handleCSVFallback(file, onSuccess, onError, error);
     }
     
-    onError(`Server error (${error.status}). Please try again later.`);
-    return false;
+    return onError(`Server error (${error.status}). Please try again later.`);
   }
   
   // Handle all other errors
   console.error("Other error:", error);
   trackFailedConnection('other_error', error, endpoint);
-  onError(error.message || "Error processing file");
-  return false;
+  return onError(error.message || "Error processing file");
 };
