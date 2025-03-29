@@ -6,12 +6,15 @@ let failureReasons: Record<string, number> = {};
 let lastFailure: number | null = null;
 let lastError: any = null;
 let endpoint: string | null = null;
+let corsErrorDetected = false;
+let corsDetails: any = null;
 
 /**
  * Track a successful connection to the edge function
  */
 export const trackSuccessfulConnection = (url?: string) => {
   successCount++;
+  corsErrorDetected = false;
   if (url) {
     endpoint = url;
   }
@@ -27,6 +30,22 @@ export const trackFailedConnection = (reason: string = 'unknown', error?: any, u
   
   if (error) {
     lastError = error;
+    
+    // Check for CORS related errors
+    if (
+      error.message && (
+        error.message.includes('CORS') || 
+        error.message.includes('origin') ||
+        error.message.includes('cross-origin')
+      )
+    ) {
+      corsErrorDetected = true;
+      corsDetails = {
+        url: url || endpoint,
+        message: error.message,
+        time: new Date().toISOString()
+      };
+    }
   }
   
   if (url) {
@@ -43,6 +62,8 @@ export const resetConnectionStats = () => {
   failureReasons = {};
   lastFailure = null;
   lastError = null;
+  corsErrorDetected = false;
+  corsDetails = null;
 };
 
 /**
@@ -64,7 +85,9 @@ export const getConnectionStats = () => {
     failures: failureCount,
     lastFailure,
     lastError,
-    endpoint
+    endpoint,
+    corsErrorDetected,
+    corsDetails
   };
 };
 
@@ -74,4 +97,23 @@ export const getConnectionStats = () => {
 export const showFallbackMessage = (toast: any, message?: string) => {
   const defaultMessage = "Using local CSV parser as fallback due to server connectivity issues";
   toast.info(message || defaultMessage);
+};
+
+/**
+ * Get detailed error information for debugging
+ */
+export const getTechnicalErrorDetails = () => {
+  if (!lastError) {
+    return "No error details available";
+  }
+  
+  return {
+    message: lastError.message || "Unknown error",
+    stack: lastError.stack,
+    endpoint,
+    corsErrorDetected,
+    corsDetails,
+    failureReasons: Object.keys(failureReasons).map(key => `${key}: ${failureReasons[key]}`).join(', '),
+    timestamp: lastFailure ? new Date(lastFailure).toISOString() : null
+  };
 };

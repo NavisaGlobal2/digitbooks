@@ -6,6 +6,9 @@ import { processWithAI } from "./lib/aiService.ts";
 import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
 
 serve(async (req) => {
+  // Log request information
+  console.log(`Received ${req.method} request from origin: ${req.headers.get("origin") || "unknown"}`);
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return handleCorsRequest();
