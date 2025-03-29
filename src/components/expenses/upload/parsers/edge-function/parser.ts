@@ -3,12 +3,11 @@ import { ParsedTransaction } from "../types";
 import { 
   getAuthToken,
   MAX_RETRIES,
+  sleep,
   trackSuccessfulConnection,
-  trackFailedConnection
+  trackFailedConnection,
+  showFallbackMessage
 } from "./index";
-import { callEdgeFunction } from "./apiClient";
-import { processSuccessfulResult } from "./responseProcessor";
-import { handleEdgeFunctionError } from "./errorHandler";
 import { handleCSVFallback } from "./fallbackHandler";
 
 /**
@@ -19,7 +18,7 @@ export const parseViaEdgeFunction = async (
   onSuccess: (transactions: ParsedTransaction[]) => void,
   onError: (errorMessage: string) => boolean,
   preferredProvider: string = "anthropic"
-) => {
+): Promise<boolean> => {
   try {
     console.log(`Parsing file via edge function: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
     
@@ -40,9 +39,8 @@ export const parseViaEdgeFunction = async (
       console.log(`Using preferred AI provider: ${preferredProvider}`);
     }
     
-    console.log(`Calling parse-bank-statement-ai edge function with ${file.name}`);
-    
-    // Use a hardcoded URL format since we know the project ID
+    // Make sure we're using the correct URL format for production
+    // Format should be: https://{project-id}.supabase.co/functions/v1/{function-name}
     const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
     const edgeFunctionEndpoint = `${supabaseUrl}/functions/v1/parse-bank-statement-ai`;
     
@@ -54,67 +52,79 @@ export const parseViaEdgeFunction = async (
 
     while (retryCount <= MAX_RETRIES) {
       try {
-        // Add a clear log message before making the fetch request
-        console.log(`Attempt ${retryCount + 1}: Fetching from ${edgeFunctionEndpoint}...`);
+        console.log(`Attempt ${retryCount + 1}: Fetching from edge function...`);
+        trackSuccessfulConnection(edgeFunctionEndpoint);
         
-        const success = await callEdgeFunction(
+        // Add a stronger timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          console.log("Request timeout reached, aborting...");
+          controller.abort();
+        }, 30000); // 30-second timeout
+        
+        // Make the request to the edge function
+        console.log("Making fetch request to edge function...");
+        const response = await fetch(
           edgeFunctionEndpoint,
-          token,
-          formData,
-          (result) => processSuccessfulResult(result, onSuccess),
-          (error) => {
-            lastError = error;
-            
-            // Check specifically for network-related errors
-            const isNetworkError = error.name === 'AbortError' || 
-                                  (error.message && (
-                                    error.message.includes('Failed to fetch') || 
-                                    error.message.includes('Network error') ||
-                                    error.message.includes('network timeout') ||
-                                    error.message.includes('abort')
-                                  ));
-            
-            console.error(`Attempt ${retryCount + 1} failed:`, error.message || error);
-            console.error("Error details:", error);
-            
-            if (isNetworkError) {
-              console.log('Network-related error detected, will attempt retry if retries remaining');
-              trackFailedConnection('network_error', error, edgeFunctionEndpoint);
-              
-              // For CSV files, try fallback immediately for network errors
-              if (file.name.toLowerCase().endsWith('.csv')) {
-                console.log('CSV file detected, attempting local fallback');
-                return handleCSVFallback(file, onSuccess, onError, error);
-              }
-              
-              return false; // Return false to continue with retry logic
-            } else {
-              // For non-network errors, process through the error handler
-              const { message, shouldRetry, errorType, details } = handleEdgeFunctionError(error, error.status);
-              trackFailedConnection(errorType, details || error, edgeFunctionEndpoint);
-              
-              if (!shouldRetry) {
-                onError(message);
-                return true; // Return true to break out of retry loop
-              }
-              
-              return false; // Return false to continue with retry logic
-            }
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+            signal: controller.signal
           }
         );
         
-        if (success) {
-          return true; // Successfully processed, exit function
+        clearTimeout(timeoutId);
+        console.log(`Edge function response status: ${response.status}`);
+        
+        // Handle non-successful responses
+        if (!response.ok) {
+          const errorMessage = await handleResponseError(response);
+          throw errorMessage;
         }
         
+        // Process successful response
+        const result = await response.json();
+        console.log("Edge function response data:", result);
+        
+        if (processResult(result, onSuccess)) {
+          return true; // Successfully processed
+        }
       } catch (error: any) {
         lastError = error;
-        console.error(`Unexpected error in attempt ${retryCount + 1}:`, error);
-        trackFailedConnection('unexpected_error', error, edgeFunctionEndpoint);
+        console.error(`Error in attempt ${retryCount + 1}:`, error);
+        
+        // Check specifically for network-related errors
+        const isNetworkError = error.name === 'AbortError' || 
+                              (error.message && (
+                                error.message.includes('Failed to fetch') || 
+                                error.message.includes('Network error') ||
+                                error.message.includes('network timeout') ||
+                                error.message.includes('abort')
+                              ));
+        
+        if (isNetworkError) {
+          console.log('Network-related error detected, will attempt retry if retries remaining');
+          trackFailedConnection('network_error', error, edgeFunctionEndpoint);
+          
+          // For CSV files, try fallback immediately for network errors
+          if (file.name.toLowerCase().endsWith('.csv')) {
+            console.log('CSV file detected, attempting local fallback');
+            return handleCSVFallback(file, onSuccess, onError, error);
+          }
+        } else {
+          const shouldContinue = handleOtherErrors(error, file, onSuccess, onError, edgeFunctionEndpoint);
+          if (!shouldContinue) {
+            return false;
+          }
+        }
       }
       
       // If we've exhausted all retries, return the last error
       if (retryCount >= MAX_RETRIES) {
+        console.log(`Max retries (${MAX_RETRIES}) exceeded. Giving up.`);
         trackFailedConnection('max_retries_exceeded', lastError, edgeFunctionEndpoint);
         return onError(
           lastError?.message || "Failed to process file after multiple attempts. Please try again later."
@@ -124,14 +134,118 @@ export const parseViaEdgeFunction = async (
       // Increment retry counter and wait before next attempt
       retryCount++;
       console.log(`Waiting before retry attempt ${retryCount + 1}...`);
-      await new Promise(r => setTimeout(r, 1000 * retryCount));
+      await sleep(1000 * retryCount);
     }
     
+    return false;
   } catch (error: any) {
-    console.error("Error in parseViaEdgeFunction:", error);
-    
+    console.error("Unexpected error in parseViaEdgeFunction:", error);
     trackFailedConnection('unexpected_error', error);
-    
     return onError(error.message || "Failed to process file with server");
   }
+};
+
+/**
+ * Process the result from the edge function
+ */
+const processResult = (
+  result: any, 
+  onSuccess: (transactions: ParsedTransaction[]) => void
+): boolean => {
+  if (!result.success) {
+    trackFailedConnection('processing_error', { result });
+    throw new Error(result.error || "Unknown error processing file");
+  }
+  
+  if (!result.transactions || !Array.isArray(result.transactions) || result.transactions.length === 0) {
+    trackFailedConnection('no_transactions', { result });
+    throw new Error("No transactions were found in the uploaded file");
+  }
+  
+  console.log(`Successfully parsed ${result.transactions.length} transactions`);
+  
+  // Process the transactions
+  const transactions: ParsedTransaction[] = result.transactions.map((tx: any) => ({
+    id: `tx-${Math.random().toString(36).substr(2, 9)}`,
+    date: tx.date,
+    description: tx.description,
+    amount: tx.amount,
+    type: tx.type || (tx.amount < 0 ? "debit" : "credit"),
+    selected: tx.type === "debit", // Pre-select debits by default
+    category: tx.category || "",
+    source: tx.source || ""
+  }));
+  
+  onSuccess(transactions);
+  return true;
+};
+
+/**
+ * Handle response error from the edge function
+ */
+const handleResponseError = async (response: Response): Promise<any> => {
+  console.error(`Server responded with status: ${response.status}`);
+  let errorMessage = "Error processing file on server";
+  
+  try {
+    // Try to parse error response as JSON
+    const errorText = await response.text();
+    console.error("Error text:", errorText);
+    
+    try {
+      const errorData = JSON.parse(errorText);
+      errorMessage = errorData.error || errorMessage;
+    } catch (e) {
+      // If parsing fails, use the raw error text
+      errorMessage = errorText || errorMessage;
+    }
+  } catch (e) {
+    console.error("Failed to read error response:", e);
+  }
+  
+  return { 
+    message: errorMessage, 
+    status: response.status 
+  };
+};
+
+/**
+ * Handle non-network errors
+ */
+const handleOtherErrors = (
+  error: any, 
+  file: File,
+  onSuccess: (transactions: ParsedTransaction[]) => void,
+  onError: (errorMessage: string) => boolean,
+  endpoint: string
+): boolean => {
+  // Handle authentication errors
+  if (error.status === 401 || 
+      (error.message && error.message.toLowerCase().includes('auth'))) {
+    console.error("Authentication error:", error);
+    trackFailedConnection('auth_error', error, endpoint);
+    onError("Authentication error. Please sign in again and try once more.");
+    return false;
+  }
+  
+  // Handle server errors
+  if (error.status && error.status >= 500) {
+    console.error("Server error:", error);
+    trackFailedConnection('server_error', error, endpoint);
+    
+    // For CSV files with server errors, try fallback
+    if (file.name.toLowerCase().endsWith('.csv')) {
+      console.log('Server error with CSV file, attempting local fallback');
+      return handleCSVFallback(file, onSuccess, onError, error);
+    }
+    
+    onError(`Server error (${error.status}). Please try again later.`);
+    return false;
+  }
+  
+  // Handle all other errors
+  console.error("Other error:", error);
+  trackFailedConnection('other_error', error, endpoint);
+  onError(error.message || "Error processing file");
+  return false;
 };
