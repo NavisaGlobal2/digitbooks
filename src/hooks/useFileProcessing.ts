@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -74,7 +75,7 @@ export const useFileProcessing = () => {
     completeProgress: () => void,
     isCancelled: boolean,
     setIsWaitingForServer?: (isWaiting: boolean) => void,
-    preferredProvider?: string
+    options?: any
   ) => {
     try {
       setProcessing(true);
@@ -88,16 +89,25 @@ export const useFileProcessing = () => {
         setIsWaitingForServer(true);
       }
       
-      const provider = preferredProvider || preferredAIProvider;
-      console.log(`Processing with preferred AI provider: ${provider}`);
-      
-      const options: Record<string, any> = {
-        preferredProvider: provider
+      // Create a standardized options object
+      const processingOptions: Record<string, any> = {
+        // Use passed provider or default
+        preferredProvider: options?.preferredProvider || preferredAIProvider
       };
       
+      // Ensure Vision API is always enabled for PDFs
       if (file.name.toLowerCase().endsWith('.pdf')) {
-        options.useVision = true;
+        processingOptions.useVision = true;
       }
+      
+      // Add any additional options
+      if (options) {
+        if (options.forceRealData) processingOptions.forceRealData = true;
+        if (options.extractRealData) processingOptions.extractRealData = true;
+        if (options.noDummyData) processingOptions.noDummyData = true;
+      }
+      
+      console.log("Processing options:", processingOptions);
       
       const { parseViaEdgeFunction } = await import("../components/expenses/upload/parsers/edge-function");
       
@@ -156,7 +166,7 @@ export const useFileProcessing = () => {
           
           return onError(errorMessage);
         },
-        options
+        processingOptions
       );
     } catch (error: any) {
       if (isCancelled) return;

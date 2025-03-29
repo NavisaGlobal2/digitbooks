@@ -14,13 +14,26 @@ export async function processWithAnthropic(
 
   console.log(`Processing context: ${context || 'general'}`);
   
+  // Check if this is Vision API extracted text
+  const isVisionExtracted = text.includes('[PDF BANK STATEMENT EXTRACTED WITH GOOGLE VISION API:') || options?.isVisionExtracted;
+  
   // Create a stronger system prompt to prevent dummy data generation
   let systemPrompt = `You are a financial data extraction assistant specialized in bank statement analysis.
   
 YOUR SOLE PURPOSE IS TO EXTRACT ACTUAL TRANSACTIONS FROM REAL FINANCIAL STATEMENTS.
 DO NOT INVENT, GENERATE OR HALLUCINATE ANY TRANSACTIONS UNDER ANY CIRCUMSTANCES.
 
-If you cannot clearly identify transactions from the input text, return an empty array [].`;
+If you cannot clearly identify transactions from the input text, return an empty array [].
+
+CRITICAL WARNING: Users have reported that you sometimes generate fictional transactions instead of extracting real ones. This is causing serious problems with their financial tracking. NEVER do this - only extract REAL transactions visible in the data.`;
+  
+  if (isVisionExtracted) {
+    systemPrompt += `
+
+SPECIAL INSTRUCTION: The input contains OCR-extracted text from a real PDF bank statement.
+This is actual transaction data that a user has uploaded. Trust this data and extract the transactions from it.
+DO NOT make up transactions - the user's financial decisions depend on this being accurate.`;
+  }
   
   if (text.includes('[PDF BANK STATEMENT:') || text.includes('ACTUAL STATEMENT TEXT FOLLOWS:')) {
     systemPrompt += `
@@ -63,10 +76,6 @@ The user's financial decisions depend on this data being accurate.`;
     - affiliate: Commission from partnerships
     - other: Miscellaneous or unclassifiable income
     
-    For each credit transaction, add a "sourceSuggestion" object containing:
-    - "source": the suggested revenue category (from the list above)
-    - "confidence": a number between 0 and 1 indicating your confidence level
-    
     Focus only on credit (incoming money) transactions, which represent revenue. These have positive amounts.
     
     IMPORTANT: Only include transactions that appear to be real based on the input. If you don't see clear transaction data, return an empty array.
@@ -92,6 +101,16 @@ The user's financial decisions depend on this data being accurate.`;
 
   try {
     console.log("Sending to Anthropic for processing...");
+    
+    // Include explicit detection for OCR text
+    const userMessage = isVisionExtracted
+      ? `THIS IS OCR-EXTRACTED TEXT FROM A REAL BANK STATEMENT PDF. EXTRACT ONLY REAL TRANSACTIONS FROM THIS TEXT. IF YOU CAN'T FIND ANY CLEAR TRANSACTIONS, RETURN AN EMPTY ARRAY [].
+
+${text}`
+      : `EXTRACT ONLY REAL TRANSACTIONS FROM THIS TEXT. IF YOU CAN'T FIND ANY CLEAR TRANSACTIONS, RETURN AN EMPTY ARRAY [].
+          
+${text}`;
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -106,9 +125,7 @@ The user's financial decisions depend on this data being accurate.`;
         system: systemPrompt,
         messages: [{
           role: "user", 
-          content: `EXTRACT ONLY REAL TRANSACTIONS FROM THIS TEXT. IF YOU CAN'T FIND ANY CLEAR TRANSACTIONS, RETURN AN EMPTY ARRAY [].
-          
-${text}`
+          content: userMessage
         }]
       }),
     });
@@ -126,6 +143,8 @@ ${text}`
       throw new Error("No content returned from Anthropic");
     }
 
+    console.log("Raw Anthropic response:", content.slice(0, 200) + "...");
+
     // Try to parse JSON response
     try {
       // Find JSON array in the response
@@ -137,9 +156,19 @@ ${text}`
       }
       
       // Try parsing the whole response
-      const parsedContent = JSON.parse(content);
-      console.log(`Parsed entire content with ${parsedContent.length} transactions`);
-      return parsedContent;
+      try {
+        const parsedContent = JSON.parse(content);
+        console.log(`Parsed entire content with ${parsedContent.length} transactions`);
+        return parsedContent;
+      } catch (parseWholeError) {
+        // If we couldn't parse the JSON, it might be because Anthropic added explanatory text
+        console.log("Couldn't parse entire response, looking for JSON array");
+      }
+
+      // If we got here, we couldn't find a valid JSON array
+      console.error("No valid JSON structure found in Anthropic response");
+      console.log("Response content:", content);
+      throw new Error("Could not parse transactions from Anthropic response");
     } catch (parseError) {
       console.error("Error parsing Anthropic response:", content);
       throw new Error("Could not parse transactions from Anthropic response");

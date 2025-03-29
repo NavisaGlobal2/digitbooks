@@ -44,7 +44,18 @@ export const useStatementProcessor = ({
     
     try {
       console.log(`Starting file processing with edge function`);
-      console.log(`File type: ${file.type}, name: ${file.name}`);
+      console.log(`File type: ${file.type}, name: ${file.name}, using provider: ${preferredAIProvider}`);
+      
+      // Create proper options object with all necessary flags
+      const processingOptions = {
+        preferredProvider: preferredAIProvider,
+        // Always enable Vision API for PDFs
+        useVision: file.name.toLowerCase().endsWith('.pdf') ? true : undefined,
+        // Force real data extraction
+        forceRealData: true,
+        extractRealData: true,
+        noDummyData: true
+      };
       
       await processServerSide(
         file,
@@ -95,7 +106,7 @@ export const useStatementProcessor = ({
         completeProgress,
         isCancelled,
         setIsWaitingForServer,
-        preferredAIProvider
+        processingOptions
       );
     } catch (error) {
       console.error("Unexpected error in processStatement:", error);

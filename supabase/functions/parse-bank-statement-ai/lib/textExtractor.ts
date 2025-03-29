@@ -25,7 +25,7 @@ export async function extractTextFromFile(file: File, options: any = {}): Promis
           if (pdfText && pdfText.length > 100) {
             console.log('Successfully extracted text from PDF with Google Vision API');
             
-            // Return with special marker to indicate real extracted content
+            // Add a clear marker to indicate real extracted content and explicitly prevent dummy data
             return `[PDF BANK STATEMENT EXTRACTED WITH GOOGLE VISION API: ${fileName} (${fileSize})]
 
 ACTUAL STATEMENT TEXT FOLLOWS:

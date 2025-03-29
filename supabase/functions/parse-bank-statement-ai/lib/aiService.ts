@@ -28,7 +28,14 @@ export async function processWithAI(
   console.log(`Available providers: ${hasAnthropicKey ? 'Anthropic, ' : ''}${hasDeepseekKey ? 'DeepSeek' : ''}`);
   console.log(`AI processing: using ${preferredProvider} as preferred provider`);
   
-  // Handle PDF files with more detailed instructions
+  // Check if this is Vision API extracted text
+  const isVisionExtracted = text.includes('[PDF BANK STATEMENT EXTRACTED WITH GOOGLE VISION API:');
+  
+  if (isVisionExtracted) {
+    console.log('DETECTED VISION API EXTRACTED TEXT - Using special processing to ensure real data extraction');
+  }
+  
+  // Always force real data extraction with very strong prompting
   let enhancedText = text;
   if (fileType === 'pdf') {
     enhancedText += `\n\nCRITICAL INSTRUCTIONS FOR PDF BANK STATEMENT PROCESSING:
@@ -53,17 +60,11 @@ DO NOT INVENT ANY TRANSACTIONS - ONLY EXTRACT WHAT YOU CAN ACTUALLY SEE IN THE D
     }
     
     // Always enforce real data extraction for PDFs
-    const forceRealData = options?.forceRealData === true || 
-                          options?.extractRealData === true || 
-                          options?.noDummyData === true;
-    
-    if (forceRealData) {
-      enhancedText += `\n\nEXTREMELY IMPORTANT: This is REAL FINANCIAL DATA. Users have reported receiving placeholder/dummy transactions instead of their real data. 
+    enhancedText += `\n\nEXTREMELY IMPORTANT: This is REAL FINANCIAL DATA. Users have reported receiving placeholder/dummy transactions instead of their real data. 
 DO NOT GENERATE ANY FICTIONAL TRANSACTIONS under any circumstances.
 Examine the input carefully for patterns that represent actual financial transactions.
 If you can't extract real transactions, return an empty array [].
-It is better to return no data than to make up transactions.`;
-    }
+The user's financial decisions depend on accurate data - providing fictional data could cause serious harm.`;
   }
   
   // Add a processing attempt marker to help track issues
@@ -78,13 +79,31 @@ It is better to return no data than to make up transactions.`;
         ...options,
         processingId,
         forceRealData: true,  // Always force real data
-        extractRealData: true
+        extractRealData: true,
+        isVisionExtracted
       });
       
       // Validate the result to ensure we're not getting placeholder data
-      if (Array.isArray(result) && result.length > 0) {
+      const hasValidTransactions = Array.isArray(result) && result.length > 0;
+      const isDummyData = detectPotentialDummyData(result);
+      
+      if (hasValidTransactions && !isDummyData) {
         console.log(`[${processingId}] Anthropic successfully processed ${result.length} transactions`);
         return result;
+      } else if (isDummyData) {
+        console.log(`[${processingId}] Detected potential dummy data from Anthropic, trying DeepSeek`);
+        if (hasDeepseekKey) {
+          return await processWithDeepseek(enhancedText, context, {
+            ...options,
+            processingId,
+            forceRealData: true,
+            extractRealData: true,
+            isVisionExtracted
+          });
+        } else {
+          console.log(`[${processingId}] No DeepSeek available, returning empty array instead of dummy data`);
+          return [];
+        }
       } else {
         console.log(`[${processingId}] Anthropic returned empty result, trying DeepSeek`);
         if (hasDeepseekKey) {
@@ -104,12 +123,30 @@ It is better to return no data than to make up transactions.`;
         ...options,
         processingId,
         forceRealData: true,
-        extractRealData: true
+        extractRealData: true,
+        isVisionExtracted
       });
       
-      if (Array.isArray(result) && result.length > 0) {
+      const hasValidTransactions = Array.isArray(result) && result.length > 0;
+      const isDummyData = detectPotentialDummyData(result);
+      
+      if (hasValidTransactions && !isDummyData) {
         console.log(`[${processingId}] DeepSeek successfully processed ${result.length} transactions`);
         return result;
+      } else if (isDummyData) {
+        console.log(`[${processingId}] Detected potential dummy data from DeepSeek, trying Anthropic`);
+        if (hasAnthropicKey) {
+          return await processWithAnthropic(enhancedText, context, {
+            ...options,
+            processingId,
+            forceRealData: true,
+            extractRealData: true,
+            isVisionExtracted
+          });
+        } else {
+          console.log(`[${processingId}] No Anthropic available, returning empty array instead of dummy data`);
+          return [];
+        }
       } else {
         console.log(`[${processingId}] DeepSeek returned empty result, trying Anthropic`);
         if (hasAnthropicKey) {
@@ -155,4 +192,75 @@ It is better to return no data than to make up transactions.`;
     
     throw error;
   }
+}
+
+/**
+ * Check if the transactions appear to be made-up dummy data
+ */
+function detectPotentialDummyData(transactions: any[]): boolean {
+  if (!Array.isArray(transactions) || transactions.length === 0) return false;
+  
+  // Common placeholder terms that indicate AI-generated data
+  const suspiciousTerms = [
+    'grocery', 'netflix', 'amazon', 'uber', 'walmart', 'target', 'starbucks',
+    'restaurant', 'gas station', 'coffee', 'deposit', 'withdrawal', 'paycheck',
+    'salary', 'example', 'sample', 'placeholder', 'dummy', 'test'
+  ];
+  
+  // Check for suspicious descriptions
+  const suspiciousDescriptions = transactions.filter(tx => {
+    if (!tx.description) return false;
+    const desc = tx.description.toLowerCase();
+    return suspiciousTerms.some(term => desc.includes(term.toLowerCase()));
+  });
+  
+  // If more than 50% of transactions have suspicious descriptions
+  if (suspiciousDescriptions.length / transactions.length > 0.5) {
+    console.log('Detected likely dummy data: Too many generic descriptions');
+    return true;
+  }
+  
+  // Check for perfectly rounded amounts (like $100.00, $50.00)
+  const roundedAmounts = transactions.filter(tx => 
+    typeof tx.amount === 'number' && tx.amount % 10 === 0 && tx.amount !== 0
+  );
+  
+  // If more than 40% of amounts are perfectly rounded
+  if (roundedAmounts.length / transactions.length > 0.4) {
+    console.log('Detected likely dummy data: Too many rounded amounts');
+    return true;
+  }
+  
+  // Check for sequential dates
+  if (transactions.length > 3) {
+    // Sort transactions by date
+    const sortedByDate = [...transactions].sort((a, b) => {
+      if (!a.date || !b.date) return 0;
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
+    
+    let sequentialDateCount = 0;
+    for (let i = 1; i < sortedByDate.length; i++) {
+      if (!sortedByDate[i-1].date || !sortedByDate[i].date) continue;
+      
+      const prevDate = new Date(sortedByDate[i-1].date);
+      const currDate = new Date(sortedByDate[i].date);
+      
+      if (isNaN(prevDate.getTime()) || isNaN(currDate.getTime())) continue;
+      
+      // Check if dates are exactly 1, 7, or 30 days apart
+      const diffDays = (currDate.getTime() - prevDate.getTime()) / (1000 * 3600 * 24);
+      if (diffDays === 1 || diffDays === 7 || diffDays === 30) {
+        sequentialDateCount++;
+      }
+    }
+    
+    // If more than 70% of dates follow a perfect pattern
+    if (sequentialDateCount > sortedByDate.length * 0.7) {
+      console.log('Detected likely dummy data: Too many sequential dates');
+      return true;
+    }
+  }
+  
+  return false;
 }
