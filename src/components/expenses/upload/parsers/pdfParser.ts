@@ -9,7 +9,7 @@ export const parsePDFFile = (
   onError: (errorMessage: string) => void,
   context: "revenue" | "expense" = "expense" // Add context parameter with default
 ) => {
-  toast.info("Processing PDF statement using AI. This may take a moment...");
+  toast.info("Processing PDF statement using OCR. This may take a moment...");
   
   // Log the file details for debugging
   console.log(`Starting PDF parsing for: ${file.name} (${file.size} bytes) with context: ${context}`);

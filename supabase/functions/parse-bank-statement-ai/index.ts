@@ -82,7 +82,7 @@ serve(async (req) => {
 
 async function processFileFromStorage(bodyData: any, userId: string, supabase: any, corsHeaders: any) {
   try {
-    const { filePath, fileName, context = 'general', jobId, processingMode = 'standard', fileType } = bodyData;
+    const { filePath, fileName, context = 'general', jobId, processingMode = 'standard', fileType, useGoogleVision = false } = bodyData;
     
     // Get the file from storage
     const { data: fileData, error: fileError } = await supabase.storage
@@ -101,6 +101,7 @@ async function processFileFromStorage(bodyData: any, userId: string, supabase: a
     const isPdf = fileExt === 'pdf';
     
     console.log(`Processing ${isPdf ? 'PDF' : fileExt} file with ${context === 'revenue' ? 'revenue' : 'general'} context in ${processingMode} mode`);
+    console.log(`Google Vision enabled: ${useGoogleVision}`);
     
     // Process the file based on context
     let transactions = [];
@@ -112,7 +113,13 @@ async function processFileFromStorage(bodyData: any, userId: string, supabase: a
     
     // Log some details about the extracted text for debugging
     if (isPdf) {
+      // Only log the first 100 characters to avoid flooding the logs
       console.log(`Extracted text from PDF (first 100 chars): ${extractedText.substring(0, 100)}...`);
+      
+      // Check if Google Vision extraction was successful
+      if (extractedText.includes('ACTUAL STATEMENT TEXT FOLLOWS:')) {
+        console.log('Using Google Vision extracted text for processing');
+      }
     }
     
     // Process the text based on preferred provider
@@ -160,6 +167,7 @@ async function processFormDataRequest(req: Request, userId: string, supabase: an
     const file = formData.get('file') as File;
     const context = formData.get('context') as string || 'general';
     const isRealData = formData.get('isRealData') as string === 'true';
+    const useGoogleVision = formData.get('useGoogleVision') as string === 'true';
     
     if (!file) {
       return new Response(JSON.stringify({ error: 'No file provided' }), {
@@ -173,7 +181,7 @@ async function processFormDataRequest(req: Request, userId: string, supabase: an
     const isPdf = fileExt === 'pdf';
     
     // Extract text from the file
-    console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}, isRealData: ${isRealData}`);
+    console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}, isRealData: ${isRealData}, useGoogleVision: ${useGoogleVision}`);
     
     if (isPdf) {
       console.log(`Processing PDF file with ${context === 'revenue' ? 'revenue' : 'general'} context`);

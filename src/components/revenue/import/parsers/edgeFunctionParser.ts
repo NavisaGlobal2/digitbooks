@@ -57,7 +57,8 @@ export const parseViaEdgeFunction = async (
           context,
           jobId,
           processingMode: file.name.toLowerCase().endsWith('.pdf') ? 'full_extraction' : 'standard',
-          fileType: file.type
+          fileType: file.type,
+          useGoogleVision: file.name.toLowerCase().endsWith('.pdf') // Enable Google Vision for PDFs
         },
       });
 

@@ -16,7 +16,7 @@ export async function processWithAnthropic(
   // Adjust the system prompt based on the context (revenue or expense)
   let systemPrompt = `You are a financial data extraction assistant specialized in bank statement analysis.`;
   
-  if (text.includes('[PDF BANK STATEMENT:')) {
+  if (text.includes('[PDF BANK STATEMENT:') || text.includes('ACTUAL STATEMENT TEXT FOLLOWS:')) {
     systemPrompt += `
     
 CRITICAL INSTRUCTION: You are processing a REAL PDF bank statement that was uploaded by a user.
