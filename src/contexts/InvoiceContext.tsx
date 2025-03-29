@@ -1,12 +1,13 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Invoice, InvoiceItem, InvoiceStatus } from '@/types/invoice';
+import { Invoice, InvoiceItem, InvoiceStatus, PaymentRecord } from '@/types/invoice';
 
 interface InvoiceContextType {
   invoices: Invoice[];
   addInvoice: (invoice: Omit<Invoice, 'id' | 'invoiceNumber'>) => void;
   getNextInvoiceNumber: () => string;
   updateInvoiceStatus: (invoiceId: string, status: InvoiceStatus) => void;
+  markInvoiceAsPaid: (invoiceId: string, payments: PaymentRecord[]) => void;
 }
 
 const InvoiceContext = createContext<InvoiceContextType | undefined>(undefined);
@@ -34,6 +35,13 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           ...invoice,
           issuedDate: new Date(invoice.issuedDate),
           dueDate: new Date(invoice.dueDate),
+          paidDate: invoice.paidDate ? new Date(invoice.paidDate) : null,
+          payments: invoice.payments 
+            ? invoice.payments.map((payment: any) => ({
+                ...payment,
+                date: new Date(payment.date)
+              })) 
+            : undefined
         }));
         
         setInvoices(processedInvoices);
@@ -85,12 +93,29 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
   };
 
+  const markInvoiceAsPaid = (invoiceId: string, payments: PaymentRecord[]) => {
+    setInvoices(prev => 
+      prev.map(invoice => {
+        if (invoice.id === invoiceId) {
+          return { 
+            ...invoice, 
+            status: 'paid',
+            payments: payments,
+            paidDate: new Date()
+          };
+        }
+        return invoice;
+      })
+    );
+  };
+
   return (
     <InvoiceContext.Provider value={{ 
       invoices, 
       addInvoice, 
       getNextInvoiceNumber,
-      updateInvoiceStatus 
+      updateInvoiceStatus,
+      markInvoiceAsPaid
     }}>
       {children}
     </InvoiceContext.Provider>

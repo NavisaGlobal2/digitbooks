@@ -5,6 +5,7 @@ import InvoiceEmptyState from "./InvoiceEmptyState";
 import InvoiceStatCards from "./InvoiceStatCards";
 import InvoiceSearchBar from "./InvoiceSearchBar";
 import InvoiceTable from "./InvoiceTable";
+import { PaymentRecord } from "@/types/invoice";
 
 interface InvoiceContentProps {
   searchQuery: string;
@@ -17,7 +18,7 @@ const InvoiceContent = ({
   setSearchQuery, 
   setIsCreatingInvoice 
 }: InvoiceContentProps) => {
-  const { invoices, updateInvoiceStatus } = useInvoices();
+  const { invoices, markInvoiceAsPaid } = useInvoices();
   const [filteredInvoices, setFilteredInvoices] = useState(invoices);
   
   useEffect(() => {
@@ -35,8 +36,8 @@ const InvoiceContent = ({
     setFilteredInvoices(filtered);
   }, [invoices, searchQuery]);
   
-  const handleMarkAsPaid = (invoiceId: string) => {
-    updateInvoiceStatus(invoiceId, 'paid');
+  const handleMarkAsPaid = (invoiceId: string, payments: PaymentRecord[]) => {
+    markInvoiceAsPaid(invoiceId, payments);
   };
   
   if (invoices.length === 0) {
