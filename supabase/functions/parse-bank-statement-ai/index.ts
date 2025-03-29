@@ -47,6 +47,12 @@ serve(async (req) => {
     // Extract file type for potential fallback decisions
     const fileType = file.name.split('.').pop()?.toLowerCase() || '';
     
+    // Get processing context if provided
+    const context = formData.get("context")?.toString() || null;
+    if (context) {
+      console.log(`Processing context: ${context}`);
+    }
+    
     // Generate batch ID for tracking
     const batchId = crypto.randomUUID();
     
@@ -58,7 +64,7 @@ serve(async (req) => {
       
       try {
         // 2. Try to process with AI service
-        transactions = await processWithAI(fileText, fileType);
+        transactions = await processWithAI(fileText, fileType, context);
         
         if (transactions.length === 0) {
           throw new Error("No transactions were extracted by the AI service");

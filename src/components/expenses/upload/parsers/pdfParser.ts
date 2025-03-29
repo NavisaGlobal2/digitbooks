@@ -7,10 +7,14 @@ export const parsePDFFile = (
   onComplete: (transactions: ParsedTransaction[]) => void,
   onError: (errorMessage: string) => void
 ) => {
-  toast.error("PDF parsing requires server-side processing.");
+  // PDF parsing now always redirects to server-side processing
+  const message = "PDF parsing is being handled by the server. " +
+    "Please use the 'Server-side processing' option to parse PDF statements for the most accurate results.";
+  
+  toast.info(message);
   
   onError(
-    "PDF parsing is not supported in the client-side browser environment due to security limitations. " +
-    "Please use the 'Server-side processing' option to parse PDF statements, or convert your statement to CSV/Excel format."
+    "PDF parsing requires server-side processing due to security limitations. " +
+    "Please use the 'Server-side processing' option which leverages AI to extract transactions from your PDF statement."
   );
 };
