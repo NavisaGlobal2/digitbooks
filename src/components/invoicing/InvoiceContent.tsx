@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import InvoiceEmptyState from "./InvoiceEmptyState";

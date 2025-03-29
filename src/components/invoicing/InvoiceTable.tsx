@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import InvoiceStatusBadge from "./InvoiceStatusBadge";
-import MarkAsPaidDialog from "./MarkAsPaidDialog";
+import { PaymentDialog } from "./payment/PaymentDialog";
 import { toast } from "sonner";
 
 interface InvoiceTableProps {
@@ -154,7 +154,7 @@ const InvoiceTable = ({ invoices, onMarkAsPaid }: InvoiceTableProps) => {
       </div>
 
       {selectedInvoice && (
-        <MarkAsPaidDialog
+        <PaymentDialog
           open={isPaidDialogOpen}
           onOpenChange={(open) => {
             setIsPaidDialogOpen(open);
