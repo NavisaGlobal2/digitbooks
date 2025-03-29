@@ -7,7 +7,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw, Server, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -34,7 +34,10 @@ export const ConnectionStats = () => {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <div className="flex items-center">
-            {hasFailures && <AlertTriangle className="w-4 h-4 text-orange-500 mr-2" />}
+            {hasFailures ? 
+              <WifiOff className="w-4 h-4 text-orange-500 mr-2" /> : 
+              <Server className="w-4 h-4 text-green-500 mr-2" />
+            }
             Server Connection Status
           </div>
           <Button
@@ -42,6 +45,7 @@ export const ConnectionStats = () => {
             size="sm" 
             onClick={updateStats}
             className="h-6 w-6 p-0"
+            title="Refresh connection stats"
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -105,6 +109,18 @@ export const ConnectionStats = () => {
               >
                 {expanded ? "Show less" : "Show details"}
               </Button>
+              
+              {!expanded && (
+                <div className="text-xs text-amber-600 mt-1">
+                  <p>Tips:</p>
+                  <ul className="list-disc pl-4">
+                    <li>Try using a CSV file format instead</li>
+                    <li>Check your internet connection</li>
+                    <li>Try disabling any VPN or proxy</li>
+                    <li>The server might be temporarily unavailable</li>
+                  </ul>
+                </div>
+              )}
             </>
           )}
         </div>

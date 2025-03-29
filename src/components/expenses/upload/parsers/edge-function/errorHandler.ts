@@ -13,6 +13,15 @@ export const handleEdgeFunctionError = (
   errorType: string;
 } => {
   // Network error handling
+  if (error.name === "AbortError") {
+    console.error("Request timed out or was aborted");
+    return {
+      message: "Request timed out. The server might be overloaded. Please try again later.",
+      shouldRetry: true,
+      errorType: 'timeout_error'
+    };
+  }
+  
   if (error.message && error.message.includes("Failed to fetch")) {
     console.error("Network error detected. This may be due to CORS, network connectivity, or the edge function being unavailable.");
     console.error("Error details:", error);

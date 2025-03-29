@@ -47,66 +47,90 @@ export const parseViaEdgeFunction = async (
     let lastError = null;
 
     while (retryCount <= MAX_RETRIES) {
-      const { result, error, exhausted } = await handleRetry(
-        async () => {
-          trackSuccessfulConnection();
-          
-          // Custom fetch to edge function
-          const response = await fetch(
-            `${supabaseUrl}/functions/v1/parse-bank-statement-ai`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-              body: formData,
-            }
-          );
-          
-          console.log(`Edge function response status: ${response.status}`);
-          
-          if (!response.ok) {
-            const errorData = await handleResponseError(response);
-            throw errorData;
+      try {
+        // Add a clear log message before making the fetch request
+        console.log(`Attempt ${retryCount + 1}: Fetching from ${supabaseUrl}/functions/v1/parse-bank-statement-ai...`);
+        
+        // Track that we're attempting to connect
+        trackSuccessfulConnection();
+        
+        // Custom fetch to edge function with explicit timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        
+        const response = await fetch(
+          `${supabaseUrl}/functions/v1/parse-bank-statement-ai`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+            signal: controller.signal
           }
-          
-          return response.json();
-        },
-        retryCount
-      );
-      
-      // If successful, process the result
-      if (result) {
-        return processSuccessfulResult(result, onSuccess);
-      }
-      
-      // Handle error
-      lastError = error;
-      const { message, shouldRetry, errorType } = handleEdgeFunctionError(error, error.status);
-      
-      // For CSV files, try fallback if it's a network error
-      if (error.message && error.message.includes("Failed to fetch") && file.name.toLowerCase().endsWith('.csv')) {
-        const fallbackHandled = await handleCSVFallback(file, onSuccess, onError, error);
-        if (fallbackHandled) {
-          return true;
+        );
+        
+        clearTimeout(timeoutId);
+        
+        console.log(`Edge function response status: ${response.status}`);
+        
+        if (!response.ok) {
+          const errorData = await handleResponseError(response);
+          throw errorData;
         }
+        
+        const result = await response.json();
+        return processSuccessfulResult(result, onSuccess);
+      } catch (error: any) {
+        lastError = error;
+        
+        // Check specifically for network-related errors
+        const isNetworkError = error.name === 'AbortError' || 
+                              (error.message && (
+                                error.message.includes('Failed to fetch') || 
+                                error.message.includes('Network error') ||
+                                error.message.includes('network timeout') ||
+                                error.message.includes('abort')
+                              ));
+        
+        console.error(`Attempt ${retryCount + 1} failed:`, error.message || error);
+        
+        if (isNetworkError) {
+          console.log('Network-related error detected, will attempt retry if retries remaining');
+          trackFailedConnection('network_error');
+          
+          // For CSV files, try fallback immediately for network errors
+          if (file.name.toLowerCase().endsWith('.csv')) {
+            console.log('CSV file detected, attempting local fallback');
+            const fallbackHandled = await handleCSVFallback(file, onSuccess, onError, error);
+            if (fallbackHandled) {
+              return true;
+            }
+          }
+        } else {
+          // For non-network errors, process through the error handler
+          const { message, shouldRetry, errorType } = handleEdgeFunctionError(error, error.status);
+          trackFailedConnection(errorType);
+          
+          if (!shouldRetry) {
+            return onError(message);
+          }
+        }
+        
+        // If we've exhausted all retries, return the last error
+        if (retryCount >= MAX_RETRIES) {
+          trackFailedConnection('max_retries_exceeded');
+          return onError(
+            lastError?.message || "Failed to process file after multiple attempts. Please try again later."
+          );
+        }
+        
+        // Increment retry counter and wait before next attempt
+        retryCount++;
+        console.log(`Waiting before retry attempt ${retryCount + 1}...`);
+        await new Promise(r => setTimeout(r, 1000 * retryCount));
       }
-      
-      // Break the loop if we shouldn't retry or if we've exhausted all retries
-      if (!shouldRetry || exhausted) {
-        trackFailedConnection(errorType);
-        return onError(message);
-      }
-      
-      // Increment retry counter
-      retryCount++;
     }
-    
-    // If we've exhausted all retries, return the last error
-    trackFailedConnection('max_retries_exceeded');
-    return onError(
-      lastError?.message || "Failed to process file after multiple attempts. Please try again later."
-    );
     
   } catch (error: any) {
     console.error("Error in parseViaEdgeFunction:", error);
