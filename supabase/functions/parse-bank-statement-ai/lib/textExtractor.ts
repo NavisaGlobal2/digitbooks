@@ -1,6 +1,7 @@
 
-import { isExcelFile, ExcelService } from '../../../src/services/excelService.ts';
-import { isCSVFile, CSVService } from '../../../src/services/csvService.ts';
+// Import the services from correct paths
+import { isExcelFile, ExcelService } from './excelService.ts';
+import { isCSVFile, CSVService } from './csvService.ts';
 
 /**
  * Extract text from various file types
