@@ -120,8 +120,8 @@ const ProcessingModeToggle = ({
               />
             </div>
 
-            {/* OCR.space Option */}
-            {onOcrSpaceToggle && (
+            {/* OCR.space Option - Only show if it's potentially available */}
+            {onOcrSpaceToggle && false && (
               <div className="flex items-center justify-between">
                 <TooltipProvider>
                   <Tooltip>

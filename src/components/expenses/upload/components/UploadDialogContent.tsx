@@ -90,7 +90,7 @@ const UploadDialogContent = ({
             onStorePdfToggle={onStorePdfToggle}
             extractPdfText={extractPdfText}
             onExtractPdfTextToggle={onExtractPdfTextToggle}
-            useOcrSpace={useOcrSpace}
+            useOcrSpace={false} // Always set to false since OCR.space API is not available
             onOcrSpaceToggle={onOcrSpaceToggle}
           />
         </div>

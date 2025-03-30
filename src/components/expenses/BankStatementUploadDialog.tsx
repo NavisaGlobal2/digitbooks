@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useExpenses } from "@/contexts/ExpenseContext";
@@ -35,6 +34,11 @@ const BankStatementUploadDialog = ({
   const [useOcrSpace, setUseOcrSpace] = useState(false);
   const [isProcessingPdf, setIsProcessingPdf] = useState(false);
   
+  const handleOcrSpaceToggle = (value: boolean) => {
+    toast.error("OCR.space API key is not configured. Please use Google Vision API instead.");
+    setUseOcrSpace(false);
+  };
+
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
     console.log(`Received ${transactions.length} parsed transactions`);
     console.log("Sample parsed transactions:", transactions.slice(0, 2));
@@ -150,10 +154,6 @@ const BankStatementUploadDialog = ({
   const handleExtractPdfTextToggle = (value: boolean) => {
     setExtractPdfText(value);
   };
-  
-  const handleOcrSpaceToggle = (value: boolean) => {
-    setUseOcrSpace(value);
-  };
 
   return (
     <>
@@ -179,7 +179,7 @@ const BankStatementUploadDialog = ({
             extractPdfText={extractPdfText}
             onExtractPdfTextToggle={handleExtractPdfTextToggle}
             isProcessingPdf={isProcessingPdf}
-            useOcrSpace={useOcrSpace}
+            useOcrSpace={false}
             onOcrSpaceToggle={handleOcrSpaceToggle}
           />
         </DialogContent>

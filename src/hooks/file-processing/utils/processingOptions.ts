@@ -42,18 +42,15 @@ export const createProcessingOptions = (
     provider: provider,
     storePdfInSupabase: additionalOptions?.storePdfInSupabase || false,
     extractPdfText: additionalOptions?.extractPdfText || false,
-    useOcrSpace: additionalOptions?.useOcrSpace || false
+    useOcrSpace: false // Always set to false since the API key is not available
   };
 
   // For PDF files, ensure Vision API is enabled
   if (fileType === 'pdf') {
     options.useVision = true;
     
-    if (additionalOptions?.useOcrSpace) {
-      console.log("🔍 Using OCR.space for PDF processing");
-      toast.info("Using OCR.space for enhanced PDF text extraction");
-    }
-    else if (additionalOptions?.extractPdfText) {
+    // OCR.space not available, so only look for extractPdfText
+    if (additionalOptions?.extractPdfText) {
       console.log("🔍 Using special PDF text extraction with Vision API");
       toast.info("Using advanced PDF text extraction");
     }
