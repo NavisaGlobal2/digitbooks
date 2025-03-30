@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useExpenses } from "@/contexts/ExpenseContext";
@@ -35,8 +36,11 @@ const BankStatementUploadDialog = ({
   const [isProcessingPdf, setIsProcessingPdf] = useState(false);
   
   const handleOcrSpaceToggle = (value: boolean) => {
-    toast.error("OCR.space API key is not configured. Please use Google Vision API instead.");
-    setUseOcrSpace(false);
+    setUseOcrSpace(value);
+    // When OCR.space is enabled, we must store the PDF in Supabase
+    if (value) {
+      setStorePdfInSupabase(true);
+    }
   };
 
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
@@ -149,6 +153,11 @@ const BankStatementUploadDialog = ({
 
   const handleStorePdfToggle = (value: boolean) => {
     setStorePdfInSupabase(value);
+    // If turning off storage but OCR.space is enabled, we need to disable OCR.space
+    if (!value && useOcrSpace) {
+      setUseOcrSpace(false);
+      toast.info("OCR.space requires PDF storage. OCR.space has been disabled.");
+    }
   };
   
   const handleExtractPdfTextToggle = (value: boolean) => {
@@ -179,7 +188,7 @@ const BankStatementUploadDialog = ({
             extractPdfText={extractPdfText}
             onExtractPdfTextToggle={handleExtractPdfTextToggle}
             isProcessingPdf={isProcessingPdf}
-            useOcrSpace={false}
+            useOcrSpace={useOcrSpace}
             onOcrSpaceToggle={handleOcrSpaceToggle}
           />
         </DialogContent>

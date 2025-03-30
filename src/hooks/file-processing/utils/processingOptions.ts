@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 interface ProcessingOptions {
@@ -42,15 +41,21 @@ export const createProcessingOptions = (
     provider: provider,
     storePdfInSupabase: additionalOptions?.storePdfInSupabase || false,
     extractPdfText: additionalOptions?.extractPdfText || false,
-    useOcrSpace: false // Always set to false since the API key is not available
+    useOcrSpace: additionalOptions?.useOcrSpace || false // Allow OCR.space to be enabled
   };
 
   // For PDF files, ensure Vision API is enabled
   if (fileType === 'pdf') {
     options.useVision = true;
     
-    // OCR.space not available, so only look for extractPdfText
-    if (additionalOptions?.extractPdfText) {
+    // If OCR.space is enabled, ensure we store PDF in Supabase
+    if (additionalOptions?.useOcrSpace) {
+      console.log("🔍 Using OCR.space for PDF processing");
+      options.storePdfInSupabase = true; // Required for OCR.space
+      toast.info("Using OCR.space for PDF text extraction");
+    }
+    // Otherwise use Google Vision if extractPdfText is enabled
+    else if (additionalOptions?.extractPdfText) {
       console.log("🔍 Using special PDF text extraction with Vision API");
       toast.info("Using advanced PDF text extraction");
     }
