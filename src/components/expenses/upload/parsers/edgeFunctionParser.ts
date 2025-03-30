@@ -46,6 +46,7 @@ export const parseViaEdgeFunction = async (
     // Log the response from the server for debugging
     console.log("Edge function response:", data);
     console.log("Retrieved transactions count:", data.transactions.length);
+    console.log("AI service used:", data.serviceUsed || "unknown");
     
     // Log account information if available
     if (data.account) {

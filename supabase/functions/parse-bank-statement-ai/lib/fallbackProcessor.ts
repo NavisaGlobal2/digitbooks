@@ -1,173 +1,146 @@
 
-import { sanitizeTextForAPI } from './utils.ts';
 import { parse as parseCSV } from "https://deno.land/std@0.170.0/encoding/csv.ts";
 
 /**
- * Simple fallback CSV processor that attempts to identify transaction data
- * when AI services are unavailable
+ * Basic fallback CSV parser when AI processing fails
  */
-export async function fallbackCSVProcessing(csvContent: string): Promise<any[]> {
-  console.log("Using fallback CSV processor");
-
+export async function fallbackCSVProcessing(csvText: string): Promise<any[]> {
+  console.log("Using fallback CSV parser");
+  
   try {
-    if (!csvContent || typeof csvContent !== 'string') {
-      throw new Error("Invalid CSV content");
-    }
-
-    // Sanitize content before processing
-    const cleanContent = sanitizeTextForAPI(csvContent);
-    
-    // Parse the CSV content
+    // Try to parse the CSV content
     let rows: string[][] = [];
+    
     try {
-      rows = await parseCSV(cleanContent, {
-        skipFirstRow: false,
-        lazyQuotes: true,
-        flexible: true
+      rows = await parseCSV(csvText, {
+        skipFirstRow: true,
+        separator: ',',
+        columns: false
       });
-    } catch (parseError) {
-      console.error("Error parsing CSV:", parseError);
-      throw new Error(`Failed to parse CSV: ${parseError.message}`);
+    } catch (csvError) {
+      console.error("Error parsing CSV with standard parser:", csvError);
+      
+      // Try alternative approach - split by newlines and commas
+      rows = csvText
+        .split('\n')
+        .map(line => line.split(',').map(cell => cell.trim()))
+        .filter(row => row.length > 1);
     }
     
-    // Need at least a header row and one data row
-    if (rows.length < 2) {
-      throw new Error("CSV has insufficient data rows");
+    if (rows.length === 0) {
+      throw new Error("No data found in CSV");
     }
     
-    // Look for date, description, and amount columns
-    const headers = rows[0].map(header => header.toLowerCase().trim());
+    console.log(`Parsed ${rows.length} rows from CSV`);
     
-    // Find potential column indices
-    const dateColIndex = findColumnIndex(headers, ['date', 'transaction date', 'txn date', 'time', 'posted', 'effective date']);
-    const descColIndex = findColumnIndex(headers, ['description', 'narrative', 'details', 'transaction', 'payee', 'merchant', 'particulars']);
-    const amountColIndex = findColumnIndex(headers, ['amount', 'value', 'debit', 'credit', 'sum', 'transaction amount']);
+    // Try to identify columns for date, description, and amount
+    const potentialHeaders = rows[0].map(header => header.toLowerCase());
     
-    if (dateColIndex === -1 || descColIndex === -1 || amountColIndex === -1) {
-      throw new Error("Could not identify required columns (date, description, amount) in CSV headers");
+    // Find column indices
+    let dateColIndex = potentialHeaders.findIndex(h => 
+      h.includes('date') || h.includes('time') || h.includes('when')
+    );
+    
+    let descColIndex = potentialHeaders.findIndex(h => 
+      h.includes('desc') || h.includes('narr') || h.includes('part') || 
+      h.includes('ref') || h.includes('detail')
+    );
+    
+    let amountColIndex = potentialHeaders.findIndex(h => 
+      h.includes('amount') || h.includes('value') || h.includes('sum')
+    );
+    
+    let debitColIndex = potentialHeaders.findIndex(h => h.includes('debit'));
+    let creditColIndex = potentialHeaders.findIndex(h => h.includes('credit'));
+    
+    // Fallbacks if we couldn't identify columns by name
+    if (dateColIndex === -1) dateColIndex = 0;
+    if (descColIndex === -1) descColIndex = dateColIndex + 1;
+    if (amountColIndex === -1 && debitColIndex === -1 && creditColIndex === -1) {
+      amountColIndex = Math.min(2, rows[0].length - 1);
     }
     
-    console.log(`Column mapping: Date=${dateColIndex}, Description=${descColIndex}, Amount=${amountColIndex}`);
+    console.log(`Identified columns: Date(${dateColIndex}), Description(${descColIndex}), Amount(${amountColIndex})`);
     
-    // Process data rows
-    const transactions = [];
+    // Process transactions
+    const transactions = rows.slice(1) // Skip header
+      .filter(row => row.length >= Math.max(dateColIndex, descColIndex, amountColIndex) + 1) 
+      .map(row => {
+        // Process date - try to normalize to YYYY-MM-DD
+        let dateStr = row[dateColIndex];
+        let formattedDate = dateStr;
+        
+        // Try to detect and format date
+        const dateParts = dateStr.split(/[\/\-\.]/);
+        if (dateParts.length === 3) {
+          // Check if year is first or last
+          if (dateParts[0].length === 4) {
+            // YYYY-MM-DD
+            formattedDate = `${dateParts[0]}-${dateParts[1].padStart(2, '0')}-${dateParts[2].padStart(2, '0')}`;
+          } else {
+            // Assume MM/DD/YYYY or DD/MM/YYYY (less reliable)
+            const year = dateParts[2].length === 2 ? `20${dateParts[2]}` : dateParts[2];
+            
+            // Heuristic: if first part > 12, assume it's day
+            if (parseInt(dateParts[0]) > 12) {
+              // DD/MM/YYYY
+              formattedDate = `${year}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+            } else {
+              // MM/DD/YYYY
+              formattedDate = `${year}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
+            }
+          }
+        }
+        
+        // Process description
+        const description = row[descColIndex] || "Unknown";
+        
+        // Process amount and determine transaction type
+        let amount = 0;
+        let type = "debit";
+        
+        if (debitColIndex !== -1 && creditColIndex !== -1) {
+          // Separate columns for debit and credit
+          const debitVal = parseFloat(row[debitColIndex].replace(/[^\d.-]/g, ""));
+          const creditVal = parseFloat(row[creditColIndex].replace(/[^\d.-]/g, ""));
+          
+          if (!isNaN(debitVal) && debitVal > 0) {
+            amount = debitVal;
+            type = "debit";
+          } else if (!isNaN(creditVal) && creditVal > 0) {
+            amount = creditVal;
+            type = "credit";
+          }
+        } else {
+          // Single amount column
+          const amountStr = row[amountColIndex].replace(/[^\d.-]/g, "");
+          amount = parseFloat(amountStr);
+          
+          if (isNaN(amount)) amount = 0;
+          
+          // Negative amount usually means debit/expense
+          if (row[amountColIndex].includes('-') || amount < 0) {
+            type = "debit";
+            amount = Math.abs(amount);
+          } else {
+            type = "credit";
+          }
+        }
+        
+        return {
+          date: formattedDate,
+          description,
+          amount,
+          type
+        };
+      })
+      .filter(tx => !isNaN(tx.amount) && tx.amount > 0);
     
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      if (row.length <= 1) continue; // Skip empty rows
-      
-      if (dateColIndex >= row.length || descColIndex >= row.length || amountColIndex >= row.length) {
-        console.warn(`Skipping row ${i}: insufficient columns`);
-        continue;
-      }
-      
-      const dateStr = row[dateColIndex]?.trim() || '';
-      const description = row[descColIndex]?.trim() || '';
-      const amountStr = row[amountColIndex]?.trim() || '';
-      
-      if (!dateStr || !description || !amountStr) {
-        console.warn(`Skipping row ${i}: missing required data`);
-        continue;
-      }
-      
-      // Process the amount (consider different formats)
-      const cleanAmount = cleanCurrencyValue(amountStr);
-      const amount = parseFloat(cleanAmount);
-      
-      if (isNaN(amount)) {
-        console.warn(`Skipping row ${i}: invalid amount "${amountStr}"`);
-        continue;
-      }
-      
-      // Try to parse the date
-      let parsedDate;
-      try {
-        parsedDate = parseDate(dateStr);
-      } catch (dateError) {
-        console.warn(`Skipping row ${i}: invalid date "${dateStr}"`);
-        continue;
-      }
-      
-      // Create a transaction object
-      transactions.push({
-        date: parsedDate,
-        description: description,
-        amount: amount,
-        type: amount < 0 ? 'debit' : 'credit'
-      });
-    }
-    
-    console.log(`Fallback processor found ${transactions.length} transactions`);
+    console.log(`Extracted ${transactions.length} transactions with fallback parser`);
     return transactions;
+    
   } catch (error) {
-    console.error("Fallback CSV processing error:", error);
-    throw new Error(`Fallback processing failed: ${error.message}`);
+    console.error("Fallback CSV processing failed:", error);
+    throw new Error(`Fallback CSV processing failed: ${error.message}`);
   }
-}
-
-/**
- * Find a matching column index from headers array
- */
-function findColumnIndex(headers: string[], possibleNames: string[]): number {
-  for (const name of possibleNames) {
-    const index = headers.findIndex(h => h.includes(name));
-    if (index !== -1) return index;
-  }
-  return -1;
-}
-
-/**
- * Clean currency values
- */
-function cleanCurrencyValue(value: string): string {
-  // Remove currency symbols, commas, and other non-numeric characters except decimal points and negative signs
-  return value
-    .replace(/[^0-9.-]/g, '')  // Remove anything that isn't a digit, decimal point or negative sign
-    .replace(/(\d),(\d)/g, '$1$2') // Remove commas between digits if missed by previous regex
-    .trim();
-}
-
-/**
- * Parse date from various formats to ISO format
- */
-function parseDate(dateStr: string): string {
-  // First, try to directly parse the date
-  const parsed = new Date(dateStr);
-  if (!isNaN(parsed.getTime())) {
-    return parsed.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-  }
-  
-  // Try common date formats
-  // DD/MM/YYYY or DD-MM-YYYY
-  const dmyRegex = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2}|\d{4})$/;
-  const dmyMatch = dateStr.match(dmyRegex);
-  if (dmyMatch) {
-    const day = parseInt(dmyMatch[1], 10);
-    const month = parseInt(dmyMatch[2], 10) - 1; // Month is 0-indexed in JS Date
-    let year = parseInt(dmyMatch[3], 10);
-    if (year < 100) year += 2000; // Assume 2-digit years are 2000s
-    
-    const date = new Date(year, month, day);
-    if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-    }
-  }
-  
-  // MM/DD/YYYY or MM-DD-YYYY (US format)
-  const mdyRegex = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2}|\d{4})$/;
-  const mdyMatch = dateStr.match(mdyRegex);
-  if (mdyMatch) {
-    const month = parseInt(mdyMatch[1], 10) - 1; // Month is 0-indexed in JS Date
-    const day = parseInt(mdyMatch[2], 10);
-    let year = parseInt(mdyMatch[3], 10);
-    if (year < 100) year += 2000; // Assume 2-digit years are 2000s
-    
-    const date = new Date(year, month, day);
-    if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-    }
-  }
-  
-  // If we can't parse the date, throw an error
-  throw new Error(`Could not parse date: ${dateStr}`);
 }

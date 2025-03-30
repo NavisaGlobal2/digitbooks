@@ -72,6 +72,7 @@ serve(async (req) => {
       
       let bankData;
       let usedFallback = false;
+      let aiServiceUsed = "primary";
       
       try {
         // 2. Try to process with AI service
@@ -93,6 +94,7 @@ serve(async (req) => {
         if (fileType === "csv") {
           console.log("Attempting fallback CSV processing");
           usedFallback = true;
+          aiServiceUsed = "fallback_csv";
           const fallbackTransactions = await fallbackCSVProcessing(fileText);
           
           bankData = {
@@ -120,7 +122,7 @@ serve(async (req) => {
           if (isAnthropicError && isDeepSeekError) {
             return new Response(
               JSON.stringify({ 
-                error: `Both AI services failed. Please try again later or use a CSV file which can be processed with the fallback parser. Original error: ${aiError.message}` 
+                error: `Both AI services failed. Please try a different file format or check formatting issues: ${aiError.message}` 
               }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 }
             );
@@ -129,7 +131,7 @@ serve(async (req) => {
           // For non-CSV files with a single AI service failure
           return new Response(
             JSON.stringify({ 
-              error: `AI processing failed: ${aiError.message}. Please try again later or use a CSV file.` 
+              error: `AI processing failed: ${aiError.message}. Please try again with a CSV or Excel file with simpler formatting.` 
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 }
           );
@@ -187,7 +189,7 @@ serve(async (req) => {
             throw new Error(`Failed to store transactions: ${txError.message}`);
           }
           
-          console.log(`Successfully stored ${transactionsToInsert.length} transactions in Supabase`);
+          console.log(`Successfully saved ${transactionsToInsert.length} transactions to database`);
         } catch (dbError) {
           console.error('Database error:', dbError);
           // Continue processing but include error in response
@@ -198,7 +200,8 @@ serve(async (req) => {
               message: `Processed ${bankData.transactions.length} transactions but failed to store in database: ${dbError.message}`,
               batchId,
               accountId,
-              dbError: dbError.message
+              dbError: dbError.message,
+              serviceUsed: aiServiceUsed
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
@@ -218,7 +221,8 @@ serve(async (req) => {
           message: usedFallback 
             ? `Successfully processed ${bankData.transactions.length} transactions using fallback method` 
             : `Successfully processed ${bankData.transactions.length} transactions`,
-          batchId
+          batchId,
+          serviceUsed: aiServiceUsed
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -226,14 +230,25 @@ serve(async (req) => {
       console.error("Processing error:", processingError);
       
       return new Response(
-        JSON.stringify({ error: processingError.message || "Unknown processing error" }),
+        JSON.stringify({ 
+          error: processingError.message || "Unknown processing error",
+          errorDetails: processingError.stack || "No stack trace available",
+          suggestions: [
+            "Try a CSV file with simpler formatting",
+            "Make sure your file contains transaction data in a tabular format",
+            "Check that date, description and amount columns are clearly identified"
+          ]
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
   } catch (error) {
     console.error("Server error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Unknown server error" }),
+      JSON.stringify({ 
+        error: error.message || "Unknown server error",
+        errorDetails: error.stack || "No stack trace available" 
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
