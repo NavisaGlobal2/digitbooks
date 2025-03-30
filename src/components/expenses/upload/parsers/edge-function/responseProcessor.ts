@@ -34,7 +34,7 @@ export const processSuccessfulResult = (
   
   if (!result.success) {
     console.error("❌ STEP 6.5: Edge function returned error");
-    trackFailedConnection('processing_error', { result });
+    trackFailedConnection('processing_error', new Error(result.error || "Unknown processing error"));
     console.error("❌ Edge function returned error:", result.error);
     throw new Error(result.error || "Unknown error processing file");
   }

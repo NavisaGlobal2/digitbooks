@@ -1,38 +1,13 @@
 
-/**
- * Sleep for a specified number of milliseconds
- */
+// Max number of retry attempts
+export const MAX_RETRIES = 3;
+
+// Sleep function for delay between retries
 export const sleep = (ms: number): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
-/**
- * Maximum number of retry attempts
- */
-export const MAX_RETRIES = 2;
-
-/**
- * Handle retry logic for edge function calls
- */
-export const handleRetry = async <T>(
-  operation: () => Promise<T>,
-  retryCount: number,
-  maxRetries: number = MAX_RETRIES
-): Promise<{ result: T | null; error: any; exhausted: boolean }> => {
-  try {
-    // Add a small delay before retrying to prevent overwhelming the server
-    if (retryCount > 0) {
-      console.log(`Retry attempt ${retryCount} of ${maxRetries}...`);
-      await sleep(1000 * retryCount);
-    }
-    
-    console.log(`Starting fetch request to edge function (attempt ${retryCount + 1})...`);
-    
-    const result = await operation();
-    
-    return { result, error: null, exhausted: false };
-  } catch (error) {
-    const exhausted = retryCount >= maxRetries;
-    return { result: null, error, exhausted };
-  }
+// Calculate delay with exponential backoff
+export const getRetryDelay = (attempt: number, baseDelay = 1000): number => {
+  return Math.min(baseDelay * Math.pow(2, attempt), 10000); // Max 10 seconds
 };

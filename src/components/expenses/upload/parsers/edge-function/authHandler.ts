@@ -1,40 +1,29 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { trackFailedConnection } from "./connectionStats";
 
 /**
- * Get authentication token for edge function calls
+ * Get the authentication token for Supabase
  */
 export const getAuthToken = async (): Promise<{ token: string | null; error: string | null }> => {
   try {
-    const { data: authData, error: authError } = await supabase.auth.getSession();
+    const { data, error } = await supabase.auth.getSession();
     
-    if (authError || !authData.session) {
-      console.error("Authentication error:", authError?.message || "No active session");
-      trackFailedConnection('auth_error', authError || new Error("No active session"));
-      return { 
-        token: null, 
-        error: authError?.message || "You need to be signed in to use this feature"
-      };
+    if (error || !data.session) {
+      console.error("Auth error:", error);
+      return { token: null, error: error?.message || "Not authenticated" };
     }
     
-    const token = authData.session.access_token;
-    if (!token) {
-      console.error("No access token found in session");
-      trackFailedConnection('no_token', new Error("Missing access token"));
-      return { 
-        token: null, 
-        error: "Authentication token is missing. Please sign in again."
-      };
-    }
-    
-    return { token, error: null };
-  } catch (error: any) {
-    console.error("Error getting auth token:", error);
-    trackFailedConnection('auth_error', error);
-    return { 
-      token: null, 
-      error: error.message || "Authentication error occurred"
-    };
+    return { token: data.session.access_token, error: null };
+  } catch (e: any) {
+    console.error("Auth exception:", e);
+    return { token: null, error: e.message || "Authentication error occurred" };
   }
+};
+
+/**
+ * Check if the user is authenticated
+ */
+export const isAuthenticated = async (): Promise<boolean> => {
+  const { token } = await getAuthToken();
+  return !!token;
 };

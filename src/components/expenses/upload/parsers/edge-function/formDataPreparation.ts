@@ -1,6 +1,4 @@
 
-import { addPDFOptions, trackPDFAttempt, resetPDFAttemptCounter } from "./pdfHandler";
-
 /**
  * Prepare form data for the edge function request
  */
@@ -39,52 +37,6 @@ export const prepareFormData = (
       console.log("🔄 STEP 1.3: Adding FORCE_VISION_API flag to ensure Vision API is used");
       formData.append("FORCE_VISION_API", "true");
     }
-    
-    // Force base64 encoding for Vision API to ensure proper format
-    formData.append("forceBase64Encoding", "true");
-    
-    // Add new improved base64 flags
-    formData.append("useSafeBase64", "true");
-    formData.append("useChunkedBase64", "true");
-    
-    // Never generate dummy data - ENHANCED with stronger flags
-    formData.append("neverGenerateDummyData", "true");
-    formData.append("preventFakeData", "true");
-    formData.append("strictExtractionOnly", "true");
-    formData.append("extractRealTransactionsOnly", "true");
-    formData.append("returnEmptyOnFailure", "true");
-    
-    // Add diagnostic flag for Vision API
-    formData.append("returnVisionDiagnostics", "true");
-    formData.append("includeExtractedText", "true");
-    formData.append("preserveOriginalPdfText", "true");
-    formData.append("rawTextOutput", "true");
-    
-    // Add flag to store PDF in Supabase
-    formData.append("storePdfInSupabase", options?.storePdfInSupabase === true ? "true" : "false");
-    
-    // Log the options being used for debugging
-    console.log("📋 PDF processing options being sent:", {
-      isPdf,
-      useVision: useVision ? "true" : "false",
-      pdfAttemptCount,
-      safeProcessing: options?.safeProcessing === true ? "true" : "false",
-      forceBase64: "true",
-      useSafeBase64: "true",
-      useChunkedBase64: "true",
-      debugMode: true,
-      diagnosticMode: true,
-      neverGenerateDummyData: true,
-      preventFakeData: true,
-      strictExtractionOnly: true,
-      extractRealTransactionsOnly: true,
-      returnEmptyOnFailure: true,
-      returnVisionDiagnostics: true,
-      includeExtractedText: true,
-      preserveOriginalPdfText: true,
-      rawTextOutput: true,
-      storePdfInSupabase: options?.storePdfInSupabase === true ? "true" : "false"
-    });
   } else {
     // Reset PDF attempt counter for non-PDF files
     resetPDFAttemptCounter();
@@ -141,4 +93,64 @@ export const createRequestConfig = (token: string): RequestInit => {
     },
     signal: controller.signal
   };
+};
+
+// PDF attempt tracking functions
+// Track PDF attempts in local storage
+export const trackPDFAttempt = (): number => {
+  const pdfAttemptCount = localStorage.getItem('pdf_attempt_count') ? 
+                         parseInt(localStorage.getItem('pdf_attempt_count') || '0') : 0;
+  const newCount = pdfAttemptCount + 1;
+  localStorage.setItem('pdf_attempt_count', newCount.toString());
+  console.log(`PDF attempt count: ${newCount}`);
+  return newCount;
+};
+
+// Reset PDF attempt counter
+export const resetPDFAttemptCounter = (): void => {
+  localStorage.removeItem('pdf_attempt_count');
+};
+
+// Add PDF-specific options to FormData
+export const addPDFOptions = (
+  formData: FormData,
+  options: any,
+  pdfAttemptCount: number
+): void => {
+  formData.append("fileType", "pdf");
+  console.log("PDF file detected. Adding special handling flags.");
+  
+  // Add special flags to ensure we're getting real data
+  formData.append("extractRealData", "true");
+  
+  // Ensure useVision flag is explicitly set to true
+  const useVision = options?.useVision !== false; // Default to true unless explicitly set to false
+  formData.append("useVision", useVision ? "true" : "false");
+  console.log(`Setting useVision flag to: ${useVision}`);
+  
+  // Add debug mode to get more information about the Google Vision API
+  formData.append("debugMode", "true");
+  
+  formData.append("forceRealData", options?.forceRealData ? "true" : "false");
+  
+  if (options?.context) {
+    formData.append("context", options.context);
+  }
+  
+  // Add safe processing option to prevent stack overflows
+  formData.append("safeProcessing", options?.safeProcessing ? "true" : "false");
+  
+  // Make sure to force using Google Vision API
+  if (useVision) {
+    formData.append("FORCE_VISION_API", "true");
+    console.log("Adding FORCE_VISION_API flag to ensure Vision API is used");
+  }
+  
+  // After multiple attempts with the same PDF, try a different approach
+  if (pdfAttemptCount > 3) {
+    console.log("Multiple PDF attempts detected, using enhanced PDF handling");
+    formData.append("enhancedPdfMode", "true");
+    // Force base64 encoding on multiple attempts
+    formData.append("forceBase64", "true");
+  }
 };

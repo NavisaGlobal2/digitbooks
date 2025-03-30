@@ -14,7 +14,7 @@ export const handleNetworkError = async (
   endpoint: string
 ): Promise<boolean> => {
   console.log('Network-related error detected, will attempt retry if retries remaining');
-  trackFailedConnection('network_error', error, endpoint);
+  trackFailedConnection('network_error', error);
   
   // For CSV files, try fallback immediately for network errors
   if (file.name.toLowerCase().endsWith('.csv')) {
@@ -39,14 +39,14 @@ export const handleOtherErrors = async (
   if (error.status === 401 || 
       (error.message && error.message.toLowerCase().includes('auth'))) {
     console.error("Authentication error:", error);
-    trackFailedConnection('auth_error', error, endpoint);
+    trackFailedConnection('auth_error', error);
     return onError("Authentication error. Please sign in again and try once more.");
   }
   
   // Handle server errors
   if (error.status && error.status >= 500) {
     console.error("Server error:", error);
-    trackFailedConnection('server_error', error, endpoint);
+    trackFailedConnection('server_error', error);
     
     // For CSV files with server errors, try fallback
     if (file.name.toLowerCase().endsWith('.csv')) {
@@ -59,6 +59,6 @@ export const handleOtherErrors = async (
   
   // Handle all other errors
   console.error("Other error:", error);
-  trackFailedConnection('other_error', error, endpoint);
+  trackFailedConnection('other_error', error);
   return onError(error.message || "Error processing file");
 };

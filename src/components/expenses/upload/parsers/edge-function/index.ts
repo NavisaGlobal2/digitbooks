@@ -1,12 +1,32 @@
-// Fixing return type issues in the index.ts file
+
 // Import necessary types and functions
 import { ParsedTransaction } from "../types";
-import { getAuthToken } from "./authHandler";
 import { trackSuccessfulConnection, trackFailedConnection } from "./connectionStats";
 import { processPdfWithOcrSpace } from "./ocrSpaceProcessor";
 import { handleCSVFallback } from "./fallbackHandler";
 import { handleEdgeFunctionRequest } from "./requestHandler";
 import { supabase } from "@/integrations/supabase/client";
+import { sleep, MAX_RETRIES } from "./retryHandler";
+
+// Export necessary utilities
+export { sleep, MAX_RETRIES } from "./retryHandler";
+
+// Function to get auth token
+export const getAuthToken = async () => {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error || !data.session) {
+      console.error("Auth error:", error);
+      return { token: null, error: error?.message || "Not authenticated" };
+    }
+    
+    return { token: data.session.access_token, error: null };
+  } catch (e: any) {
+    console.error("Auth exception:", e);
+    return { token: null, error: e.message || "Authentication error occurred" };
+  }
+};
 
 // Function to handle PDF processing with OCR.space
 export const handleOcrSpaceProcessing = async (
@@ -21,9 +41,10 @@ export const handleOcrSpaceProcessing = async (
       return onError(error || "Failed to authenticate with Supabase");
     }
 
-    // Get Supabase URL and key for client
-    const supabaseUrl = supabase.supabaseUrl;
-    const supabaseKey = supabase.supabaseKey;
+    // Get Supabase URL and key for client using environment variables
+    // These values should come from environment variables, not direct access to supabase client
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
     // Process PDF with OCR.space
     const result = await processPdfWithOcrSpace(file, supabaseUrl, supabaseKey);
@@ -71,7 +92,8 @@ export const parseViaEdgeFunction = async (
     const { token, error: authError } = await getAuthToken();
     if (authError || !token) {
       console.error("Authentication error:", authError);
-      return onError(authError || "You need to be signed in to use this feature");
+      onError(authError || "You need to be signed in to use this feature");
+      return;
     }
     
     // Prepare the request body
@@ -116,7 +138,8 @@ export const parseViaEdgeFunction = async (
         return;
       }
       
-      return onError(result.error);
+      onError(result.error);
+      return;
     }
     
     // Process successful response

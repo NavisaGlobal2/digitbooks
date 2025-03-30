@@ -1,11 +1,10 @@
 
 import { ParsedTransaction } from "../types";
-import { getAuthToken, MAX_RETRIES, sleep } from "./index";
+import { getAuthToken, MAX_RETRIES, sleep } from "./retryHandler";
 import { trackSuccessfulConnection, trackFailedConnection } from "./connectionStats";
-import { prepareFormData, createRequestConfig } from "./formDataPreparation";
+import { prepareFormData } from "./formDataPreparation";
 import { sendRequestWithRetry } from "./requestHandler";
 import { handleNetworkError, handleOtherErrors } from "./errorHandlers";
-import { handlePDFRetry } from "./pdfHandler";
 
 /**
  * Parse a bank statement file via the Supabase edge function
@@ -25,7 +24,7 @@ export const parseViaEdgeFunction = async (
     const { token, error: authError } = await getAuthToken();
     if (authError || !token) {
       console.error("❌ STEP 0.2: Authentication error:", authError);
-      trackFailedConnection('auth_token_error', { message: authError });
+      trackFailedConnection('auth_token_error', new Error(authError || "Authentication failed"));
       return onError(authError || "Authentication error occurred");
     }
     console.log(`✅ STEP 0.3: Authentication token retrieved successfully`);
@@ -65,11 +64,6 @@ export const parseViaEdgeFunction = async (
     while (retryCount <= MAX_RETRIES) {
       try {
         console.log(`🔄 STEP 4: Processing attempt ${retryCount + 1} of ${MAX_RETRIES + 1}`);
-        // Handle PDF-specific retry logic
-        if (isFilePdf) {
-          console.log(`🔄 STEP 4.1: Handling PDF-specific retry logic for attempt ${retryCount + 1}`);
-          await handlePDFRetry(formData, retryCount);
-        }
         
         // Attempt to send the request
         console.log(`🔄 STEP 4.2: Sending request to edge function endpoint`);
@@ -159,7 +153,7 @@ export const parseViaEdgeFunction = async (
       // If we've exhausted all retries, return the last error
       if (retryCount >= MAX_RETRIES) {
         console.log(`❌ STEP 9: Max retries (${MAX_RETRIES}) exceeded. Giving up.`);
-        trackFailedConnection('max_retries_exceeded', lastError, edgeFunctionEndpoint);
+        trackFailedConnection('max_retries_exceeded', lastError || new Error("Max retries exceeded"));
         return onError(
           lastError?.message || "Failed to process file after multiple attempts. Please try again later."
         );

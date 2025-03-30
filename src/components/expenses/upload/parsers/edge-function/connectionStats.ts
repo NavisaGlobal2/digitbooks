@@ -6,7 +6,7 @@ interface ConnectionStats {
   failureCount: number; // Alias for failCount
   lastSuccess: Date | null;
   lastError: Error | null;
-  lastFailure: Date | null; // Add missing property
+  lastFailure: Date | null;
   errors: string[];
   endpoint?: string;
   corsErrorDetected: boolean;
@@ -43,13 +43,16 @@ export const trackSuccessfulConnection = (endpoint?: string) => {
   connectionStats.failureRate = total > 0 ? (connectionStats.failCount / total) * 100 : 0;
 };
 
-// Track a failed connection
-export const trackFailedConnection = (reason: string, error: Error) => {
+// Track a failed connection - takes optional endpoint parameter
+export const trackFailedConnection = (reason: string, error: Error, endpoint?: string) => {
   connectionStats.failCount++;
   connectionStats.failureCount = connectionStats.failCount; // Keep in sync
   connectionStats.lastError = error;
   connectionStats.lastFailure = new Date();
   connectionStats.errors.push(error.message || 'Unknown error');
+  
+  // Store endpoint if provided
+  if (endpoint) connectionStats.endpoint = endpoint;
   
   // Detect CORS errors
   if (
