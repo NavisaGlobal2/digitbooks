@@ -1,7 +1,7 @@
 
 // Import necessary types and functions
 import { ParsedTransaction } from "../types";
-import { trackSuccessfulConnection, trackFailedConnection } from "./connectionStats";
+import { trackSuccessfulConnection, trackFailedConnection, getConnectionStats, getTechnicalErrorDetails } from "./connectionStats";
 import { processPdfWithOcrSpace } from "./ocrSpaceProcessor";
 import { handleCSVFallback } from "./fallbackHandler";
 import { handleEdgeFunctionRequest } from "./requestHandler";
@@ -61,4 +61,4 @@ export const handleOcrSpaceProcessing = async (
 };
 
 // Re-export stats functions
-export { getConnectionStats } from './connectionStats';
+export { getConnectionStats, getTechnicalErrorDetails } from './connectionStats';
