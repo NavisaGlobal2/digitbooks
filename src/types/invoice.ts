@@ -1,5 +1,5 @@
 
-export type InvoiceStatus = 'pending' | 'paid' | 'overdue' | 'partially-paid';
+export type InvoiceStatus = 'pending' | 'paid' | 'overdue';
 
 export interface InvoiceItem {
   description: string;
@@ -8,19 +8,9 @@ export interface InvoiceItem {
   tax: number;
 }
 
-export interface PaymentRecord {
-  amount: number;
-  date: Date;
-  method: string;
-  receiptUrl?: string | null;
-  reference?: string;
-}
-
 export interface Invoice {
   id: string;
   clientName: string;
-  clientEmail?: string;
-  clientAddress?: string;
   invoiceNumber: string;
   issuedDate: Date;
   dueDate: Date;
@@ -33,7 +23,5 @@ export interface Invoice {
     accountName: string;
     accountNumber: string;
     bankName: string;
-  };
-  payments?: PaymentRecord[];
-  paidDate?: Date | null;
+  }
 }

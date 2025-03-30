@@ -7,93 +7,99 @@ import { InvoiceDetails } from "../pdfSections/types";
 import { createTemporaryInvoiceElement } from "./invoiceElementFactory";
 
 /**
- * Function to share the invoice via web share API or fallback to download
+ * Function to share the invoice
  */
 export const shareInvoice = async (invoiceDetails: InvoiceDetails) => {
-  const toastId = toast.loading("Preparing invoice for sharing...");
-  
   try {
-    // Check if Web Share API is supported
-    if (!navigator.share) {
-      toast.error("Sharing is not supported on this device/browser.", {
-        id: toastId
-      });
-      return false;
-    }
+    toast.loading("Preparing invoice for sharing...");
     
-    // Use the existing preview element or create a temporary one
+    // First try to find an existing preview element
     const previewElement = document.querySelector('.invoice-preview');
-    let tempDiv: HTMLDivElement | null = null;
-    let elementToCapture: HTMLElement;
+    
+    let canvas;
     
     if (previewElement) {
-      elementToCapture = previewElement as HTMLElement;
-    } else {
-      // Create a temporary element that's explicitly typed as HTMLDivElement
-      tempDiv = createTemporaryInvoiceElement(invoiceDetails);
-      document.body.appendChild(tempDiv);
-      elementToCapture = tempDiv;
-    }
-    
-    try {
-      // Capture the element as a canvas
-      const canvas = await html2canvas(elementToCapture, {
+      // If a preview element exists, capture it directly
+      canvas = await html2canvas(previewElement as HTMLElement, {
         scale: 2,
         logging: false,
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff"
       });
+    } else {
+      // If no preview element exists, create a temporary one using the same template as in downloadInvoice
+      const tempDiv = createTemporaryInvoiceElement(invoiceDetails);
+      document.body.appendChild(tempDiv);
       
-      // Create a PDF from the canvas
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'px',
-        format: [canvas.width, canvas.height]
-      });
-      
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      
-      // Convert the PDF to a Blob
-      const pdfBlob = pdf.output('blob');
-      
-      // Generate a filename
-      const dateStr = format(new Date(), "yyyyMMdd");
-      const clientName = invoiceDetails.clientName || "Client";
-      const fileName = `Invoice-${clientName.replace(/\s+/g, '_').toLowerCase()}-${dateStr}.pdf`;
-      
-      // Create a File object from the Blob
-      const fileToShare = new File([pdfBlob], fileName, { type: 'application/pdf' });
-      
-      // Share the file
-      await navigator.share({
-        files: [fileToShare],
-        title: 'Invoice',
-        text: `Invoice for ${clientName}`
-      });
-      
-      toast.success("Invoice shared successfully!", {
-        id: toastId
-      });
-      return true;
-    } finally {
-      // Clean up the temporary element if it was created
-      if (tempDiv) {
+      try {
+        canvas = await html2canvas(tempDiv, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff"
+        });
+      } finally {
         document.body.removeChild(tempDiv);
       }
     }
+    
+    // Convert the canvas to a blob
+    const imgBlob = await new Promise<Blob>((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob as Blob);
+      }, 'image/png', 1.0);
+    });
+    
+    // Create a PDF from the image
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'px',
+      format: [canvas.width, canvas.height]
+    });
+    
+    const imgData = canvas.toDataURL('image/png', 1.0);
+    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+    
+    // Convert the PDF to a blob
+    const pdfBlob = pdf.output('blob');
+    
+    // Check if the Web Share API is available
+    if (navigator.share && navigator.canShare) {
+      const file = new File([pdfBlob], "invoice.pdf", { type: "application/pdf" });
+      
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Invoice',
+          text: 'Please find attached invoice.',
+        });
+        toast.success("Share dialog opened successfully!");
+        return true;
+      }
+    }
+    
+    // Fallback for browsers that don't support file sharing
+    // Create a temporary URL and copy to clipboard
+    const dataUrl = URL.createObjectURL(pdfBlob);
+    
+    try {
+      // Create a temporary link to download
+      const tempLink = document.createElement('a');
+      tempLink.href = dataUrl;
+      tempLink.setAttribute('download', 'invoice.pdf');
+      tempLink.click();
+      
+      toast.success("Invoice ready to share!");
+      return true;
+    } finally {
+      // Clean up
+      URL.revokeObjectURL(dataUrl);
+    }
   } catch (error) {
     console.error("Error sharing invoice:", error);
-    // Web Share API can throw if user cancels - don't show error in this case
-    if ((error as Error).name !== 'AbortError') {
-      toast.error("Failed to share invoice. Please try again.", {
-        id: toastId
-      });
-    } else {
-      // Just dismiss the loading toast if user cancelled
-      toast.dismiss(toastId);
-    }
+    toast.error("Failed to share invoice. Please try again.");
     return false;
   }
 };

@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Card, CardHeader, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -8,45 +8,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useBusinessProfile } from "./BusinessProfileContext";
 import LogoUpload from "@/components/invoicing/LogoUpload";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/auth";
 
 export const CompanyProfileCard: React.FC = () => {
   const { profile, handleChange, setProfile } = useBusinessProfile();
-  const { user } = useAuth();
-
-  // Fetch business profile logo on component mount
-  useEffect(() => {
-    const fetchBusinessLogo = async () => {
-      if (!user?.id) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('logo_url')
-          .eq('id', user.id)
-          .single();
-        
-        if (error) {
-          console.error('Error fetching business logo:', error);
-          return;
-        }
-        
-        if (data && data.logo_url && !profile.logo) {
-          setProfile(prev => ({
-            ...prev,
-            logo: data.logo_url
-          }));
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    };
-    
-    if (!profile.logo) {
-      fetchBusinessLogo();
-    }
-  }, [user, profile.logo, setProfile]);
 
   const handleLogoChange = (logoUrl: string | null) => {
     setProfile((prevProfile) => ({

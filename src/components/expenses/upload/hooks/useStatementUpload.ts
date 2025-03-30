@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from "react";
+import { ColumnMapping } from "../parsers/columnMapper";
 import { ParsedTransaction } from "../parsers";
 import { useUploadProgress } from "./useUploadProgress";
 import { useUploadError } from "./useUploadError";
-import { useFileProcessing } from "@/hooks/useFileProcessing";
+import { useFileProcessing } from "./useFileProcessing";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 export const useStatementUpload = (
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void
@@ -13,28 +13,19 @@ export const useStatementUpload = (
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [preferredAIProvider, setPreferredAIProvider] = useState<string>("fallback");
 
   // Check authentication status
   useEffect(() => {
     const checkAuthStatus = async () => {
       const { data } = await supabase.auth.getSession();
       setIsAuthenticated(!!data.session);
-      
-      if (!data.session) {
-        console.log("User is not authenticated");
-      } else {
-        console.log("User is authenticated");
-      }
     };
     
     checkAuthStatus();
     
     // Subscribe to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const authenticated = !!session;
-      setIsAuthenticated(authenticated);
-      console.log("Auth state changed, authenticated:", authenticated);
+      setIsAuthenticated(!!session);
     });
     
     return () => {
@@ -52,6 +43,7 @@ export const useStatementUpload = (
     resetProgress,
     completeProgress,
     cancelProgress,
+    updateProgress
   } = useUploadProgress();
 
   const {
@@ -62,15 +54,21 @@ export const useStatementUpload = (
   } = useUploadError();
 
   const {
-    processServerSide
-  } = useFileProcessing();
+    processServerSide,
+    isAuthenticated: fileProcessingIsAuthenticated
+  } = useFileProcessing({
+    onTransactionsParsed,
+    handleError,
+    resetProgress,
+    completeProgress,
+    showFallbackMessage: () => {}, // We no longer need fallback processing
+    isCancelled,
+    setIsWaitingForServer
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("File input change event received");
-    
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      console.log("File selected:", selectedFile.name, selectedFile.type, selectedFile.size);
       setFile(selectedFile);
       clearError();
       
@@ -93,8 +91,6 @@ export const useStatementUpload = (
         setError('Processing requires authentication. Please sign in to use this feature.');
         return;
       }
-    } else {
-      console.log("No file selected in the event");
     }
   };
 
@@ -119,38 +115,7 @@ export const useStatementUpload = (
         return;
       }
       
-      console.log("Starting file processing with edge function");
-      
-      await processServerSide(
-        file,
-        (transactions) => {
-          setUploading(false);
-          onTransactionsParsed(transactions);
-        },
-        (errorMessage) => {
-          setUploading(false);
-          
-          const isAuthError = errorMessage.toLowerCase().includes('auth') || 
-                            errorMessage.toLowerCase().includes('sign in') ||
-                            errorMessage.toLowerCase().includes('token');
-          
-          // Show the error message to the user
-          handleError(errorMessage);
-          
-          // For auth errors, reset progress
-          if (isAuthError) {
-            resetProgress();
-            return true;
-          }
-          
-          resetProgress();
-          return true;
-        },
-        resetProgress,
-        completeProgress,
-        isCancelled,
-        setIsWaitingForServer
-      );
+      await processServerSide(file);
     } catch (error) {
       console.error("Unexpected error in parseFile:", error);
       handleError("An unexpected error occurred. Please try again.");
@@ -177,9 +142,6 @@ export const useStatementUpload = (
     step,
     isWaitingForServer,
     cancelProgress,
-    isAuthenticated,
-    // AI provider selection
-    preferredAIProvider,
-    setPreferredAIProvider
+    isAuthenticated
   };
 };

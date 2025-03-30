@@ -1,12 +1,10 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import InvoiceEmptyState from "./InvoiceEmptyState";
 import InvoiceStatCards from "./InvoiceStatCards";
 import InvoiceSearchBar from "./InvoiceSearchBar";
 import InvoiceTable from "./InvoiceTable";
-import { PaymentRecord } from "@/types/invoice";
-import { toast } from "sonner";
 
 interface InvoiceContentProps {
   searchQuery: string;
@@ -19,9 +17,8 @@ const InvoiceContent = ({
   setSearchQuery, 
   setIsCreatingInvoice 
 }: InvoiceContentProps) => {
-  const { invoices, markInvoiceAsPaid } = useInvoices();
+  const { invoices, updateInvoiceStatus } = useInvoices();
   const [filteredInvoices, setFilteredInvoices] = useState(invoices);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -38,27 +35,9 @@ const InvoiceContent = ({
     setFilteredInvoices(filtered);
   }, [invoices, searchQuery]);
   
-  const handleMarkAsPaid = useCallback(async (invoiceId: string, payments: PaymentRecord[]) => {
-    if (isProcessingPayment) return;
-    
-    setIsProcessingPayment(true);
-    
-    try {
-      // Add a delay to ensure proper state updates and prevent UI glitches
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      markInvoiceAsPaid(invoiceId, payments);
-      toast.success("Payment recorded successfully");
-    } catch (error) {
-      console.error("Error marking invoice as paid:", error);
-      toast.error("Failed to record payment");
-    } finally {
-      // Add a delay before resetting the processing state
-      setTimeout(() => {
-        setIsProcessingPayment(false);
-      }, 500);
-    }
-  }, [markInvoiceAsPaid, isProcessingPayment]);
+  const handleMarkAsPaid = (invoiceId: string) => {
+    updateInvoiceStatus(invoiceId, 'paid');
+  };
   
   if (invoices.length === 0) {
     return <InvoiceEmptyState onCreateInvoice={() => setIsCreatingInvoice(true)} />;
@@ -80,7 +59,6 @@ const InvoiceContent = ({
             <InvoiceTable 
               invoices={filteredInvoices}
               onMarkAsPaid={handleMarkAsPaid}
-              isProcessingPayment={isProcessingPayment}
             />
           </div>
         </div>

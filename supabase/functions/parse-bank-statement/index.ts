@@ -1,17 +1,14 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { corsHeaders, handleCorsRequest } from './lib/cors.ts'
+import { corsHeaders } from './lib/cors.ts'
 import { processFormData } from './lib/formProcessor.ts'
 import { saveToDatabase } from './lib/database.ts'
 
 // Export the request handler for testability
 export async function handleRequest(req: Request): Promise<Response> {
-  // Log request information
-  console.log(`Received ${req.method} request from origin: ${req.headers.get("origin") || "unknown"}`);
-  
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
-    return handleCorsRequest();
+    return new Response(null, { headers: corsHeaders, status: 204 })
   }
 
   try {

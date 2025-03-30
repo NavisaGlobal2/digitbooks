@@ -1,6 +1,6 @@
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ParsedTransaction } from "./upload/parsers/types";
+import { ParsedTransaction } from "./upload/parsers";
 import TaggingDialogHeader from "./upload/TaggingDialogHeader";
 import TransactionBulkActions from "./upload/TransactionBulkActions";
 import TransactionTable from "./upload/TransactionTable";
@@ -27,12 +27,10 @@ const TransactionTaggingDialog = ({
     selectedCount,
     debitCount,
     taggedCount,
-    suggestedCount,
     handleSelectAll,
     handleSelectTransaction,
     handleSetCategory,
-    handleSetCategoryForAll,
-    handleApplyAllSuggestions
+    handleSetCategoryForAll
   } = useTransactionTagging(transactions);
 
   const handleSave = () => {
@@ -52,8 +50,6 @@ const TransactionTaggingDialog = ({
           selectAll={selectAll}
           onSelectAllChange={handleSelectAll}
           onCategoryForAllChange={handleSetCategoryForAll}
-          suggestedCount={suggestedCount}
-          onApplySuggestions={handleApplyAllSuggestions}
         />
         
         <TransactionTable 

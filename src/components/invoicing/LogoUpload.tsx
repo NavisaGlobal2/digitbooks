@@ -1,10 +1,9 @@
-import { useRef, ChangeEvent, useEffect } from "react";
+
+import { useRef, ChangeEvent } from "react";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Logo } from "@/components/Logo";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/auth";
 
 interface LogoUploadProps {
   logoPreview: string | null;
@@ -13,27 +12,6 @@ interface LogoUploadProps {
 
 const LogoUpload = ({ logoPreview, setLogoPreview }: LogoUploadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useAuth();
-
-  const updateBusinessProfile = async (logoUrl: string) => {
-    if (!user?.id) return;
-    
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ logo_url: logoUrl })
-        .eq('id', user.id);
-        
-      if (error) {
-        console.error("Error updating business profile:", error);
-        toast.error("Failed to save logo to business profile");
-      } else {
-        toast.success("Logo saved to business profile");
-      }
-    } catch (error) {
-      console.error("Error updating business profile:", error);
-    }
-  };
 
   const handleLogoUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -43,9 +21,7 @@ const LogoUpload = ({ logoPreview, setLogoPreview }: LogoUploadProps) => {
       
       reader.onload = (e) => {
         if (e.target && typeof e.target.result === 'string') {
-          const logoUrl = e.target.result;
-          setLogoPreview(logoUrl);
-          updateBusinessProfile(logoUrl);
+          setLogoPreview(e.target.result);
           toast.success("Logo uploaded successfully");
         }
       };
@@ -74,9 +50,7 @@ const LogoUpload = ({ logoPreview, setLogoPreview }: LogoUploadProps) => {
       
       reader.onload = (e) => {
         if (e.target && typeof e.target.result === 'string') {
-          const logoUrl = e.target.result;
-          setLogoPreview(logoUrl);
-          updateBusinessProfile(logoUrl);
+          setLogoPreview(e.target.result);
           toast.success("Logo uploaded successfully");
         }
       };

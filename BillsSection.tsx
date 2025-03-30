@@ -1,14 +1,9 @@
 
-import { useState } from "react";
 import { CreditCard, ChevronRight, Calendar, Zap, Building, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { formatNaira } from "@/utils/invoice/formatters";
-import BillsDialog from "@/components/expenses/bills/BillsDialog";
 
 const BillsSection = () => {
-  const [showAllBills, setShowAllBills] = useState(false);
-  
   const bills = [
     { icon: Zap, title: "Electricity Bill", daysLeft: 3, amount: 85 },
     { icon: Building, title: "Office Rent", daysLeft: 5, amount: 1200 },
@@ -35,39 +30,16 @@ const BillsSection = () => {
                 </div>
                 <p className="font-medium text-sm mb-1">{bill.title}</p>
                 <p className="text-xs text-muted-foreground mb-2">Due in {bill.daysLeft} days</p>
-                <p className="font-bold text-base">{formatNaira(bill.amount)}</p>
+                <p className="font-bold text-base">${bill.amount}</p>
               </div>
             </Card>
           ))}
         </div>
-        <Button 
-          variant="ghost" 
-          className="w-full mt-4 text-primary text-sm flex items-center justify-center gap-1"
-          onClick={() => setShowAllBills(true)}
-        >
+        <Button variant="ghost" className="w-full mt-4 text-primary text-sm flex items-center justify-center gap-1">
           <span>View all bills</span>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </CardContent>
-      
-      {/* Add Bills Dialog */}
-      <BillsDialog
-        open={showAllBills}
-        onOpenChange={setShowAllBills}
-        bills={bills.map(bill => ({
-          id: String(Math.random()), // Generate temporary IDs
-          title: bill.title,
-          amount: bill.amount,
-          daysLeft: bill.daysLeft,
-          icon: bill.icon,
-          frequency: "monthly", // Default frequency
-          dueDate: `2023-${new Date().getMonth() + 2}-${15 + bill.daysLeft}`, // Generate a future date
-          category: bill.title.includes("Rent") ? "rent" : 
-                   bill.title.includes("Electricity") ? "utilities" :
-                   bill.title.includes("SaaS") ? "software" : "other" // Map to appropriate categories
-        }))}
-        onPayBill={() => {}} // Empty handler since we're in dashboard view
-      />
     </Card>
   );
 };

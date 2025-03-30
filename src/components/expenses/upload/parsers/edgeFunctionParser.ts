@@ -1,100 +1,100 @@
 
-import { ParsedTransaction } from "./types";
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
+import { ParsedTransaction } from "./types";
+import { toast } from "sonner";
 
 export const parseViaEdgeFunction = async (
   file: File,
   onSuccess: (transactions: ParsedTransaction[]) => void,
-  onError: (errorMessage: string) => boolean,
-  preferredProvider: string = 'fallback',
-  context: string = 'expense'
-): Promise<void> => {
+  onError: (errorMessage: string) => boolean
+): Promise<ParsedTransaction[]> => {
   try {
-    // Check authentication first
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
-      throw new Error("Authentication required. Please sign in to continue.");
-    }
-
-    // Create form data with the file and preferences
+    // Create a form to send the file
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('fileName', file.name);
-    formData.append('authToken', sessionData.session.access_token);
-    formData.append('context', context);
-    formData.append('useRawText', 'true'); // Always use raw text extraction
+    formData.append("file", file);
 
-    console.log(`Processing ${file.name} (${file.type}, ${file.size} bytes) via edge function`);
+    // We now use only the AI-powered parser for all file types
+    const endpoint = 'parse-bank-statement-ai';
 
-    // Call the edge function
-    const { data, error } = await supabase.functions.invoke('parse-bank-statement-ai', {
+    console.log(`Sending file to edge function: ${endpoint}`);
+    
+    // Check authentication status before making the request
+    const { data: authData } = await supabase.auth.getSession();
+    if (!authData.session) {
+      const errorMsg = "You need to be signed in to use this feature. Please sign in and try again.";
+      onError(errorMsg);
+      return [];
+    }
+    
+    // Call the serverless function
+    const { data, error } = await supabase.functions.invoke(endpoint, {
       body: formData,
     });
 
     if (error) {
       console.error("Edge function error:", error);
-      const handled = onError(error.message || "Error processing file");
-      return;
+      
+      // Check for Anthropic API key error
+      if (error.message && (
+        error.message.includes("ANTHROPIC_API_KEY") ||
+        error.message.includes("Anthropic API") ||
+        error.message.includes("exceeded") ||
+        error.message.includes("rate limit")
+      )) {
+        const errorMsg = "Anthropic API key error: Either the key is not configured, invalid, or you've exceeded your rate limit. Please contact your administrator.";
+        onError(errorMsg);
+        return [];
+      }
+      
+      // Check for authentication errors
+      if (error.message && (
+        error.message.includes("Auth session") ||
+        error.message.includes("authentication") ||
+        error.message.includes("unauthorized")
+      )) {
+        const errorMsg = "Authentication error: Please try signing out and signing back in to refresh your session.";
+        onError(errorMsg);
+        return [];
+      }
+      
+      onError(`Server error: ${error.message}`);
+      return [];
     }
 
-    if (!data || !data.transactions || !Array.isArray(data.transactions) || data.transactions.length === 0) {
-      const handled = onError("No transactions found in file");
-      return;
+    if (!data || !data.transactions || !Array.isArray(data.transactions)) {
+      onError("Invalid response from server. No transactions found in the response.");
+      return [];
     }
 
-    // Log the response from the server for debugging
-    console.log("Edge function response:", data);
-    console.log("Retrieved transactions count:", data.transactions.length);
-    console.log("Processing service used:", data.serviceUsed || "unknown");
+    // Map the server response to our ParsedTransaction type
+    const parsedTransactions: ParsedTransaction[] = data.transactions.map((tx: any) => ({
+      date: new Date(tx.date),
+      description: tx.description,
+      amount: Math.abs(parseFloat(tx.amount)), // Store as positive number
+      type: tx.type || (parseFloat(tx.amount) < 0 ? 'debit' : 'credit'),
+      category: tx.category || null,
+      selected: tx.type === 'debit', // Preselect debits
+      batchId: data.batchId
+    }));
+
+    // Only include debit transactions (expenses)
+    const filteredTransactions = parsedTransactions.filter(tx => tx.type === 'debit');
     
-    // Log account information if available
-    if (data.account) {
-      console.log("Account information:", data.account);
+    if (filteredTransactions.length === 0) {
+      onError("No expense transactions found in the statement. Only expense transactions can be imported.");
+      return [];
     }
 
-    // Transform the response to match our expected ParsedTransaction format
-    // Ensure dates are valid before adding transactions
-    const parsedTransactions: ParsedTransaction[] = data.transactions
-      .filter(tx => {
-        // Validate the date before including in results
-        if (!tx.date || tx.date === 'unknown') {
-          console.warn(`Skipping transaction with invalid date: ${JSON.stringify(tx)}`);
-          return false;
-        }
-        
-        try {
-          // Test if date can be parsed
-          const testDate = new Date(tx.date);
-          if (isNaN(testDate.getTime())) {
-            console.warn(`Skipping transaction with unparseable date: ${tx.date}`);
-            return false;
-          }
-          return true;
-        } catch (e) {
-          console.warn(`Error validating date for transaction: ${e}`);
-          return false;
-        }
-      })
-      .map((tx: any) => ({
-        id: uuidv4(),
-        date: tx.date,
-        description: tx.description || "Unknown transaction",
-        amount: Math.abs(tx.amount) || 0, // Ensure positive amount
-        type: tx.type || "debit",
-        selected: context === 'expense' ? tx.type === 'debit' : tx.type === 'credit', // Pre-select based on context
-        batchId: data.batchId || null,
-        balance: tx.balance || null,
-        source: context === 'revenue' ? tx.source || null : null
-      }));
-
-    // Send the transactions to the caller
-    onSuccess(parsedTransactions);
+    // Call success callback with transactions
+    onSuccess(filteredTransactions);
     
-    // Show success toast with the transaction count and batch ID
-    console.log(`Successfully processed ${parsedTransactions.length} transactions with batch ID: ${data.batchId}`);
-  } catch (error: any) {
+    // Show success message with the transaction count
+    toast.success(`Successfully parsed ${filteredTransactions.length} expenses from your statement`);
+    
+    return filteredTransactions;
+  } catch (error) {
     console.error("Error in parseViaEdgeFunction:", error);
-    onError(error.message || "Unexpected error processing file");
+    onError(`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    return [];
   }
 };

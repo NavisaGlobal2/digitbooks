@@ -99,7 +99,7 @@ const Auth: React.FC = () => {
               <AlertDescription>{authError}</AlertDescription>
             </Alert>
           )}
-          <AuthForm mode={mode} />
+          <AuthForm mode={mode} setMode={setMode} />
         </div>
       </div>
 

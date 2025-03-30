@@ -1,22 +1,19 @@
 
 import { Progress } from "@/components/ui/progress";
-import { Loader2, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface ProgressIndicatorProps {
   progress: number;
   step: string;
   isVisible: boolean;
   isWaitingForServer?: boolean;
-  onCancel?: () => void;
 }
 
 const ProgressIndicator = ({ 
   progress, 
   step, 
   isVisible,
-  isWaitingForServer = false,
-  onCancel
+  isWaitingForServer = false
 }: ProgressIndicatorProps) => {
   if (!isVisible) return null;
   
@@ -24,20 +21,7 @@ const ProgressIndicator = ({
     <div className="space-y-2">
       <div className="flex justify-between text-xs text-muted-foreground">
         <span>{step}</span>
-        <div className="flex items-center gap-2">
-          <span>{progress}%</span>
-          {onCancel && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-5 w-5" 
-              onClick={onCancel}
-              title="Cancel"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
+        <span>{progress}%</span>
       </div>
       <Progress value={progress} className="h-2" />
       

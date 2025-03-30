@@ -1,58 +1,30 @@
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
 import { Card } from "@/components/ui/card";
 import { ChartContainer } from "@/components/ui/chart";
-import { useBudget } from "@/contexts/BudgetContext";
-import { useExpenses } from "@/contexts/ExpenseContext";
-import { useState, useEffect } from "react";
-import { format, parseISO, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
+
+// Sample data for the bar chart - this would be replaced by actual data
+const data = [
+  { name: "Jan", budget: 4000, expenses: 2400 },
+  { name: "Feb", budget: 3000, expenses: 2800 },
+  { name: "Mar", budget: 3500, expenses: 2200 },
+  { name: "Apr", budget: 4000, expenses: 1800 },
+  { name: "May", budget: 3000, expenses: 2800 },
+  { name: "Jun", budget: 3500, expenses: 2200 }
+];
+
+const chartConfig = {
+  budget: {
+    label: "Budget",
+    color: "#10B981" // green-500
+  },
+  expenses: {
+    label: "Expenses",
+    color: "#F87171" // red-400
+  }
+};
 
 const ExpenseVsBudgetChart = () => {
-  const { budgets } = useBudget();
-  const { expenses } = useExpenses();
-  const [chartData, setChartData] = useState<any[]>([]);
-  
-  useEffect(() => {
-    // Generate data for the last 6 months
-    const endDate = new Date();
-    const startDate = subMonths(endDate, 5); // 6 months including current
-    
-    // Get all months in the range
-    const months = eachMonthOfInterval({
-      start: startDate,
-      end: endDate
-    });
-    
-    // Prepare chart data
-    const data = months.map(month => {
-      const monthStart = startOfMonth(month);
-      const monthEnd = endOfMonth(month);
-      const monthName = format(month, "MMM");
-      
-      // Calculate expenses for this month
-      const monthExpenses = expenses.filter(expense => {
-        const expenseDate = expense.date instanceof Date ? expense.date : new Date(expense.date);
-        return expenseDate >= monthStart && expenseDate <= monthEnd;
-      }).reduce((sum, expense) => sum + expense.amount, 0);
-      
-      // Find budget for this month (assuming one budget per month)
-      // This is simplified - you might need to adjust based on your budget structure
-      const monthBudget = budgets.find(budget => {
-        const budgetStartDate = budget.startDate instanceof Date ? budget.startDate : new Date(budget.startDate);
-        const budgetEndDate = budget.endDate instanceof Date ? budget.endDate : new Date(budget.endDate);
-        return budgetStartDate <= monthEnd && budgetEndDate >= monthStart;
-      });
-      
-      return {
-        name: monthName,
-        expenses: Math.round(monthExpenses),
-        budget: monthBudget ? Math.round(monthBudget.totalBudget) : 0
-      };
-    });
-    
-    setChartData(data);
-  }, [expenses, budgets]);
-
   return (
     <Card className="p-4 h-[350px]">
       <div className="flex justify-between items-center mb-4">
@@ -66,7 +38,7 @@ const ExpenseVsBudgetChart = () => {
       </div>
       <ResponsiveContainer width="100%" height={280}>
         <BarChart
-          data={chartData}
+          data={data}
           margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
           barGap={0}
           barCategoryGap="20%"

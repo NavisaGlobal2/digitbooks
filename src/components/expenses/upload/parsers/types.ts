@@ -1,26 +1,12 @@
 
 import { ExpenseCategory } from "@/types/expense";
 
-export type ParsedTransactionType = 'debit' | 'credit';
-
-export interface CategorySuggestion {
-  category: ExpenseCategory;
-  confidence: number;
-}
-
-export interface ParsedTransaction {
+export type ParsedTransaction = {
   id: string;
-  date: string | Date;
+  date: Date;
   description: string;
   amount: number;
-  type: ParsedTransactionType;
+  type: 'credit' | 'debit';
   category?: ExpenseCategory;
-  selected?: boolean;
-  categorySuggestion?: CategorySuggestion;
-}
-
-export interface CSVParseResult {
-  transactions: ParsedTransaction[];
-  headers: string[];
-  rawData: any[][];
-}
+  selected: boolean;
+};

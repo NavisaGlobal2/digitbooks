@@ -10,9 +10,10 @@ type AuthMode = 'login' | 'signup';
 
 interface AuthFormProps {
   mode: AuthMode;
+  setMode: React.Dispatch<React.SetStateAction<AuthMode>>;
 }
 
-const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
+const AuthForm: React.FC<AuthFormProps> = ({ mode, setMode }) => {
   const { login, signup } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,7 +23,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [verificationStep, setVerificationStep] = useState(false);
-  const [currentMode, setCurrentMode] = useState<AuthMode>(mode);
 
   // Check for password reset or verification parameters in URL
   useEffect(() => {
@@ -41,7 +41,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     setIsLoading(true);
 
     try {
-      if (currentMode === 'signup') {
+      if (mode === 'signup') {
         if (password !== confirmPassword) {
           toast.error("Passwords do not match");
           setIsLoading(false);
@@ -69,7 +69,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
 
   const handleBackToLogin = () => {
     setVerificationStep(false);
-    setCurrentMode('login');
+    setMode('login');
   };
 
   // For verification code step
@@ -84,8 +84,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
 
   return (
     <LoginSignupForm
-      mode={currentMode}
-      setMode={setCurrentMode}
+      mode={mode}
+      setMode={setMode}
       onSubmit={handleLoginSignup}
       email={email}
       setEmail={setEmail}

@@ -14,8 +14,6 @@ import { EXPENSE_CATEGORIES } from "@/utils/expenseCategories";
 import { ExpenseCategory } from "@/types/expense";
 import { ParsedTransaction } from "./parsers/types";
 import { formatCurrency } from "@/utils/invoice/formatters";
-import { Sparkles } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TransactionTableProps {
   transactions: ParsedTransaction[];
@@ -30,29 +28,6 @@ const TransactionTable = ({
 }: TransactionTableProps) => {
   // Log for debugging
   console.log(`TransactionTable rendering: ${transactions.length} transactions, ${transactions.filter(t => t.selected).length} selected`);
-  
-  // Helper function to safely format a date
-  const safeFormatDate = (dateStr: string) => {
-    try {
-      // Check if we have a valid date string
-      if (!dateStr || dateStr === "unknown") {
-        return "Unknown date";
-      }
-      
-      const date = new Date(dateStr);
-      
-      // Check if the date is valid
-      if (isNaN(date.getTime())) {
-        console.warn(`Invalid date: ${dateStr}`);
-        return "Invalid date";
-      }
-      
-      return format(date, "yyyy-MM-dd");
-    } catch (error) {
-      console.error(`Error formatting date ${dateStr}:`, error);
-      return "Error";
-    }
-  };
   
   return (
     <div className="flex-1 overflow-auto p-0 max-h-[calc(90vh-210px)]">
@@ -87,7 +62,7 @@ const TransactionTable = ({
                 />
               </TableCell>
               <TableCell className="font-mono text-xs">
-                {safeFormatDate(transaction.date)}
+                {format(new Date(transaction.date), "yyyy-MM-dd")}
               </TableCell>
               <TableCell className="font-medium">
                 {formatCurrency(transaction.amount)}
@@ -102,47 +77,24 @@ const TransactionTable = ({
               </TableCell>
               <TableCell>
                 {transaction.type === 'debit' ? (
-                  <div className="flex items-center gap-1">
-                    <Select
-                      value={transaction.category}
-                      onValueChange={(value) => 
-                        onSetCategory(transaction.id, value as ExpenseCategory)
-                      }
-                      disabled={!transaction.selected}
-                    >
-                      <SelectTrigger className={`w-full ${!transaction.category && transaction.selected ? "border-red-300" : ""}`}>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {EXPENSE_CATEGORIES.map((category) => (
-                          <SelectItem key={category.value} value={category.value}>
-                            {category.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    
-                    {transaction.categorySuggestion && transaction.categorySuggestion.confidence > 0.5 && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="cursor-help">
-                              <Sparkles 
-                                className={`h-4 w-4 ml-1 ${transaction.category ? 'text-gray-400' : 'text-yellow-500 animate-pulse'}`} 
-                              />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="right">
-                            <p className="text-sm">
-                              Suggested: <span className="font-medium">{EXPENSE_CATEGORIES.find(c => c.value === transaction.categorySuggestion?.category)?.label}</span>
-                              <br />
-                              <span className="text-xs opacity-70">Confidence: {Math.round(transaction.categorySuggestion.confidence * 100)}%</span>
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
-                  </div>
+                  <Select
+                    value={transaction.category}
+                    onValueChange={(value) => 
+                      onSetCategory(transaction.id, value as ExpenseCategory)
+                    }
+                    disabled={!transaction.selected}
+                  >
+                    <SelectTrigger className={`w-full ${!transaction.category && transaction.selected ? "border-red-300" : ""}`}>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXPENSE_CATEGORIES.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 ) : (
                   <span className="text-sm text-gray-500 italic">N/A</span>
                 )}
