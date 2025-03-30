@@ -4,6 +4,7 @@ import { corsHeaders, handleCorsRequest } from "./lib/cors.ts";
 import { extractTextFromFile } from "./lib/textExtractor.ts";
 import { processWithAI } from "./lib/aiService.ts";
 import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
+import { getFileExtension } from "./lib/utils.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -22,6 +23,9 @@ serve(async (req) => {
     // Get processing context if provided (revenue or expense)
     const context = formData.get("context")?.toString() || null;
     
+    // Get file name if not available in file object
+    const fileName = formData.get("fileName")?.toString() || (file instanceof File ? file.name : "unknown");
+    
     // Only try to set the environment variable if explicitly provided
     // This avoids the "operation not supported" error for PDF files
     if (preferredProvider) {
@@ -37,15 +41,15 @@ serve(async (req) => {
     
     if (!file || !(file instanceof File)) {
       return new Response(
-        JSON.stringify({ error: "No file uploaded" }),
+        JSON.stringify({ error: "No file uploaded or invalid file" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
     
-    console.log(`Processing file: ${file.name}, size: ${file.size} bytes`);
+    console.log(`Processing file: ${fileName}, size: ${file.size} bytes`);
     
     // Extract file type for potential fallback decisions
-    const fileType = file.name.split('.').pop()?.toLowerCase() || '';
+    const fileType = getFileExtension(fileName);
     
     if (context) {
       console.log(`Processing context: ${context}`);
@@ -98,7 +102,7 @@ serve(async (req) => {
         } else {
           // Check if the error is from Anthropic and DeepSeek is not configured
           const isAnthropicError = aiError.message?.includes("Anthropic") || 
-                                   aiError.message?.includes("overloaded");
+                                 aiError.message?.includes("overloaded");
           const isDeepSeekError = aiError.message?.includes("DeepSeek");
           
           // If both AI services failed, provide a detailed error
