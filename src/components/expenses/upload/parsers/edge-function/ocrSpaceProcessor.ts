@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // OCR.space constants
@@ -150,12 +149,11 @@ const performOcr = async (imageUrl: string) => {
     formData.append('isTable', 'true');
     
     // Get the API key from environment variables in a browser-safe way
-    // Use window.ENV or import.meta.env if available, otherwise check for a global variable
-    // This avoids using process.env which doesn't exist in browsers
+    // Use environment variables if available, otherwise check for a global variable
     const apiKey = 
-      typeof window !== 'undefined' && window.ENV?.OCR_SPACE_API_KEY || 
-      import.meta?.env?.VITE_OCR_SPACE_API_KEY || 
-      import.meta?.env?.OCR_SPACE_API_KEY;
+      (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_OCR_SPACE_API_KEY || import.meta.env?.OCR_SPACE_API_KEY)) || 
+      // Access a potential global variable for OCR space API key
+      (typeof window !== 'undefined' && (window as any).OCR_SPACE_API_KEY);
     
     if (!apiKey) {
       throw new Error("OCR.space API key is not configured. Please set the OCR_SPACE_API_KEY environment variable.");

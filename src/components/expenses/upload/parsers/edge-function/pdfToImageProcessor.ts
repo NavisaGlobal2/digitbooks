@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "../types";
+import { v4 as uuidv4 } from 'uuid';
 
 // Process PDF as images for better text extraction
 export const processPdfAsImages = async (
@@ -133,6 +134,7 @@ export const extractStructuredDataFromPdf = (text: string): { transactions: Pars
         // If we have a valid amount and description, add it as a transaction
         if (!isNaN(amount) && description) {
           transactions.push({
+            id: uuidv4(), // Generate a unique ID for each transaction
             date: formatDate(date),
             description,
             amount,
