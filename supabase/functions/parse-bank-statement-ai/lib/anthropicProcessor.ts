@@ -12,14 +12,14 @@ export async function processWithAnthropic(text: string, context?: string): Prom
   console.log(`Processing context: ${context || 'general'}`);
   
   // Adjust the system prompt based on the context (revenue or expense)
-  let systemPrompt = `You are a financial data extraction assistant. Your task is to parse bank statement data from various formats and output a clean JSON array of transactions.`;
+  let systemPrompt = `You are a financial data extraction assistant specializing in bank statements. Your task is to parse bank statement data from various Excel and CSV formats and output a clean JSON array of transactions.`;
   
   if (context === "revenue") {
     systemPrompt += `
     
     For each transaction, extract:
     - date (in YYYY-MM-DD format)
-    - description (the transaction narrative)
+    - description (the complete transaction narrative with all details preserved)
     - amount (as a number, negative for debits/expenses, positive for credits/revenue)
     - type ("debit" or "credit")
     
@@ -41,35 +41,50 @@ export async function processWithAnthropic(text: string, context?: string): Prom
     
     Focus only on credit (incoming money) transactions, which represent revenue. These have positive amounts.
     
+    Examine the Excel data carefully. Look for patterns indicating transaction rows, and ignore headers, footers, summary rows, and non-transaction information.
+    
     Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
   } else {
     systemPrompt += `
     
     For each transaction, extract:
-    - date (in YYYY-MM-DD format)
-    - description (the COMPLETE transaction narrative, preserving all details)
+    - date (in YYYY-MM-DD format, converting from any format like DD/MM/YYYY)
+    - description (the COMPLETE transaction narrative, preserving all reference numbers and details)
     - amount (as a number, negative for debits/expenses, positive for credits/deposits)
     - type ("debit" or "credit")
     
     Pay special attention to:
-    1. Convert all dates to YYYY-MM-DD format, regardless of original format
-    2. Preserve ALL details in the description field including reference numbers
-    3. Ensure amount signs are correct (negative for money leaving account, positive for money coming in)
+    1. Understand the structure of the Excel data and identify the actual transaction rows
+    2. Skip any headers, summary rows, balance calculations, or metadata
+    3. Convert all dates to YYYY-MM-DD format, regardless of original format (e.g., 01/02/24 → 2024-02-01)
+    4. Preserve ALL details in the description field including reference numbers
+    5. For amount fields, ensure proper sign (negative for money leaving account, positive for money coming in)
+    6. If currency symbols or commas exist in amount fields, ignore them and extract only the numeric value
     
-    If there's any ambiguity about transaction direction, use the description to determine whether it's a debit or credit.
+    If the description contains specific information like:
+    - Recipient name and account numbers
+    - Reference codes or identifiers
+    - Transaction types (ATM, POS, TRANSFER)
+    - Purpose of payment
+    
+    Include ALL of these details in the description field, preserving their original form.
+    
+    Analyze the tabular structure carefully to identify the actual transaction data, even when mixed with headers or summary information.
+    
+    In the output JSON, include ONLY the actual transactions - skip any rows that are balance summaries, headers, or non-transaction information.
     
     Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.
     Sample format:
     [
       {
         "date": "2023-05-15",
-        "description": "GROCERY STORE PURCHASE",
+        "description": "GROCERY STORE PURCHASE REF#12345",
         "amount": -58.97,
         "type": "debit"
       },
       {
         "date": "2023-05-17",
-        "description": "SALARY PAYMENT",
+        "description": "SALARY PAYMENT FROM ACME CORP",
         "amount": 1500.00,
         "type": "credit"
       }
