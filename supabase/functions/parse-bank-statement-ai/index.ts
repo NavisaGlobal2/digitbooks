@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders, handleCorsRequest } from "./lib/cors.ts";
 import { extractTextFromFile } from "./lib/textExtractor.ts";
@@ -6,9 +5,6 @@ import { processWithAI } from "./lib/aiService.ts";
 import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
 
 serve(async (req) => {
-  // Log request information
-  console.log(`Received ${req.method} request from origin: ${req.headers.get("origin") || "unknown"}`);
-  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return handleCorsRequest();
@@ -59,6 +55,8 @@ serve(async (req) => {
     try {
       // 1. Extract text from the file
       const fileText = await extractTextFromFile(file);
+      console.log(`Successfully extracted text content of length: ${fileText.length} characters`);
+      
       let transactions = [];
       let usedFallback = false;
       

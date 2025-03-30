@@ -10,6 +10,7 @@ export const CSVService = {
    */
   parseCSV: async (file: File): Promise<string[][]> => {
     try {
+      console.log(`Parsing CSV file: ${file.name}`);
       const text = await file.text();
       const lines = text.split(/\r\n|\n/);
       const result: string[][] = [];
@@ -22,6 +23,7 @@ export const CSVService = {
         }
       }
       
+      console.log(`Parsed ${result.length} rows from CSV file`);
       return result;
     } catch (error) {
       console.error('Error parsing CSV file:', error);
@@ -36,12 +38,17 @@ export const CSVService = {
    */
   extractTextFromCSV: async (file: File): Promise<string> => {
     try {
+      console.log(`Extracting text from CSV file: ${file.name}`);
       const csvData = await CSVService.parseCSV(file);
       let textContent = `[CSV FILE: ${file.name}]\n\n`;
       
       // Add all rows
-      for (const row of csvData) {
-        textContent += row.join('\t') + '\n';
+      if (csvData.length > 0) {
+        for (const row of csvData) {
+          textContent += row.join('\t') + '\n';
+        }
+      } else {
+        textContent += "Warning: No data rows found in the CSV file.\n";
       }
       
       // Add specific instructions for bank statement parsing
