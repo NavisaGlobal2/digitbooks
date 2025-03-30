@@ -2,7 +2,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders, handleCorsRequest } from "./lib/cors.ts";
 import { extractTextFromFile } from "./lib/textExtractor.ts";
-import { processWithAI } from "./lib/aiService.ts";
 import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
 import { getFileExtension } from "./lib/utils.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -18,14 +17,11 @@ serve(async (req) => {
     const formData = await req.formData();
     const file = formData.get("file");
     
-    // Get the preferred AI provider from the request, if provided
-    const preferredProvider = formData.get("preferredProvider")?.toString() || null;
-    
     // Get processing context if provided (revenue or expense)
     const context = formData.get("context")?.toString() || null;
     
-    // Check if we should use enhanced fallback processing
-    const useEnhancedFallback = formData.get("useEnhancedFallback")?.toString() === "true";
+    // Flag to use raw text extraction
+    const useRawText = formData.get("useRawText")?.toString() === "true";
     
     // Get auth token for Supabase
     const authToken = formData.get("authToken")?.toString() || null;
@@ -53,68 +49,115 @@ serve(async (req) => {
     const batchId = crypto.randomUUID();
     
     try {
-      // 1. Extract text from the file
+      // Extract text from the file
       const fileText = await extractTextFromFile(file);
       console.log(`Successfully extracted text content of length: ${fileText.length} characters`);
       
       // Log some of the extracted content to debug
       console.log(`Sample of extracted content: ${fileText.substring(0, 200)}...`);
       
-      let bankData;
-      let usedFallback = false;
-      let aiServiceUsed = "primary";
-      
-      // Use fallback processor as the primary method for all files
-      // This is more reliable than depending on AI services
-      try {
-        console.log("Using enhanced fallback processor as primary method");
-        usedFallback = true;
-        aiServiceUsed = "enhanced_fallback";
+      // If raw text extraction is requested, return the text
+      if (useRawText) {
+        // Use fallback processor as it's more reliable than AI
         const fallbackTransactions = await fallbackCSVProcessing(fileText);
         
-        bankData = {
+        const bankData = {
           account_holder: undefined,
           account_number: undefined,
           currency: 'USD', // Default currency
           transactions: fallbackTransactions
         };
         
-        if (bankData.transactions.length > 0) {
-          console.log(`Successfully parsed ${bankData.transactions.length} transactions using fallback processor`);
-        } else {
-          // If fallback fails to find any transactions and the user didn't explicitly choose fallback, try AI processing
-          if (preferredProvider !== 'fallback') {
-            throw new Error("No transactions found with fallback processor, will try AI");
-          }
-        }
-      } catch (fallbackError) {
-        // Only attempt AI processing if not explicitly using fallback
-        if (preferredProvider !== 'fallback') {
-          console.log("Fallback processing unsuccessful, attempting AI processing:", fallbackError);
-          // Try to process with AI service
+        console.log(`Processed ${bankData.transactions.length} transactions using fallback processor`);
+        
+        // Store in Supabase if auth token is provided
+        let accountId = null;
+        if (authToken) {
           try {
-            bankData = await processWithAI(fileText, fileType, context);
-            usedFallback = false;
-            aiServiceUsed = "ai_service";
-            
-            if (bankData.transactions.length === 0) {
-              throw new Error("No transactions were extracted by the AI service");
+            // Initialize Supabase client
+            const supabaseUrl = Deno.env.get('SUPABASE_URL');
+            if (!supabaseUrl) {
+              throw new Error('Missing SUPABASE_URL environment variable');
             }
             
-            console.log(`Found ${bankData.transactions.length} transactions using AI service`);
-          } catch (aiError) {
-            console.error("AI processing failed:", aiError);
-            throw aiError; // Let the outer catch handle this
+            const supabase = createClient(supabaseUrl, authToken);
+            
+            // Create account record
+            const { data: accountData, error: accountError } = await supabase
+              .from('bank_statement_accounts')
+              .insert([{
+                account_holder: fileName.replace(/\.[^/.]+$/, ""),
+                account_number: 'Unknown',
+                currency: 'USD'
+              }])
+              .select()
+              .single();
+            
+            if (accountError) {
+              console.error('Error storing account:', accountError);
+              throw new Error(`Failed to store account: ${accountError.message}`);
+            }
+            
+            accountId = accountData.id;
+            
+            // Store transactions
+            const transactionsToInsert = bankData.transactions.map(tx => ({
+              account_id: accountId,
+              date: tx.date,
+              description: tx.description,
+              type: tx.type,
+              amount: tx.amount,
+              balance: tx.balance
+            }));
+            
+            const { error: txError } = await supabase
+              .from('bank_statement_transactions')
+              .insert(transactionsToInsert);
+            
+            if (txError) {
+              console.error('Error storing transactions:', txError);
+              throw new Error(`Failed to store transactions: ${txError.message}`);
+            }
+            
+            console.log(`Successfully saved ${transactionsToInsert.length} transactions to database`);
+          } catch (dbError) {
+            console.error('Database error:', dbError);
+            // Continue processing but include error in response
           }
-        } else {
-          // If explicitly using fallback only, propagate the error
-          throw fallbackError;
         }
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            transactions: bankData.transactions,
+            account: {
+              id: accountId,
+              account_holder: bankData.account_holder,
+              account_number: bankData.account_number,
+              currency: bankData.currency
+            },
+            message: `Successfully processed ${bankData.transactions.length} transactions`,
+            batchId,
+            serviceUsed: "text_extraction",
+            rawContent: fileText.substring(0, 1000) + (fileText.length > 1000 ? '...' : '') // Return first 1000 chars of raw text
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
       
-      console.log(`Parsed ${bankData.transactions.length} transactions from file`);
+      // Use fallback processor (always)
+      const fallbackTransactions = await fallbackCSVProcessing(fileText);
       
-      // 3. Store in Supabase if auth token is provided
+      const bankData = {
+        account_holder: undefined,
+        account_number: undefined,
+        currency: 'USD', // Default currency
+        transactions: fallbackTransactions
+      };
+      
+      console.log(`Processed ${bankData.transactions.length} transactions using fallback processor`);
+      
+      // Store in Supabase if auth token is provided
       let accountId = null;
       if (authToken) {
         try {
@@ -130,9 +173,9 @@ serve(async (req) => {
           const { data: accountData, error: accountError } = await supabase
             .from('bank_statement_accounts')
             .insert([{
-              account_holder: bankData.account_holder || fileName.replace(/\.[^/.]+$/, ""),
-              account_number: bankData.account_number || 'Unknown',
-              currency: bankData.currency || 'USD'
+              account_holder: fileName.replace(/\.[^/.]+$/, ""),
+              account_number: 'Unknown',
+              currency: 'USD'
             }])
             .select()
             .single();
@@ -167,18 +210,6 @@ serve(async (req) => {
         } catch (dbError) {
           console.error('Database error:', dbError);
           // Continue processing but include error in response
-          return new Response(
-            JSON.stringify({
-              success: true,
-              transactions: bankData.transactions,
-              message: `Processed ${bankData.transactions.length} transactions but failed to store in database: ${dbError.message}`,
-              batchId,
-              accountId,
-              dbError: dbError.message,
-              serviceUsed: aiServiceUsed
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
         }
       }
       
@@ -192,11 +223,10 @@ serve(async (req) => {
             account_number: bankData.account_number,
             currency: bankData.currency
           },
-          message: usedFallback 
-            ? `Successfully processed ${bankData.transactions.length} transactions using fallback method` 
-            : `Successfully processed ${bankData.transactions.length} transactions`,
+          message: `Successfully processed ${bankData.transactions.length} transactions`,
           batchId,
-          serviceUsed: aiServiceUsed
+          serviceUsed: "text_extraction",
+          rawContent: fileText.substring(0, 1000) + (fileText.length > 1000 ? '...' : '') // Return first 1000 chars of raw text
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

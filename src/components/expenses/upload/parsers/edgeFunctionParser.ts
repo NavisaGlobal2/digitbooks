@@ -20,11 +20,10 @@ export const parseViaEdgeFunction = async (
     // Create form data with the file and preferences
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('preferredProvider', preferredProvider);
     formData.append('fileName', file.name);
     formData.append('authToken', sessionData.session.access_token);
     formData.append('context', context);
-    formData.append('useEnhancedFallback', 'true'); // Always use enhanced fallback processing
+    formData.append('useRawText', 'true'); // Always use raw text extraction
 
     console.log(`Processing ${file.name} (${file.type}, ${file.size} bytes) via edge function`);
 

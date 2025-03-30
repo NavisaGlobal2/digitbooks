@@ -6,7 +6,6 @@ export const useFileProcessing = () => {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
   const [processingStatus, setProcessingStatus] = useState<string | null>(null);
 
   const processReceiptFile = (file: File): Promise<string> => {
@@ -75,15 +74,14 @@ export const useFileProcessing = () => {
     resetProgress: () => void,
     completeProgress: () => void,
     isCancelled: boolean,
-    setIsWaitingForServer?: (isWaiting: boolean) => void,
-    preferredProvider?: string
+    setIsWaitingForServer?: (isWaiting: boolean) => void
   ) => {
     try {
       setProcessing(true);
       
       const fileType = file.name.split('.').pop()?.toLowerCase();
       setProcessingStatus(fileType === 'pdf' 
-        ? "Extracting data from PDF statement..." 
+        ? "Extracting text from PDF statement..." 
         : "Processing statement data...");
       
       if (setIsWaitingForServer) {
@@ -129,8 +127,7 @@ export const useFileProcessing = () => {
           }
           
           return onError(errorMessage);
-        },
-        preferredProvider || preferredAIProvider
+        }
       );
     } catch (error: any) {
       if (isCancelled) return;
@@ -156,8 +153,6 @@ export const useFileProcessing = () => {
     processServerSide,
     isAuthenticated,
     setIsAuthenticated,
-    preferredAIProvider,
-    setPreferredAIProvider,
     processingStatus
   };
 };
