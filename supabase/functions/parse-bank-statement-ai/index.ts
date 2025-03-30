@@ -19,6 +19,9 @@ serve(async (req) => {
     // Get the preferred AI provider from the request, if provided
     const preferredProvider = formData.get("preferredProvider")?.toString() || null;
     
+    // Get processing context if provided (revenue or expense)
+    const context = formData.get("context")?.toString() || null;
+    
     // Only try to set the environment variable if explicitly provided
     // This avoids the "operation not supported" error for PDF files
     if (preferredProvider) {
@@ -44,8 +47,6 @@ serve(async (req) => {
     // Extract file type for potential fallback decisions
     const fileType = file.name.split('.').pop()?.toLowerCase() || '';
     
-    // Get processing context if provided
-    const context = formData.get("context")?.toString() || null;
     if (context) {
       console.log(`Processing context: ${context}`);
     }
@@ -58,12 +59,20 @@ serve(async (req) => {
       const fileText = await extractTextFromFile(file);
       console.log(`Successfully extracted text content of length: ${fileText.length} characters`);
       
+      // Log some of the extracted content to debug
+      console.log(`Sample of extracted content: ${fileText.substring(0, 200)}...`);
+      
       let transactions = [];
       let usedFallback = false;
       
       try {
         // 2. Try to process with AI service
         transactions = await processWithAI(fileText, fileType, context);
+        
+        // Log sample of transactions for debugging
+        if (transactions.length > 0) {
+          console.log(`Sample transaction: ${JSON.stringify(transactions[0])}`);
+        }
         
         if (transactions.length === 0) {
           throw new Error("No transactions were extracted by the AI service");

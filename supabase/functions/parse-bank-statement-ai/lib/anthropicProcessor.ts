@@ -47,9 +47,16 @@ export async function processWithAnthropic(text: string, context?: string): Prom
     
     For each transaction, extract:
     - date (in YYYY-MM-DD format)
-    - description (the transaction narrative)
-    - amount (as a number, negative for debits/expenses)
+    - description (the COMPLETE transaction narrative, preserving all details)
+    - amount (as a number, negative for debits/expenses, positive for credits/deposits)
     - type ("debit" or "credit")
+    
+    Pay special attention to:
+    1. Convert all dates to YYYY-MM-DD format, regardless of original format
+    2. Preserve ALL details in the description field including reference numbers
+    3. Ensure amount signs are correct (negative for money leaving account, positive for money coming in)
+    
+    If there's any ambiguity about transaction direction, use the description to determine whether it's a debit or credit.
     
     Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.
     Sample format:
@@ -70,6 +77,9 @@ export async function processWithAnthropic(text: string, context?: string): Prom
   }
 
   try {
+    // Log the first 500 characters of the text to help with debugging
+    console.log(`First 500 chars of text sent to Anthropic: ${text.substring(0, 500)}...`);
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -117,9 +127,19 @@ export async function processWithAnthropic(text: string, context?: string): Prom
       throw new Error("No content returned from Anthropic");
     }
 
+    // Log a sample of the response
+    console.log(`Anthropic response (first 200 chars): ${content.substring(0, 200)}...`);
+
     // Parse the JSON response - Anthropic should return only JSON
     try {
-      return JSON.parse(content);
+      const parsedResult = JSON.parse(content);
+      
+      // Log first transaction for debugging
+      if (Array.isArray(parsedResult) && parsedResult.length > 0) {
+        console.log(`First parsed transaction: ${JSON.stringify(parsedResult[0])}`);
+      }
+      
+      return parsedResult;
     } catch (parseError) {
       console.error("Error parsing Anthropic response:", content);
       throw new Error("Could not parse transactions from Anthropic response");
