@@ -1,87 +1,59 @@
 
-// Track connection statistics for edge functions
-
 export interface ConnectionStats {
   successCount: number;
   failCount: number;
-  lastSuccess: Date | null;
-  lastFail: Date | null;
-  errors: string[];
   total: number;
   successRate: number;
-  failureRate: number;
-  endpoint?: string;
-  corsErrorDetected: boolean;
-  failureReasons: Record<string, number>;
+  lastFailReason: string | null;
+  lastFailTime: number | null;
 }
 
-// Initialize stats
-const connectionStats: ConnectionStats = {
+// Initialize stats object
+let connectionStats: ConnectionStats = {
   successCount: 0,
   failCount: 0,
-  lastSuccess: null,
-  lastFail: null,
-  errors: [],
   total: 0,
   successRate: 0,
-  failureRate: 0,
-  endpoint: undefined,
-  corsErrorDetected: false,
-  failureReasons: {}
+  lastFailReason: null,
+  lastFailTime: null,
 };
 
 // Track successful connection
-export const trackSuccessfulConnection = (endpoint?: string) => {
+export const trackSuccessfulConnection = (service: string): void => {
   connectionStats.successCount++;
-  connectionStats.lastSuccess = new Date();
-  if (endpoint) connectionStats.endpoint = endpoint;
-  updateRates();
+  connectionStats.total++;
+  calculateSuccessRate();
 };
 
 // Track failed connection
-export const trackFailedConnection = (error: string, type: string = 'unknown') => {
+export const trackFailedConnection = (reason: string, service: string): void => {
   connectionStats.failCount++;
-  connectionStats.lastFail = new Date();
-  connectionStats.errors.push(error);
-  
-  // Track failure by type
-  if (!connectionStats.failureReasons[type]) {
-    connectionStats.failureReasons[type] = 0;
-  }
-  connectionStats.failureReasons[type]++;
-  
-  // Check for CORS errors
-  if (error.includes('CORS') || error.includes('cors')) {
-    connectionStats.corsErrorDetected = true;
-  }
-  
-  updateRates();
+  connectionStats.total++;
+  connectionStats.lastFailReason = reason;
+  connectionStats.lastFailTime = Date.now();
+  calculateSuccessRate();
 };
 
-// Update success/failure rates
-const updateRates = () => {
-  connectionStats.total = connectionStats.successCount + connectionStats.failCount;
-  if (connectionStats.total > 0) {
-    connectionStats.successRate = Math.round((connectionStats.successCount / connectionStats.total) * 100);
-    connectionStats.failureRate = 100 - connectionStats.successRate;
-  }
+// Calculate the success rate percentage
+const calculateSuccessRate = (): void => {
+  connectionStats.successRate = connectionStats.total > 0 
+    ? Math.round((connectionStats.successCount / connectionStats.total) * 100) 
+    : 0;
 };
 
-// Get connection stats
+// Get the current connection stats
 export const getConnectionStats = (): ConnectionStats => {
-  return {...connectionStats};
+  return { ...connectionStats };
 };
 
-// Reset connection stats
-export const resetConnectionStats = () => {
-  connectionStats.successCount = 0;
-  connectionStats.failCount = 0;
-  connectionStats.lastSuccess = null;
-  connectionStats.lastFail = null;
-  connectionStats.errors = [];
-  connectionStats.total = 0;
-  connectionStats.successRate = 0;
-  connectionStats.failureRate = 0;
-  connectionStats.corsErrorDetected = false;
-  connectionStats.failureReasons = {};
+// Reset connection stats (mainly for testing)
+export const resetConnectionStats = (): void => {
+  connectionStats = {
+    successCount: 0,
+    failCount: 0,
+    total: 0,
+    successRate: 0,
+    lastFailReason: null,
+    lastFailTime: null,
+  };
 };

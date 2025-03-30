@@ -91,7 +91,7 @@ export const callEdgeFunction = async (
     return onSuccess(result);
   } catch (error: any) {
     console.error("Error calling edge function:", error);
-    trackFailedConnection('api_call_error', error, url);
+    trackFailedConnection('api_call_error', url);
     return onError(error);
   }
 };

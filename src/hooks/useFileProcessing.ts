@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -28,12 +27,10 @@ export const useFileProcessing = () => {
 
   const processBankStatementFile = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
-      // File type validation with more reliable detection
       const validateFileType = () => {
         const fileExt = file.name.split('.').pop()?.toLowerCase();
         const validExts = ['csv', 'xlsx', 'xls', 'pdf'];
         
-        // Check MIME type first, fallback to extension
         const isValidMimeType = [
           'text/csv', 
           'application/vnd.ms-excel', 
@@ -50,7 +47,6 @@ export const useFileProcessing = () => {
         return;
       }
       
-      // Check file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
         toast.error("File is too large. Maximum size is 10MB");
         reject("File too large");
@@ -71,7 +67,6 @@ export const useFileProcessing = () => {
     });
   };
 
-  // This is the function being used in useStatementUpload
   const processServerSide = async (file: File, 
     onSuccess: (transactions: any[]) => void, 
     onError: (errorMessage: string) => boolean,
@@ -84,18 +79,15 @@ export const useFileProcessing = () => {
     try {
       setProcessing(true);
       
-      // Set processing status based on file type
       const fileType = file.name.split('.').pop()?.toLowerCase();
       setProcessingStatus(fileType === 'pdf' 
         ? "Extracting data from PDF statement..." 
         : "Processing statement data...");
       
-      // If we're waiting for server, update the UI
       if (setIsWaitingForServer) {
         setIsWaitingForServer(true);
       }
       
-      // Now process with edge function
       const { parseViaEdgeFunction } = await import("../components/expenses/upload/parsers/edgeFunctionParser");
       
       await parseViaEdgeFunction(
@@ -103,7 +95,6 @@ export const useFileProcessing = () => {
         (transactions) => {
           if (isCancelled) return;
           
-          // Validate the received transactions
           if (!Array.isArray(transactions) || transactions.length === 0) {
             if (setIsWaitingForServer) {
               setIsWaitingForServer(false);
@@ -114,7 +105,6 @@ export const useFileProcessing = () => {
             return;
           }
           
-          // Log transaction data for debugging
           console.log(`Received ${transactions.length} transactions from server`, 
             transactions.slice(0, 2));
           
