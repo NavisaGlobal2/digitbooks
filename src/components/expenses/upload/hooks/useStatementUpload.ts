@@ -89,7 +89,7 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
     }
     
     // Process the file
-    await processStatement(file, preferredAIProvider, isAuthenticated, useVisionApi);
+    await processStatement(file, preferredAIProvider, isAuthenticated as boolean, useVisionApi);
   }, [file, verifyAuth, validateFile, processStatement, preferredAIProvider, isAuthenticated, useVisionApi]);
 
   const clearFile = useCallback(() => {

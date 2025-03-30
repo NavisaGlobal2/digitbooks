@@ -27,7 +27,12 @@ export const useStatementProcessor = ({
 }: StatementProcessorProps) => {
   const { processServerSide } = useFileProcessing();
 
-  const processStatement = async (file: File, preferredAIProvider: string, isAuthenticated: boolean, useVisionApi: boolean = true) => {
+  const processStatement = async (
+    file: File, 
+    preferredAIProvider: string, 
+    isAuthenticated: boolean, 
+    useVisionApi: boolean = true
+  ) => {
     // Prevent double processing
     if (!file) {
       onError("Please select a bank statement file");
