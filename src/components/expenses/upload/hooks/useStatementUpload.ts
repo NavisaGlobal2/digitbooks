@@ -72,9 +72,9 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
 
   const parseFile = useCallback(async () => {
     // Verify auth first
-    const authError = await verifyAuth();
-    if (authError) {
-      setError(authError); // authError is now a string | null type
+    const authErrorMessage = await verifyAuth();
+    if (authErrorMessage) {
+      setError(authErrorMessage);
       return;
     }
     
