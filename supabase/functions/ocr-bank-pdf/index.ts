@@ -50,15 +50,17 @@ serve(async (req) => {
     const ocrSpaceApiKey = Deno.env.get('OCR_SPACE_API_KEY');
     
     if (!ocrSpaceApiKey) {
+      console.error("❌ OCR_SPACE_API_KEY environment variable is not set");
       return new Response(JSON.stringify({ 
-        error: 'OCR.space API key is not configured on the server' 
+        error: 'OCR.space API key is not configured on the server',
+        details: 'Please set the OCR_SPACE_API_KEY environment variable in your Supabase project settings.'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
     
-    console.log("🔄 Calling OCR.space API with PDF URL...");
+    console.log("🔄 Calling OCR.space API with PDF URL:", pdfUrl);
     
     // Call the OCR.space API
     const ocrResponse = await fetch('https://api.ocr.space/parse/url', {

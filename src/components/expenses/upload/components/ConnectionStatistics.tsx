@@ -1,46 +1,58 @@
 
-import { useEffect, useState } from "react";
-import { getConnectionStats } from "../parsers/edge-function";
+import React from 'react';
+import { getConnectionStats } from '../parsers/edge-function';
+import { formatDistanceToNow } from 'date-fns';
 
-/**
- * Component to display connection statistics for edge function
- */
-const ConnectionStatistics = () => {
-  const [stats, setStats] = useState(() => getConnectionStats());
+export const ConnectionStatistics = () => {
+  const stats = getConnectionStats();
+  const totalAttempts = stats.successCount + stats.failCount;
   
-  useEffect(() => {
-    // Update stats every 3 seconds
-    const interval = setInterval(() => {
-      setStats(getConnectionStats());
-    }, 3000);
-    
-    return () => clearInterval(interval);
-  }, []);
-  
-  // Don't show anything if no connections have been attempted
-  if (stats.total === 0) {
-    return null;
-  }
-  
-  // Don't show status if everything is working well
-  if (stats.failureCount === 0 && stats.successCount > 0) {
-    return null;
-  }
+  // Calculate success rate
+  const successRate = totalAttempts > 0 
+    ? Math.round((stats.successCount / totalAttempts) * 100) 
+    : 0;
   
   return (
-    <div className="mt-2 text-xs text-gray-500">
-      <p className={stats.failureCount > 0 ? "text-amber-600" : "text-green-600"}>
-        Edge function status: 
-        {stats.failureCount > 0 ? " Limited connectivity" : " Connected"}
-        {stats.total > 0 && ` (${stats.successRate}% success rate)`}
-      </p>
-      {stats.failureCount > 0 && (
-        <p className="text-xs text-gray-500 mt-1">
-          If upload fails, try using a CSV file for more reliable processing.
+    <div className="mt-4 p-3 border rounded-md bg-gray-50">
+      <h4 className="text-sm font-medium mb-2">Connection Statistics</h4>
+      <div className="text-xs space-y-1">
+        <p>
+          <span className="font-medium">Total requests:</span> {totalAttempts}
         </p>
-      )}
+        <p>
+          <span className="font-medium">Successful:</span> {stats.successCount}
+        </p>
+        <p>
+          <span className="font-medium">Failed:</span> {stats.failCount}
+        </p>
+        
+        {stats.lastSuccess && (
+          <p>
+            <span className="font-medium">Last success:</span> {formatDistanceToNow(stats.lastSuccess, { addSuffix: true })}
+          </p>
+        )}
+        
+        <p>
+          <span className="font-medium">Success rate:</span> {successRate}%
+          <span className="ml-2 inline-block w-20 h-2 bg-gray-200 rounded-full">
+            <span 
+              className={`block h-2 rounded-full ${successRate > 50 ? 'bg-green-500' : 'bg-orange-500'}`}
+              style={{ width: `${successRate}%` }}
+            />
+          </span>
+        </p>
+        
+        {stats.failCount > 0 && (
+          <div>
+            <p className="font-medium mt-1">Recent errors:</p>
+            <ul className="list-disc list-inside">
+              {stats.errors.slice(0, 3).map((error, index) => (
+                <li key={index} className="text-red-600 truncate">{error}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
-
-export default ConnectionStatistics;

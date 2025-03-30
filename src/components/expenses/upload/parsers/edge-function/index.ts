@@ -3,22 +3,14 @@ import { ParsedTransaction } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { prepareFormData, createRequestConfig } from './formDataPreparation';
 import { processPdfWithOcrSpace } from './ocrSpaceProcessor';
+import { connectionStats, trackSuccessfulConnection, trackFailedConnection, getConnectionStats } from './connectionStats';
 
 // Constants
 export const MAX_RETRIES = 2;
 let pdfAttemptCount = 0;
 
-// Statistics for monitoring and debugging
-let connectionStats = {
-  successCount: 0,
-  failCount: 0,
-  lastSuccess: null as Date | null,
-  lastError: null as Error | null,
-  errors: [] as string[]
-};
-
-// Get connection statistics
-export const getConnectionStats = () => connectionStats;
+// Export functions for connection stats
+export { getConnectionStats, trackSuccessfulConnection, trackFailedConnection };
 
 // Export the OCR.space processor
 export { processPdfWithOcrSpace };
@@ -38,23 +30,6 @@ export const getAuthToken = async () => {
     return { token: data.session.access_token, error: null };
   } catch (error: any) {
     return { token: null, error: error?.message || 'Authentication error' };
-  }
-};
-
-// Track connection statistics
-export const trackSuccessfulConnection = () => {
-  connectionStats.successCount++;
-  connectionStats.lastSuccess = new Date();
-};
-
-export const trackFailedConnection = (reason: string, error: any, url?: string) => {
-  connectionStats.failCount++;
-  connectionStats.lastError = error instanceof Error ? error : new Error(String(error));
-  connectionStats.errors.push(`${new Date().toISOString()}: ${reason} - ${error?.message || 'Unknown error'} ${url ? `(${url})` : ''}`);
-  
-  // Keep only the last 10 errors
-  if (connectionStats.errors.length > 10) {
-    connectionStats.errors.shift();
   }
 };
 

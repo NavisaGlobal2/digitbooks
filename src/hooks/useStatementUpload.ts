@@ -1,13 +1,10 @@
+
 // src/hooks/useStatementUpload.ts - This is an example implementation for using OCR.space
 import { useState, useCallback } from "react";
 import { parseStatementFile, ParsedTransaction } from "../components/expenses/upload/parsers";
 import { parseViaEdgeFunction } from "../components/expenses/upload/parsers/edge-function";
 import { toast } from "sonner";
-import { useStatementProcessor } from "./useStatementProcessor";
-import { useProcessingState } from "./useProcessingState";
-import { useUploadProgress } from "./useUploadProgress";
-import { useStatementAuth } from "./useStatementAuth";
-import { useFileValidation } from "./useFileValidation";
+import { supabase } from '@/integrations/supabase/client';
 
 interface StatementUploadHookProps {
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
@@ -30,44 +27,72 @@ export const useStatementUpload = ({
   const [isWaitingForServer, setIsWaitingForServer] = useState<boolean>(false);
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
   const [useVisionApi, setUseVisionApi] = useState<boolean>(true);
+  const [progress, setProgress] = useState<number>(0);
+  const [step, setStep] = useState<string>('idle');
+  const [isCancelled, setCancelled] = useState<boolean>(false);
 
-  // isAuthenticated is correctly typed as boolean | null from useStatementAuth
-  const { isAuthenticated, verifyAuth } = useStatementAuth();
+  // Authentication verification
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   
-  const { validateFile } = useFileValidation();
-  const { 
-    progress, 
-    step, 
-    startProgress, 
-    completeProgress, 
-    resetProgress, 
-    isCancelled, 
-    setCancelled,
-    cancelProgress 
-  } = useUploadProgress();
+  // Verify authentication
+  const verifyAuth = async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session?.session);
+      
+      if (!session?.session) {
+        return "You must be logged in to upload and process statements.";
+      }
+      return null;
+    } catch (error) {
+      console.error("Auth check error:", error);
+      setIsAuthenticated(false);
+      return "Authentication error. Please try logging in again.";
+    }
+  };
+
+  // Progress handling
+  const startProgress = useCallback(() => {
+    setProgress(0);
+    setStep('starting');
+  }, []);
   
+  const completeProgress = useCallback(() => {
+    setProgress(100);
+    setStep('complete');
+  }, []);
+  
+  const resetProgress = useCallback(() => {
+    setProgress(0);
+    setStep('idle');
+  }, []);
+
+  // Error handling
   const onError = useCallback((errorMessage: string): boolean => {
     setError(errorMessage);
     setUploading(false);
     resetProgress();
     return true;
   }, [resetProgress]);
-  
-  const { processStatement } = useStatementProcessor({
-    onTransactionsParsed,
-    onError,
-    startProgress,
-    resetProgress,
-    completeProgress,
-    isCancelled,
-    setIsWaitingForServer,
-    startProcessing: () => setUploading(true),
-    stopProcessing: () => setUploading(false),
-    storePdfInSupabase,
-    extractPdfText,
-    setIsProcessingPdf,
-    useOcrSpace
-  });
+
+  // File validation
+  const validateFile = (file: File) => {
+    const allowedTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/pdf'];
+    const allowedExtensions = ['.csv', '.xlsx', '.xls', '.pdf'];
+    
+    const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    
+    if (!allowedExtensions.includes(fileExtension) && !allowedTypes.includes(file.type)) {
+      return `Invalid file type. Please upload a CSV, Excel, or PDF file.`;
+    }
+    
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      return `File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 10MB.`;
+    }
+    
+    return null;
+  };
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) {
@@ -84,48 +109,10 @@ export const useStatementUpload = ({
       setError(validationError);
       return;
     }
-  }, [validateFile]);
-
-  const parseFile = useCallback(async () => {
-    // Verify auth first
-    const authErrorMessage = await verifyAuth();
-    if (authErrorMessage) {
-      setError(authErrorMessage);
-      return;
-    }
-    
-    // Validate the file again just to be sure
-    if (!file) {
-      setError("Please select a bank statement file");
-      return;
-    }
-    
-    const validationError = validateFile(file);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    
-    // Pass isAuthenticated as boolean, ensuring it's not null with !!
-    // This fixes the type error by explicitly converting to boolean
-    await processStatement(file, preferredAIProvider, !!isAuthenticated, useVisionApi);
-  }, [file, verifyAuth, validateFile, processStatement, preferredAIProvider, isAuthenticated, useVisionApi]);
-
-  const clearFile = useCallback(() => {
-    setFile(null);
-    setError(null);
-    resetProgress();
-  }, [resetProgress]);
-
-  const cancelUpload = useCallback(() => {
-    setCancelled(true);
-    setUploading(false);
-    setIsWaitingForServer(false);
-    resetProgress();
-  }, [setCancelled, resetProgress]);
+  }, []);
 
   const processStatement = useCallback(async (file: File, preferredAIProvider: string, isAuthenticated: boolean, useVisionApi: boolean) => {
-    startProcessing();
+    setUploading(true);
     setError(null);
     startProgress();
     setCancelled(false);
@@ -135,7 +122,7 @@ export const useStatementUpload = ({
         const authErrorMessage = await verifyAuth();
         if (authErrorMessage) {
           setError(authErrorMessage);
-          stopProcessing();
+          setUploading(false);
           resetProgress();
           return;
         }
@@ -170,7 +157,7 @@ export const useStatementUpload = ({
           }
           
           // Handle success
-          stopProcessing();
+          setUploading(false);
           completeProgress();
           onTransactionsParsed(transactions);
         },
@@ -182,7 +169,7 @@ export const useStatementUpload = ({
           
           // Handle error
           setError(errorMessage);
-          stopProcessing();
+          setUploading(false);
           resetProgress();
           return true;
         },
@@ -203,10 +190,47 @@ export const useStatementUpload = ({
       
       // Handle error
       setError(error.message || "An error occurred while processing the file");
-      stopProcessing();
+      setUploading(false);
       resetProgress();
     }
-  }, [startProcessing, stopProcessing, completeProgress, resetProgress, onTransactionsParsed, setError, storePdfInSupabase, extractPdfText, setIsProcessingPdf, useOcrSpace, verifyAuth, setCancelled, startProgress]);
+  }, [startProgress, resetProgress, completeProgress, onTransactionsParsed, storePdfInSupabase, extractPdfText, setIsProcessingPdf, useOcrSpace, verifyAuth]);
+
+  const parseFile = useCallback(async () => {
+    // Verify auth first
+    const authErrorMessage = await verifyAuth();
+    if (authErrorMessage) {
+      setError(authErrorMessage);
+      return;
+    }
+    
+    // Validate the file again just to be sure
+    if (!file) {
+      setError("Please select a bank statement file");
+      return;
+    }
+    
+    const validationError = validateFile(file);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    
+    // Pass isAuthenticated as boolean, ensuring it's not null with !!
+    await processStatement(file, preferredAIProvider, !!isAuthenticated, useVisionApi);
+  }, [file, verifyAuth, processStatement, preferredAIProvider, isAuthenticated, useVisionApi]);
+
+  const clearFile = useCallback(() => {
+    setFile(null);
+    setError(null);
+    resetProgress();
+  }, [resetProgress]);
+
+  const cancelUpload = useCallback(() => {
+    setCancelled(true);
+    setUploading(false);
+    setIsWaitingForServer(false);
+    resetProgress();
+  }, [setCancelled, resetProgress]);
 
   return {
     file,

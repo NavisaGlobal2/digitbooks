@@ -1,215 +1,237 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { ParsedTransaction } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { ParsedTransaction } from '../types';
+import { toast } from 'sonner';
 
 /**
- * Process PDF using OCR.space API via Supabase Edge Function
+ * Process a PDF file using OCR.space API
  */
 export const processPdfWithOcrSpace = async (
   file: File,
-  onSuccess: (data: { extractedText: string, transactions?: ParsedTransaction[] }) => void,
+  onSuccess: (result: { success: boolean; text: string; transactions: ParsedTransaction[] }) => boolean,
   onError: (errorMessage: string) => boolean
 ): Promise<boolean> => {
   try {
-    // First upload the PDF to Supabase storage
-    console.log("🔄 Uploading PDF to Supabase storage for OCR processing:", file.name);
-    toast.info("Uploading PDF to storage...");
+    console.log("🔄 OCR.space: Starting PDF processing");
     
-    // Generate a unique file name to avoid collisions
-    const timestamp = new Date().getTime();
-    const fileName = `bank-statements/${timestamp}-${file.name.replace(/\s+/g, '_')}`;
+    // Step 1: Upload the PDF to Supabase Storage
+    const fileName = `bank-statements/${uuidv4()}-${file.name.replace(/\s+/g, '_')}`;
+    console.log("🔄 OCR.space: Uploading PDF to Supabase Storage:", fileName);
     
-    // Upload the file to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('expense-documents')
-      .upload(fileName, file);
-    
+      .from('pdfs')
+      .upload(fileName, file, {
+        contentType: file.type,
+        upsert: false
+      });
+      
     if (uploadError) {
-      console.error("❌ Failed to upload PDF:", uploadError);
+      console.error("❌ OCR.space: Error uploading PDF to storage", uploadError);
       return onError(`Failed to upload PDF: ${uploadError.message}`);
     }
     
-    // Get a public or signed URL for the uploaded file
-    console.log("✅ PDF uploaded successfully");
-    toast.success("PDF uploaded to storage");
+    console.log("✅ OCR.space: PDF uploaded successfully");
     
-    // Create a public URL or signed URL for the file
-    const { data: urlData } = await supabase.storage
-      .from('expense-documents')
-      .createSignedUrl(fileName, 3600); // URL valid for 1 hour
+    // Step 2: Get a public URL for the uploaded file
+    const { data: publicURLData } = supabase.storage
+      .from('pdfs')
+      .getPublicUrl(fileName);
     
-    if (!urlData || !urlData.signedUrl) {
-      console.error("❌ Failed to get signed URL");
-      return onError("Failed to get URL for uploaded PDF");
+    const publicUrl = publicURLData?.publicUrl;
+    
+    if (!publicUrl) {
+      console.error("❌ OCR.space: Couldn't get public URL for uploaded PDF");
+      return onError("Unable to generate public URL for the PDF");
     }
     
-    const pdfUrl = urlData.signedUrl;
-    console.log("🔄 Generated signed URL for OCR processing");
+    console.log("✅ OCR.space: Generated public URL for PDF:", publicUrl);
     
-    // Call the Supabase Edge Function for OCR
-    toast.info("Processing PDF with OCR...");
-    console.log("🔄 Calling OCR function with PDF URL");
+    // Step 3: Call the OCR.space Edge Function with the PDF URL
+    const { data: authData } = await supabase.auth.getSession();
     
-    const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
-    const { data: authData, error: authError } = await supabase.auth.getSession();
-    
-    if (authError || !authData?.session?.access_token) {
-      console.error("❌ Authentication error:", authError);
-      return onError("Authentication error, please sign in to process PDFs");
+    if (!authData.session) {
+      console.error("❌ OCR.space: No authentication session");
+      return onError("Authentication required");
     }
     
-    const response = await fetch(`${supabaseUrl}/functions/v1/ocr-bank-pdf`, {
-      method: "POST",
+    console.log("🔄 OCR.space: Calling OCR Edge Function");
+    
+    // Call the OCR.space Edge Function
+    const response = await fetch(`${supabase.supabaseUrl}/functions/v1/ocr-bank-pdf`, {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${authData.session.access_token}`
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authData.session.access_token}`
       },
-      body: JSON.stringify({
-        pdfUrl: pdfUrl
+      body: JSON.stringify({ 
+        pdfUrl: publicUrl
       })
     });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ OCR processing failed:", errorText);
-      return onError(`OCR processing failed: ${errorText}`);
+      const errorData = await response.json();
+      console.error("❌ OCR.space: Edge Function error:", errorData);
+      
+      // Check if the API key is not configured
+      if (errorData.error === 'OCR.space API key is not configured on the server') {
+        toast.error("OCR.space API key is not configured. Please set it in your Supabase Edge Function environment.");
+        return onError("OCR.space API key is not configured. Please set the OCR_SPACE_API_KEY environment variable in your Supabase project settings.");
+      }
+      
+      return onError(`OCR.space Edge Function error: ${errorData.error || 'Unknown error'}`);
     }
     
     const result = await response.json();
+    console.log("✅ OCR.space: Received text extraction result");
     
-    if (!result.text) {
-      console.error("❌ No text extracted from PDF");
-      return onError("No text could be extracted from the PDF");
+    if (!result.success) {
+      console.error("❌ OCR.space: Text extraction failed", result.error);
+      return onError(`OCR.space extraction failed: ${result.error || 'Unknown error'}`);
     }
     
-    console.log("✅ Successfully extracted text from PDF");
-    toast.success("Text extracted from PDF");
-    
-    // Extract basic transaction patterns from the OCR text
     const extractedText = result.text;
-    const transactions = extractTransactionsFromText(extractedText);
     
-    console.log(`📊 Extracted ${transactions.length} potential transactions from OCR text`);
+    if (!extractedText || extractedText.trim() === '') {
+      console.error("❌ OCR.space: No text extracted from PDF");
+      return onError("OCR.space couldn't extract any text from the PDF");
+    }
     
-    onSuccess({ 
-      extractedText,
-      transactions: transactions.length > 0 ? transactions : undefined
+    console.log("✅ OCR.space: Successfully extracted text from PDF");
+    
+    // Step 4: Parse the extracted text as a basic transaction list
+    // This is a simple regex-based parser for common bank statement formats
+    // A more advanced AI-based parser would normally be used here
+    const transactions = parseExtractedText(extractedText);
+    
+    return onSuccess({ 
+      success: true, 
+      text: extractedText,
+      transactions: transactions
     });
-    return true;
-    
   } catch (error: any) {
-    console.error("❌ Error in processPdfWithOcrSpace:", error);
-    return onError(error.message || "Failed to process PDF with OCR");
+    console.error("❌ OCR.space: Unexpected error:", error);
+    return onError(`OCR.space processing error: ${error.message || 'Unknown error'}`);
   }
 };
 
-/**
- * Extracts potential transactions from OCR text using pattern matching
- * This is a basic implementation - could be enhanced with more sophisticated parsing
- */
-function extractTransactionsFromText(text: string): ParsedTransaction[] {
+// Simple regex-based parser for extracted text
+const parseExtractedText = (text: string): ParsedTransaction[] => {
   const transactions: ParsedTransaction[] = [];
+  const lines = text.split('\n');
   
-  // Common date patterns
+  // Common date formats in bank statements
   const datePatterns = [
-    // DD/MM/YYYY or DD-MM-YYYY
-    /(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/,
-    // Month DD, YYYY
-    /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{2,4}/i,
-    // YYYY-MM-DD
-    /(\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2})/
+    /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/,      // MM/DD/YYYY or DD/MM/YYYY
+    /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/,        // YYYY/MM/DD
+    /(\w{3,9})\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})/, // Month DD, YYYY
   ];
   
   // Amount patterns
-  const amountPattern = /\$?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/;
-  
-  // Split text into lines
-  const lines = text.split("\n");
+  const amountPattern = /([\-\+]?\$?[\d,]+\.\d{2})/;
   
   for (const line of lines) {
-    // Skip very short lines
-    if (line.trim().length < 10) continue;
+    // Skip empty lines and headers
+    if (!line.trim() || line.includes('STATEMENT') || line.includes('PAGE') || line.includes('BALANCE')) {
+      continue;
+    }
     
-    let transactionDate = null;
-    
-    // Try to find a date in the line
+    let dateMatch = null;
     for (const pattern of datePatterns) {
-      const dateMatch = line.match(pattern);
-      if (dateMatch) {
-        transactionDate = dateMatch[0];
+      const match = line.match(pattern);
+      if (match) {
+        dateMatch = match;
         break;
       }
     }
     
-    // Only proceed if we found a date (likely a transaction line)
-    if (transactionDate) {
-      // Try to find an amount
+    if (dateMatch) {
+      // Try to extract date
+      let date = '';
+      try {
+        // Attempt to normalize the date to YYYY-MM-DD
+        const dateParts = dateMatch.slice(1, 4).map(part => parseInt(part));
+        
+        // Handle different date formats
+        if (dateMatch[0].includes('/') || dateMatch[0].includes('-')) {
+          // For numeric dates like MM/DD/YYYY or YYYY-MM-DD
+          if (dateParts[0] > 1000) {
+            // YYYY-MM-DD
+            date = `${dateParts[0]}-${String(dateParts[1]).padStart(2, '0')}-${String(dateParts[2]).padStart(2, '0')}`;
+          } else {
+            // MM/DD/YYYY or DD/MM/YYYY (assume MM/DD/YYYY for simplicity)
+            let year = dateParts[2];
+            if (year < 100) year = 2000 + year;
+            date = `${year}-${String(dateParts[0]).padStart(2, '0')}-${String(dateParts[1]).padStart(2, '0')}`;
+          }
+        } else {
+          // For written month format
+          const month = dateMatch[1];
+          const day = parseInt(dateMatch[2]);
+          const year = parseInt(dateMatch[3]);
+          
+          const monthMap: {[key: string]: number} = {
+            'jan': 1, 'january': 1,
+            'feb': 2, 'february': 2,
+            'mar': 3, 'march': 3,
+            'apr': 4, 'april': 4,
+            'may': 5,
+            'jun': 6, 'june': 6,
+            'jul': 7, 'july': 7,
+            'aug': 8, 'august': 8,
+            'sep': 9, 'september': 9,
+            'oct': 10, 'october': 10,
+            'nov': 11, 'november': 11,
+            'dec': 12, 'december': 12
+          };
+          
+          const monthNum = monthMap[month.toLowerCase()] || 1;
+          date = `${year}-${String(monthNum).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+      } catch (e) {
+        // If date parsing fails, use the raw match as a fallback
+        date = dateMatch[0];
+      }
+      
+      // Extract amount
       const amountMatch = line.match(amountPattern);
-      const amount = amountMatch ? amountMatch[1].replace(/,/g, '') : null;
+      let amount = 0;
       
-      // Extract description (everything that's not the date or amount)
-      let description = line;
-      
-      // Remove the date and amount from the description
-      if (transactionDate) {
-        description = description.replace(transactionDate, '');
-      }
-      if (amount) {
-        description = description.replace(amountPattern, '');
+      if (amountMatch) {
+        // Parse amount, removing currency symbols and commas
+        const amountStr = amountMatch[0].replace(/[$,]/g, '');
+        amount = parseFloat(amountStr);
       }
       
-      // Clean up the description
-      description = description.trim()
-        .replace(/\s+/g, ' ') // Replace multiple spaces with a single space
-        .replace(/^\s*[\-\*•]+\s*/, ''); // Remove bullets/dashes from the beginning
+      // Determine transaction type
+      const type = amount < 0 ? 'debit' : 'credit';
       
-      // Only add if we have minimum required fields
-      if (description && (amount || amount === '0')) {
+      // Extract description by removing date and amount
+      let description = line
+        .replace(dateMatch[0], '')
+        .replace(amountMatch ? amountMatch[0] : '', '')
+        .trim();
+      
+      // Remove common prefixes and clean up
+      description = description
+        .replace(/^[0-9]+\s+/, '') // Remove leading numbers
+        .replace(/\s{2,}/g, ' ')   // Replace multiple spaces with single space
+        .trim();
+      
+      if (description && !isNaN(amount)) {
         transactions.push({
-          id: uuidv4(), // Add unique ID for each transaction
-          date: formatDateString(transactionDate),
-          description: description,
-          amount: parseFloat(amount),
-          type: amount.includes('-') ? 'debit' : 'credit'
+          id: `tx-${Math.random().toString(36).substr(2, 9)}`,
+          date,
+          description,
+          amount,
+          type,
+          selected: type === 'debit',
+          category: '',
+          source: ''
         });
       }
     }
   }
   
   return transactions;
-}
-
-/**
- * Try to convert various date formats to YYYY-MM-DD
- */
-function formatDateString(dateStr: string): string {
-  try {
-    // Try to parse the date
-    const date = new Date(dateStr);
-    
-    // Check if the date is valid
-    if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0]; // Return YYYY-MM-DD
-    }
-    
-    // If direct parsing fails, try some common formats
-    let day, month, year;
-    
-    // Check DD/MM/YYYY or DD-MM-YYYY
-    const dmy = dateStr.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
-    if (dmy) {
-      day = dmy[1].padStart(2, '0');
-      month = dmy[2].padStart(2, '0');
-      year = dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3];
-      return `${year}-${month}-${day}`;
-    }
-    
-    // Return the original string if all parsing fails
-    return dateStr;
-  } catch (e) {
-    console.warn("Could not format date:", dateStr);
-    return dateStr;
-  }
-}
+};
