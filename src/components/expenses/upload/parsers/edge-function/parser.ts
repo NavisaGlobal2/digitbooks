@@ -1,7 +1,7 @@
 
 // Import necessary types and functions
 import { ParsedTransaction } from "../types";
-import { getAuthToken } from "./authHandler";
+import { getAuthToken } from "../edge-function"; // Import from the index file where it's now defined
 import { MAX_RETRIES, sleep } from "./retryHandler";
 import { trackSuccessfulConnection, trackFailedConnection } from "./connectionStats";
 import { prepareFormData } from "./formDataPreparation";
@@ -53,7 +53,9 @@ export const parseViaEdgeFunction = async (
     console.log(`✅ STEP 0.6: Form data prepared, PDF attempt count: ${pdfAttemptCount}`);
     
     // Make sure we're using the correct URL format
-    const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
+    const supabaseUrl = 
+      (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || 
+      "https://naxmgtoskeijvdofqyik.supabase.co";
     const edgeFunctionEndpoint = `${supabaseUrl}/functions/v1/parse-bank-statement-ai`;
     
     console.log(`🔄 STEP 3: Full endpoint URL: ${edgeFunctionEndpoint}`);
@@ -122,7 +124,7 @@ export const parseViaEdgeFunction = async (
         // Check specifically for Vision API related errors
         const isVisionApiError = error.message && (
           error.message.includes("Google Vision API") ||
-          error.message.includes("Vision API") ||
+          error.message.includes("Vision API") || 
           error.message.includes("vision")
         );
         

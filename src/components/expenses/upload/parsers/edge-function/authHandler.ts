@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 /**
  * Get the authentication token for Supabase
  */
-export const getAuthToken = async (): Promise<{ token: string | null; error: string | null }> => {
+export const getAuthToken = async () => {
   try {
     const { data, error } = await supabase.auth.getSession();
     
@@ -18,12 +18,4 @@ export const getAuthToken = async (): Promise<{ token: string | null; error: str
     console.error("Auth exception:", e);
     return { token: null, error: e.message || "Authentication error occurred" };
   }
-};
-
-/**
- * Check if the user is authenticated
- */
-export const isAuthenticated = async (): Promise<boolean> => {
-  const { token } = await getAuthToken();
-  return !!token;
 };
