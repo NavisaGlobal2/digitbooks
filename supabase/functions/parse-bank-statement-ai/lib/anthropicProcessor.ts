@@ -43,7 +43,9 @@ export async function processWithAnthropic(text: string, context?: string): Prom
     
     Examine the Excel data carefully. Look for patterns indicating transaction rows, and ignore headers, footers, summary rows, and non-transaction information.
     
-    Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
+    Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.
+    
+    IMPORTANT: Ensure your response is complete, properly formatted JSON with no trailing commas or unfinished structures.`;
   } else {
     systemPrompt += `
     
@@ -73,7 +75,8 @@ export async function processWithAnthropic(text: string, context?: string): Prom
     
     In the output JSON, include ONLY the actual transactions - skip any rows that are balance summaries, headers, or non-transaction information.
     
-    Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.
+    IMPORTANT: Your response must be a valid JSON array. Make sure to properly close all brackets and do not include any text outside the JSON array. Do not include code formatting or markdown backticks in your response. Do not truncate your response - include all transactions.
+    
     Sample format:
     [
       {
@@ -150,10 +153,37 @@ export async function processWithAnthropic(text: string, context?: string): Prom
 
     // Parse the JSON response - Anthropic should return only JSON
     try {
-      const parsedResult = JSON.parse(content);
+      // Clean up the content - remove markdown code blocks if present
+      const cleanedContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      
+      // Add missing closing bracket if needed
+      let jsonToProcess = cleanedContent;
+      const openBrackets = (cleanedContent.match(/\[/g) || []).length;
+      const closeBrackets = (cleanedContent.match(/\]/g) || []).length;
+      
+      if (openBrackets > closeBrackets) {
+        jsonToProcess = jsonToProcess + ']'.repeat(openBrackets - closeBrackets);
+        console.log(`Fixed JSON by adding ${openBrackets - closeBrackets} closing brackets`);
+      }
+      
+      // Try to find a valid JSON array in the response
+      let startPos = jsonToProcess.indexOf('[');
+      let endPos = jsonToProcess.lastIndexOf(']');
+      
+      if (startPos !== -1 && endPos !== -1 && startPos < endPos) {
+        jsonToProcess = jsonToProcess.substring(startPos, endPos + 1);
+      }
+      
+      // Now parse the JSON
+      const parsedResult = JSON.parse(jsonToProcess);
+      
+      // Verify it's an array
+      if (!Array.isArray(parsedResult)) {
+        throw new Error("Response is not a valid JSON array of transactions");
+      }
       
       // Log first transaction for debugging
-      if (Array.isArray(parsedResult) && parsedResult.length > 0) {
+      if (parsedResult.length > 0) {
         console.log(`First parsed transaction: ${JSON.stringify(parsedResult[0])}`);
       }
       

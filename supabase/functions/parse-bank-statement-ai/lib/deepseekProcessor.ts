@@ -12,52 +12,35 @@ export async function processWithDeepseek(text: string, context?: string): Promi
   console.log(`Processing context: ${context || 'general'}`);
   
   // Adjust the system prompt based on the context (revenue or expense)
-  let systemPrompt = `You are a financial data extraction assistant. Your task is to parse bank statement data from various formats and output a clean JSON array of transactions.`;
+  let systemPrompt = `You are a financial data extraction expert. Your task is to parse bank statement data and output a clean JSON array of transactions.`;
   
   if (context === "revenue") {
     systemPrompt += `
-    
-    For each transaction, extract:
+    Focus on extracting revenue transactions (deposits, income) with these fields:
     - date (in YYYY-MM-DD format)
-    - description (the transaction narrative)
-    - amount (as a number, negative for debits/expenses, positive for credits/revenue)
-    - type ("debit" or "credit")
+    - description (preserve all transaction details)
+    - amount (as a positive number for revenue)
+    - type (always "credit" for revenue)
     
-    Additionally, for credit (revenue) transactions, analyze the description to suggest a source from these categories:
-    - sales: Product or service sales revenue
-    - services: Service fees, consulting
-    - investments: Interest, dividends, capital gains
-    - grants: Grants or institutional funding
-    - donations: Charitable contributions
-    - royalties: Licensing fees, intellectual property income
-    - rental: Property or equipment rental income
-    - consulting: Professional services fees
-    - affiliate: Commission from partnerships
-    - other: Miscellaneous or unclassifiable income
+    For each revenue transaction, add a "sourceSuggestion" with source category and confidence level.
     
-    For each credit transaction, add a "sourceSuggestion" object containing:
-    - "source": the suggested revenue category (from the list above)
-    - "confidence": a number between 0 and 1 indicating your confidence level
-    
-    Focus only on credit (incoming money) transactions, which represent revenue. These have positive amounts.
-    
-    Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
+    Output ONLY a JSON array of transactions, properly formatted with complete brackets and no additional text.`;
   } else {
     systemPrompt += `
-    
-    For each transaction, extract:
+    Extract all financial transactions with:
     - date (in YYYY-MM-DD format)
-    - description (the transaction narrative)
-    - amount (as a number, negative for debits/expenses)
+    - description (preserve all details exactly as shown)
+    - amount (as a number, negative for debits/expenses, positive for credits)
     - type ("debit" or "credit")
     
-    Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
+    Output ONLY a JSON array of transactions, properly formatted with complete brackets and no additional text.
+    IMPORTANT: Make sure to close all JSON brackets properly and include all transactions.`;
   }
 
   try {
-    // Filter out invalid characters or encoding issues before sending to DeepSeek
-    const sanitizedText = sanitizeTextForAPI(text);
-    
+    // Log a sample of the text for debugging
+    console.log(`First 500 chars of text sent to DeepSeek: ${text.substring(0, 500)}...`);
+
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -73,11 +56,11 @@ export async function processWithDeepseek(text: string, context?: string): Promi
           },
           {
             role: "user",
-            content: sanitizedText
+            content: text
           }
         ],
-        temperature: 0.1,
-        max_tokens: 4000
+        temperature: 0.2,
+        max_tokens: 4000,
       }),
     });
 
@@ -85,17 +68,15 @@ export async function processWithDeepseek(text: string, context?: string): Promi
       const error = await response.json();
       console.error("DeepSeek API error:", error);
       
-      // Handle authentication error
-      if (error.error?.code === "invalid_api_key") {
+      if (error.error?.type === "invalid_api_key") {
         throw new Error("DeepSeek API authentication error: Please check your API key.");
       }
       
-      // Handle rate limit error
-      if (error.error?.code === "rate_limit_exceeded") {
+      if (error.error?.type?.includes("rate_limit")) {
         throw new Error("DeepSeek API rate limit exceeded. Please try again later.");
       }
       
-      throw new Error(`DeepSeek API error: ${error.error?.message || "Unknown error"}`);
+      throw new Error(`DeepSeek API error: ${error.error?.message || JSON.stringify(error) || "Unknown error"}`);
     }
 
     const data = await response.json();
@@ -105,9 +86,45 @@ export async function processWithDeepseek(text: string, context?: string): Promi
       throw new Error("No content returned from DeepSeek");
     }
 
+    // Log a sample of the response
+    console.log(`DeepSeek response (first 200 chars): ${content.substring(0, 200)}...`);
+
     // Parse the JSON response
     try {
-      return JSON.parse(content);
+      // Clean up the content - remove markdown code blocks if present
+      const cleanedContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      
+      // Add missing closing bracket if needed
+      let jsonToProcess = cleanedContent;
+      const openBrackets = (cleanedContent.match(/\[/g) || []).length;
+      const closeBrackets = (cleanedContent.match(/\]/g) || []).length;
+      
+      if (openBrackets > closeBrackets) {
+        jsonToProcess = jsonToProcess + ']'.repeat(openBrackets - closeBrackets);
+        console.log(`Fixed JSON by adding ${openBrackets - closeBrackets} closing brackets`);
+      }
+      
+      // Try to find a valid JSON array in the response
+      let startPos = jsonToProcess.indexOf('[');
+      let endPos = jsonToProcess.lastIndexOf(']');
+      
+      if (startPos !== -1 && endPos !== -1 && startPos < endPos) {
+        jsonToProcess = jsonToProcess.substring(startPos, endPos + 1);
+      }
+      
+      const parsedResult = JSON.parse(jsonToProcess);
+      
+      // Verify it's an array
+      if (!Array.isArray(parsedResult)) {
+        throw new Error("Response is not a valid JSON array of transactions");
+      }
+      
+      // Log first transaction for debugging
+      if (parsedResult.length > 0) {
+        console.log(`First parsed transaction: ${JSON.stringify(parsedResult[0])}`);
+      }
+      
+      return parsedResult;
     } catch (parseError) {
       console.error("Error parsing DeepSeek response:", content);
       throw new Error("Could not parse transactions from DeepSeek response");
@@ -116,21 +133,4 @@ export async function processWithDeepseek(text: string, context?: string): Promi
     console.error("Error processing with DeepSeek:", error);
     throw error;
   }
-}
-
-/**
- * Sanitize text before sending to API to prevent encoding issues
- * @param text Text to sanitize
- * @returns Sanitized text
- */
-function sanitizeTextForAPI(text: string): string {
-  // Replace problematic characters and encoding issues
-  return text
-    // Replace null bytes and control characters
-    .replace(/[\x00-\x1F\x7F]/g, ' ')
-    // Replace unpaired surrogates with space
-    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g, ' ')
-    // Reduce multiple spaces to single space
-    .replace(/\s+/g, ' ')
-    .trim();
 }
