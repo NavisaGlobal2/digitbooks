@@ -74,7 +74,7 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
     // Verify auth first
     const authError = await verifyAuth();
     if (authError) {
-      setError(authError);
+      setError(authError); // authError is now a string | null type
       return;
     }
     
