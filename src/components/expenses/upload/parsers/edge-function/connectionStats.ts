@@ -4,8 +4,15 @@ export interface ConnectionStats {
   failCount: number;
   total: number;
   successRate: number;
+  failureRate: number;
   lastFailReason: string | null;
   lastFailTime: number | null;
+  lastSuccess: number | null;
+  lastFail: number | null;
+  endpoint: string | null;
+  corsErrorDetected: boolean;
+  failureReasons: Record<string, number>;
+  errors: string[];
 }
 
 // Initialize stats object
@@ -14,14 +21,23 @@ let connectionStats: ConnectionStats = {
   failCount: 0,
   total: 0,
   successRate: 0,
+  failureRate: 0,
   lastFailReason: null,
   lastFailTime: null,
+  lastSuccess: null,
+  lastFail: null,
+  endpoint: null,
+  corsErrorDetected: false,
+  failureReasons: {},
+  errors: []
 };
 
 // Track successful connection
 export const trackSuccessfulConnection = (service: string): void => {
   connectionStats.successCount++;
   connectionStats.total++;
+  connectionStats.lastSuccess = Date.now();
+  connectionStats.endpoint = service;
   calculateSuccessRate();
 };
 
@@ -31,6 +47,28 @@ export const trackFailedConnection = (reason: string, service: string): void => 
   connectionStats.total++;
   connectionStats.lastFailReason = reason;
   connectionStats.lastFailTime = Date.now();
+  connectionStats.lastFail = Date.now();
+  connectionStats.endpoint = service;
+  
+  // Increment the count for this specific reason
+  if (!connectionStats.failureReasons[reason]) {
+    connectionStats.failureReasons[reason] = 1;
+  } else {
+    connectionStats.failureReasons[reason]++;
+  }
+  
+  // Add to errors array (limit to latest 10)
+  const errorMessage = `${new Date().toISOString()} - ${reason}: ${service}`;
+  connectionStats.errors.unshift(errorMessage);
+  if (connectionStats.errors.length > 10) {
+    connectionStats.errors.pop();
+  }
+  
+  // Check if it's a CORS error
+  if (reason === 'cors_error') {
+    connectionStats.corsErrorDetected = true;
+  }
+  
   calculateSuccessRate();
 };
 
@@ -38,6 +76,9 @@ export const trackFailedConnection = (reason: string, service: string): void => 
 const calculateSuccessRate = (): void => {
   connectionStats.successRate = connectionStats.total > 0 
     ? Math.round((connectionStats.successCount / connectionStats.total) * 100) 
+    : 0;
+  connectionStats.failureRate = connectionStats.total > 0
+    ? Math.round((connectionStats.failCount / connectionStats.total) * 100)
     : 0;
 };
 
@@ -53,7 +94,14 @@ export const resetConnectionStats = (): void => {
     failCount: 0,
     total: 0,
     successRate: 0,
+    failureRate: 0,
     lastFailReason: null,
     lastFailTime: null,
+    lastSuccess: null,
+    lastFail: null,
+    endpoint: null,
+    corsErrorDetected: false,
+    failureReasons: {},
+    errors: []
   };
 };

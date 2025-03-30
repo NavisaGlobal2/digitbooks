@@ -83,6 +83,7 @@ export const callEdgeFunction = async (
     
     if (!response.ok) {
       const errorData = await handleResponseError(response);
+      trackFailedConnection('api_response_error', url);
       throw errorData;
     }
     
@@ -91,7 +92,7 @@ export const callEdgeFunction = async (
     return onSuccess(result);
   } catch (error: any) {
     console.error("Error calling edge function:", error);
-    trackFailedConnection('api_call_error', url);
+    trackFailedConnection(error?.errorType || 'api_call_error', url);
     return onError(error);
   }
 };

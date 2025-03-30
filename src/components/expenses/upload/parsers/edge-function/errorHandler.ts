@@ -13,6 +13,8 @@ export const handleEdgeFunctionError = (
   errorType: string;
   details?: any;
 } => {
+  const errorSource = error?.message || 'unknown_error';
+  
   // CORS error detection
   if (error.message && (
     error.message.includes('CORS') || 
@@ -20,7 +22,7 @@ export const handleEdgeFunctionError = (
     error.message.includes('cross-origin')
   )) {
     console.error("CORS error detected:", error);
-    trackFailedConnection('cors_error', error);
+    trackFailedConnection('cors_error', errorSource);
     return {
       message: "Cross-Origin Request Blocked. This is likely a server configuration issue. Please try again later.",
       shouldRetry: false,
@@ -32,7 +34,7 @@ export const handleEdgeFunctionError = (
   // Network error handling
   if (error.name === "AbortError") {
     console.error("Request timed out or was aborted");
-    trackFailedConnection('timeout_error', error);
+    trackFailedConnection('timeout_error', errorSource);
     return {
       message: "Request timed out. The server might be overloaded. Please try again later.",
       shouldRetry: true,
@@ -45,7 +47,7 @@ export const handleEdgeFunctionError = (
     console.error("Network error detected. This may be due to CORS, network connectivity, or the edge function being unavailable.");
     console.error("Error details:", error);
     
-    trackFailedConnection('network_error', error);
+    trackFailedConnection('network_error', errorSource);
     return {
       message: "Could not connect to the server. Please check your internet connection and try again.",
       shouldRetry: true,
@@ -57,7 +59,7 @@ export const handleEdgeFunctionError = (
   // Authentication error
   if (responseStatus === 401) {
     console.error("Authentication error: User session may be invalid or expired");
-    trackFailedConnection('unauthorized', error);
+    trackFailedConnection('unauthorized', errorSource);
     return {
       message: "Authentication error. Please sign in again and try one more time.",
       shouldRetry: false,
@@ -69,7 +71,7 @@ export const handleEdgeFunctionError = (
   // Server error
   if (responseStatus && responseStatus >= 500) {
     console.error(`Server error with status code: ${responseStatus}`);
-    trackFailedConnection(`http_${responseStatus}`, error);
+    trackFailedConnection(`http_${responseStatus}`, errorSource);
     return {
       message: `Server error (${responseStatus}). Please try again later.`,
       shouldRetry: true,
@@ -80,7 +82,7 @@ export const handleEdgeFunctionError = (
   
   // Default error
   console.error("Unknown error:", error);
-  trackFailedConnection('other_error', error);
+  trackFailedConnection('other_error', errorSource);
   return {
     message: error.message || "Unknown error occurred",
     shouldRetry: false,

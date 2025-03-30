@@ -80,7 +80,7 @@ export function ConnectionStats({ className, onReset }: ConnectionStatsProps) {
         
         <div className="bg-slate-50 p-4 rounded-lg">
           <div className="text-sm text-muted-foreground">Endpoint</div>
-          <div className="text-sm font-medium truncate" title={stats.endpoint}>
+          <div className="text-sm font-medium truncate" title={stats.endpoint || undefined}>
             {stats.endpoint ? (stats.endpoint.length > 30 ? `...${stats.endpoint.slice(-30)}` : stats.endpoint) : "N/A"}
           </div>
         </div>
@@ -118,7 +118,7 @@ export function ConnectionStats({ className, onReset }: ConnectionStatsProps) {
           <div className="space-y-1">
             {Object.entries(stats.failureReasons).map(([reason, count]) => (
               <div key={reason} className="flex justify-between items-center text-sm">
-                <span className="capitalize">{reason.replace('_', ' ')}</span>
+                <span className="capitalize">{String(reason).replace('_', ' ')}</span>
                 <span className="font-medium">{count}</span>
               </div>
             ))}
