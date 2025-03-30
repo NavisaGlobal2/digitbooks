@@ -1,6 +1,8 @@
 
+// Import necessary types and functions
 import { ParsedTransaction } from "../types";
-import { getAuthToken, MAX_RETRIES, sleep } from "./retryHandler";
+import { getAuthToken } from "./authHandler";
+import { MAX_RETRIES, sleep } from "./retryHandler";
 import { trackSuccessfulConnection, trackFailedConnection } from "./connectionStats";
 import { prepareFormData } from "./formDataPreparation";
 import { sendRequestWithRetry } from "./requestHandler";
