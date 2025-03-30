@@ -1,3 +1,4 @@
+
 import { sanitizeTextForAPI } from "./utils.ts";
 
 /**
@@ -41,7 +42,7 @@ export const ExcelService = {
  */
 const extractTextFromExcel = async (base64Data: string, fileName: string): Promise<string> => {
   try {
-    console.log("Processing Excel file:", fileName);
+    console.log("Server-side processing Excel file:", fileName);
     
     // Clean the base64 string
     const cleanBase64 = base64Data.includes('base64,') 
@@ -51,27 +52,28 @@ const extractTextFromExcel = async (base64Data: string, fileName: string): Promi
     // Convert base64 to binary array
     const data = base64ToUint8Array(cleanBase64);
     
-    // Since we don't have XLSX in Deno, we'll need to parse the binary data manually
-    // This is a simplified approach to extract text from Excel binary data
+    // Since we don't have XLSX in Deno, we'll implement a simple binary text extraction
+    // Extract text segments using our fallback method
+    let extractedText = `EXCEL DOCUMENT: ${fileName}\n\n`;
     
-    let extractedText = `[EXCEL FILE: ${fileName}]\n\n`;
-    extractedText += "DETECTED TABLE STRUCTURE:\nTRANSACTION DATA:\n";
-    
-    // Extract ASCII text segments
+    // Extract text segments
     const textSegments = extractTextSegments(data);
     
     // Look for tabular data patterns
     const tableData = extractTabularData(data, textSegments);
     
-    // Add table data if found
+    // Add structured data if found
     if (tableData.length > 0) {
+      extractedText += "STRUCTURED DATA:\n";
       for (const row of tableData) {
         extractedText += row.join("\t") + "\n";
       }
     } else {
       // If no structured data found, include the text segments
-      extractedText += "\n\nADDITIONAL RELEVANT DATA:\n";
-      extractedText += textSegments.join("\n");
+      extractedText += "EXTRACTED TEXT:\n";
+      extractedText += textSegments
+        .filter(segment => segment.length >= 3)
+        .join("\n");
     }
 
     console.log("Excel extraction complete");
@@ -125,7 +127,7 @@ const extractTextSegments = (data: Uint8Array): string[] => {
       currentSegment += String.fromCharCode(data[i]);
     } else if (currentSegment.length > 0) {
       // End of segment
-      if (currentSegment.length >= 3 && isRelevantTextSegment(currentSegment)) {
+      if (currentSegment.length >= 3) {
         segments.push(currentSegment);
       }
       currentSegment = '';
@@ -133,41 +135,11 @@ const extractTextSegments = (data: Uint8Array): string[] => {
   }
   
   // Add any remaining segment
-  if (currentSegment.length >= 3 && isRelevantTextSegment(currentSegment)) {
+  if (currentSegment.length >= 3) {
     segments.push(currentSegment);
   }
   
   return segments;
-}
-
-/**
- * Check if a text segment is relevant for financial data
- * @param segment The text segment to check
- * @returns boolean indicating if segment is relevant
- */
-const isRelevantTextSegment = (segment: string): boolean => {
-  // Ignore segments that are just repeated characters
-  if (/^(.)\1+$/.test(segment)) return false;
-  
-  // Financial data often includes these words
-  const financialKeywords = [
-    'date', 'amount', 'transaction', 'payment', 'transfer', 'balance', 
-    'debit', 'credit', 'deposit', 'withdrawal', 'reference'
-  ];
-  
-  // Check if segment contains any financial keywords
-  for (const keyword of financialKeywords) {
-    if (segment.toLowerCase().includes(keyword)) return true;
-  }
-  
-  // Check for date patterns
-  if (/\d{1,2}[-\/\.]\d{1,2}[-\/\.]\d{2,4}/.test(segment)) return true;
-  
-  // Check for currency values
-  if (/[\$€£¥]\s?\d+[.,]\d{2}/.test(segment) || /\d+[.,]\d{2}\s?[\$€£¥]/.test(segment)) return true;
-  
-  // General check - keep if it has numbers and letters (likely meaningful content)
-  return /\d/.test(segment) && /[a-zA-Z]/.test(segment) && segment.length > 5;
 }
 
 /**
@@ -179,38 +151,17 @@ const isRelevantTextSegment = (segment: string): boolean => {
 const extractTabularData = (data: Uint8Array, textSegments: string[]): string[][] => {
   const table: string[][] = [];
   
-  // Try to find patterns that might indicate table structures
-  let potentialHeader: string[] = [];
-  
-  // Look for segments that might be headers
+  // Simplified approach: look for tab, comma, or pipe delimited content
   for (const segment of textSegments) {
-    if (segment.toLowerCase().includes('date') && 
-        (segment.toLowerCase().includes('description') || 
-         segment.toLowerCase().includes('transaction') || 
-         segment.toLowerCase().includes('detail'))) {
+    // Check if this segment might be a table row
+    if (segment.includes('\t') || segment.includes(',') || segment.includes('|')) {
+      let delimiter = '\t';
+      if (segment.includes(',') && !segment.includes('\t')) delimiter = ',';
+      if (segment.includes('|') && !segment.includes('\t') && !segment.includes(',')) delimiter = '|';
       
-      // This segment might contain header information
-      const parts = segment.split(/[\t,;|]/);
-      if (parts.length > 1) {
-        potentialHeader = parts;
-        break;
-      }
-    }
-  }
-  
-  // If we found a potential header, add it to the table
-  if (potentialHeader.length > 0) {
-    table.push(potentialHeader);
-    
-    // Now try to find rows that match this pattern
-    for (const segment of textSegments) {
-      // Skip the header itself
-      if (segment === potentialHeader.join('\t')) continue;
-      
-      // Look for segments with similar structure
-      const parts = segment.split(/[\t,;|]/);
-      if (parts.length >= potentialHeader.length - 1 && parts.length <= potentialHeader.length + 1) {
-        table.push(parts);
+      const cells = segment.split(delimiter);
+      if (cells.length >= 2) {
+        table.push(cells.map(cell => cell.trim()));
       }
     }
   }
