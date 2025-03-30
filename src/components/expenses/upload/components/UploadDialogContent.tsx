@@ -1,10 +1,11 @@
-import React from 'react';
-import { Alert, AlertDescription } from "@/components/ui/alert";
+
+import React from "react";
+import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Upload, Loader2, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
-import { X, Upload, FileText, AlertCircle } from 'lucide-react';
-import ProcessingModeToggle from "./ProcessingModeToggle";
+import ConnectionStatistics from "./ConnectionStatistics";
+import { useAuth } from "@/contexts/auth";
 
 interface UploadDialogContentProps {
   file: File | null;
@@ -18,16 +19,16 @@ interface UploadDialogContentProps {
   isAuthenticated: boolean | null;
   preferredAIProvider: string;
   setPreferredAIProvider: (provider: string) => void;
-  useVisionApi: boolean;
-  setUseVisionApi: (useVision: boolean) => void;
   isWaitingForServer?: boolean;
-  storePdfInSupabase: boolean;
-  onStorePdfToggle: (value: boolean) => void;
-  extractPdfText: boolean;
-  onExtractPdfTextToggle: (value: boolean) => void;
+  useVisionApi?: boolean;
+  setUseVisionApi?: (use: boolean) => void;
+  storePdfInSupabase?: boolean;
+  onStorePdfToggle?: (store: boolean) => void;
+  extractPdfText?: boolean;
+  onExtractPdfTextToggle?: (extract: boolean) => void;
   isProcessingPdf?: boolean;
-  useOcrSpace: boolean;
-  onOcrSpaceToggle: (value: boolean) => void;
+  useOcrSpace?: boolean;
+  onOcrSpaceToggle?: (use: boolean) => void;
 }
 
 const UploadDialogContent: React.FC<UploadDialogContentProps> = ({
@@ -42,164 +43,209 @@ const UploadDialogContent: React.FC<UploadDialogContentProps> = ({
   isAuthenticated,
   preferredAIProvider,
   setPreferredAIProvider,
+  isWaitingForServer,
   useVisionApi,
   setUseVisionApi,
-  isWaitingForServer = false,
   storePdfInSupabase,
   onStorePdfToggle,
   extractPdfText,
   onExtractPdfTextToggle,
-  isProcessingPdf = false,
+  isProcessingPdf,
   useOcrSpace,
   onOcrSpaceToggle
 }) => {
-  const isPdf = file && file.type === 'application/pdf';
+  // Get auth context
+  const { isAuthenticated: authContextAuth, user } = useAuth();
   
-  const showOcrSpaceWarning = useOcrSpace && !isAuthenticated;
+  // Determine final authentication status (priority to direct auth check)
+  const isUserAuthenticated = isAuthenticated !== null ? isAuthenticated : authContextAuth;
   
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Upload bank statement</h2>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={onClose}
-          disabled={uploading}
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+    <>
+      <DialogHeader>
+        <DialogTitle>Upload Bank Statement</DialogTitle>
+        <DialogDescription>
+          Upload a CSV, Excel or PDF file from your bank to import transactions.
+        </DialogDescription>
+      </DialogHeader>
       
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="ml-2">{error}</AlertDescription>
-        </Alert>
-      )}
-      
-      {useOcrSpace && error?.includes('OCR.space API key is not configured') && (
-        <Alert variant="default" className="mb-4 border-yellow-500 text-yellow-800 bg-yellow-50">
-          <AlertCircle className="h-4 w-4 text-yellow-800" />
-          <AlertDescription className="ml-2">
-            <strong>OCR.space API Key Missing</strong>
-            <p className="text-sm">
-              The OCR.space API key needs to be configured in your Supabase project.
-              Set the environment variable <code className="bg-yellow-100 p-1 rounded">OCR_SPACE_API_KEY</code> in your Supabase Edge Function settings.
-            </p>
-            <p className="text-sm mt-1">
-              You can get a free OCR.space API key at <a href="https://ocr.space/ocrapi" target="_blank" rel="noopener noreferrer" className="underline text-blue-600">ocr.space</a>.
-            </p>
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {showOcrSpaceWarning && (
-        <Alert variant="default" className="mb-4 border-amber-200 bg-amber-50">
-          <AlertCircle className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="ml-2">
-            You must be logged in to use OCR.space processing.
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {isProcessingPdf && (
-        <Alert variant="default" className="mb-4 bg-blue-50 border-blue-200">
-          <AlertCircle className="h-4 w-4 text-blue-500" />
-          <AlertDescription className="ml-2 text-blue-700">
-            Processing PDF document. This may take a few moments...
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <div className="space-y-4">
-        <div 
-          className={`border-2 border-dashed rounded-md p-6 text-center cursor-pointer ${
-            file ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:border-gray-400'
-          }`}
-          onClick={() => document.getElementById('file-upload')?.click()}
-        >
-          {file ? (
-            <div className="flex flex-col items-center">
-              <FileText className="h-8 w-8 text-green-500 mb-2" />
-              <p className="text-sm font-medium text-green-600">{file.name}</p>
-              <p className="text-xs text-gray-500">
-                {(file.size / 1024).toFixed(2)} KB
-              </p>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-red-500 mt-2"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const fileInput = document.getElementById('file-upload') as HTMLInputElement;
-                  if (fileInput) fileInput.value = '';
-                  handleFileChange({ target: { files: null } } as any);
-                }}
-              >
-                Remove
-              </Button>
-            </div>
-          ) : (
-            <>
-              <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="mb-1 text-sm font-medium text-gray-700">
-                Click to upload or drag and drop
-              </p>
-              <p className="text-xs text-gray-500">
-                CSV, Excel or PDF files
-              </p>
-            </>
-          )}
-          <input
-            id="file-upload"
-            type="file"
-            accept=".csv,.xls,.xlsx,.pdf"
-            className="hidden"
-            onChange={handleFileChange}
-            disabled={uploading}
-          />
+      {!isUserAuthenticated && (
+        <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4">
+          <h4 className="text-amber-800 font-medium">Authentication Required</h4>
+          <p className="text-amber-700 text-sm mt-1">
+            You need to be signed in to upload and process bank statements.
+          </p>
         </div>
-
-        <ProcessingModeToggle
-          preferredAIProvider={preferredAIProvider}
-          setPreferredAIProvider={setPreferredAIProvider}
-          useVisionApi={useVisionApi}
-          setUseVisionApi={setUseVisionApi}
-          storePdfInSupabase={storePdfInSupabase}
-          onStorePdfToggle={onStorePdfToggle}
-          extractPdfText={extractPdfText}
-          onExtractPdfTextToggle={onExtractPdfTextToggle}
-          useOcrSpace={useOcrSpace}
-          onOcrSpaceToggle={onOcrSpaceToggle}
-        />
-
-        {uploading && (
-          <div className="pt-2 pb-2">
-            <Progress value={progress} className="h-2" />
-            <p className="text-xs text-gray-500 mt-1">{step}</p>
+      )}
+      
+      <div className="space-y-4">
+        {!file && (
+          <div className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center">
+            <Upload className="mx-auto h-8 w-8 text-gray-400" />
+            <p className="mt-2 text-sm text-gray-600">
+              Click to browse or drag and drop
+            </p>
+            <input
+              type="file"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              accept=".csv,.xls,.xlsx,.pdf"
+              onChange={handleFileChange}
+              disabled={uploading || !isUserAuthenticated}
+            />
           </div>
         )}
-
-        <div className="flex justify-end space-x-2 pt-2">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={uploading}
-          >
-            Cancel
-          </Button>
-          <Button
-            disabled={!file || uploading}
-            onClick={parseFile}
-            className="bg-green-500 hover:bg-green-600 text-white"
-          >
-            {uploading ? 'Processing...' : 'Parse Statement'}
-          </Button>
-        </div>
+        
+        {file && (
+          <div className="flex items-center justify-between border rounded-md p-3">
+            <div className="flex items-center">
+              <div className="bg-blue-100 p-2 rounded">
+                <Upload className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="ml-3 truncate">
+                <p className="text-sm font-medium">{file.name}</p>
+                <p className="text-xs text-gray-500">
+                  {(file.size / 1024).toFixed(1)} KB
+                </p>
+              </div>
+            </div>
+            {!uploading && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="h-8 w-8 p-0 flex items-center justify-center"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Remove file</span>
+              </Button>
+            )}
+          </div>
+        )}
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-3">
+            <h4 className="text-red-800 font-medium">Error</h4>
+            <p className="text-red-700 text-sm mt-1">{error}</p>
+          </div>
+        )}
+        
+        {uploading && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">
+                {isWaitingForServer 
+                  ? "Processing file on server..." 
+                  : isProcessingPdf 
+                    ? "Processing PDF..." 
+                    : "Uploading..."}
+              </p>
+              <span className="text-xs text-gray-500">{progress}%</span>
+            </div>
+            <Progress value={progress} className="h-2" />
+            {isWaitingForServer && (
+              <p className="text-xs text-gray-600">
+                This may take a moment... We're extracting transaction data from your file.
+              </p>
+            )}
+          </div>
+        )}
+        
+        {file && !uploading && (
+          <>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label htmlFor="ai-provider" className="text-sm font-medium">
+                  Preferred AI Provider
+                </label>
+                <select
+                  id="ai-provider"
+                  value={preferredAIProvider}
+                  onChange={(e) => setPreferredAIProvider(e.target.value)}
+                  className="text-sm border rounded px-2 py-1"
+                >
+                  <option value="anthropic">Anthropic (Claude)</option>
+                  <option value="deepseek">DeepSeek</option>
+                </select>
+              </div>
+              
+              {file.name.toLowerCase().endsWith('.pdf') && (
+                <>
+                  {onStorePdfToggle && (
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="store-pdf" className="text-sm font-medium">
+                        Store PDF in Supabase
+                      </label>
+                      <input
+                        id="store-pdf"
+                        type="checkbox"
+                        checked={!!storePdfInSupabase}
+                        onChange={(e) => onStorePdfToggle(e.target.checked)}
+                        className="rounded"
+                      />
+                    </div>
+                  )}
+                  
+                  {onExtractPdfTextToggle && (
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="extract-text" className="text-sm font-medium">
+                        Extract PDF text with Vision API
+                      </label>
+                      <input
+                        id="extract-text"
+                        type="checkbox"
+                        checked={!!extractPdfText}
+                        onChange={(e) => onExtractPdfTextToggle(e.target.checked)}
+                        className="rounded"
+                      />
+                    </div>
+                  )}
+                  
+                  {onOcrSpaceToggle && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label htmlFor="use-ocr-space" className="text-sm font-medium">
+                          Use OCR.space for PDF processing
+                        </label>
+                        <p className="text-xs text-gray-500">
+                          Alternative OCR service (requires API key)
+                        </p>
+                      </div>
+                      <input
+                        id="use-ocr-space"
+                        type="checkbox"
+                        checked={!!useOcrSpace}
+                        onChange={(e) => onOcrSpaceToggle(e.target.checked)}
+                        className="rounded"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={onClose}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={parseFile}
+                disabled={!isUserAuthenticated}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                Process File
+              </Button>
+            </div>
+          </>
+        )}
+        
+        {!file && !uploading && (
+          <ConnectionStatistics />
+        )}
       </div>
-    </div>
+    </>
   );
 };
 

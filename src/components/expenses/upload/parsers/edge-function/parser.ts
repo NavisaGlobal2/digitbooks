@@ -1,4 +1,3 @@
-
 // Import necessary types and functions
 import { ParsedTransaction } from "../types";
 import { getAuthToken } from "./authHandler";
@@ -27,7 +26,7 @@ export const parseViaEdgeFunction = async (
     if (authError || !token) {
       console.error("❌ STEP 0.2: Authentication error:", authError);
       trackFailedConnection('auth_token_error', new Error(authError || "Authentication failed"));
-      return onError(authError || "Authentication error occurred");
+      return onError(authError || "Authentication error. Please sign in and try again.");
     }
     console.log(`✅ STEP 0.3: Authentication token retrieved successfully`);
     
@@ -52,34 +51,10 @@ export const parseViaEdgeFunction = async (
     const { formData, isPdf: isFilePdf, pdfAttemptCount } = prepareFormData(file, options);
     console.log(`✅ STEP 0.6: Form data prepared, PDF attempt count: ${pdfAttemptCount}`);
     
-    // Use Supabase Edge Function URL if available, or fall back to API endpoint
-    // UPDATED: Use a more robust URL determination approach
-    let edgeFunctionEndpoint;
-    
-    // Method 1: Get URL from import.meta (Vite)
-    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_EDGE_FUNCTION_URL) {
-      edgeFunctionEndpoint = import.meta.env.VITE_EDGE_FUNCTION_URL;
-      console.log("Using edge function URL from import.meta.env:", edgeFunctionEndpoint);
-    } 
-    // Method 2: Get from Supabase functions directly using the current origin
-    else {
-      const supabaseUrl = 
-        (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || 
-        "https://naxmgtoskeijvdofqyik.supabase.co";
-      
-      // Try specific endpoints in order
-      const possibleEndpoints = [
-        // Option 1: Direct Supabase function invocation
-        `${supabaseUrl}/functions/v1/parse-bank-statement`,
-        // Option 2: Alternative function name
-        `${supabaseUrl}/functions/v1/parse-bank-statement-ai`,
-        // Option 3: Local API fallback
-        `/api/parse-bank-statement`
-      ];
-      
-      edgeFunctionEndpoint = possibleEndpoints[0]; // Start with the first option
-      console.log(`Using Supabase edge function URL: ${edgeFunctionEndpoint}`);
-    }
+    // Use Supabase Edge Function URL
+    // UPDATED: Use direct Project URL approach for better reliability
+    const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
+    const edgeFunctionEndpoint = `${supabaseUrl}/functions/v1/parse-bank-statement`;
     
     console.log(`🔄 STEP 3: Full endpoint URL: ${edgeFunctionEndpoint}`);
     console.log("Request options:", options);
@@ -87,27 +62,13 @@ export const parseViaEdgeFunction = async (
     // Implement retry logic
     let retryCount = 0;
     let lastError = null;
-    let endpointIndex = 0;
-    const possibleEndpoints = [
-      // Try specific endpoints in order
-      `https://naxmgtoskeijvdofqyik.supabase.co/functions/v1/parse-bank-statement`,
-      `https://naxmgtoskeijvdofqyik.supabase.co/functions/v1/parse-bank-statement-ai`,
-      `/api/parse-bank-statement`
-    ];
-
+    
     while (retryCount <= MAX_RETRIES) {
       try {
         console.log(`🔄 STEP 4: Processing attempt ${retryCount + 1} of ${MAX_RETRIES + 1}`);
         
-        // If we've had errors, try a different endpoint
-        if (retryCount > 0 && endpointIndex < possibleEndpoints.length - 1) {
-          endpointIndex++;
-          edgeFunctionEndpoint = possibleEndpoints[endpointIndex];
-          console.log(`🔄 STEP 4.1: Trying alternative endpoint: ${edgeFunctionEndpoint}`);
-        }
-        
-        // Attempt to send the request
-        console.log(`🔄 STEP 4.2: Sending request to edge function endpoint`);
+        // Attempt to send the request with fresh token
+        console.log(`🔄 STEP 4.2: Sending request to edge function endpoint with auth token`);
         const requestSucceeded = await sendRequestWithRetry(
           edgeFunctionEndpoint,
           token,
@@ -144,7 +105,19 @@ export const parseViaEdgeFunction = async (
             onSuccess(filteredTransactions);
             return true;
           },
-          onError,
+          (errorMessage) => {
+            // Check if this is an authentication error
+            if (errorMessage.includes('auth') || 
+                errorMessage.includes('Authentication') || 
+                errorMessage.includes('token') ||
+                errorMessage.includes('sign in')) {
+              
+              console.error(`❌ Authentication error: ${errorMessage}`);
+              return onError(`Authentication error: Please sign in again and try once more.`);
+            }
+            
+            return onError(errorMessage);
+          },
           isFilePdf,
           retryCount,
           MAX_RETRIES
