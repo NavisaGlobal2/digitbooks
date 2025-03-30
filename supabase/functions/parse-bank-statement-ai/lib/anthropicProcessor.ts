@@ -80,6 +80,9 @@ export async function processWithAnthropic(text: string, context?: string): Prom
     // Log the first 500 characters of the text to help with debugging
     console.log(`First 500 chars of text sent to Anthropic: ${text.substring(0, 500)}...`);
 
+    // Filter out invalid characters or encoding issues before sending to Anthropic
+    const sanitizedText = sanitizeTextForAPI(text);
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -94,7 +97,7 @@ export async function processWithAnthropic(text: string, context?: string): Prom
         messages: [
           {
             role: "user",
-            content: text
+            content: sanitizedText
           }
         ]
       }),
@@ -148,4 +151,21 @@ export async function processWithAnthropic(text: string, context?: string): Prom
     console.error("Error processing with Anthropic:", error);
     throw error;
   }
+}
+
+/**
+ * Sanitize text before sending to API to prevent encoding issues
+ * @param text Text to sanitize
+ * @returns Sanitized text
+ */
+function sanitizeTextForAPI(text: string): string {
+  // Replace problematic characters and encoding issues
+  return text
+    // Replace null bytes and control characters
+    .replace(/[\x00-\x1F\x7F]/g, ' ')
+    // Replace unpaired surrogates with space
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g, ' ')
+    // Reduce multiple spaces to single space
+    .replace(/\s+/g, ' ')
+    .trim();
 }

@@ -72,6 +72,7 @@ serve(async (req) => {
         // Log sample of transactions for debugging
         if (transactions.length > 0) {
           console.log(`Sample transaction: ${JSON.stringify(transactions[0])}`);
+          console.log(`Found ${transactions.length} transactions using AI service`);
         }
         
         if (transactions.length === 0) {

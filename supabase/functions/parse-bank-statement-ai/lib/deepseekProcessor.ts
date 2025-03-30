@@ -55,6 +55,9 @@ export async function processWithDeepseek(text: string, context?: string): Promi
   }
 
   try {
+    // Filter out invalid characters or encoding issues before sending to DeepSeek
+    const sanitizedText = sanitizeTextForAPI(text);
+    
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -70,7 +73,7 @@ export async function processWithDeepseek(text: string, context?: string): Promi
           },
           {
             role: "user",
-            content: text
+            content: sanitizedText
           }
         ],
         temperature: 0.1,
@@ -113,4 +116,21 @@ export async function processWithDeepseek(text: string, context?: string): Promi
     console.error("Error processing with DeepSeek:", error);
     throw error;
   }
+}
+
+/**
+ * Sanitize text before sending to API to prevent encoding issues
+ * @param text Text to sanitize
+ * @returns Sanitized text
+ */
+function sanitizeTextForAPI(text: string): string {
+  // Replace problematic characters and encoding issues
+  return text
+    // Replace null bytes and control characters
+    .replace(/[\x00-\x1F\x7F]/g, ' ')
+    // Replace unpaired surrogates with space
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g, ' ')
+    // Reduce multiple spaces to single space
+    .replace(/\s+/g, ' ')
+    .trim();
 }

@@ -1,4 +1,3 @@
-
 import { isExcelFile as isExcelFileFn } from "./utils.ts";
 
 /**
@@ -6,118 +5,71 @@ import { isExcelFile as isExcelFileFn } from "./utils.ts";
  */
 export const ExcelService = {
   /**
-   * Extract text content from an Excel file
+   * Extract text from an Excel file
    * @param file The Excel file to extract text from
-   * @returns Promise with the extracted text content
+   * @returns Promise with the extracted text
    */
   extractTextFromExcel: async (file: File): Promise<string> => {
     try {
       console.log(`Extracting text from Excel file: ${file.name} (${file.size} bytes)`);
       
-      // Get the binary data from the file
-      const arrayBuffer = await file.arrayBuffer();
-      const data = new Uint8Array(arrayBuffer);
-      console.log(`Attempting to extract text from ${arrayBuffer.byteLength} bytes of Excel binary data`);
+      // Get file data as array buffer
+      const buffer = await file.arrayBuffer();
       
-      // Extract text using multiple strategies for better coverage
-      const textSegments: string[] = [];
+      // Attempt to extract text using multiple methods and combine results
+      let extractedText = '';
+      let segments: { ascii: string[], utf16: string[], structured: any[] } = {
+        ascii: [],
+        utf16: [],
+        structured: []
+      };
       
+      // Extract potential data from Excel binary
       try {
-        // 1. Extract ASCII text
-        const asciiText = extractASCIIStrings(data);
+        const data = new Uint8Array(buffer);
+        
+        console.log(`Attempting to extract text from ${data.length} bytes of Excel binary data`);
+        
+        // 1. Extract ASCII text (most reliable for readable content)
+        const asciiText = extractASCIIText(data);
+        segments.ascii = asciiText;
         console.log(`Extracted ${asciiText.length} ASCII text segments`);
         
-        if (asciiText.length > 0) {
-          textSegments.push(...asciiText);
-        }
-      } catch (err) {
-        console.log("ASCII extraction error:", err.message);
-      }
-      
-      try {
-        // 2. Extract UTF-16 text
-        const utf16Text = extractUTF16Strings(data);
+        // 2. Extract UTF-16 text (catches some additional formatted text)
+        const utf16Text = extractUTF16Text(data);
+        segments.utf16 = utf16Text;
         console.log(`Extracted ${utf16Text.length} UTF16 text segments`);
         
-        if (utf16Text.length > 0) {
-          textSegments.push(...utf16Text);
-        }
-      } catch (err) {
-        console.log("UTF-16 extraction error:", err.message);
-      }
-      
-      try {
-        // 3. Look for structured data patterns
-        const structuredData = findStructuredData(data);
+        // 3. Try to extract structured data patterns
+        const structuredData = extractStructuredData(data);
+        segments.structured = structuredData;
         console.log(`Extracted ${structuredData.length} structured data segments`);
         
-        if (structuredData.length > 0) {
-          textSegments.push(...structuredData);
-        }
-      } catch (err) {
-        console.log("Structured data extraction error:", err.message);
+        // Log the total number of segments found
+        console.log(`Found ${asciiText.length + utf16Text.length + structuredData.length} text segments in Excel file`);
+        
+        // Combine extracted text with proper formatting
+        extractedText = [
+          `[EXCEL FILE: ${file.name}]`,
+          '',
+          'DETECTED TABLE STRUCTURE:',
+          'TRANSACTION DATA:',
+          ...asciiText.filter(t => isTransactionLike(t)),
+          '',
+          'ADDITIONAL RELEVANT DATA:',
+          ...asciiText.filter(t => !isTransactionLike(t) && t.length > 3),
+          ...utf16Text.filter(t => t.length > 3),
+          ...structuredData.map(d => typeof d === 'string' ? d : JSON.stringify(d)).filter(t => t.length > 3)
+        ].join('\n');
+        
+        console.log(`Extracted segments - UTF16: ${utf16Text.length}, ASCII: ${asciiText.length}, Structured: ${structuredData.length}`);
+      } catch (binaryError) {
+        console.error('Error extracting from binary data:', binaryError);
+        extractedText = `Failed to extract binary data: ${binaryError.message}. ` + extractedText;
       }
       
-      // Filter out irrelevant text segments and prioritize important segments
-      const filteredSegments = textSegments
-        .filter(segment => segment.trim().length > 0)
-        .filter(segment => {
-          // Filter out common Excel internal strings
-          const lowerSegment = segment.toLowerCase();
-          return !lowerSegment.includes("microsoft excel") &&
-                !lowerSegment.includes("worksheets") &&
-                !lowerSegment.includes("<html") &&
-                !lowerSegment.includes("<!doctype") &&
-                !lowerSegment.includes("<xml") &&
-                segment.length > 2; // Filter out very short segments
-        });
-      
-      console.log(`Found ${filteredSegments.length} text segments in Excel file`);
-      
-      // Format the extracted text
-      let textContent = `[EXCEL FILE: ${file.name}]\n\n`;
-      
-      // Log extraction stats
-      const asciiCount = textSegments.filter(s => !containsUnicode(s)).length;
-      const utf16Count = textSegments.filter(s => containsUnicode(s)).length;
-      const structuredCount = textSegments.length - asciiCount - utf16Count;
-      
-      console.log(`Extracted segments - UTF16: ${utf16Count}, ASCII: ${asciiCount}, Structured: ${structuredCount}`);
-      
-      // Add table headers section specifically designed to help LLM recognize column structures
-      textContent += "DETECTED TABLE STRUCTURE:\n";
-      
-      // Find potential headers - look for rows with short text items that might be column headers
-      const potentialHeaders = findPotentialHeaders(filteredSegments);
-      if (potentialHeaders.length > 0) {
-        textContent += "Headers: " + potentialHeaders.join(" | ") + "\n\n";
-      }
-      
-      // Add transaction data section
-      textContent += "TRANSACTION DATA:\n";
-      
-      // Find rows that look like transactions (contain dates, numbers, etc.)
-      const transactionRows = findTransactionRows(filteredSegments);
-      
-      // Add all identified transaction rows
-      textContent += transactionRows.join("\n");
-      
-      // Add all remaining text segments that might be relevant
-      // Focus on segments that might contain transaction data
-      const remainingRelevantSegments = filteredSegments
-        .filter(segment => 
-          !transactionRows.includes(segment) && 
-          !potentialHeaders.includes(segment) &&
-          (containsDate(segment) || containsCurrency(segment) || containsTransactionWords(segment))
-        );
-      
-      if (remainingRelevantSegments.length > 0) {
-        textContent += "\n\nADDITIONAL RELEVANT DATA:\n";
-        textContent += remainingRelevantSegments.join("\n");
-      }
-      
-      console.log(`Final extracted text contains ${textContent.length} characters`);
-      return textContent;
+      console.log(`Final extracted text contains ${extractedText.length} characters`);
+      return extractedText;
     } catch (error) {
       console.error('Error extracting text from Excel file:', error);
       throw new Error(`Failed to extract text from Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -126,159 +78,130 @@ export const ExcelService = {
 };
 
 /**
- * Check if a file is an Excel file
- * @param file The file to check
- * @returns boolean indicating if the file is an Excel file
+ * Helper function to determine if a text segment looks like transaction data
+ * @param text The text segment to check
+ * @returns boolean indicating if text looks like transaction data
  */
-export const isExcelFile = (file: File): boolean => {
-  return isExcelFileFn(file.name, file.type);
-};
+function isTransactionLike(text: string): boolean {
+  // Check for common transaction indicators (dates, amounts with currency symbols, numbers)
+  const datePattern = /\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/;
+  const amountPattern = /(?:£|\$|€|\d+\.\d{2}|\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/;
+  
+  return (
+    datePattern.test(text) || 
+    amountPattern.test(text) ||
+    /(debit|credit|payment|transfer|transaction|deposit|withdrawal)/i.test(text)
+  );
+}
 
-// Helper function to extract ASCII strings from binary data
-function extractASCIIStrings(data: Uint8Array): string[] {
-  const minLength = 4; // Minimum length for a string to be considered valid
-  const strings: string[] = [];
-  let currentString = '';
+/**
+ * Extract ASCII text from binary data
+ * @param data The binary data
+ * @returns Array of extracted text segments
+ */
+function extractASCIIText(data: Uint8Array): string[] {
+  const textSegments: string[] = [];
+  let currentSegment = '';
   
   for (let i = 0; i < data.length; i++) {
     const byte = data[i];
-    // Check if it's a printable ASCII character
-    if (byte >= 32 && byte <= 126) {
-      currentString += String.fromCharCode(byte);
-    } else {
-      // End of current string
-      if (currentString.length >= minLength) {
-        strings.push(currentString);
-      }
-      currentString = '';
-    }
-  }
-  
-  // Add the last string if it's valid
-  if (currentString.length >= minLength) {
-    strings.push(currentString);
-  }
-  
-  return strings;
-}
-
-// Helper function to extract UTF-16 strings from binary data
-function extractUTF16Strings(data: Uint8Array): string[] {
-  const minLength = 2; // Minimum length for a string to be considered valid
-  const strings: string[] = [];
-  let currentString = '';
-  
-  for (let i = 0; i < data.length - 1; i += 2) {
-    // Create a UTF-16 character from two bytes
-    const charCode = data[i] + (data[i + 1] << 8);
     
-    // Check if it's a printable character
-    if (charCode >= 32 && charCode <= 65535 && charCode !== 65533) {
-      try {
-        const char = String.fromCharCode(charCode);
-        currentString += char;
-      } catch (e) {
-        // Skip invalid character
-        if (currentString.length >= minLength) {
-          strings.push(currentString);
-        }
-        currentString = '';
-      }
+    // ASCII printable characters (32-126)
+    if (byte >= 32 && byte <= 126) {
+      currentSegment += String.fromCharCode(byte);
+    } else if (byte === 10 || byte === 13) { // Line breaks
+      currentSegment += ' ';
     } else {
-      // End of current string
-      if (currentString.length >= minLength) {
-        strings.push(currentString);
+      if (currentSegment.trim().length > 3) {
+        textSegments.push(currentSegment.trim());
       }
-      currentString = '';
+      currentSegment = '';
     }
   }
   
-  // Add the last string if it's valid
-  if (currentString.length >= minLength) {
-    strings.push(currentString);
+  // Add the last segment if not empty
+  if (currentSegment.trim().length > 3) {
+    textSegments.push(currentSegment.trim());
   }
   
-  return strings;
+  return textSegments;
 }
 
-// Helper function to find structured data patterns in binary data
-function findStructuredData(data: Uint8Array): string[] {
-  const results: string[] = [];
+/**
+ * Extract UTF-16 text from binary data
+ * @param data The binary data
+ * @returns Array of extracted text segments
+ */
+function extractUTF16Text(data: Uint8Array): string[] {
+  const textSegments: string[] = [];
   
-  // Look for patterns indicating tables or structured data
-  const dataStr = new TextDecoder().decode(data);
-  
-  // Simple pattern for CSV-like data in Excel files
-  const csvPattern = /([^\n,]+,){3,}[^\n,]+/g;
-  const csvMatches = dataStr.match(csvPattern);
-  if (csvMatches) {
-    results.push(...csvMatches);
+  // Process pairs of bytes as UTF-16
+  for (let i = 0; i < data.length - 1; i += 2) {
+    let currentSegment = '';
+    let validChars = 0;
+    
+    for (let j = i; j < Math.min(i + 100, data.length - 1); j += 2) {
+      const charCode = data[j] + (data[j + 1] << 8);
+      
+      // Check for printable characters
+      if (charCode >= 32 && charCode <= 126 || charCode >= 160 && charCode <= 255) {
+        currentSegment += String.fromCharCode(charCode);
+        validChars++;
+      } else {
+        break;
+      }
+    }
+    
+    if (validChars > 3 && currentSegment.trim().length > 0) {
+      textSegments.push(currentSegment.trim());
+      i += validChars * 2 - 2; // Skip the characters we've processed
+    }
   }
   
-  // Look for tab-separated data
-  const tsvPattern = /([^\n\t]+\t){3,}[^\n\t]+/g;
-  const tsvMatches = dataStr.match(tsvPattern);
-  if (tsvMatches) {
-    results.push(...tsvMatches);
-  }
+  return textSegments;
+}
+
+/**
+ * Extract structured data patterns from binary data
+ * @param data The binary data
+ * @returns Array of structured data objects/strings
+ */
+function extractStructuredData(data: Uint8Array): any[] {
+  const results: any[] = [];
+  const text = new TextDecoder().decode(data);
   
-  // Look for date patterns followed by numbers (typical for bank statements)
-  const datePattern = /\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}.{1,50}[\d,.]+/g;
-  const dateMatches = dataStr.match(datePattern);
+  // Look for date patterns
+  const dateMatches = text.match(/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/g);
   if (dateMatches) {
     results.push(...dateMatches);
+  }
+  
+  // Look for currency/amount patterns
+  const amountMatches = text.match(/(?:£|\$|€|\d+\.\d{2}|\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/g);
+  if (amountMatches) {
+    results.push(...amountMatches);
   }
   
   return results;
 }
 
-// Helper function to check if a string contains Unicode characters
-function containsUnicode(str: string): boolean {
-  for (let i = 0; i < str.length; i++) {
-    if (str.charCodeAt(i) > 127) return true;
+/**
+ * Check if a file is an Excel file
+ * @param file The file to check
+ * @returns boolean indicating if the file is an Excel file
+ */
+export const isExcelFile = (file: File): boolean => {
+  const excelMimeTypes = [
+    'application/vnd.ms-excel', 
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  ];
+  
+  // Check mime type
+  if (excelMimeTypes.includes(file.type)) {
+    return true;
   }
-  return false;
-}
-
-// Helper function to find potential header rows
-function findPotentialHeaders(segments: string[]): string[] {
-  // Look for segments with potential column headers
-  return segments.filter(segment => {
-    // Headers often contain these words
-    const headerKeywords = ['date', 'description', 'amount', 'balance', 'reference', 'transaction', 'debit', 'credit'];
-    const lowerSegment = segment.toLowerCase();
-    
-    // Check if segment contains multiple header keywords
-    return headerKeywords.filter(keyword => lowerSegment.includes(keyword)).length >= 2;
-  });
-}
-
-// Helper function to find rows that look like transactions
-function findTransactionRows(segments: string[]): string[] {
-  // Look for segments that likely represent transaction rows
-  return segments.filter(segment => {
-    // Transaction rows typically have dates and amounts
-    return containsDate(segment) && containsCurrency(segment);
-  });
-}
-
-// Helper function to check if a string contains a date pattern
-function containsDate(str: string): boolean {
-  // Common date formats (DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, etc.)
-  const dateRegex = /\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/;
-  return dateRegex.test(str);
-}
-
-// Helper function to check if a string contains currency/amount pattern
-function containsCurrency(str: string): boolean {
-  // Look for currency symbols or numbers with decimal points that might represent amounts
-  const currencyRegex = /[\$£€₦]?\s?\d{1,3}(,\d{3})*(\.\d{2})?|\d+\.\d{2}/;
-  return currencyRegex.test(str);
-}
-
-// Helper function to check if a string contains words commonly found in transactions
-function containsTransactionWords(str: string): boolean {
-  const lowerStr = str.toLowerCase();
-  const transactionWords = ['payment', 'transfer', 'deposit', 'withdrawal', 'purchase', 'fee', 'interest', 'balance', 'statement'];
-  return transactionWords.some(word => lowerStr.includes(word));
-}
+  
+  // Check file extension
+  const fileName = file.name.toLowerCase();
+  return fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+};
