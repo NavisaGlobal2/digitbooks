@@ -15,26 +15,26 @@ const SupportedFormatsInfo = ({
   return (
     <div className="text-xs text-muted-foreground mt-2">
       <div className="flex items-center gap-1 mb-1">
-        <p>Supported format:</p>
+        <p>Supported formats:</p>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Info className="h-4 w-4 text-gray-400" />
             </TooltipTrigger>
             <TooltipContent>
-              <p>CSV format only with date, description and amount columns</p>
+              <p>CSV and Excel formats with date, description and amount columns</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>
       <ul className="list-disc list-inside ml-2">
-        <li>CSV files from most Nigerian banks</li>
+        <li>CSV and Excel files from most Nigerian banks</li>
         <li>Files should include date, description, and amount columns</li>
         <li>Maximum file size: 10MB</li>
       </ul>
       
       <div className="mt-3 flex flex-col space-y-1">
-        <p className="font-medium">Don't have a CSV file?</p>
+        <p className="font-medium">Don't have a proper format?</p>
         <Button 
           variant="outline" 
           size="sm" 

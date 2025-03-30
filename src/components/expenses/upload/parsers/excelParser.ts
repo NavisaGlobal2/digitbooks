@@ -219,7 +219,7 @@ const parseExcelWithLib = (XLSX: any, file: File, onComplete: (transactions: Par
             description,
             amount,
             type,
-            selected: type === 'debit',
+            selected: false, // Don't preselect transactions
           });
         } catch (err) {
           console.warn('Error parsing row:', err, row);
@@ -610,7 +610,7 @@ const extractTransactionsWithoutHeaders = (rows: any[], columns: {
         description,
         amount,
         type,
-        selected: type === 'debit',
+        selected: false, // Don't preselect transactions
       });
     } catch (err) {
       console.warn('Error parsing row without headers:', err, row);
