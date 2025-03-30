@@ -1,10 +1,9 @@
 
-import { getAuthToken, sleep } from "./retryHandler";
+import { sleep, MAX_RETRIES } from "./retryHandler";
 import { trackSuccessfulConnection, trackFailedConnection } from "./connectionStats";
 import { showFallbackMessage } from "./index";
 import { handleFallbackProcessing } from "./fallbackHandler";
-
-const MAX_RETRIES = 3;
+import { getAuthToken } from "./authHandler";
 
 export const parseViaEdgeFunction = async (fileContent: string, fileType: string) => {
   let retries = 0;

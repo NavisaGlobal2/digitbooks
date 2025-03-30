@@ -1,3 +1,6 @@
+
+import { trackFailedConnection } from "./connectionStats";
+
 export const getAuthToken = (): string | null => {
   try {
     // Simplified auth token retrieval logic

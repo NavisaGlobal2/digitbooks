@@ -16,7 +16,10 @@ const Verify = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <VerificationForm email={email} />
+      <VerificationForm 
+        email={email} 
+        onBack={() => window.history.back()} 
+      />
     </div>
   );
 };

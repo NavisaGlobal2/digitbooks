@@ -12,12 +12,12 @@ export const processSuccessfulResult = (
   console.log("Edge function result:", result);
   
   if (!result.success) {
-    trackFailedConnection('processing_error', { result });
+    trackFailedConnection('processing_error', 'result_error');
     throw new Error(result.error || "Unknown error processing file");
   }
   
   if (!result.transactions || !Array.isArray(result.transactions) || result.transactions.length === 0) {
-    trackFailedConnection('no_transactions', { result });
+    trackFailedConnection('no_transactions', 'empty_result');
     throw new Error("No transactions were found in the uploaded file");
   }
   

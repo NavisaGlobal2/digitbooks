@@ -19,7 +19,7 @@ const ConnectionStatistics = () => {
   }, []);
   
   // Don't show anything if no connections have been attempted
-  if (!stats.total || stats.total === 0) {
+  if (stats.total === 0) {
     return null;
   }
   
