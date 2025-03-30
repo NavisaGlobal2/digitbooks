@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowDownCircle, ExternalLink, RefreshCw, StopCircle, XCircle } from "lucide-react";
-import { getTechnicalErrorDetails, getConnectionStats, resetConnectionStats } from "../parsers/edge-function/connectionStats";
+import { getTechnicalErrorDetails, getConnectionStats, resetStats } from "../parsers/edge-function/connectionStats";
 
 const ConnectionStats = ({ isVisible = true }) => {
   const [showDetails, setShowDetails] = useState(false);
@@ -19,8 +19,8 @@ const ConnectionStats = ({ isVisible = true }) => {
       ? "bg-green-100 text-green-800" 
       : "bg-gray-100 text-gray-800";
   
-  const resetStats = () => {
-    resetConnectionStats();
+  const resetStatsHandler = () => {
+    resetStats();
     setShowDetails(false);
     setShowTechnicalDetails(false);
   };
@@ -48,7 +48,7 @@ const ConnectionStats = ({ isVisible = true }) => {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={resetStats}
+            onClick={resetStatsHandler}
           >
             <RefreshCw className="h-4 w-4 mr-1" />
             Reset Stats
@@ -74,8 +74,8 @@ const ConnectionStats = ({ isVisible = true }) => {
               )}
             </li>
             
-            {stats.lastFailure && (
-              <li><span className="font-medium">Last failure:</span> {new Date(stats.lastFailure).toLocaleString()}</li>
+            {stats.lastFail && (
+              <li><span className="font-medium">Last failure:</span> {new Date(stats.lastFail).toLocaleString()}</li>
             )}
             
             {stats.failCount > 0 && (
