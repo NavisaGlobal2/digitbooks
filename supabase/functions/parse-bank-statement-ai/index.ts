@@ -182,6 +182,8 @@ async function processFormDataRequest(req: Request, userId: string, supabase: an
     const context = formData.get('context') as string || 'general';
     const isRealData = formData.get('isRealData') as string === 'true';
     const useGoogleVision = formData.get('useGoogleVision') as string === 'true';
+    const storePdfInSupabase = formData.get('storePdfInSupabase') as string === 'true';
+    const originalFileName = formData.get('originalFileName') as string || file.name;
     
     if (!file) {
       return new Response(JSON.stringify({ error: 'No file provided' }), {
@@ -193,6 +195,46 @@ async function processFormDataRequest(req: Request, userId: string, supabase: an
     // Process the file based on type
     const fileExt = file.name.split('.').pop()?.toLowerCase();
     const isPdf = fileExt === 'pdf';
+    
+    // Store the file in Supabase Storage if requested
+    let fileUrl = null;
+    if (storePdfInSupabase && isPdf) {
+      try {
+        console.log(`Storing PDF file in Supabase Storage: ${originalFileName}`);
+        
+        // Create storage client
+        const timestamp = new Date().toISOString().replace(/[-:.]/g, '');
+        const safeName = originalFileName.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+        const storagePath = `statements/${userId}/${timestamp}_${safeName}`;
+        
+        // Upload the file
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('expense_documents')
+          .upload(storagePath, file, {
+            contentType: file.type,
+            upsert: false
+          });
+          
+        if (uploadError) {
+          console.error('Error uploading file to storage:', uploadError);
+        } else {
+          console.log(`File uploaded successfully to ${storagePath}`);
+          
+          // Get public URL
+          const { data: publicUrlData } = await supabase.storage
+            .from('expense_documents')
+            .getPublicUrl(storagePath);
+            
+          if (publicUrlData?.publicUrl) {
+            fileUrl = publicUrlData.publicUrl;
+            console.log(`File public URL: ${fileUrl}`);
+          }
+        }
+      } catch (storageError) {
+        console.error('Error storing file:', storageError);
+        // Continue processing even if storage fails
+      }
+    }
     
     // Extract text from the file
     console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}, isRealData: ${isRealData}, useGoogleVision: ${useGoogleVision}`);
@@ -246,10 +288,22 @@ async function processFormDataRequest(req: Request, userId: string, supabase: an
     // Generate a batch ID
     const batchId = crypto.randomUUID();
     
+    // If file was stored, add the URL to the first transaction as metadata
+    if (fileUrl && transactions.length > 0) {
+      // Add file URL as metadata to the first transaction
+      if (!transactions[0].metadata) {
+        transactions[0].metadata = {};
+      }
+      transactions[0].metadata.sourceDocumentUrl = fileUrl;
+      transactions[0].metadata.originalFileName = originalFileName;
+    }
+    
     return new Response(JSON.stringify({ 
       success: true,
       transactions,
-      batchId
+      batchId,
+      fileUrl,
+      originalFileName: storePdfInSupabase ? originalFileName : null
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

@@ -1,14 +1,16 @@
 
-import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import React from "react";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, AlertTriangle } from "lucide-react";
+import { X } from "lucide-react";
 import FileUploadArea from "../FileUploadArea";
 import ErrorDisplay from "../ErrorDisplay";
-import ProgressIndicator from "./ProgressIndicator";
 import ProcessingModeToggle from "./ProcessingModeToggle";
+import ProgressIndicator from "./ProgressIndicator";
 import SupportedFormatsInfo from "./SupportedFormatsInfo";
-import ConnectionStatistics from "./ConnectionStatistics";
-import { useState, useEffect } from "react";
+import ConnectionStats from "./ConnectionStats";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface UploadDialogContentProps {
   file: File | null;
@@ -18,13 +20,15 @@ interface UploadDialogContentProps {
   parseFile: () => void;
   onClose: () => void;
   progress: number;
-  step: string;
-  isAuthenticated?: boolean;
-  preferredAIProvider?: string;
-  setPreferredAIProvider?: (provider: string) => void;
-  isWaitingForServer?: boolean;
-  useVisionApi?: boolean;
-  setUseVisionApi?: (useVision: boolean) => void;
+  step: string | null;
+  isAuthenticated: boolean | null;
+  preferredAIProvider: string;
+  setPreferredAIProvider: (provider: string) => void;
+  isWaitingForServer: boolean;
+  useVisionApi: boolean;
+  setUseVisionApi: (use: boolean) => void;
+  storePdfInSupabase?: boolean;
+  onStorePdfToggle?: (value: boolean) => void;
 }
 
 const UploadDialogContent = ({
@@ -39,107 +43,118 @@ const UploadDialogContent = ({
   isAuthenticated,
   preferredAIProvider,
   setPreferredAIProvider,
-  isWaitingForServer = false,
-  useVisionApi = true,
-  setUseVisionApi
+  isWaitingForServer,
+  useVisionApi,
+  setUseVisionApi,
+  storePdfInSupabase = false,
+  onStorePdfToggle
 }: UploadDialogContentProps) => {
-  const [useEdgeFunction, setUseEdgeFunction] = useState(true);
-  const [edgeFunctionAvailable, setEdgeFunctionAvailable] = useState(true);
+  const isPdf = file?.name.toLowerCase().endsWith('.pdf');
   
-  const toggleEdgeFunction = () => {
-    setUseEdgeFunction(!useEdgeFunction);
-  };
-  
-  // Check if the file is a PDF
-  const isPdfFile = file && file.name.toLowerCase().endsWith('.pdf');
-  
-  // Check if the CSV file has been selected
-  const isCsvFile = file && file.name.toLowerCase().endsWith('.csv');
-  
-  // For non-CSV files, we should force edge function processing
-  useEffect(() => {
-    if (file && !file.name.toLowerCase().endsWith('.csv')) {
-      setUseEdgeFunction(true);
-    }
-  }, [file]);
-
   return (
     <>
-      <DialogHeader>
+      <DialogHeader className="space-y-3">
         <div className="flex items-center justify-between">
           <DialogTitle>Upload Bank Statement</DialogTitle>
-          <Button variant="ghost" size="icon" onClick={onClose} disabled={uploading}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            onClick={onClose}
+            disabled={uploading}
+          >
+            <span className="sr-only">Close</span>
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <DialogDescription>
-          Upload your bank statement to extract transactions
-        </DialogDescription>
       </DialogHeader>
 
-      <div className="space-y-4">
-        {uploading ? (
-          <ProgressIndicator 
-            progress={progress} 
-            step={step} 
-            isVisible={true}
-            isWaitingForServer={isWaitingForServer}
-            onCancel={onClose}
-          />
-        ) : (
+      <div className="space-y-4 py-4">
+        {error && <ErrorDisplay error={error} />}
+
+        {!uploading && (
           <>
-            {!isAuthenticated && (
-              <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded mb-4">
-                <div className="flex items-start">
-                  <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5 mr-2" />
-                  <div>
-                    <p className="font-bold">Authentication Required</p>
-                    <p>You need to be signed in to upload bank statements. Please sign in and try again.</p>
-                  </div>
-                </div>
+            <FileUploadArea
+              file={file}
+              onChange={handleFileChange}
+              disabled={uploading}
+            />
+
+            {file && (
+              <div className="space-y-4">
+                <ProcessingModeToggle
+                  title="AI Provider"
+                  description="Select which AI provider to use for processing your statement"
+                  options={[
+                    { value: "anthropic", label: "Claude" },
+                    { value: "deepseek", label: "DeepSeek" }
+                  ]}
+                  value={preferredAIProvider}
+                  onChange={setPreferredAIProvider}
+                />
+
+                {isPdf && (
+                  <>
+                    <ProcessingModeToggle
+                      title="Google Vision OCR"
+                      description="Use Google Vision API for PDF processing (recommended)"
+                      options={[
+                        { value: "true", label: "Enabled" },
+                        { value: "false", label: "Disabled" }
+                      ]}
+                      value={useVisionApi ? "true" : "false"}
+                      onChange={(value) => setUseVisionApi(value === "true")}
+                    />
+                    
+                    <div className="flex items-center space-x-2">
+                      <Switch 
+                        id="store-pdf" 
+                        checked={storePdfInSupabase}
+                        onCheckedChange={onStorePdfToggle}
+                      />
+                      <Label htmlFor="store-pdf">Store PDF in Supabase Storage</Label>
+                    </div>
+                  </>
+                )}
               </div>
             )}
-            
-            <FileUploadArea 
-              file={file} 
-              onFileChange={handleFileChange} 
-              disabled={uploading} 
-            />
-            
-            {/* Show the AI provider selection and Vision API toggle when a file is selected */}
-            {file && (
-              <ProcessingModeToggle 
-                useEdgeFunction={useEdgeFunction} 
-                toggleEdgeFunction={toggleEdgeFunction}
-                edgeFunctionAvailable={edgeFunctionAvailable}
-                disabled={uploading}
-                isAuthenticated={isAuthenticated}
-                preferredAIProvider={preferredAIProvider}
-                setPreferredAIProvider={setPreferredAIProvider}
-                useVisionApi={useVisionApi}
-                setUseVisionApi={setUseVisionApi}
-                isPdfFile={isPdfFile}
-              />
-            )}
-            
-            {error && <ErrorDisplay error={error} />}
-            
+
             <SupportedFormatsInfo />
-            
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                disabled={!file || uploading || !isAuthenticated}
-                onClick={parseFile}
-                className="bg-green-500 hover:bg-green-600 text-white"
-              >
-                Process Statement
-              </Button>
-            </div>
-            
-            <ConnectionStatistics />
           </>
         )}
+
+        {uploading && (
+          <div className="pt-4">
+            <ProgressIndicator
+              progress={progress}
+              step={step}
+              isWaitingForServer={isWaitingForServer}
+              onCancel={onClose}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-between items-center pt-4">
+        <ConnectionStats />
+        
+        <div className="flex space-x-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={uploading}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={parseFile}
+            disabled={!file || uploading || !isAuthenticated}
+          >
+            Upload
+          </Button>
+        </div>
       </div>
     </>
   );

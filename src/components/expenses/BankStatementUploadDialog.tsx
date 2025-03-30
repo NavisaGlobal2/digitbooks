@@ -30,6 +30,7 @@ const BankStatementUploadDialog = ({
   const [showTaggingDialog, setShowTaggingDialog] = useState(false);
   const [parsedTransactions, setParsedTransactions] = useState<ParsedTransaction[]>([]);
   const [processingComplete, setProcessingComplete] = useState(false);
+  const [storePdfInSupabase, setStorePdfInSupabase] = useState(true);
   
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
     console.log(`Received ${transactions.length} parsed transactions`);
@@ -68,7 +69,8 @@ const BankStatementUploadDialog = ({
     useVisionApi,
     setUseVisionApi
   } = useStatementUpload({ 
-    onTransactionsParsed: handleTransactionsParsed 
+    onTransactionsParsed: handleTransactionsParsed,
+    storePdfInSupabase
   });
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
@@ -139,6 +141,10 @@ const BankStatementUploadDialog = ({
     }
   };
 
+  const handleStorePdfToggle = (value: boolean) => {
+    setStorePdfInSupabase(value);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -158,6 +164,8 @@ const BankStatementUploadDialog = ({
             isWaitingForServer={isWaitingForServer}
             useVisionApi={useVisionApi}
             setUseVisionApi={setUseVisionApi}
+            storePdfInSupabase={storePdfInSupabase}
+            onStorePdfToggle={handleStorePdfToggle}
           />
         </DialogContent>
       </Dialog>

@@ -60,6 +60,9 @@ export const prepareFormData = (
     formData.append("preserveOriginalPdfText", "true");
     formData.append("rawTextOutput", "true");
     
+    // Add flag to store PDF in Supabase
+    formData.append("storePdfInSupabase", options?.storePdfInSupabase === true ? "true" : "false");
+    
     // Log the options being used for debugging
     console.log("📋 PDF processing options being sent:", {
       isPdf,
@@ -79,7 +82,8 @@ export const prepareFormData = (
       returnVisionDiagnostics: true,
       includeExtractedText: true,
       preserveOriginalPdfText: true,
-      rawTextOutput: true
+      rawTextOutput: true,
+      storePdfInSupabase: options?.storePdfInSupabase === true ? "true" : "false"
     });
   } else {
     // Reset PDF attempt counter for non-PDF files
@@ -106,6 +110,9 @@ export const prepareFormData = (
   if (options?.debugMode) {
     formData.append("debugMode", "true");
   }
+  
+  // Store original file name for reference
+  formData.append("originalFileName", file.name);
   
   console.log("✅ STEP 1.5: Form data preparation complete");
   

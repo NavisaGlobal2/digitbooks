@@ -1,17 +1,20 @@
 
-import { useFileProcessing } from "@/hooks/useFileProcessing";
-import { ParsedTransaction } from "../parsers";
+import { useState, useCallback } from "react";
+import { parsePDFFile } from "../parsers/pdfParser";
+import { parseStatementFile, ParsedTransaction } from "../parsers";
+import { useProcessingState } from "./useProcessingState";
 
 interface StatementProcessorProps {
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
   onError: (errorMessage: string) => boolean;
-  startProgress: () => void;
+  startProgress: (steps?: number) => void;
   resetProgress: () => void;
   completeProgress: () => void;
   isCancelled: boolean;
-  setIsWaitingForServer: (isWaiting: boolean) => void;
-  startProcessing: (file: File) => void;
+  setIsWaitingForServer?: (isWaiting: boolean) => void;
+  startProcessing: () => void;
   stopProcessing: () => void;
+  storePdfInSupabase?: boolean;
 }
 
 export const useStatementProcessor = ({
@@ -23,104 +26,102 @@ export const useStatementProcessor = ({
   isCancelled,
   setIsWaitingForServer,
   startProcessing,
-  stopProcessing
+  stopProcessing,
+  storePdfInSupabase = false
 }: StatementProcessorProps) => {
-  const { processServerSide } = useFileProcessing();
-
-  const processStatement = async (
+  const [processingStatus, setProcessingStatus] = useState<string | null>(null);
+  
+  const processStatement = useCallback(async (
     file: File, 
     preferredAIProvider: string, 
-    isAuthenticated: boolean, // Explicitly typed as boolean
+    isAuthenticated: boolean,
     useVisionApi: boolean = true
   ) => {
-    // Prevent double processing
-    if (!file) {
-      onError("Please select a bank statement file");
-      return;
-    }
-    
-    if (!isAuthenticated) {
-      onError("Processing requires authentication. Please sign in to use this feature.");
-      return;
-    }
-
-    startProcessing(file);
+    startProcessing();
     startProgress();
     
     try {
-      console.log(`Starting file processing with edge function`);
-      console.log(`File type: ${file.type}, name: ${file.name}, using provider: ${preferredAIProvider}, Vision API: ${useVisionApi}`);
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      setProcessingStatus(`Processing ${fileExt === 'pdf' ? 'PDF' : fileExt} file...`);
       
-      // Create proper options object with all necessary flags
-      const processingOptions = {
-        preferredProvider: preferredAIProvider,
-        // Use Vision API based on user preference, default to true for PDFs
-        useVision: file.name.toLowerCase().endsWith('.pdf') ? useVisionApi : false,
-        // Force real data extraction
-        forceRealData: true,
-        extractRealData: true,
-        noDummyData: true
-      };
+      // For PDFs, we want to use the PDF-specific parser with more detailed error handling
+      if (fileExt === 'pdf') {
+        console.log(`Processing PDF file with Vision API: ${useVisionApi}`);
+        parsePDFFile(
+          file, 
+          onTransactionsParsed, 
+          onError,
+          "expense", 
+          storePdfInSupabase
+        );
+      } else {
+        console.log(`Processing ${fileExt} file with standard parser`);
+        
+        if (!isAuthenticated) {
+          // For non-PDFs, try client-side parsing first if not authenticated
+          parseStatementFile(
+            file,
+            (result) => {
+              if (isCancelled) return;
+              
+              completeProgress();
+              
+              // Check if we got transactions array or CSV parse result
+              const transactions = Array.isArray(result) ? result : result.data;
+              console.log(`Successfully parsed ${transactions.length} transactions`);
+              
+              onTransactionsParsed(transactions);
+              stopProcessing();
+            },
+            (errorMessage) => {
+              if (isCancelled) return;
+              
+              onError(errorMessage);
+              stopProcessing();
+            }
+          );
+        } else {
+          // If authenticated, we want to use the edge function for all file types
+          setProcessingStatus(`Processing ${fileExt} file with AI...`);
+          
+          const { processServerSide } = await import("../../../../hooks/useFileProcessing");
+          processServerSide(
+            file,
+            onTransactionsParsed,
+            onError,
+            resetProgress,
+            completeProgress,
+            isCancelled,
+            setIsWaitingForServer,
+            {
+              preferredProvider: preferredAIProvider,
+              useVision: useVisionApi,
+              storePdfInSupabase
+            }
+          );
+        }
+      }
+    } catch (error: any) {
+      if (isCancelled) return;
       
-      await processServerSide(
-        file,
-        (transactions) => {
-          stopProcessing();
-          
-          if (transactions && transactions.length > 0) {
-            console.log(`Received ${transactions.length} parsed transactions`);
-            onTransactionsParsed(transactions);
-          } else {
-            onError("No transactions were found in the file. Please try a different file or format.");
-            resetProgress();
-          }
-        },
-        (errorMessage) => {
-          stopProcessing();
-          
-          const isAuthError = errorMessage.toLowerCase().includes('auth') || 
-                            errorMessage.toLowerCase().includes('sign in') ||
-                            errorMessage.toLowerCase().includes('token');
-                            
-          const isAnthropicError = errorMessage.toLowerCase().includes('anthropic') ||
-                           errorMessage.toLowerCase().includes('api key') || 
-                           errorMessage.toLowerCase().includes('overloaded');
-
-          const isDeepSeekError = errorMessage.toLowerCase().includes('deepseek');
-          
-          // Show the error message to the user
-          onError(errorMessage);
-          
-          // If it's a PDF and a specific error, suggest trying again immediately
-          if (file.name.toLowerCase().endsWith('.pdf') && 
-              (errorMessage.includes("sandbox environment internal error") || 
-               errorMessage.includes("Maximum call stack size exceeded"))) {
-            return false; // Don't reset progress yet
-          }
-          
-          // For auth or critical API errors, don't try to fallback
-          if (isAuthError || (isAnthropicError && isDeepSeekError)) {
-            resetProgress();
-            return true;
-          }
-          
-          resetProgress();
-          return true;
-        },
-        resetProgress,
-        completeProgress,
-        isCancelled,
-        setIsWaitingForServer,
-        processingOptions
-      );
-    } catch (error) {
-      console.error("Unexpected error in processStatement:", error);
-      onError("An unexpected error occurred. Please try again.");
+      onError(error.message || "Unexpected error processing file");
       stopProcessing();
     }
-  };
+  }, [
+    onTransactionsParsed,
+    onError,
+    startProgress,
+    resetProgress,
+    completeProgress,
+    isCancelled,
+    setIsWaitingForServer,
+    startProcessing,
+    stopProcessing,
+    storePdfInSupabase
+  ]);
 
   return {
-    processStatement
+    processStatement,
+    processingStatus
   };
 };

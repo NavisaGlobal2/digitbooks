@@ -7,12 +7,13 @@ export const parsePDFFile = (
   file: File, 
   onComplete: (transactions: ParsedTransaction[]) => void,
   onError: (errorMessage: string) => void,
-  context: "revenue" | "expense" = "expense"
+  context: "revenue" | "expense" = "expense",
+  storePdfInSupabase: boolean = false
 ) => {
   toast.info("Processing PDF statement using OCR. This may take a moment...");
   
   // Log the file details for debugging
-  console.log(`Starting PDF parsing for: ${file.name} (${file.size} bytes) with context: ${context}`);
+  console.log(`Starting PDF parsing for: ${file.name} (${file.size} bytes) with context: ${context}, store in Supabase: ${storePdfInSupabase}`);
   
   // ALWAYS ensure Vision API is enabled for PDFs for better results
   const options = {
@@ -26,7 +27,8 @@ export const parsePDFFile = (
     strictExtractMode: true,
     returnEmptyOnFailure: true,
     neverGenerateDummyData: true,
-    debugMode: true // Add debug mode to get more info
+    debugMode: true, // Add debug mode to get more info
+    storePdfInSupabase: storePdfInSupabase // Flag to store the PDF in Supabase
   };
   
   console.log("PDF processing options:", options);
@@ -91,6 +93,9 @@ export const parsePDFFile = (
       }
       
       console.log(`${context} PDF transactions after processing:`, processedTransactions);
+      if (storePdfInSupabase) {
+        toast.success(`PDF file "${file.name}" has been saved to Supabase storage`);
+      }
       onComplete(processedTransactions);
     },
     (errorMessage) => {
