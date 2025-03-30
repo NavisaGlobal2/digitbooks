@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useStatementAuth = () => {
@@ -33,9 +33,23 @@ export const useStatementAuth = () => {
     };
   }, []);
 
+  // Add verifyAuth method
+  const verifyAuth = useCallback(async (): Promise<string | null> => {
+    // Check current authentication state
+    const { data } = await supabase.auth.getSession();
+    const authenticated = !!data.session;
+    
+    if (!authenticated) {
+      return "Authentication required to process bank statements";
+    }
+    
+    return null; // No error means authentication is valid
+  }, []);
+
   return {
     isAuthenticated,
     preferredAIProvider,
-    setPreferredAIProvider
+    setPreferredAIProvider,
+    verifyAuth
   };
 };

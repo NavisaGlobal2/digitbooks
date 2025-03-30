@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useExpenses } from "@/contexts/ExpenseContext";
@@ -61,7 +60,9 @@ const BankStatementUploadDialog = ({
     setPreferredAIProvider,
     useVisionApi,
     setUseVisionApi
-  } = useStatementUpload({ handleTransactionsParsed });
+  } = useStatementUpload({ 
+    onTransactionsParsed: handleTransactionsParsed 
+  });
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
     // Generate a unique batch ID using UUID for this import

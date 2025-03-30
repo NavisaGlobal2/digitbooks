@@ -119,6 +119,7 @@ export const useUploadProgress = () => {
     resetProgress,
     completeProgress,
     cancelProgress,
-    updateProgress
+    updateProgress,
+    setCancelled: setIsCancelled // Explicitly expose the setCancelled function
   };
 };

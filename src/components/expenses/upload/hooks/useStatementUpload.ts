@@ -19,7 +19,7 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
   const [useVisionApi, setUseVisionApi] = useState<boolean>(true);
 
-  const { verifyAuth, isAuthenticated } = useStatementAuth();
+  const { isAuthenticated } = useStatementAuth();
   const { validateFile } = useFileValidation();
   const { 
     progress, 
@@ -28,7 +28,8 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
     completeProgress, 
     resetProgress, 
     isCancelled, 
-    setCancelled 
+    setCancelled,
+    cancelProgress 
   } = useUploadProgress();
   
   const onError = useCallback((errorMessage: string): boolean => {
@@ -67,6 +68,14 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
     }
   }, [validateFile]);
 
+  // Simple auth verification function since useStatementAuth doesn't have verifyAuth
+  const verifyAuth = useCallback(async () => {
+    if (!isAuthenticated) {
+      return "You must be logged in to process bank statements";
+    }
+    return null;
+  }, [isAuthenticated]);
+
   const parseFile = useCallback(async () => {
     // Verify auth first
     const authError = await verifyAuth();
@@ -97,7 +106,7 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
     resetProgress();
   }, [resetProgress]);
 
-  const cancelProgress = useCallback(() => {
+  const cancelUpload = useCallback(() => {
     setCancelled(true);
     setUploading(false);
     setIsWaitingForServer(false);
@@ -113,7 +122,7 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
     clearFile,
     progress,
     step,
-    cancelProgress,
+    cancelProgress: cancelUpload,
     isWaitingForServer,
     isAuthenticated,
     preferredAIProvider,
