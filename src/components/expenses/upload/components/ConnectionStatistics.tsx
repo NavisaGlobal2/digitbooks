@@ -42,7 +42,7 @@ export const ConnectionStatistics = () => {
           </span>
         </p>
         
-        {stats.failCount > 0 && (
+        {stats.failCount > 0 && stats.errors && stats.errors.length > 0 && (
           <div>
             <p className="font-medium mt-1">Recent errors:</p>
             <ul className="list-disc list-inside">
@@ -56,3 +56,5 @@ export const ConnectionStatistics = () => {
     </div>
   );
 };
+
+export default ConnectionStatistics;

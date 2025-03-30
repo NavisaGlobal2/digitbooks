@@ -1,3 +1,4 @@
+
 // Track connection success and failure stats
 let connectionStats = {
   successCount: 0,
@@ -77,7 +78,8 @@ export const getConnectionStats = () => {
   return {
     ...connectionStats,
     successRate,
-    failureRate
+    failureRate,
+    errors: technicalDetails.errors.map(e => e.message) // Add errors array from technicalDetails
   };
 };
 
