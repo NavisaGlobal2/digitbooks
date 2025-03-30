@@ -8,6 +8,8 @@ export const prepareFormData = (
   file: File,
   options: any = {}
 ): { formData: FormData; isPdf: boolean; pdfAttemptCount: number } => {
+  console.log("🔄 STEP 1: Preparing form data for file:", file.name);
+  
   // Create FormData with file and options
   const formData = new FormData();
   formData.append("file", file);
@@ -21,6 +23,7 @@ export const prepareFormData = (
   let pdfAttemptCount = 0;
   
   if (isPdf) {
+    console.log("🔄 STEP 1.1: PDF file detected. Adding special handling flags.");
     pdfAttemptCount = trackPDFAttempt();
     addPDFOptions(formData, options, pdfAttemptCount);
     
@@ -29,7 +32,13 @@ export const prepareFormData = (
     
     // Add clear indication that we want to use Vision API
     const useVision = options?.useVision !== false; // Default to true unless explicitly set to false
+    console.log(`🔄 STEP 1.2: Setting useVision flag to: ${useVision}`);
     formData.append("useVision", useVision ? "true" : "false");
+    
+    if (useVision) {
+      console.log("🔄 STEP 1.3: Adding FORCE_VISION_API flag to ensure Vision API is used");
+      formData.append("FORCE_VISION_API", "true");
+    }
     
     // Force base64 encoding for Vision API to ensure proper format
     formData.append("forceBase64Encoding", "true");
@@ -64,7 +73,7 @@ export const prepareFormData = (
   // Add preferred provider if specified
   if (options?.preferredProvider) {
     formData.append("preferredProvider", options.preferredProvider);
-    console.log(`📋 Using preferred AI provider: ${options.preferredProvider}`);
+    console.log(`📋 STEP 1.4: Using preferred AI provider: ${options.preferredProvider}`);
   }
   
   // Add additional flags to enforce real data extraction
@@ -82,6 +91,8 @@ export const prepareFormData = (
     formData.append("debugMode", "true");
   }
   
+  console.log("✅ STEP 1.5: Form data preparation complete");
+  
   return { formData, isPdf, pdfAttemptCount };
 };
 
@@ -89,6 +100,8 @@ export const prepareFormData = (
  * Create request configuration for the edge function
  */
 export const createRequestConfig = (token: string): RequestInit => {
+  console.log("🔄 STEP 2: Creating request configuration with auth token");
+  
   // Add a stronger timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
@@ -96,7 +109,7 @@ export const createRequestConfig = (token: string): RequestInit => {
     controller.abort();
   }, 60000); // 60-second timeout for PDFs
   
-  console.log("🔑 Request configured with auth token and 60s timeout");
+  console.log("✅ STEP 2.1: Request configured with auth token and 60s timeout");
   
   return {
     method: "POST",

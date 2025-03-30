@@ -17,7 +17,7 @@ export const makeEdgeFunctionRequest = async (
   isPdf: boolean
 ): Promise<{ success: boolean; error?: any }> => {
   try {
-    console.log("Making fetch request to edge function...");
+    console.log("🔄 STEP 3.1: Making fetch request to edge function...");
     trackSuccessfulConnection(endpoint);
     
     const response = await fetch(
@@ -32,32 +32,38 @@ export const makeEdgeFunctionRequest = async (
       }
     );
     
-    console.log(`Edge function response status: ${response.status}`);
+    console.log(`✅ STEP 3.2: Edge function response status: ${response.status}`);
     
     // Handle non-successful responses
     if (!response.ok) {
+      console.error(`❌ STEP 3.3: Edge function returned non-OK status: ${response.status}`);
       const errorData = await handleResponseError(response);
       throw errorData;
     }
     
     // Process successful response
+    console.log("🔄 STEP 3.4: Processing edge function response data");
     const result = await response.json();
     console.log("Edge function response data:", result);
     
     // Reset PDF attempt counter on success
     if (isPdf) {
+      console.log("✅ STEP 3.5: Resetting PDF attempt counter after successful response");
       localStorage.removeItem('pdf_attempt_count');
     }
     
     if (processSuccessfulResult(result, onSuccess)) {
+      console.log("✅ STEP 3.6: Successfully processed result");
       return { success: true };
     }
     
+    console.error("❌ STEP 3.7: Failed to process successful result");
     return { 
       success: false,
       error: { message: "Failed to process successful result" }
     };
   } catch (error: any) {
+    console.error("❌ STEP 3.8: Error in makeEdgeFunctionRequest:", error);
     return { success: false, error };
   }
 };
@@ -75,14 +81,16 @@ export const sendRequestWithRetry = async (
   retryCount: number,
   maxRetries: number
 ): Promise<boolean> => {
+  console.log(`🔄 STEP 3: Sending request to edge function (attempt ${retryCount + 1})`);
+  
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
-    console.log("Request timeout reached, aborting...");
+    console.log("⏱️ STEP 3.0: Request timeout reached, aborting...");
     controller.abort();
   }, 60000);
   
   try {
-    console.log(`Attempt ${retryCount + 1}: Fetching from edge function...`);
+    console.log(`🔄 STEP 3.0: Attempt ${retryCount + 1}: Fetching from edge function...`);
     
     const { success, error } = await makeEdgeFunctionRequest(
       endpoint,
@@ -96,18 +104,22 @@ export const sendRequestWithRetry = async (
     clearTimeout(timeoutId);
     
     if (success) {
+      console.log(`✅ STEP 3.7: Request successful on attempt ${retryCount + 1}`);
       return true;
     }
     
     if (error) {
-      console.error(`Error in attempt ${retryCount + 1}:`, error);
+      console.error(`❌ STEP 3.8: Error in attempt ${retryCount + 1}:`, error);
       
       if (isPdf) {
+        console.log(`🔄 STEP 3.9: Handling PDF-specific error for attempt ${retryCount + 1}`);
         const { shouldRetry, message } = handlePDFError(error, retryCount, error.isPdfError || false);
         
         if (shouldRetry && retryCount < maxRetries) {
+          console.log(`🔄 STEP 3.10: Will retry PDF processing (attempt ${retryCount + 2})`);
           return false; // Signal for retry
         } else {
+          console.error(`❌ STEP 3.11: PDF error, not retrying:`, message);
           return onError(message);
         }
       }
@@ -122,14 +134,16 @@ export const sendRequestWithRetry = async (
                             ));
       
       if (isNetworkError && retryCount < maxRetries) {
+        console.log(`🔄 STEP 3.12: Network error detected, will retry (attempt ${retryCount + 2})`);
         return false; // Signal for retry
       }
     }
     
+    console.error(`❌ STEP 3.13: Non-recoverable error in attempt ${retryCount + 1}`);
     return onError(error?.message || "Unknown error occurred");
   } catch (error: any) {
     clearTimeout(timeoutId);
-    console.error(`Error in attempt ${retryCount + 1}:`, error);
+    console.error(`❌ STEP 3.14: Exception in attempt ${retryCount + 1}:`, error);
     return onError(error?.message || "Unexpected error during request");
   }
 };

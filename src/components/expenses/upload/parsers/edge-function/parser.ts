@@ -17,15 +17,18 @@ export const parseViaEdgeFunction = async (
   options: any = {}
 ): Promise<boolean> => {
   try {
+    console.log(`🔄 STEP 0: Starting bank statement processing via edge function`);
     console.log(`Parsing file via edge function: ${file.name}, size: ${file.size} bytes, type: ${file.type}`, options);
     
     // Get auth token
+    console.log(`🔄 STEP 0.1: Getting authentication token`);
     const { token, error: authError } = await getAuthToken();
     if (authError || !token) {
-      console.error("Authentication error:", authError);
+      console.error("❌ STEP 0.2: Authentication error:", authError);
       trackFailedConnection('auth_token_error', { message: authError });
       return onError(authError || "Authentication error occurred");
     }
+    console.log(`✅ STEP 0.3: Authentication token retrieved successfully`);
     
     // For PDFs, ensure Vision API is used by default unless explicitly disabled
     const isPdf = file.name.toLowerCase().endsWith('.pdf');
@@ -38,20 +41,21 @@ export const parseViaEdgeFunction = async (
       options.forceRealData = true;
       options.debugMode = true; // Add debug flag
       
-      console.log("Vision API and anti-dummy data protections enabled for PDF processing");
+      console.log("🔄 STEP 0.4: Vision API and anti-dummy data protections enabled for PDF processing");
       
       // Add explicit console log for Google Vision API usage
-      console.log("🔍 Attempting to use Google Vision API for PDF text extraction");
+      console.log("🔍 STEP 0.5: Attempting to use Google Vision API for PDF text extraction");
     }
     
     // Prepare form data
     const { formData, isPdf: isFilePdf, pdfAttemptCount } = prepareFormData(file, options);
+    console.log(`✅ STEP 0.6: Form data prepared, PDF attempt count: ${pdfAttemptCount}`);
     
     // Make sure we're using the correct URL format
     const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
     const edgeFunctionEndpoint = `${supabaseUrl}/functions/v1/parse-bank-statement-ai`;
     
-    console.log(`Full endpoint URL: ${edgeFunctionEndpoint}`);
+    console.log(`🔄 STEP 3: Full endpoint URL: ${edgeFunctionEndpoint}`);
     console.log("Request options:", options);
     
     // Implement retry logic
@@ -60,18 +64,21 @@ export const parseViaEdgeFunction = async (
 
     while (retryCount <= MAX_RETRIES) {
       try {
+        console.log(`🔄 STEP 4: Processing attempt ${retryCount + 1} of ${MAX_RETRIES + 1}`);
         // Handle PDF-specific retry logic
         if (isFilePdf) {
+          console.log(`🔄 STEP 4.1: Handling PDF-specific retry logic for attempt ${retryCount + 1}`);
           await handlePDFRetry(formData, retryCount);
         }
         
         // Attempt to send the request
+        console.log(`🔄 STEP 4.2: Sending request to edge function endpoint`);
         const requestSucceeded = await sendRequestWithRetry(
           edgeFunctionEndpoint,
           token,
           formData,
           (transactions) => {
-            console.log(`Received ${transactions.length} transactions from edge function`);
+            console.log(`✅ STEP 5: Received ${transactions.length} transactions from edge function`);
             
             // First check for any log markers that indicate real data was extracted
             const realDataExtracted = transactions.some(tx => 
@@ -80,9 +87,9 @@ export const parseViaEdgeFunction = async (
             );
             
             if (realDataExtracted) {
-              console.log("✅ Confirmed that real data was extracted via Google Vision");
+              console.log("✅ STEP 5.1: Confirmed that real data was extracted via Google Vision");
             } else if (isFilePdf && options.useVision) {
-              console.warn("⚠️ No Vision API success markers found. Google Vision API might not have been used.");
+              console.warn("⚠️ STEP 5.2: No Vision API success markers found. Google Vision API might not have been used.");
             }
             
             // Filter out any marker transactions
@@ -93,9 +100,11 @@ export const parseViaEdgeFunction = async (
             
             // Check for empty or invalid transactions
             if (!filteredTransactions || filteredTransactions.length === 0) {
+              console.error("❌ STEP 5.3: No valid transactions found in the document");
               return onError("No transactions were found in the document. Please try a different file format.");
             }
             
+            console.log(`✅ STEP 5.4: Processing ${filteredTransactions.length} transactions from server`);
             // Pass the filtered transactions to success handler
             onSuccess(filteredTransactions);
             return true;
@@ -107,11 +116,12 @@ export const parseViaEdgeFunction = async (
         );
         
         if (requestSucceeded) {
+          console.log(`✅ STEP 7: Request completed successfully`);
           return true;
         }
       } catch (error: any) {
         lastError = error;
-        console.error(`Error in attempt ${retryCount + 1}:`, error);
+        console.error(`❌ STEP 8: Error in attempt ${retryCount + 1}:`, error);
         
         // Check specifically for Vision API related errors
         const isVisionApiError = error.message && (
@@ -121,7 +131,7 @@ export const parseViaEdgeFunction = async (
         );
         
         if (isVisionApiError) {
-          console.error("Google Vision API error detected:", error);
+          console.error("❌ STEP 8.1: Google Vision API error detected:", error);
           return onError("Google Vision API error: " + error.message);
         }
         
@@ -135,10 +145,12 @@ export const parseViaEdgeFunction = async (
                               ));
         
         if (isNetworkError) {
+          console.log(`🔄 STEP 8.2: Handling network error for attempt ${retryCount + 1}`);
           const handled = await handleNetworkError(error, file, onSuccess, onError, edgeFunctionEndpoint);
           if (handled) return true;
         } else {
           // Handle other errors
+          console.log(`🔄 STEP 8.3: Handling other error for attempt ${retryCount + 1}`);
           const handled = await handleOtherErrors(error, file, onSuccess, onError, edgeFunctionEndpoint);
           if (handled) return true;
         }
@@ -146,7 +158,7 @@ export const parseViaEdgeFunction = async (
       
       // If we've exhausted all retries, return the last error
       if (retryCount >= MAX_RETRIES) {
-        console.log(`Max retries (${MAX_RETRIES}) exceeded. Giving up.`);
+        console.log(`❌ STEP 9: Max retries (${MAX_RETRIES}) exceeded. Giving up.`);
         trackFailedConnection('max_retries_exceeded', lastError, edgeFunctionEndpoint);
         return onError(
           lastError?.message || "Failed to process file after multiple attempts. Please try again later."
@@ -155,13 +167,13 @@ export const parseViaEdgeFunction = async (
       
       // Increment retry counter and wait before next attempt
       retryCount++;
-      console.log(`Waiting before retry attempt ${retryCount + 1}...`);
+      console.log(`🔄 STEP 10: Waiting before retry attempt ${retryCount + 1}...`);
       await sleep(1000 * retryCount);
     }
     
     return false;
   } catch (error: any) {
-    console.error("Unexpected error in parseViaEdgeFunction:", error);
+    console.error("❌ STEP 11: Unexpected error in parseViaEdgeFunction:", error);
     trackFailedConnection('unexpected_error', error);
     return onError(error.message || "Failed to process file with server");
   }
