@@ -73,16 +73,31 @@ export const useStatementProcessor = ({
               onTransactionsParsed(result.transactions);
             } else if (result.extractedText) {
               // If we have text but no structured transactions, try to parse the text
-              try {
-                const { extractStructuredDataFromPdf } = await import("../parsers/edge-function/pdfToImageProcessor");
-                const structuredData = extractStructuredDataFromPdf(result.extractedText);
-                
-                if (structuredData.transactions.length > 0) {
-                  console.log(`Parsed ${structuredData.transactions.length} transactions from extracted text`);
-                  onTransactionsParsed(structuredData.transactions);
-                } else {
-                  // If we couldn't parse structured data, fall back to regular PDF parsing
-                  console.log("Could not extract structured data from text, falling back to regular PDF parsing");
+              console.log("Got extracted text but no structured transactions, attempting to parse text");
+              
+              // Create an async function to handle the text parsing
+              const parseExtractedText = async () => {
+                try {
+                  const { extractStructuredDataFromPdf } = await import("../parsers/edge-function/pdfToImageProcessor");
+                  const structuredData = extractStructuredDataFromPdf(result.extractedText);
+                  
+                  if (structuredData.transactions.length > 0) {
+                    console.log(`Parsed ${structuredData.transactions.length} transactions from extracted text`);
+                    onTransactionsParsed(structuredData.transactions);
+                  } else {
+                    // If we couldn't parse structured data, fall back to regular PDF parsing
+                    console.log("Could not extract structured data from text, falling back to regular PDF parsing");
+                    parsePDFFile(
+                      file,
+                      onTransactionsParsed,
+                      onError,
+                      "expense",
+                      storePdfInSupabase
+                    );
+                  }
+                } catch (error) {
+                  console.error("Error extracting structured data from text:", error);
+                  // Fall back to regular PDF parsing
                   parsePDFFile(
                     file,
                     onTransactionsParsed,
@@ -91,17 +106,10 @@ export const useStatementProcessor = ({
                     storePdfInSupabase
                   );
                 }
-              } catch (error) {
-                console.error("Error extracting structured data from text:", error);
-                // Fall back to regular PDF parsing
-                parsePDFFile(
-                  file,
-                  onTransactionsParsed,
-                  onError,
-                  "expense",
-                  storePdfInSupabase
-                );
-              }
+              };
+              
+              // Execute the async function
+              parseExtractedText();
             } else {
               // If we couldn't extract text or transactions, fall back to regular PDF parsing
               console.log("No transactions or text extracted, falling back to regular PDF parsing");
