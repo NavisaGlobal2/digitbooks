@@ -7,7 +7,7 @@ export const parseViaEdgeFunction = async (
   file: File,
   onSuccess: (transactions: ParsedTransaction[]) => void,
   onError: (errorMessage: string) => boolean,
-  preferredProvider: string = 'anthropic',
+  preferredProvider: string = 'fallback',
   context: string = 'expense'
 ): Promise<void> => {
   try {
@@ -24,6 +24,7 @@ export const parseViaEdgeFunction = async (
     formData.append('fileName', file.name);
     formData.append('authToken', sessionData.session.access_token);
     formData.append('context', context);
+    formData.append('useEnhancedFallback', 'true'); // Prefer enhanced fallback processing
 
     console.log(`Processing ${file.name} (${file.type}, ${file.size} bytes) via edge function`);
 

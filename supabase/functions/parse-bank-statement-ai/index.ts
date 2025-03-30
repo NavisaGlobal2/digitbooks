@@ -24,6 +24,9 @@ serve(async (req) => {
     // Get processing context if provided (revenue or expense)
     const context = formData.get("context")?.toString() || null;
     
+    // Check if we should use enhanced fallback processing
+    const useEnhancedFallback = formData.get("useEnhancedFallback")?.toString() === "true";
+    
     // Get auth token for Supabase
     const authToken = formData.get("authToken")?.toString() || null;
     
@@ -39,7 +42,6 @@ serve(async (req) => {
       } catch (envError) {
         // Log but don't fail if we can't set the environment variable
         console.log(`Could not set preferred AI provider: ${envError.message}`);
-        // Continue processing without failing
       }
     }
     
@@ -74,27 +76,12 @@ serve(async (req) => {
       let usedFallback = false;
       let aiServiceUsed = "primary";
       
-      try {
-        // 2. Try to process with AI service
-        bankData = await processWithAI(fileText, fileType, context);
-        
-        // Log sample of transactions for debugging
-        if (bankData.transactions.length > 0) {
-          console.log(`Sample transaction: ${JSON.stringify(bankData.transactions[0])}`);
-          console.log(`Found ${bankData.transactions.length} transactions using AI service`);
-        }
-        
-        if (bankData.transactions.length === 0) {
-          throw new Error("No transactions were extracted by the AI service");
-        }
-      } catch (aiError) {
-        console.error("AI processing failed:", aiError);
-        
-        // If it's a CSV, try the fallback parser as last resort
-        if (fileType === "csv") {
-          console.log("Attempting fallback CSV processing");
+      // If user prefers enhanced fallback or it's a CSV file, try fallback processor first
+      if (useEnhancedFallback || preferredProvider === 'fallback' || fileType === "csv") {
+        try {
+          console.log("Using enhanced fallback processor first");
           usedFallback = true;
-          aiServiceUsed = "fallback_csv";
+          aiServiceUsed = "enhanced_fallback";
           const fallbackTransactions = await fallbackCSVProcessing(fileText);
           
           bankData = {
@@ -104,37 +91,85 @@ serve(async (req) => {
             transactions: fallbackTransactions
           };
           
-          if (bankData.transactions.length === 0) {
-            return new Response(
-              JSON.stringify({ 
-                error: "Could not parse transactions using either AI or fallback methods. Please check the file format." 
-              }),
-              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
-            );
+          if (bankData.transactions.length > 0) {
+            console.log(`Successfully parsed ${bankData.transactions.length} transactions using fallback processor`);
+          } else {
+            // If fallback fails to find any transactions, try AI processing
+            throw new Error("No transactions found with fallback processor, will try AI");
           }
-        } else {
-          // Check if the error is from Anthropic and DeepSeek is not configured
-          const isAnthropicError = aiError.message?.includes("Anthropic") || 
-                                 aiError.message?.includes("overloaded");
-          const isDeepSeekError = aiError.message?.includes("DeepSeek");
+        } catch (fallbackError) {
+          // Only attempt AI processing if not explicitly using fallback
+          if (preferredProvider !== 'fallback') {
+            console.log("Fallback processing unsuccessful, attempting AI processing:", fallbackError);
+            // Try to process with AI service
+            try {
+              bankData = await processWithAI(fileText, fileType, context);
+              usedFallback = false;
+              aiServiceUsed = "ai_service";
+              
+              if (bankData.transactions.length === 0) {
+                throw new Error("No transactions were extracted by the AI service");
+              }
+              
+              console.log(`Found ${bankData.transactions.length} transactions using AI service`);
+            } catch (aiError) {
+              console.error("AI processing failed:", aiError);
+              throw aiError; // Let the outer catch handle this
+            }
+          } else {
+            // If explicitly using fallback only, propagate the error
+            throw fallbackError;
+          }
+        }
+      } else {
+        // Try AI processing first, then fallback to CSV parser if needed
+        try {
+          // Try to process with AI service
+          bankData = await processWithAI(fileText, fileType, context);
           
-          // If both AI services failed, provide a detailed error
-          if (isAnthropicError && isDeepSeekError) {
+          // Log sample of transactions for debugging
+          if (bankData.transactions.length > 0) {
+            console.log(`Sample transaction: ${JSON.stringify(bankData.transactions[0])}`);
+            console.log(`Found ${bankData.transactions.length} transactions using AI service`);
+          }
+          
+          if (bankData.transactions.length === 0) {
+            throw new Error("No transactions were extracted by the AI service");
+          }
+        } catch (aiError) {
+          console.error("AI processing failed:", aiError);
+          
+          // If it's a CSV, try the fallback parser as last resort
+          if (fileType === "csv" || fileType === "xlsx" || fileType === "xls") {
+            console.log("Attempting fallback CSV processing");
+            usedFallback = true;
+            aiServiceUsed = "fallback_csv";
+            const fallbackTransactions = await fallbackCSVProcessing(fileText);
+            
+            bankData = {
+              account_holder: undefined,
+              account_number: undefined,
+              currency: 'USD', // Default currency
+              transactions: fallbackTransactions
+            };
+            
+            if (bankData.transactions.length === 0) {
+              return new Response(
+                JSON.stringify({ 
+                  error: "Could not parse transactions using either AI or fallback methods. Please check the file format." 
+                }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
+              );
+            }
+          } else {
+            // For non-CSV files with a single AI service failure
             return new Response(
               JSON.stringify({ 
-                error: `Both AI services failed. Please try a different file format or check formatting issues: ${aiError.message}` 
+                error: `AI processing failed: ${aiError.message}. Please try again with a CSV or Excel file with simpler formatting.` 
               }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 }
             );
           }
-          
-          // For non-CSV files with a single AI service failure
-          return new Response(
-            JSON.stringify({ 
-              error: `AI processing failed: ${aiError.message}. Please try again with a CSV or Excel file with simpler formatting.` 
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 }
-          );
         }
       }
       
