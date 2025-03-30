@@ -47,10 +47,10 @@ const App = () => (
         <ClientProvider>
           <InvoiceProvider>
             <ExpenseProvider>
-              <RevenueProvider>
-                <BudgetProvider>
-                  <LedgerProvider>
-                    <VendorProvider>  {/* Add VendorProvider here */}
+              <VendorProvider>  {/* Moved VendorProvider inside ExpenseProvider */}
+                <RevenueProvider>
+                  <BudgetProvider>
+                    <LedgerProvider>
                       <Toaster />
                       <Sonner />
                       <BrowserRouter>
@@ -146,10 +146,10 @@ const App = () => (
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </BrowserRouter>
-                    </VendorProvider>  {/* Close VendorProvider */}
-                  </LedgerProvider>
-                </BudgetProvider>
-              </RevenueProvider>
+                    </LedgerProvider>
+                  </BudgetProvider>
+                </RevenueProvider>
+              </VendorProvider>  {/* Close VendorProvider */}
             </ExpenseProvider>
           </InvoiceProvider>
         </ClientProvider>
