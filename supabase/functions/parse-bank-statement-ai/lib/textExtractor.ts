@@ -50,7 +50,7 @@ Format the response as a JSON array of transaction objects with the structure:
     }
     
     // Handle CSV files
-    if (isCSVFile(file)) {
+    if (isCSVFile(fileName, file.type)) {
       console.log("Detected CSV file, using CSV service");
       const csvText = await CSVService.extractTextFromCSV(file);
       
