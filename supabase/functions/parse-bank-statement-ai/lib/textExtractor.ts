@@ -61,19 +61,31 @@ export async function extractTextFromFile(file: File, options: any = {}): Promis
               // Add a clear marker to indicate real extracted content and explicitly prevent dummy data
               return `[PDF BANK STATEMENT EXTRACTED WITH GOOGLE VISION API: ${fileName} (${fileSize})]
 
-ACTUAL STATEMENT TEXT FOLLOWS:
+RAW EXTRACTED TEXT FOLLOWS - USE THIS TO FIND ACTUAL BANK TRANSACTIONS:
 ${pdfText}
 
-CRITICAL INSTRUCTION FOR AI: This is REAL text extracted from an ACTUAL bank statement PDF.
-1. Process the above text to find all financial transactions
-2. Format each transaction with date (YYYY-MM-DD), description, and amount
-3. For amounts, preserve negative values for debits and positive values for credits
-4. Return ONLY genuine transactions found in this text, NEVER invent data
-5. If you can't clearly identify transactions, return an empty array []
-6. The user's financial decisions depend on this data being accurate
-7. DO NOT generate fictional or placeholder transactions under ANY circumstances
-8. If extraction fails or text is unclear, RETURN AN EMPTY ARRAY
-9. THIS IS REAL DATA, NOT A TEST - I REPEAT, DO NOT GENERATE EXAMPLE DATA`;
+CRITICAL INSTRUCTIONS - READ CAREFULLY:
+1. This is REAL text extracted from an ACTUAL bank statement PDF
+2. Look for patterns resembling transaction entries (date, description, amount)
+3. Return ONLY transactions you can clearly identify in the text above
+4. Format transactions with date (YYYY-MM-DD), description, and amount
+5. Preserve negative values for debits, positive for credits
+6. If you can't identify real transactions, return an empty array []
+7. NEVER invent or generate fictional transactions
+8. DO NOT include placeholder or example transactions
+9. Only extract what actually exists in the provided text
+10. THIS IS A FINANCIAL DOCUMENT - Accuracy is critical
+
+EXTRACTION APPROACH:
+- First identify the transaction table/list section in the document
+- Look for patterns of dates, descriptions and monetary amounts
+- Pay special attention to currency symbols (₦, $, £, €) and decimal points
+- Note that some banks use negative numbers for debits, others use CR/DR notations
+- Focus on finding the actual transaction data structure in this specific document
+
+RETURN FORMAT:
+A JSON array containing only real transactions found in this text.
+If no clear transactions can be identified, return an empty array [].`;
             } else {
               console.warn("⚠️ Google Vision API returned insufficient text:", pdfText?.length || 0, "characters");
               

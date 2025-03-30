@@ -47,13 +47,18 @@ export const prepareFormData = (
     formData.append("useSafeBase64", "true");
     formData.append("useChunkedBase64", "true");
     
-    // Never generate dummy data
+    // Never generate dummy data - ENHANCED with stronger flags
     formData.append("neverGenerateDummyData", "true");
+    formData.append("preventFakeData", "true");
+    formData.append("strictExtractionOnly", "true");
+    formData.append("extractRealTransactionsOnly", "true");
     formData.append("returnEmptyOnFailure", "true");
     
     // Add diagnostic flag for Vision API
     formData.append("returnVisionDiagnostics", "true");
     formData.append("includeExtractedText", "true");
+    formData.append("preserveOriginalPdfText", "true");
+    formData.append("rawTextOutput", "true");
     
     // Log the options being used for debugging
     console.log("📋 PDF processing options being sent:", {
@@ -67,9 +72,14 @@ export const prepareFormData = (
       debugMode: true,
       diagnosticMode: true,
       neverGenerateDummyData: true,
+      preventFakeData: true,
+      strictExtractionOnly: true,
+      extractRealTransactionsOnly: true,
       returnEmptyOnFailure: true,
       returnVisionDiagnostics: true,
-      includeExtractedText: true
+      includeExtractedText: true,
+      preserveOriginalPdfText: true,
+      rawTextOutput: true
     });
   } else {
     // Reset PDF attempt counter for non-PDF files

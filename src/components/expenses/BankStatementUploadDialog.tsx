@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useExpenses } from "@/contexts/ExpenseContext";
@@ -32,6 +33,12 @@ const BankStatementUploadDialog = ({
   
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
     console.log(`Received ${transactions.length} parsed transactions`);
+    console.log("Sample parsed transactions:", transactions.slice(0, 2));
+    
+    if (transactions.length === 0) {
+      toast.warning("No transactions were found in your statement. The document may not contain recognizable transaction data.");
+      return;
+    }
     
     // Pre-select all debit transactions by default
     const preSelectedTransactions = transactions.map(tx => ({
