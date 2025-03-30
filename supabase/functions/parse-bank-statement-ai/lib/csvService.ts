@@ -1,4 +1,6 @@
 
+import { isCSVFile as isCSVFileFn } from "./utils.ts";
+
 /**
  * Service for handling CSV file operations
  */
@@ -107,18 +109,5 @@ const parseCSVRow = (text: string): string[] => {
  * @returns boolean indicating if the file is a CSV file
  */
 export const isCSVFile = (file: File): boolean => {
-  const csvMimeTypes = [
-    'text/csv',
-    'application/csv', 
-    'application/vnd.ms-excel'
-  ];
-  
-  // Check mime type
-  if (csvMimeTypes.includes(file.type)) {
-    return true;
-  }
-  
-  // Check file extension
-  const fileName = file.name.toLowerCase();
-  return fileName.endsWith('.csv');
+  return isCSVFileFn(file.name, file.type);
 };
