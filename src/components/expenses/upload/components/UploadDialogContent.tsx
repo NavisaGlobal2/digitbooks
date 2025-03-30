@@ -55,7 +55,6 @@ const UploadDialogContent: React.FC<UploadDialogContentProps> = ({
 }) => {
   const isPdf = file && file.type === 'application/pdf';
   
-  // Check if using OCR.space but not authenticated
   const showOcrSpaceWarning = useOcrSpace && !isAuthenticated;
   
   return (
@@ -106,7 +105,7 @@ const UploadDialogContent: React.FC<UploadDialogContentProps> = ({
       )}
       
       {isProcessingPdf && (
-        <Alert className="mb-4 bg-blue-50 border-blue-200">
+        <Alert variant="default" className="mb-4 bg-blue-50 border-blue-200">
           <AlertCircle className="h-4 w-4 text-blue-500" />
           <AlertDescription className="ml-2 text-blue-700">
             Processing PDF document. This may take a few moments...

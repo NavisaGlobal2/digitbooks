@@ -1,5 +1,7 @@
+
 import { createClient } from '@supabase/supabase-js';
-import { ExpenseCategory } from '../../../../types/expense';
+// Use the correct import path for ExpenseCategory
+import { ExpenseCategory } from "@/types/expense";
 
 // OCR.space constants
 const OCR_SPACE_API_URL = 'https://api.ocr.space/parse/image';
@@ -91,6 +93,8 @@ const uploadImageToSupabase = async (imageData: string, supabase: any, fileName:
 
     // Upload the image to Supabase
     const filePath = `ocr-space/${fileName.replace('.pdf', '')}/page-${pageNum}.jpeg`;
+    
+    // Fix the protected property access by using the public methods
     const { data, error } = await supabase
       .storage
       .from(SUPABASE_BUCKET)
@@ -191,7 +195,7 @@ export const extractStructuredDataFromText = (text: string): any => {
           date: date,
           description: description,
           amount: amount,
-          category: "other" as ExpenseCategory, // Default category
+          category: "other" as ExpenseCategory, // Explicitly cast to ExpenseCategory
         });
       }
     }
