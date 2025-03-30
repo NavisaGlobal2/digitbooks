@@ -68,12 +68,13 @@ export const parseViaEdgeFunction = async (
 
     // Map the server response to our ParsedTransaction type
     const parsedTransactions: ParsedTransaction[] = data.transactions.map((tx: any) => ({
+      id: crypto.randomUUID(),
       date: new Date(tx.date),
       description: tx.description,
       amount: Math.abs(parseFloat(tx.amount)), // Store as positive number
       type: tx.type || (parseFloat(tx.amount) < 0 ? 'debit' : 'credit'),
-      category: tx.category || null,
-      selected: tx.type === 'debit', // Preselect debits
+      category: tx.category || undefined,
+      selected: false, // Don't preselect transactions
       batchId: data.batchId
     }));
 
