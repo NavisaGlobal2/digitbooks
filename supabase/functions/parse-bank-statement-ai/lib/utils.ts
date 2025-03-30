@@ -147,3 +147,16 @@ export function sanitizeTextForAPI(text: string): string {
     .replace(/\s+/g, ' ')
     .trim();
 }
+
+/**
+ * Clean currency values
+ * @param value The currency value to clean
+ * @returns Cleaned value
+ */
+export function cleanCurrencyValue(value: string): string {
+  // Remove currency symbols, commas, and other non-numeric characters except decimal points and negative signs
+  return value
+    .replace(/[^0-9.-]/g, '')  // Remove anything that isn't a digit, decimal point or negative sign
+    .replace(/(\d),(\d)/g, '$1$2') // Remove commas between digits if missed by previous regex
+    .trim();
+}

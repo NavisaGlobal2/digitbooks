@@ -20,7 +20,11 @@ export async function fallbackCSVProcessing(csvContent: string): Promise<any[]> 
     // Parse the CSV content
     let rows: string[][] = [];
     try {
-      rows = await parseCSV(cleanContent);
+      rows = await parseCSV(cleanContent, {
+        skipFirstRow: false,
+        lazyQuotes: true,
+        flexible: true
+      });
     } catch (parseError) {
       console.error("Error parsing CSV:", parseError);
       throw new Error(`Failed to parse CSV: ${parseError.message}`);

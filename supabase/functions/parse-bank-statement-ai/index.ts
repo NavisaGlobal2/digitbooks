@@ -5,6 +5,7 @@ import { extractTextFromFile } from "./lib/textExtractor.ts";
 import { processWithAI } from "./lib/aiService.ts";
 import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
 import { getFileExtension } from "./lib/utils.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -22,6 +23,9 @@ serve(async (req) => {
     
     // Get processing context if provided (revenue or expense)
     const context = formData.get("context")?.toString() || null;
+    
+    // Get auth token for Supabase
+    const authToken = formData.get("authToken")?.toString() || null;
     
     // Get file name if not available in file object
     const fileName = formData.get("fileName")?.toString() || (file instanceof File ? file.name : "unknown");
@@ -66,20 +70,20 @@ serve(async (req) => {
       // Log some of the extracted content to debug
       console.log(`Sample of extracted content: ${fileText.substring(0, 200)}...`);
       
-      let transactions = [];
+      let bankData;
       let usedFallback = false;
       
       try {
         // 2. Try to process with AI service
-        transactions = await processWithAI(fileText, fileType, context);
+        bankData = await processWithAI(fileText, fileType, context);
         
         // Log sample of transactions for debugging
-        if (transactions.length > 0) {
-          console.log(`Sample transaction: ${JSON.stringify(transactions[0])}`);
-          console.log(`Found ${transactions.length} transactions using AI service`);
+        if (bankData.transactions.length > 0) {
+          console.log(`Sample transaction: ${JSON.stringify(bankData.transactions[0])}`);
+          console.log(`Found ${bankData.transactions.length} transactions using AI service`);
         }
         
-        if (transactions.length === 0) {
+        if (bankData.transactions.length === 0) {
           throw new Error("No transactions were extracted by the AI service");
         }
       } catch (aiError) {
@@ -89,9 +93,16 @@ serve(async (req) => {
         if (fileType === "csv") {
           console.log("Attempting fallback CSV processing");
           usedFallback = true;
-          transactions = await fallbackCSVProcessing(fileText);
+          const fallbackTransactions = await fallbackCSVProcessing(fileText);
           
-          if (transactions.length === 0) {
+          bankData = {
+            account_holder: undefined,
+            account_number: undefined,
+            currency: 'USD', // Default currency
+            transactions: fallbackTransactions
+          };
+          
+          if (bankData.transactions.length === 0) {
             return new Response(
               JSON.stringify({ 
                 error: "Could not parse transactions using either AI or fallback methods. Please check the file format." 
@@ -125,15 +136,88 @@ serve(async (req) => {
         }
       }
       
-      console.log(`Parsed ${transactions.length} transactions from file`);
+      console.log(`Parsed ${bankData.transactions.length} transactions from file`);
+      
+      // 3. Store in Supabase if auth token is provided
+      let accountId = null;
+      if (authToken) {
+        try {
+          // Initialize Supabase client
+          const supabaseUrl = Deno.env.get('SUPABASE_URL');
+          if (!supabaseUrl) {
+            throw new Error('Missing SUPABASE_URL environment variable');
+          }
+          
+          const supabase = createClient(supabaseUrl, authToken);
+          
+          // Create account record
+          const { data: accountData, error: accountError } = await supabase
+            .from('bank_statement_accounts')
+            .insert([{
+              account_holder: bankData.account_holder || fileName.replace(/\.[^/.]+$/, ""),
+              account_number: bankData.account_number || 'Unknown',
+              currency: bankData.currency || 'USD'
+            }])
+            .select()
+            .single();
+          
+          if (accountError) {
+            console.error('Error storing account:', accountError);
+            throw new Error(`Failed to store account: ${accountError.message}`);
+          }
+          
+          accountId = accountData.id;
+          
+          // Store transactions
+          const transactionsToInsert = bankData.transactions.map(tx => ({
+            account_id: accountId,
+            date: tx.date,
+            description: tx.description,
+            type: tx.type,
+            amount: tx.amount,
+            balance: tx.balance
+          }));
+          
+          const { error: txError } = await supabase
+            .from('bank_statement_transactions')
+            .insert(transactionsToInsert);
+          
+          if (txError) {
+            console.error('Error storing transactions:', txError);
+            throw new Error(`Failed to store transactions: ${txError.message}`);
+          }
+          
+          console.log(`Successfully stored ${transactionsToInsert.length} transactions in Supabase`);
+        } catch (dbError) {
+          console.error('Database error:', dbError);
+          // Continue processing but include error in response
+          return new Response(
+            JSON.stringify({
+              success: true,
+              transactions: bankData.transactions,
+              message: `Processed ${bankData.transactions.length} transactions but failed to store in database: ${dbError.message}`,
+              batchId,
+              accountId,
+              dbError: dbError.message
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
       
       return new Response(
         JSON.stringify({ 
           success: true, 
-          transactions,
+          transactions: bankData.transactions,
+          account: {
+            id: accountId,
+            account_holder: bankData.account_holder,
+            account_number: bankData.account_number,
+            currency: bankData.currency
+          },
           message: usedFallback 
-            ? `Successfully processed ${transactions.length} transactions using fallback method` 
-            : `Successfully processed ${transactions.length} transactions`,
+            ? `Successfully processed ${bankData.transactions.length} transactions using fallback method` 
+            : `Successfully processed ${bankData.transactions.length} transactions`,
           batchId
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }

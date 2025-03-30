@@ -76,14 +76,19 @@ async function extractTextFromPDF(file: File): Promise<string> {
   console.log("Processing PDF file - preparing context for AI processing");
   
   // Create a placeholder with file information
-  const placeholderText = `PDF DOCUMENT: ${file.name || "unnamed.pdf"} (${file.size} bytes)
+  const placeholderText = `PDF BANK STATEMENT: ${file.name || "unnamed.pdf"} (${file.size} bytes)
 This is a bank statement in PDF format. Please analyze the content carefully to extract:
-1. All transaction dates (convert to YYYY-MM-DD format)
-2. Transaction descriptions 
-3. Transaction amounts (negative for debits, positive for credits)
-4. Additional metadata like reference numbers, payment methods, etc.
+1. Account holder name
+2. Account number
+3. Currency
+4. All transactions with:
+   - Date (convert to YYYY-MM-DD format)
+   - Description
+   - Amount (positive for credits, negative for debits)
+   - Transaction type (credit/debit)
+   - Current balance (if available)
 
-Please structure the transactions in a standardized JSON format.`;
+Please structure the response in a standardized JSON format.`;
 
   return placeholderText;
 }

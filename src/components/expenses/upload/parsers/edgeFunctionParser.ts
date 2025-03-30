@@ -1,6 +1,7 @@
 
 import { ParsedTransaction } from "./types";
 import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from "uuid";
 
 export const parseViaEdgeFunction = async (
   file: File,
@@ -20,9 +21,7 @@ export const parseViaEdgeFunction = async (
     formData.append('file', file);
     formData.append('preferredProvider', preferredProvider);
     formData.append('fileName', file.name);
-
-    // Get the token for authorizing the function call
-    const token = sessionData.session.access_token;
+    formData.append('authToken', sessionData.session.access_token);
 
     console.log(`Processing ${file.name} (${file.type}, ${file.size} bytes) via edge function`);
 
@@ -42,10 +41,61 @@ export const parseViaEdgeFunction = async (
       return;
     }
 
+    // Transform the response to match our expected ParsedTransaction format
+    const parsedTransactions: ParsedTransaction[] = data.transactions.map((tx: any) => ({
+      id: uuidv4(),
+      date: tx.date,
+      description: tx.description,
+      amount: Math.abs(tx.amount), // Ensure positive amount
+      type: tx.type,
+      selected: tx.type === 'debit', // Pre-select debit transactions
+      categorySuggestion: tx.type === 'debit' ? {
+        category: guessCategoryFromDescription(tx.description),
+        confidence: 0.7
+      } : undefined
+    }));
+
     // Send the transactions to the caller
-    onSuccess(data.transactions as ParsedTransaction[]);
+    onSuccess(parsedTransactions);
   } catch (error: any) {
     console.error("Error in parseViaEdgeFunction:", error);
     onError(error.message || "Unexpected error processing file");
   }
 };
+
+/**
+ * Basic logic to guess expense category from transaction description
+ */
+function guessCategoryFromDescription(description: string): string {
+  const lowerDesc = description.toLowerCase();
+  
+  if (lowerDesc.includes('food') || lowerDesc.includes('restaurant') || 
+      lowerDesc.includes('cafe') || lowerDesc.includes('coffee') ||
+      lowerDesc.includes('uber eats') || lowerDesc.includes('doordash')) {
+    return 'food';
+  }
+  
+  if (lowerDesc.includes('uber') || lowerDesc.includes('lyft') || 
+      lowerDesc.includes('taxi') || lowerDesc.includes('transport') ||
+      lowerDesc.includes('train') || lowerDesc.includes('subway')) {
+    return 'transportation';
+  }
+  
+  if (lowerDesc.includes('amazon') || lowerDesc.includes('walmart') || 
+      lowerDesc.includes('target') || lowerDesc.includes('purchase')) {
+    return 'shopping';
+  }
+  
+  if (lowerDesc.includes('rent') || lowerDesc.includes('mortgage') || 
+      lowerDesc.includes('apartment') || lowerDesc.includes('housing')) {
+    return 'housing';
+  }
+  
+  if (lowerDesc.includes('phone') || lowerDesc.includes('internet') || 
+      lowerDesc.includes('wireless') || lowerDesc.includes('broadband')) {
+    return 'utilities';
+  }
+  
+  // Default
+  return 'other';
+}
