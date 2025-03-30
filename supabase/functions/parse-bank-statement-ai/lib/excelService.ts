@@ -58,7 +58,7 @@ function extractTextFromExcelBinary(data: Uint8Array): string[] {
   const textSegments: string[] = [];
   let currentSegment = '';
   let inTextSegment = false;
-  let currentChar = ''; // Initialize currentChar to avoid undefined reference
+  let currentChar = ''; // Initialize currentChar with empty string
   
   // Look for text patterns in the binary data
   for (let i = 0; i < data.length - 1; i++) {
@@ -101,7 +101,7 @@ function extractTextFromExcelBinary(data: Uint8Array): string[] {
       }
     }
     
-    // Check for potential row boundaries
+    // Check for potential row boundaries - make sure currentChar is defined first
     if (inTextSegment && currentChar && (currentChar === '\n' || currentChar === '\r')) {
       if (currentSegment.length > 3) { // Ignore very short segments
         textSegments.push(currentSegment.trim());
