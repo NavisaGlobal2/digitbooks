@@ -116,7 +116,7 @@ const ProcessingModeToggle = ({
                 checked={extractPdfText}
                 onCheckedChange={onExtractPdfTextToggle}
                 aria-label="Extract text from PDF with Google Vision"
-                size="sm"
+                className="scale-90"
               />
             </div>
 
@@ -144,7 +144,7 @@ const ProcessingModeToggle = ({
                   checked={useOcrSpace}
                   onCheckedChange={handleOcrSpaceToggle}
                   aria-label="Use OCR.space for PDF processing"
-                  size="sm"
+                  className="scale-90"
                 />
               </div>
             )}
@@ -168,11 +168,11 @@ const ProcessingModeToggle = ({
                 </Tooltip>
               </TooltipProvider>
               <Switch
-                checked={storePdfInSupabase || useOcrSpace} // Force checked when OCR.space is enabled
+                checked={storePdfInSupabase || useOcrSpace}
                 onCheckedChange={onStorePdfToggle}
-                disabled={useOcrSpace} // Disable toggle when OCR.space is enabled as it's required
+                disabled={useOcrSpace}
                 aria-label="Store PDF in Supabase"
-                size="sm"
+                className="scale-90"
               />
             </div>
           </div>

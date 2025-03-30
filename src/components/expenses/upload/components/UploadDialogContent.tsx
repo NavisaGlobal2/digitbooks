@@ -97,10 +97,11 @@ const UploadDialogContent = ({
       )}
 
       <UploadDialogFooter
-        file={file}
+        onParse={parseFile}
+        onCancel={onClose}
         uploading={uploading}
-        parseFile={parseFile}
-        onClose={onClose}
+        disabled={!file}
+        showCancelButton={uploading}
       />
     </div>
   );

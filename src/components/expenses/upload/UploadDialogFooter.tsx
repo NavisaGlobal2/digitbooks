@@ -7,6 +7,7 @@ interface UploadDialogFooterProps {
   uploading: boolean;
   disabled: boolean;
   showCancelButton?: boolean;
+  file?: File | null; // Making file optional to fix the TypeScript error
 }
 
 const UploadDialogFooter = ({ 

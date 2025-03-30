@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ParsedTransaction } from '../types';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Process PDF using OCR.space API via Supabase Edge Function
@@ -167,6 +168,7 @@ function extractTransactionsFromText(text: string): ParsedTransaction[] {
       // Only add if we have minimum required fields
       if (description && (amount || amount === '0')) {
         transactions.push({
+          id: uuidv4(), // Add unique ID for each transaction
           date: formatDateString(transactionDate),
           description: description,
           amount: parseFloat(amount),
