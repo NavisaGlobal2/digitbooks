@@ -28,19 +28,25 @@ export const parseViaEdgeFunction = async (
     }
     
     // For PDFs, ensure Vision API is used by default unless explicitly disabled
-    if (file.name.toLowerCase().endsWith('.pdf') && options.useVision !== false) {
+    const isPdf = file.name.toLowerCase().endsWith('.pdf');
+    if (isPdf && options.useVision !== false) {
       options.useVision = true;
-      console.log("Vision API enabled for PDF processing");
+      // Update dummyData prevention flags
+      options.disableFakeDataGeneration = true;
+      options.strictExtractMode = true;
+      options.forceRealData = true;
+      console.log("Vision API and anti-dummy data protections enabled for PDF processing");
     }
     
     // Prepare form data
-    const { formData, isPdf, pdfAttemptCount } = prepareFormData(file, options);
+    const { formData, isPdf: isFilePdf, pdfAttemptCount } = prepareFormData(file, options);
     
     // Make sure we're using the correct URL format
     const supabaseUrl = "https://naxmgtoskeijvdofqyik.supabase.co";
     const edgeFunctionEndpoint = `${supabaseUrl}/functions/v1/parse-bank-statement-ai`;
     
     console.log(`Full endpoint URL: ${edgeFunctionEndpoint}`);
+    console.log("Request options:", options);
     
     // Implement retry logic
     let retryCount = 0;
@@ -49,7 +55,7 @@ export const parseViaEdgeFunction = async (
     while (retryCount <= MAX_RETRIES) {
       try {
         // Handle PDF-specific retry logic
-        if (isPdf) {
+        if (isFilePdf) {
           await handlePDFRetry(formData, retryCount);
         }
         
@@ -58,9 +64,36 @@ export const parseViaEdgeFunction = async (
           edgeFunctionEndpoint,
           token,
           formData,
-          onSuccess,
+          (transactions) => {
+            console.log(`Received ${transactions.length} transactions from edge function`);
+            
+            // First check for any log markers that indicate real data was extracted
+            const realDataExtracted = transactions.some(tx => 
+              tx.description?.includes('VISION_API_EXTRACTION_SUCCESS_MARKER') ||
+              tx.amount?.toString().includes('VISION_API_EXTRACTION_SUCCESS_MARKER')
+            );
+            
+            if (realDataExtracted) {
+              console.log("✅ Confirmed that real data was extracted via Google Vision");
+            }
+            
+            // Filter out any marker transactions
+            const filteredTransactions = transactions.filter(tx => 
+              !tx.description?.includes('VISION_API_EXTRACTION_SUCCESS_MARKER') &&
+              !tx.amount?.toString().includes('VISION_API_EXTRACTION_SUCCESS_MARKER')
+            );
+            
+            // Check for empty or invalid transactions
+            if (!filteredTransactions || filteredTransactions.length === 0) {
+              return onError("No transactions were found in the document. Please try a different file format.");
+            }
+            
+            // Pass the filtered transactions to success handler
+            onSuccess(filteredTransactions);
+            return true;
+          },
           onError,
-          isPdf,
+          isFilePdf,
           retryCount,
           MAX_RETRIES
         );

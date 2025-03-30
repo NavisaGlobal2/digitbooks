@@ -87,14 +87,14 @@ const ProcessingModeToggle = ({
                       <TooltipContent>
                         <p className="w-[220px] text-xs">
                           Vision API helps extract text from PDFs with better accuracy. 
-                          Disable only if you're experiencing issues.
+                          <strong>Required for real data extraction.</strong>
                         </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Recommended for better PDF text extraction
+                  <strong className="text-green-600">Recommended</strong> for accurate PDF text extraction
                 </p>
               </div>
               <Switch
