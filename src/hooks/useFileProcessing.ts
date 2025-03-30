@@ -1,72 +1,38 @@
 
 import { useState } from "react";
-import { toast } from "sonner";
+import { useProcessingState } from "./file-processing/useProcessingState";
+import { useFileValidation } from "./file-processing/useFileValidation";
+import { useServerProcessing } from "./file-processing/useServerProcessing";
+import { useEdgeFunctionProcessing } from "./file-processing/useEdgeFunctionProcessing";
 
 export const useFileProcessing = () => {
-  const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
-  const [processingStatus, setProcessingStatus] = useState<string | null>(null);
-
-  const processReceiptFile = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      
-      reader.onload = () => {
-        const receiptUrl = reader.result as string;
-        resolve(receiptUrl);
-      };
-      
-      reader.onerror = () => {
-        toast.error("Failed to process receipt file");
-        reject("Failed to process receipt file");
-      };
-    });
-  };
-
-  const processBankStatementFile = (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const validateFileType = () => {
-        const fileExt = file.name.split('.').pop()?.toLowerCase();
-        const validExts = ['csv', 'xlsx', 'xls', 'pdf'];
-        
-        const isValidMimeType = [
-          'text/csv', 
-          'application/vnd.ms-excel', 
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'application/pdf'
-        ].includes(file.type);
-        
-        return isValidMimeType || validExts.includes(fileExt || '');
-      };
-      
-      if (!validateFileType()) {
-        toast.error("Unsupported file format. Please upload CSV, Excel, or PDF files");
-        reject("Unsupported file format");
-        return;
-      }
-      
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("File is too large. Maximum size is 10MB");
-        reject("File too large");
-        return;
-      }
-      
-      setProcessing(true);
-      
-      try {
-        resolve(file);
-      } catch (err) {
-        console.error('Error processing bank statement:', err);
-        toast.error("Failed to process bank statement file");
-        reject("Failed to process bank statement file");
-      } finally {
-        setProcessing(false);
-      }
-    });
-  };
+  const [isCancelled, setIsCancelled] = useState(false);
+  
+  const {
+    processing, 
+    setProcessing,
+    error,
+    setError,
+    isAuthenticated,
+    setIsAuthenticated,
+    preferredAIProvider,
+    setPreferredAIProvider
+  } = useProcessingState();
+  
+  const { processReceiptFile, processBankStatementFile } = useFileValidation();
+  
+  const { 
+    isWaitingForServer,
+    setIsWaitingForServer, 
+    createProcessingOptions 
+  } = useServerProcessing();
+  
+  const { 
+    processingStatus,
+    setProcessingStatus,
+    handleEdgeFunctionSuccess,
+    handleEdgeFunctionError
+  } = useEdgeFunctionProcessing();
 
   const processServerSide = async (file: File, 
     onSuccess: (transactions: any[]) => void, 
@@ -90,26 +56,8 @@ export const useFileProcessing = () => {
         setIsWaitingForServer(true);
       }
       
-      // Create a standardized options object
-      const processingOptions: Record<string, any> = {
-        // Use passed provider or default
-        preferredProvider: options?.preferredProvider || preferredAIProvider
-      };
-      
-      // Handle Vision API option for PDFs
-      if (isPdf) {
-        // Use the explicit useVision option if provided, otherwise default to true
-        const useVision = options?.useVision !== undefined ? options.useVision : true;
-        processingOptions.useVision = useVision;
-        console.log(`Setting useVision flag to: ${useVision}`);
-      }
-      
-      // Add any additional options
-      if (options) {
-        if (options.forceRealData) processingOptions.forceRealData = true;
-        if (options.extractRealData) processingOptions.extractRealData = true;
-        if (options.noDummyData) processingOptions.noDummyData = true;
-      }
+      // Create processing options
+      const processingOptions = createProcessingOptions(options, preferredAIProvider, fileType);
       
       console.log("Processing options:", processingOptions);
       
@@ -120,55 +68,24 @@ export const useFileProcessing = () => {
         (transactions) => {
           if (isCancelled) return;
           
-          if (!Array.isArray(transactions) || transactions.length === 0) {
-            if (setIsWaitingForServer) {
-              setIsWaitingForServer(false);
-            }
-            setProcessing(false);
-            setProcessingStatus(null);
-            onError("No valid transactions found in the statement. Please try a different file or format.");
-            resetProgress();
-            return;
-          }
-          
-          const processedTransactions = transactions.map(tx => {
-            if (tx.date && typeof tx.date === 'string') {
-              const dateObj = new Date(tx.date);
-              if (!isNaN(dateObj.getTime())) {
-                tx.date = dateObj.toISOString().split('T')[0];
-              }
-            }
-            return tx;
-          });
-          
-          console.log(`Received ${processedTransactions.length} transactions from server`);
-          
           completeProgress();
-          if (setIsWaitingForServer) {
-            setIsWaitingForServer(false);
-          }
-          setProcessing(false);
-          setProcessingStatus(null);
-          onSuccess(processedTransactions);
+          
+          handleEdgeFunctionSuccess(
+            transactions, 
+            onSuccess,
+            setIsWaitingForServer,
+            setProcessing
+          );
         },
         (errorMessage) => {
-          if (isCancelled) return true;
-          
-          setProcessing(false);
-          setProcessingStatus(null);
-          
-          if (setIsWaitingForServer) {
-            setIsWaitingForServer(false);
-          }
-          
-          const isPdfRetryError = file.name.toLowerCase().endsWith('.pdf') && 
-                                errorMessage.toLowerCase().includes('second attempt');
-          
-          if (isPdfRetryError) {
-            toast.warning("PDF processing requires a second attempt. Please try again.");
-          }
-          
-          return onError(errorMessage);
+          return handleEdgeFunctionError(
+            errorMessage,
+            file,
+            isCancelled,
+            onError,
+            setIsWaitingForServer,
+            setProcessing
+          );
         },
         processingOptions
       );
@@ -198,6 +115,10 @@ export const useFileProcessing = () => {
     setIsAuthenticated,
     preferredAIProvider,
     setPreferredAIProvider,
-    processingStatus
+    processingStatus,
+    isWaitingForServer,
+    setIsWaitingForServer,
+    isCancelled,
+    setIsCancelled
   };
 };
