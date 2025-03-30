@@ -1,11 +1,1 @@
-
 project_id = "naxmgtoskeijvdofqyik"
-
-[functions.list-banks]
-verify_jwt = false
-
-[functions.verify-account]
-verify_jwt = false
-
-[functions.send-team-invitation]
-verify_jwt = false
