@@ -1,3 +1,4 @@
+
 /**
  * Extract text from various file types
  */
@@ -14,8 +15,9 @@ export async function extractTextFromFile(file: File, options: any = {}): Promis
       const safeProcessing = options?.safeProcessing === true;
       const strictExtractMode = options?.strictExtractMode === true;
       const disableFakeData = options?.disableFakeDataGeneration === true;
+      const returnEmptyOnFailure = options?.returnEmptyOnFailure === true;
       
-      console.log(`Processing PDF file: ${fileName}, size: ${fileSize}, useGoogleVision: ${useGoogleVision}, forceRealData: ${forceRealData}, safeProcessing: ${safeProcessing}, strictExtractMode: ${strictExtractMode}`);
+      console.log(`Processing PDF file: ${fileName}, size: ${fileSize}, useGoogleVision: ${useGoogleVision}, forceRealData: ${forceRealData}, safeProcessing: ${safeProcessing}, strictExtractMode: ${strictExtractMode}, returnEmptyOnFailure: ${returnEmptyOnFailure}`);
       
       // First try to extract real data using Google Vision API if enabled
       if (useGoogleVision) {
@@ -51,38 +53,58 @@ CRITICAL INSTRUCTION FOR AI: This is REAL text extracted from an ACTUAL bank sta
 2. Format each transaction with date (YYYY-MM-DD), description, and amount
 3. For amounts, preserve negative values for debits and positive values for credits
 4. Return ONLY genuine transactions found in this text, NEVER invent data
-5. If you can't clearly identify transactions, return an empty array
+5. If you can't clearly identify transactions, return an empty array []
 6. The user's financial decisions depend on this data being accurate
 7. DO NOT generate fictional or placeholder transactions under ANY circumstances
-8. THIS IS REAL DATA, NOT A TEST - I REPEAT, DO NOT GENERATE EXAMPLE DATA`;
+8. If extraction fails or text is unclear, RETURN AN EMPTY ARRAY
+9. THIS IS REAL DATA, NOT A TEST - I REPEAT, DO NOT GENERATE EXAMPLE DATA`;
             } else {
               console.warn("⚠️ Google Vision API returned insufficient text:", pdfText?.length || 0, "characters");
+              
+              if (returnEmptyOnFailure) {
+                console.log("⚠️ Returning empty array instruction due to insufficient Vision API text");
+                return `[EMPTY PDF EXTRACTION - NO SUFFICIENT TEXT DETECTED]
+
+CRITICAL INSTRUCTION: No clear text could be extracted from this PDF.
+RETURN AN EMPTY ARRAY [] - DO NOT GENERATE ANY EXAMPLE OR FICTIONAL DATA.
+This is critically important - the user requires only real data.`;
+              }
             }
           } else {
             console.error("❌ Failed to convert PDF to base64");
           }
         } catch (visionError) {
           console.error("❌ Google Vision extraction failed:", visionError);
+          
+          if (returnEmptyOnFailure) {
+            console.log("⚠️ Returning empty array instruction due to Vision API error");
+            return `[VISION API ERROR - NO TEXT EXTRACTED]
+
+CRITICAL INSTRUCTION: Vision API failed to extract text from this PDF.
+RETURN AN EMPTY ARRAY [] - DO NOT GENERATE ANY EXAMPLE OR FICTIONAL DATA.
+This is critically important - the user requires only real data.`;
+          }
         }
       } else {
         console.warn("⚠️ Google Vision API is disabled for this request");
       }
       
       // Fallback to the original method if Google Vision fails or is disabled
-      const realDataEmphasis = forceRealData || disableFakeData ? `
+      const realDataEmphasis = `
 
 CRITICAL NOTICE: YOU MUST ONLY EXTRACT REAL TRANSACTIONS FROM THE DOCUMENT.
 NEVER GENERATE FICTIONAL TRANSACTIONS, EVEN IF YOU CANNOT CLEARLY IDENTIFY ANY.
 RETURNING AN EMPTY ARRAY IS BETTER THAN GENERATING FICTIONAL DATA.
 THE USER'S FINANCIAL DECISIONS DEPEND ON THIS DATA BEING ACCURATE.
-I REPEAT: DO NOT UNDER ANY CIRCUMSTANCES GENERATE EXAMPLE DATA.` : '';
+I REPEAT: DO NOT UNDER ANY CIRCUMSTANCES GENERATE EXAMPLE DATA.`;
 
-      const strictModeInstructions = strictExtractMode ? `
+      const strictModeInstructions = `
 STRICT EXTRACTION MODE IS ENABLED:
 - Only extract transactions that you can clearly identify with high confidence
 - If text is unclear, return an empty array rather than guessing
 - DO NOT try to be helpful by generating examples of what the data might look like
-- If in doubt, return LESS data rather than potentially incorrect data` : '';
+- If in doubt, return LESS data rather than potentially incorrect data
+- RETURNING AN EMPTY ARRAY [] IS THE CORRECT RESPONSE WHEN NO CLEAR TRANSACTIONS ARE FOUND`;
 
       return `[PDF BANK STATEMENT: ${fileName} (${fileSize})]
 
@@ -96,7 +118,8 @@ CRITICAL INSTRUCTION FOR AI: You are extracting REAL financial data from an ACTU
 7. Mark negative values as debits and positive values as credits
 8. The user's financial decisions depend on this data being accurate${realDataEmphasis}${strictModeInstructions}
 
-RESPOND ONLY with a valid JSON array of real transactions extracted from the statement.`;
+RESPOND ONLY with a valid JSON array of real transactions extracted from the statement.
+IF NO CLEAR TRANSACTIONS ARE FOUND, RESPOND WITH [] (an empty array).`;
     } catch (error) {
       console.error("Error creating PDF prompt:", error);
       throw new Error(`Failed to process PDF file: ${error.message}`);

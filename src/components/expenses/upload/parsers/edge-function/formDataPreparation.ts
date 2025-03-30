@@ -30,6 +30,10 @@ export const prepareFormData = (
     // Force base64 encoding for Vision API to ensure proper format
     formData.append("forceBase64Encoding", "true");
     
+    // Never generate dummy data
+    formData.append("neverGenerateDummyData", "true");
+    formData.append("returnEmptyOnFailure", "true");
+    
     // Log the options being used for debugging
     console.log("PDF processing options being sent:", {
       isPdf,
@@ -37,7 +41,9 @@ export const prepareFormData = (
       pdfAttemptCount,
       safeProcessing: options?.safeProcessing === true ? "true" : "false",
       forceBase64: "true",
-      debugMode: true
+      debugMode: true,
+      neverGenerateDummyData: true,
+      returnEmptyOnFailure: true
     });
   } else {
     // Reset PDF attempt counter for non-PDF files
@@ -55,13 +61,11 @@ export const prepareFormData = (
     formData.append("forceRealData", "true");
   }
   
-  if (options?.disableFakeDataGeneration) {
-    formData.append("disableFakeDataGeneration", "true");
-  }
-  
-  if (options?.strictExtractMode) {
-    formData.append("strictExtractMode", "true");
-  }
+  // Always add these flags to prevent dummy data generation
+  formData.append("disableFakeDataGeneration", "true");
+  formData.append("strictExtractMode", "true");
+  formData.append("returnEmptyOnFailure", "true");
+  formData.append("neverGenerateDummyData", "true");
   
   if (options?.debugMode) {
     formData.append("debugMode", "true");

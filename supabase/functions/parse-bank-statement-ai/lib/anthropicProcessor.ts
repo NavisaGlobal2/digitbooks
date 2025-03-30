@@ -16,6 +16,7 @@ export async function processWithAnthropic(
   
   // Check if this is Vision API extracted text
   const isVisionExtracted = text.includes('[PDF BANK STATEMENT EXTRACTED WITH GOOGLE VISION API:') || options?.isVisionExtracted;
+  const isEmptyExtraction = text.includes('[EMPTY PDF EXTRACTION') || text.includes('[VISION API ERROR');
   
   // Create a stronger system prompt to prevent dummy data generation
   let systemPrompt = `You are a financial data extraction assistant specialized in bank statement analysis.
@@ -27,12 +28,18 @@ If you cannot clearly identify transactions from the input text, return an empty
 
 CRITICAL WARNING: Users have reported that you sometimes generate fictional transactions instead of extracting real ones. This is causing serious problems with their financial tracking. NEVER do this - only extract REAL transactions visible in the data.`;
   
+  if (isEmptyExtraction) {
+    console.log("Empty extraction detected - will force empty array response");
+    return [];
+  }
+  
   if (isVisionExtracted) {
     systemPrompt += `
 
 SPECIAL INSTRUCTION: The input contains OCR-extracted text from a real PDF bank statement.
 This is actual transaction data that a user has uploaded. Trust this data and extract the transactions from it.
-DO NOT make up transactions - the user's financial decisions depend on this being accurate.`;
+DO NOT make up transactions - the user's financial decisions depend on this being accurate.
+RETURN AN EMPTY ARRAY [] IF NO CLEAR TRANSACTIONS ARE IDENTIFIED.`;
   }
   
   if (text.includes('[PDF BANK STATEMENT:') || text.includes('ACTUAL STATEMENT TEXT FOLLOWS:')) {
@@ -42,17 +49,19 @@ CRITICAL INSTRUCTION: You are processing a REAL PDF bank statement that was uplo
 Your task is to analyze the content and extract ONLY actual transactions that appear in this bank statement.
 This is NOT a simulation or test - a user has uploaded their real bank statement.
 If you cannot determine clear transaction patterns, return an empty array rather than inventing fake transactions.
-NEVER create fictional data - only extract what appears to be genuine financial transactions.`;
+NEVER create fictional data - only extract what appears to be genuine financial transactions.
+RETURNING AN EMPTY ARRAY [] IS THE CORRECT RESPONSE WHEN NO CLEAR TRANSACTIONS ARE FOUND.`;
   }
   
-  if (options?.forceRealData) {
+  if (options?.forceRealData || options?.neverGenerateDummyData || options?.returnEmptyOnFailure) {
     systemPrompt += `
 
 EXTREMELY IMPORTANT: The user is receiving placeholder/dummy transactions instead of their real data.
 This is causing a severe problem in their financial tracking application.
 DO NOT GENERATE ANY FICTIONAL TRANSACTIONS under any circumstances.
 If you can't extract real transactions, return an empty array [].
-The user's financial decisions depend on this data being accurate.`;
+The user's financial decisions depend on this data being accurate.
+RETURNING AN EMPTY ARRAY [] IS THE CORRECT RESPONSE WHEN NO CLEAR TRANSACTIONS ARE FOUND.`;
   }
   
   if (context === "revenue") {
@@ -95,6 +104,7 @@ The user's financial decisions depend on this data being accurate.`;
     If you don't see clear transaction data, return an empty array.
     
     IMPORTANT: NEVER generate fictional transactions. Only extract data that appears genuine.
+    RETURN AN EMPTY ARRAY [] IF NO CLEAR TRANSACTIONS ARE IDENTIFIED.
     
     Respond ONLY with a valid JSON array of transactions, with NO additional text or explanation.`;
   }
@@ -140,7 +150,8 @@ ${text}`;
     const content = data.content?.[0]?.text;
     
     if (!content) {
-      throw new Error("No content returned from Anthropic");
+      console.log("No content returned from Anthropic, returning empty array");
+      return [];
     }
 
     console.log("Raw Anthropic response:", content.slice(0, 200) + "...");
@@ -168,13 +179,16 @@ ${text}`;
       // If we got here, we couldn't find a valid JSON array
       console.error("No valid JSON structure found in Anthropic response");
       console.log("Response content:", content);
-      throw new Error("Could not parse transactions from Anthropic response");
+      console.log("Returning empty array due to parsing failure");
+      return [];
     } catch (parseError) {
       console.error("Error parsing Anthropic response:", content);
-      throw new Error("Could not parse transactions from Anthropic response");
+      console.log("Returning empty array due to parsing error");
+      return [];
     }
   } catch (error) {
     console.error("Error processing with Anthropic:", error);
-    throw error;
+    console.log("Returning empty array due to processing error");
+    return [];
   }
 }

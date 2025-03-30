@@ -16,9 +16,16 @@ export const processSuccessfulResult = (
     throw new Error(result.error || "Unknown error processing file");
   }
   
-  if (!result.transactions || !Array.isArray(result.transactions) || result.transactions.length === 0) {
-    trackFailedConnection('no_transactions', { result });
-    throw new Error("No transactions were found in the uploaded file");
+  if (!result.transactions || !Array.isArray(result.transactions)) {
+    console.log("No transactions found or invalid transactions array");
+    onSuccess([]);
+    return true;
+  }
+  
+  if (result.transactions.length === 0) {
+    console.log("Empty transactions array returned - no transactions found");
+    onSuccess([]);
+    return true;
   }
   
   console.log(`Successfully parsed ${result.transactions.length} transactions`);

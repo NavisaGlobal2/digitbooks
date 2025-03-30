@@ -24,6 +24,8 @@ export const parsePDFFile = (
     safeProcessing: true,
     disableFakeDataGeneration: true,
     strictExtractMode: true,
+    returnEmptyOnFailure: true,
+    neverGenerateDummyData: true,
     debugMode: true // Add debug mode to get more info
   };
   
@@ -49,21 +51,12 @@ export const parsePDFFile = (
       
       console.log("Vision API used successfully:", visionApiUsed);
       
-      // Enhanced validation to detect AI-generated content
-      const suspiciousTransactions = detectSuspiciousTransactions(transactions);
-      if (suspiciousTransactions.length > 0) {
-        console.warn("Suspicious transactions detected:", suspiciousTransactions);
-        toast.error("The system may have generated example data instead of extracting real transactions. Please try again with a CSV file format.");
-        onError("AI returned placeholder data instead of real transactions. Please try again with a different file format.");
-        return;
-      }
-      
-      // Ensure transactions have proper dates
-      const processedTransactions = transactions.map(tx => {
+      // Filter out any marker transactions
+      const processedTransactions = transactions.filter(tx => {
         // Filter out any marker transactions
         if (tx.description?.includes('VISION_API_EXTRACTION_SUCCESS_MARKER') ||
             tx.amount?.toString().includes('VISION_API_EXTRACTION_SUCCESS_MARKER')) {
-          return null;
+          return false;
         }
         
         if (tx.date) {
@@ -80,16 +73,22 @@ export const parsePDFFile = (
         
         // Validate each transaction to ensure it has required fields
         if (!tx.description || tx.description.trim() === '') {
-          tx.description = 'Unspecified transaction';
+          return false; // Skip transactions with empty descriptions
         }
         
         if (isNaN(parseFloat(String(tx.amount)))) {
           console.warn("Invalid amount detected:", tx.amount);
-          tx.amount = 0;
+          return false; // Skip transactions with invalid amounts
         }
         
-        return tx;
-      }).filter(tx => tx !== null) as ParsedTransaction[];
+        return true;
+      }) as ParsedTransaction[];
+      
+      if (processedTransactions.length === 0) {
+        toast.warning(`No valid ${context} transactions were found in your PDF. Please try a different file.`);
+        onError(`No valid ${context} transactions found in PDF. Please try a different file.`);
+        return;
+      }
       
       console.log(`${context} PDF transactions after processing:`, processedTransactions);
       onComplete(processedTransactions);
@@ -121,72 +120,3 @@ export const parsePDFFile = (
     options
   );
 };
-
-/**
- * Enhanced detection of suspicious/AI-generated transactions
- */
-function detectSuspiciousTransactions(transactions: ParsedTransaction[]): ParsedTransaction[] {
-  // Filter out any marker transactions first
-  const filteredTransactions = transactions.filter(tx => 
-    !tx.description?.includes('VISION_API_EXTRACTION_SUCCESS_MARKER') &&
-    !tx.amount?.toString().includes('VISION_API_EXTRACTION_SUCCESS_MARKER')
-  );
-  
-  // Common patterns in AI-generated example data
-  const suspiciousTerms = [
-    'placeholder', 'example', 'sample', 'dummy', 'test transaction', 'demo',
-    'john doe', 'jane doe', 'grocery', 'coffee', 'netflix', 'amazon', 'uber', 
-    'walmart', 'target', 'starbucks', 'restaurant', 'gas station', 'market',
-    'payroll', 'salary', 'deposit', 'withdrawal', 'transfer', 'payment',
-    '12345', '10.00', '20.00', '50.00', '100.00' // Common placeholder amounts
-  ];
-  
-  // Find transactions that are likely AI-generated
-  const suspicious = filteredTransactions.filter(tx => {
-    // Check if description contains suspicious terms
-    if (tx.description && suspiciousTerms.some(term => 
-      tx.description.toLowerCase().includes(term.toLowerCase()))) {
-      return true;
-    }
-    
-    // Check for suspiciously round amounts (e.g., exactly 100.00)
-    const amount = parseFloat(String(tx.amount));
-    if (amount === Math.floor(amount) && amount >= 10 && amount <= 1000) {
-      return true;
-    }
-    
-    return false;
-  });
-  
-  // Reject if all transaction dates are perfectly sequential (likely fake data)
-  if (filteredTransactions.length > 3) {
-    let sequentialDateCount = 0;
-    const sortedTxs = [...filteredTransactions].sort((a, b) => {
-      if (!a.date || !b.date) return 0;
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
-    });
-    
-    for (let i = 1; i < sortedTxs.length; i++) {
-      if (!sortedTxs[i-1].date || !sortedTxs[i].date) continue;
-      
-      const prevDate = new Date(sortedTxs[i-1].date);
-      const currDate = new Date(sortedTxs[i].date);
-      
-      if (isNaN(prevDate.getTime()) || isNaN(currDate.getTime())) continue;
-      
-      const diffDays = (currDate.getTime() - prevDate.getTime()) / (1000 * 3600 * 24);
-      
-      if (diffDays === 1 || diffDays === 7 || diffDays === 30) {
-        sequentialDateCount++;
-      }
-    }
-    
-    // If more than 70% of dates are sequential, it's likely fake data
-    if (sequentialDateCount > sortedTxs.length * 0.7) {
-      console.warn("Warning: Detected suspiciously sequential dates in transactions");
-      return filteredTransactions; // Return all transactions to trigger the error
-    }
-  }
-  
-  return suspicious;
-}

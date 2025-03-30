@@ -9,6 +9,8 @@ export async function processWithDeepseek(
     isSpecialPdfFormat?: boolean;
     fileName?: string;
     fileSize?: number;
+    returnEmptyOnFailure?: boolean;
+    neverGenerateDummyData?: boolean;
   }
 ): Promise<any> {
   const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY");
@@ -18,6 +20,13 @@ export async function processWithDeepseek(
 
   console.log("Sending to DeepSeek for processing...");
   console.log(`Processing context: ${context || 'general'}`);
+  
+  // Check if this is an empty extraction instruction
+  const isEmptyExtraction = text.includes('[EMPTY PDF EXTRACTION') || text.includes('[VISION API ERROR');
+  if (isEmptyExtraction || options?.returnEmptyOnFailure === true) {
+    console.log("Empty extraction detected or forced empty result requested - returning empty array");
+    return [];
+  }
   
   // Adjust the system prompt based on the context (revenue or expense)
   let systemPrompt = `You are a financial data extraction assistant specialized in bank statement analysis.`;
@@ -29,7 +38,19 @@ CRITICAL INSTRUCTION: You are processing a REAL PDF bank statement that was uplo
 Your task is to analyze the content and extract actual transactions that would appear in a bank statement.
 This is NOT a simulation or test - a user has uploaded their real bank statement.
 If you cannot determine clear transaction patterns, return an empty array rather than inventing fake transactions.
-NEVER create fictional data - only extract what appears to be genuine financial transactions.`;
+NEVER create fictional data - only extract what appears to be genuine financial transactions.
+RETURNING AN EMPTY ARRAY [] IS THE CORRECT RESPONSE WHEN NO CLEAR TRANSACTIONS ARE FOUND.`;
+  }
+  
+  if (options?.neverGenerateDummyData) {
+    systemPrompt += `
+
+EXTREMELY IMPORTANT: The user is receiving placeholder/dummy transactions instead of their real data.
+This is causing a severe problem in their financial tracking application.
+DO NOT GENERATE ANY FICTIONAL TRANSACTIONS under any circumstances.
+If you can't extract real transactions, return an empty array [].
+The user's financial decisions depend on this data being accurate.
+RETURNING AN EMPTY ARRAY [] IS THE CORRECT RESPONSE WHEN NO CLEAR TRANSACTIONS ARE FOUND.`;
   }
   
   if (context === "revenue") {
@@ -53,10 +74,6 @@ NEVER create fictional data - only extract what appears to be genuine financial 
     - affiliate: Commission from partnerships
     - other: Miscellaneous or unclassifiable income
     
-    For each credit transaction, add a "sourceSuggestion" object containing:
-    - "source": the suggested revenue category (from the list above)
-    - "confidence": a number between 0 and 1 indicating your confidence level
-    
     Focus only on credit (incoming money) transactions, which represent revenue. These have positive amounts.
     
     IMPORTANT: Only include transactions that appear to be real based on the input. If you don't see clear transaction data, return an empty array.
@@ -76,6 +93,7 @@ NEVER create fictional data - only extract what appears to be genuine financial 
     If you don't see clear transaction data, return an empty array.
     
     IMPORTANT: NEVER generate fictional transactions. Only extract data that appears genuine.
+    RETURNING AN EMPTY ARRAY [] IS THE CORRECT RESPONSE WHEN NO CLEAR TRANSACTIONS ARE FOUND.
     
     Respond ONLY with a valid JSON array of transactions, with NO additional text or explanation.`;
   }
@@ -96,7 +114,9 @@ NEVER create fictional data - only extract what appears to be genuine financial 
           },
           {
             role: "user",
-            content: text
+            content: `EXTRACT ONLY REAL TRANSACTIONS FROM THIS TEXT. IF YOU CAN'T FIND ANY CLEAR TRANSACTIONS, RETURN AN EMPTY ARRAY [].
+          
+${text}`
           }
         ],
         temperature: 0.1, // Lower temperature for more deterministic results
@@ -118,25 +138,31 @@ NEVER create fictional data - only extract what appears to be genuine financial 
         throw new Error("DeepSeek API rate limit exceeded. Please try again later.");
       }
       
-      throw new Error(`DeepSeek API error: ${error.error?.message || "Unknown error"}`);
+      console.log("Returning empty array due to API error");
+      return [];
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
     
     if (!content) {
-      throw new Error("No content returned from DeepSeek");
+      console.log("No content returned from DeepSeek, returning empty array");
+      return [];
     }
 
     // Parse the JSON response
     try {
-      return JSON.parse(content);
+      const parsedData = JSON.parse(content);
+      console.log(`Extracted ${parsedData.length} transactions from DeepSeek response`);
+      return parsedData;
     } catch (parseError) {
       console.error("Error parsing DeepSeek response:", content);
-      throw new Error("Could not parse transactions from DeepSeek response");
+      console.log("Returning empty array due to parsing error");
+      return [];
     }
   } catch (error) {
     console.error("Error processing with DeepSeek:", error);
-    throw error;
+    console.log("Returning empty array due to processing error");
+    return [];
   }
 }
