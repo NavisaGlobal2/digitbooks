@@ -29,6 +29,9 @@ interface UploadDialogContentProps {
   setUseVisionApi: (use: boolean) => void;
   storePdfInSupabase?: boolean;
   onStorePdfToggle?: (value: boolean) => void;
+  extractPdfText?: boolean;
+  onExtractPdfTextToggle?: (value: boolean) => void;
+  isProcessingPdf?: boolean;
 }
 
 const UploadDialogContent = ({
@@ -47,7 +50,10 @@ const UploadDialogContent = ({
   useVisionApi,
   setUseVisionApi,
   storePdfInSupabase = false,
-  onStorePdfToggle
+  onStorePdfToggle,
+  extractPdfText = false,
+  onExtractPdfTextToggle,
+  isProcessingPdf = false
 }: UploadDialogContentProps) => {
   const isPdf = file?.name.toLowerCase().endsWith('.pdf');
   
@@ -114,6 +120,15 @@ const UploadDialogContent = ({
                       />
                       <Label htmlFor="store-pdf">Store PDF in Supabase Storage</Label>
                     </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Switch 
+                        id="extract-pdf-text" 
+                        checked={extractPdfText}
+                        onCheckedChange={onExtractPdfTextToggle}
+                      />
+                      <Label htmlFor="extract-pdf-text">Convert PDF to images for OCR</Label>
+                    </div>
                   </>
                 )}
               </div>
@@ -129,6 +144,7 @@ const UploadDialogContent = ({
               progress={progress}
               step={step}
               isWaitingForServer={isWaitingForServer}
+              isProcessingPdf={isProcessingPdf}
               onCancel={onClose}
             />
           </div>

@@ -10,11 +10,15 @@ import { useFileValidation } from "./useFileValidation";
 interface StatementUploadHookProps {
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
   storePdfInSupabase?: boolean;
+  extractPdfText?: boolean;
+  setIsProcessingPdf?: (isProcessing: boolean) => void;
 }
 
 export const useStatementUpload = ({ 
   onTransactionsParsed,
-  storePdfInSupabase = false
+  storePdfInSupabase = false,
+  extractPdfText = false,
+  setIsProcessingPdf
 }: StatementUploadHookProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
@@ -55,7 +59,9 @@ export const useStatementUpload = ({
     setIsWaitingForServer,
     startProcessing: () => setUploading(true),
     stopProcessing: () => setUploading(false),
-    storePdfInSupabase
+    storePdfInSupabase,
+    extractPdfText,
+    setIsProcessingPdf
   });
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

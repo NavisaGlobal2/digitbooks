@@ -31,6 +31,8 @@ const BankStatementUploadDialog = ({
   const [parsedTransactions, setParsedTransactions] = useState<ParsedTransaction[]>([]);
   const [processingComplete, setProcessingComplete] = useState(false);
   const [storePdfInSupabase, setStorePdfInSupabase] = useState(true);
+  const [extractPdfText, setExtractPdfText] = useState(true);
+  const [isProcessingPdf, setIsProcessingPdf] = useState(false);
   
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
     console.log(`Received ${transactions.length} parsed transactions`);
@@ -70,7 +72,9 @@ const BankStatementUploadDialog = ({
     setUseVisionApi
   } = useStatementUpload({ 
     onTransactionsParsed: handleTransactionsParsed,
-    storePdfInSupabase
+    storePdfInSupabase,
+    extractPdfText,
+    setIsProcessingPdf
   });
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
@@ -126,10 +130,6 @@ const BankStatementUploadDialog = ({
     }
   };
 
-  const closeTaggingDialog = () => {
-    setShowTaggingDialog(false);
-  };
-
   const handleClose = () => {
     if (uploading) {
       cancelProgress();
@@ -143,6 +143,10 @@ const BankStatementUploadDialog = ({
 
   const handleStorePdfToggle = (value: boolean) => {
     setStorePdfInSupabase(value);
+  };
+  
+  const handleExtractPdfTextToggle = (value: boolean) => {
+    setExtractPdfText(value);
   };
 
   return (
@@ -166,6 +170,9 @@ const BankStatementUploadDialog = ({
             setUseVisionApi={setUseVisionApi}
             storePdfInSupabase={storePdfInSupabase}
             onStorePdfToggle={handleStorePdfToggle}
+            extractPdfText={extractPdfText}
+            onExtractPdfTextToggle={handleExtractPdfTextToggle}
+            isProcessingPdf={isProcessingPdf}
           />
         </DialogContent>
       </Dialog>
@@ -174,7 +181,7 @@ const BankStatementUploadDialog = ({
       {showTaggingDialog && (
         <TransactionTaggingDialog
           open={showTaggingDialog}
-          onOpenChange={closeTaggingDialog}
+          onOpenChange={() => setShowTaggingDialog(false)}
           transactions={parsedTransactions}
           onTaggingComplete={handleTaggingComplete}
         />
