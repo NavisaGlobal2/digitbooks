@@ -1,14 +1,14 @@
 
 import React from 'react';
-import { AuthForm } from "@/components/auth/AuthForm";
+import AuthForm from "@/components/auth/AuthForm";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 
 const Login = () => {
-  const { session } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   
   // If user is already authenticated, redirect to dashboard
-  if (session) {
+  if (isAuthenticated && user) {
     return <Navigate to="/dashboard" replace />;
   }
 

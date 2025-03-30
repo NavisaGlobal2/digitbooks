@@ -1,40 +1,18 @@
-
-import { supabase } from "@/integrations/supabase/client";
-import { trackFailedConnection } from "./connectionStats";
-
-/**
- * Get authentication token for edge function calls
- */
-export const getAuthToken = async (): Promise<{ token: string | null; error: string | null }> => {
+export const getAuthToken = (): string | null => {
   try {
-    const { data: authData, error: authError } = await supabase.auth.getSession();
+    // Simplified auth token retrieval logic
+    // In a real app, this would extract a token from the auth system
+    const mockToken = localStorage.getItem('authToken');
     
-    if (authError || !authData.session) {
-      console.error("Authentication error:", authError?.message || "No active session");
-      trackFailedConnection('auth_error');
-      return { 
-        token: null, 
-        error: authError?.message || "You need to be signed in to use this feature"
-      };
+    if (!mockToken) {
+      trackFailedConnection('No auth token found', 'auth');
+      return null;
     }
     
-    const token = authData.session.access_token;
-    if (!token) {
-      console.error("No access token found in session");
-      trackFailedConnection('no_token');
-      return { 
-        token: null, 
-        error: "Authentication token is missing. Please sign in again."
-      };
-    }
-    
-    return { token, error: null };
-  } catch (error: any) {
-    console.error("Error getting auth token:", error);
-    trackFailedConnection('auth_error');
-    return { 
-      token: null, 
-      error: error.message || "Authentication error occurred"
-    };
+    return mockToken;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown auth error';
+    trackFailedConnection(errorMessage, 'auth');
+    return null;
   }
 };

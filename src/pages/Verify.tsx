@@ -1,16 +1,16 @@
 
 import React from 'react';
-import { VerificationForm } from "@/components/auth/VerificationForm";
+import VerificationForm from "@/components/auth/VerificationForm";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 
 const Verify = () => {
-  const { session } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const location = useLocation();
   const email = location.state?.email || "";
   
   // If user is already authenticated, redirect to dashboard
-  if (session) {
+  if (isAuthenticated && user) {
     return <Navigate to="/dashboard" replace />;
   }
 

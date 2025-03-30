@@ -1,121 +1,87 @@
 
+// Track connection statistics for edge functions
+
 export interface ConnectionStats {
   successCount: number;
   failCount: number;
   lastSuccess: Date | null;
   lastFail: Date | null;
   errors: string[];
+  total: number;
+  successRate: number;
+  failureRate: number;
   endpoint?: string;
-  corsErrorDetected?: boolean;
-  successRate?: number;
-  failureRate?: number;
-  failureReasons?: Record<string, number>;
-  total?: number; // Added for ConnectionStatistics component
+  corsErrorDetected: boolean;
+  failureReasons: Record<string, number>;
 }
 
-const stats: ConnectionStats = {
+// Initialize stats
+const connectionStats: ConnectionStats = {
   successCount: 0,
   failCount: 0,
   lastSuccess: null,
   lastFail: null,
   errors: [],
-  endpoint: "",
-  corsErrorDetected: false,
+  total: 0,
   successRate: 0,
   failureRate: 0,
-  failureReasons: {},
-  total: 0 // Added for ConnectionStatistics component
+  endpoint: undefined,
+  corsErrorDetected: false,
+  failureReasons: {}
 };
 
-export function recordSuccess(endpoint: string) {
-  stats.successCount++;
-  stats.lastSuccess = new Date();
-  stats.endpoint = endpoint;
-  
-  // Update total
-  stats.total = stats.successCount + stats.failCount;
-  
-  // Calculate rates
-  stats.successRate = (stats.successCount / stats.total) * 100;
-  stats.failureRate = (stats.failCount / stats.total) * 100;
-}
+// Track successful connection
+export const trackSuccessfulConnection = (endpoint?: string) => {
+  connectionStats.successCount++;
+  connectionStats.lastSuccess = new Date();
+  if (endpoint) connectionStats.endpoint = endpoint;
+  updateRates();
+};
 
-export function recordFailure(endpoint: string, error: string | any, details?: any) {
-  stats.failCount++;
-  stats.lastFail = new Date();
+// Track failed connection
+export const trackFailedConnection = (error: string, type: string = 'unknown') => {
+  connectionStats.failCount++;
+  connectionStats.lastFail = new Date();
+  connectionStats.errors.push(error);
   
-  // Handle error being an object
-  const errorMessage = typeof error === 'string' ? error : 
-                      (error?.message || JSON.stringify(error));
+  // Track failure by type
+  if (!connectionStats.failureReasons[type]) {
+    connectionStats.failureReasons[type] = 0;
+  }
+  connectionStats.failureReasons[type]++;
   
-  stats.errors.push(errorMessage);
-  stats.endpoint = endpoint;
-  
-  // Limit errors array to latest 10 entries
-  if (stats.errors.length > 10) {
-    stats.errors = stats.errors.slice(stats.errors.length - 10);
+  // Check for CORS errors
+  if (error.includes('CORS') || error.includes('cors')) {
+    connectionStats.corsErrorDetected = true;
   }
   
-  // Check if this is a CORS error
-  if (errorMessage.toLowerCase().includes('cors') || 
-      errorMessage.toLowerCase().includes('cross-origin') ||
-      errorMessage.toLowerCase().includes('not allowed')) {
-    stats.corsErrorDetected = true;
+  updateRates();
+};
+
+// Update success/failure rates
+const updateRates = () => {
+  connectionStats.total = connectionStats.successCount + connectionStats.failCount;
+  if (connectionStats.total > 0) {
+    connectionStats.successRate = Math.round((connectionStats.successCount / connectionStats.total) * 100);
+    connectionStats.failureRate = 100 - connectionStats.successRate;
   }
-  
-  // Track common error patterns
-  if (!stats.failureReasons) {
-    stats.failureReasons = {};
-  }
-  
-  let errorCategory = categorizeError(errorMessage);
-  stats.failureReasons[errorCategory] = (stats.failureReasons[errorCategory] || 0) + 1;
-  
-  // Update total
-  stats.total = stats.successCount + stats.failCount;
-  
-  // Calculate rates
-  stats.successRate = (stats.successCount / stats.total) * 100;
-  stats.failureRate = (stats.failCount / stats.total) * 100;
-}
+};
 
-// Alias functions for backward compatibility
-export const trackSuccessfulConnection = recordSuccess;
-export const trackFailedConnection = recordFailure;
+// Get connection stats
+export const getConnectionStats = (): ConnectionStats => {
+  return {...connectionStats};
+};
 
-export function getConnectionStats(): ConnectionStats {
-  return { ...stats };
-}
-
-export function resetConnectionStats() {
-  stats.successCount = 0;
-  stats.failCount = 0;
-  stats.lastSuccess = null;
-  stats.lastFail = null;
-  stats.errors = [];
-  stats.corsErrorDetected = false;
-  stats.successRate = 0;
-  stats.failureRate = 0;
-  stats.failureReasons = {};
-  stats.total = 0;
-}
-
-function categorizeError(error: string): string {
-  const errorLower = error.toLowerCase();
-  
-  if (errorLower.includes('auth') || errorLower.includes('unauthorized') || errorLower.includes('401')) {
-    return 'authentication';
-  } else if (errorLower.includes('cors') || errorLower.includes('cross-origin')) {
-    return 'cors';
-  } else if (errorLower.includes('timeout') || errorLower.includes('timed out')) {
-    return 'timeout';
-  } else if (errorLower.includes('404') || errorLower.includes('not found')) {
-    return 'not_found';
-  } else if (errorLower.includes('network') || errorLower.includes('connection')) {
-    return 'network';
-  } else if (errorLower.includes('parse') || errorLower.includes('json')) {
-    return 'parsing';
-  } else {
-    return 'other';
-  }
-}
+// Reset connection stats
+export const resetConnectionStats = () => {
+  connectionStats.successCount = 0;
+  connectionStats.failCount = 0;
+  connectionStats.lastSuccess = null;
+  connectionStats.lastFail = null;
+  connectionStats.errors = [];
+  connectionStats.total = 0;
+  connectionStats.successRate = 0;
+  connectionStats.failureRate = 0;
+  connectionStats.corsErrorDetected = false;
+  connectionStats.failureReasons = {};
+};
