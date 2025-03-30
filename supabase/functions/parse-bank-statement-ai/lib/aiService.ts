@@ -1,6 +1,7 @@
 
 import { processWithAnthropic } from "./anthropicProcessor.ts";
 import { processWithDeepseek } from "./deepseekProcessor.ts";
+import { sanitizeTextForAPI } from "./utils.ts";
 
 /**
  * Process extracted text with AI services
@@ -38,6 +39,19 @@ If you are unsure about any transaction, do your best to extract the information
       enhancedText += "\nSince the context is revenue tracking, pay special attention to incoming payments and credits.";
     }
   }
+  
+  // For Excel files, add special handling instructions
+  if (fileType === 'xlsx' || fileType === 'xls') {
+    enhancedText += `\n\nIMPORTANT FOR EXCEL PROCESSING:
+1. Look for table structures that contain transaction data (date, description, amount)
+2. Particularly focus on columns that might contain dates and monetary values
+3. If a column appears to contain both debits and credits, split them accordingly
+4. For any amounts, use negative values for debits and positive for credits
+5. Format all dates as YYYY-MM-DD regardless of original format`;
+  }
+  
+  // Ensure text is properly sanitized
+  enhancedText = sanitizeTextForAPI(enhancedText);
   
   // First try the preferred provider
   if (preferredProvider === "anthropic" && hasAnthropicKey) {

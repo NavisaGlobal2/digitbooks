@@ -1,98 +1,117 @@
 
 /**
- * Utility functions for the bank statement parser
+ * Utility functions for file parsing and processing
  */
 
 /**
- * Check if a file is an Excel file based on filename and/or mime type
- * @param fileName The name of the file
- * @param fileType The MIME type of the file
- * @returns boolean indicating if the file is an Excel file
- */
-export const isExcelFile = (fileName: string, fileType: string): boolean => {
-  // Check file extension
-  const excelExtensions = ['.xlsx', '.xls', '.xlsm', '.xlsb'];
-  const lowerFileName = fileName.toLowerCase();
-  
-  // Check MIME type
-  const excelMimeTypes = [
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-excel.sheet.macroEnabled.12',
-    'application/vnd.ms-excel.sheet.binary.macroEnabled.12'
-  ];
-  
-  return excelExtensions.some(ext => lowerFileName.endsWith(ext)) || 
-         excelMimeTypes.includes(fileType);
-};
-
-/**
- * Check if a file is a CSV file based on filename and/or mime type
- * @param fileName The name of the file
- * @param fileType The MIME type of the file
+ * Check if a file is a CSV file based on extension and/or mime type
+ * @param fileName File name to check
+ * @param mimeType File MIME type to check
  * @returns boolean indicating if the file is a CSV file
  */
-export const isCSVFile = (fileName: string, fileType: string): boolean => {
-  // Check file extension
-  const csvExtensions = ['.csv'];
-  const lowerFileName = fileName.toLowerCase();
-  
-  // Check MIME type
+export const isCSVFile = (fileName: string, mimeType: string): boolean => {
   const csvMimeTypes = [
     'text/csv',
     'application/csv', 
-    'text/comma-separated-values',
-    'application/vnd.ms-excel'  // Some CSV files are reported with Excel MIME type
+    'application/vnd.ms-excel',
+    'text/plain'
   ];
   
-  return csvExtensions.some(ext => lowerFileName.endsWith(ext)) || 
-         csvMimeTypes.includes(fileType);
+  // Check mime type
+  if (csvMimeTypes.includes(mimeType)) {
+    return true;
+  }
+  
+  // Check file extension
+  const lowercaseName = fileName.toLowerCase();
+  return lowercaseName.endsWith('.csv');
 };
 
 /**
- * Check if a file is a PDF file based on filename and/or mime type
- * @param fileName The name of the file
- * @param fileType The MIME type of the file
+ * Check if a file is a PDF file based on extension and/or mime type
+ * @param fileName File name to check 
+ * @param mimeType File MIME type to check
  * @returns boolean indicating if the file is a PDF file
  */
-export const isPDFFile = (fileName: string, fileType: string): boolean => {
-  // Check file extension
-  const lowerFileName = fileName.toLowerCase();
+export const isPDFFile = (fileName: string, mimeType: string): boolean => {
+  // Check mime type
+  if (mimeType === 'application/pdf') {
+    return true;
+  }
   
-  // Check MIME type
-  return lowerFileName.endsWith('.pdf') || fileType === 'application/pdf';
+  // Check file extension
+  const lowercaseName = fileName.toLowerCase();
+  return lowercaseName.endsWith('.pdf');
 };
 
 /**
- * Format date strings consistently
- * @param dateStr The date string to format
- * @returns A formatted date string (YYYY-MM-DD) or the original if parsing fails
+ * Format a date string to YYYY-MM-DD format
+ * @param dateStr Date string in various formats
+ * @returns Formatted date string or original if parsing fails
  */
-export const formatDateString = (dateStr: string): string => {
+export const formatDate = (dateStr: string): string => {
   try {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) {
+    // Already in YYYY-MM-DD format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
       return dateStr;
     }
     
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    // Handle DD/MM/YYYY format
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+      const parts = dateStr.split('/');
+      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
     
-    return `${year}-${month}-${day}`;
+    // Handle MM/DD/YYYY format
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+      const parts = dateStr.split('/');
+      return `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+    }
+    
+    // Try generic date parsing as fallback
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+    
+    return dateStr;
   } catch (error) {
+    console.error(`Error formatting date: ${dateStr}`, error);
     return dateStr;
   }
 };
 
 /**
- * Clean and normalize text content
- * @param text The text to clean
- * @returns Cleaned text
+ * Clean text for AI processing by removing problematic characters
+ * @param text Text to sanitize
+ * @returns Sanitized text
  */
-export const cleanText = (text: string): string => {
-  if (!text) return '';
+export const sanitizeTextForAPI = (text: string): string => {
+  // Replace problematic characters and encoding issues
+  return text
+    // Replace null bytes and control characters
+    .replace(/[\x00-\x1F\x7F]/g, ' ')
+    // Replace unpaired surrogates with space
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g, ' ')
+    // Filter out other problematic Unicode characters
+    .replace(/[\uFFFE\uFFFF\uFDD0-\uFDEF\uFDC0-\uFDCF]/g, ' ')
+    // Reduce multiple spaces to single space
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+/**
+ * Clean currency values and convert to numeric format
+ * @param value Currency value as string
+ * @returns Cleaned numeric value
+ */
+export const cleanCurrencyValue = (value: string): number => {
+  if (!value || typeof value !== 'string') return 0;
   
-  // Remove multiple spaces, normalize line breaks
-  return text.replace(/\s+/g, ' ').trim();
+  // Remove currency symbols and non-numeric characters (except for decimal point and minus sign)
+  const cleaned = value.replace(/[^\d.,\-]/g, '')
+    .replace(/,/g, '.') // Replace comma with dot for decimal
+    .replace(/(\..*?)\..*$/, '$1'); // Keep only first decimal point
+    
+  return parseFloat(cleaned) || 0;
 };

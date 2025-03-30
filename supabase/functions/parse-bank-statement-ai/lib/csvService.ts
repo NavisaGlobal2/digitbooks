@@ -1,5 +1,5 @@
 
-import { isCSVFile as isCSVFileFn } from "./utils.ts";
+import { isCSVFile as isCSVFileFn, sanitizeTextForAPI } from "./utils.ts";
 
 /**
  * Service for handling CSV file operations
@@ -20,7 +20,7 @@ export const CSVService = {
       for (const line of lines) {
         // Handle quoted values properly (values that might contain commas)
         const row = parseCSVRow(line);
-        if (row.length > 0) {
+        if (row.length > 0 && row.some(cell => cell.trim() !== '')) {
           result.push(row);
         }
       }
@@ -44,7 +44,7 @@ export const CSVService = {
       const csvData = await CSVService.parseCSV(file);
       let textContent = `[CSV FILE: ${file.name}]\n\n`;
       
-      // Add all rows
+      // Add all rows in a tabular format for clearer structure
       if (csvData.length > 0) {
         for (const row of csvData) {
           textContent += row.join('\t') + '\n';
@@ -54,17 +54,29 @@ export const CSVService = {
       }
       
       // Add specific instructions for bank statement parsing
-      textContent += `\nThis is a CSV spreadsheet containing bank transaction data.
+      const enhancedCsvText = textContent + `\n\nThis is a CSV spreadsheet containing bank transaction data.
 Please extract all financial transactions with PRECISE attention to:
 1. Transaction dates (convert to YYYY-MM-DD format if possible)
-2. Transaction descriptions/narratives
-3. Transaction amounts (use negative for debits/expenses)
-4. Transaction types (debit or credit)
+2. Transaction descriptions/narratives (include ALL relevant details)
+3. Transaction amounts (use negative for debits/expenses, positive for credits/deposits)
+4. Transaction types (categorize as "debit" for money going out or "credit" for money coming in)
 
-Format the response as a structured array of transaction objects.
+Only extract actual transactions, ignoring headers, footers, and non-transaction data.
+If there's a column that appears to be a reference number or transaction ID, include it in the description.
+If dates are in a different format (like DD/MM/YYYY), please standardize to YYYY-MM-DD.
+
+Format the response as a JSON array of transaction objects with the structure:
+[
+  {
+    "date": "YYYY-MM-DD", 
+    "description": "Full transaction description", 
+    "amount": 123.45, 
+    "type": "debit|credit"
+  }
+]
 `;
       
-      return textContent;
+      return sanitizeTextForAPI(enhancedCsvText);
     } catch (error) {
       console.error('Error extracting text from CSV file:', error);
       throw new Error(`Failed to extract text from CSV file: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -86,8 +98,14 @@ const parseCSVRow = (text: string): string[] => {
     const char = text[i];
     
     if (char === '"') {
-      // Toggle quote state
-      inQuotes = !inQuotes;
+      // Check if this is an escaped quote (double quote inside quoted field)
+      if (inQuotes && i + 1 < text.length && text[i + 1] === '"') {
+        current += '"';
+        i++; // Skip the next quote
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+      }
     } else if (char === ',' && !inQuotes) {
       // Found delimiter, add current value to result
       result.push(current);
