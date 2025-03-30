@@ -74,7 +74,7 @@ export async function fallbackCSVProcessing(csvText: string): Promise<any[]> {
     let headerRowIndex = 0;
     const headerKeywords = ['date', 'description', 'amount', 'transaction', 'debit', 'credit', 'balance'];
     
-    for (let i = 0; i < Math.min(5, rows.length); i++) {
+    for (let i = 0; i < Math.min(10, rows.length); i++) {
       const rowText = rows[i].join(' ').toLowerCase();
       const keywordMatches = headerKeywords.filter(keyword => rowText.includes(keyword)).length;
       
@@ -89,36 +89,26 @@ export async function fallbackCSVProcessing(csvText: string): Promise<any[]> {
     console.log("Identified headers:", headers);
     
     // Find column indices for critical fields
-    let dateColIndex = headers.findIndex(h => 
-      h.includes('date') || h.includes('time') || h.includes('when')
-    );
-    
-    let descColIndex = headers.findIndex(h => 
-      h.includes('desc') || h.includes('narr') || h.includes('part') || 
-      h.includes('ref') || h.includes('detail')
-    );
-    
-    let amountColIndex = headers.findIndex(h => 
-      h.includes('amount') || h.includes('value') || h.includes('sum')
-    );
-    
-    let debitColIndex = headers.findIndex(h => h.includes('debit'));
-    let creditColIndex = headers.findIndex(h => h.includes('credit'));
-    let balanceColIndex = headers.findIndex(h => h.includes('balance'));
+    let dateColIndex = findColumnIndex(headers, ['date', 'time', 'when', 'transaction date']);
+    let descColIndex = findColumnIndex(headers, ['desc', 'narr', 'part', 'ref', 'detail', 'transaction', 'narrative']);
+    let amountColIndex = findColumnIndex(headers, ['amount', 'value', 'sum']);
+    let debitColIndex = findColumnIndex(headers, ['debit', 'withdrawal', 'expense', 'out']);
+    let creditColIndex = findColumnIndex(headers, ['credit', 'deposit', 'income', 'in']);
+    let balanceColIndex = findColumnIndex(headers, ['balance', 'bal']);
     
     // Fallbacks if we couldn't identify columns by name
     if (dateColIndex === -1) dateColIndex = 0;
     if (descColIndex === -1) descColIndex = dateColIndex + 1;
     if (amountColIndex === -1 && debitColIndex === -1 && creditColIndex === -1) {
       // Look for numeric columns as possible amounts
-      for (let i = 0; i < rows[0].length; i++) {
+      for (let i = 0; i < headers.length; i++) {
         if (i !== dateColIndex && i !== descColIndex) {
           // Check if this column often contains numeric values
-          const testRows = rows.slice(headerRowIndex + 1, headerRowIndex + 6);
+          const testRows = rows.slice(headerRowIndex + 1, Math.min(headerRowIndex + 11, rows.length));
           const numericCount = testRows.filter(row => {
             if (row[i]) {
               const cleaned = row[i].replace(/[^\d.-]/g, "");
-              return !isNaN(parseFloat(cleaned));
+              return !isNaN(parseFloat(cleaned)) && cleaned.length > 0;
             }
             return false;
           }).length;
@@ -139,7 +129,7 @@ export async function fallbackCSVProcessing(csvText: string): Promise<any[]> {
     
     // Process transactions, skipping the header row
     const transactions = rows.slice(headerRowIndex + 1) 
-      .filter(row => row.length >= Math.max(dateColIndex, descColIndex, amountColIndex, debitColIndex, creditColIndex) + 1)
+      .filter(row => row.length >= Math.max(dateColIndex, descColIndex, amountColIndex, debitColIndex, creditColIndex, balanceColIndex) + 1)
       .filter(row => {
         // Skip rows that are likely not transactions (e.g., summary rows)
         const rowText = row.join(' ').toLowerCase();
@@ -149,34 +139,7 @@ export async function fallbackCSVProcessing(csvText: string): Promise<any[]> {
       .map(row => {
         // Process date - try to normalize to YYYY-MM-DD
         let dateStr = row[dateColIndex] || '';
-        let formattedDate = dateStr;
-        
-        // Try to detect and format date
-        // Remove non-date characters
-        dateStr = dateStr.replace(/[^\d\/\-\.]/g, '');
-        
-        const dateParts = dateStr.split(/[\/\-\.]/);
-        if (dateParts.length === 3) {
-          // Check if year is first or last
-          if (dateParts[0].length === 4) {
-            // YYYY-MM-DD
-            formattedDate = `${dateParts[0]}-${dateParts[1].padStart(2, '0')}-${dateParts[2].padStart(2, '0')}`;
-          } else if (dateParts[2].length === 4) {
-            // MM/DD/YYYY or DD/MM/YYYY
-            // Heuristic: if first part > 12, assume it's day
-            if (parseInt(dateParts[0]) > 12) {
-              // DD/MM/YYYY
-              formattedDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
-            } else {
-              // MM/DD/YYYY
-              formattedDate = `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
-            }
-          } else {
-            // Two-digit year, e.g., DD/MM/YY
-            const year = parseInt(dateParts[2]) > 50 ? `19${dateParts[2]}` : `20${dateParts[2]}`;
-            formattedDate = `${year}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
-          }
-        }
+        let formattedDate = parseDate(dateStr);
         
         // Process description
         const description = row[descColIndex] || "Unknown";
@@ -255,4 +218,83 @@ export async function fallbackCSVProcessing(csvText: string): Promise<any[]> {
     console.error("Fallback CSV processing failed:", error);
     throw new Error(`Fallback CSV processing failed: ${error.message}`);
   }
+}
+
+/**
+ * Find the index of a column based on a list of possible keywords
+ */
+function findColumnIndex(headers: string[], keywords: string[]): number {
+  for (const keyword of keywords) {
+    const index = headers.findIndex(h => h.includes(keyword));
+    if (index !== -1) return index;
+  }
+  return -1;
+}
+
+/**
+ * Parse date from various formats to YYYY-MM-DD
+ */
+function parseDate(dateStr: string): string {
+  // Remove non-date characters
+  dateStr = dateStr.replace(/[^\d\/\-\.]/g, '');
+  
+  // Check if it's already in YYYY-MM-DD format
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
+  
+  const currentYear = new Date().getFullYear();
+  const dateParts = dateStr.split(/[\/\-\.]/);
+  
+  if (dateParts.length === 3) {
+    // Check if year is first or last
+    if (dateParts[0].length === 4) {
+      // YYYY-MM-DD
+      return `${dateParts[0]}-${dateParts[1].padStart(2, '0')}-${dateParts[2].padStart(2, '0')}`;
+    } else if (dateParts[2].length === 4) {
+      // DD/MM/YYYY or MM/DD/YYYY
+      // Heuristic: if first part > 12, assume it's day
+      if (parseInt(dateParts[0]) > 12) {
+        // DD/MM/YYYY
+        return `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+      } else {
+        // MM/DD/YYYY (US format)
+        return `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
+      }
+    } else {
+      // Two-digit year, e.g., DD/MM/YY
+      let year = parseInt(dateParts[2]);
+      // Handle 2-digit years based on a sliding window
+      if (year < 100) {
+        year = year > 50 ? 1900 + year : 2000 + year;
+      }
+      
+      // Determine if it's DD/MM/YY or MM/DD/YY
+      if (parseInt(dateParts[0]) > 12) {
+        // DD/MM/YY
+        return `${year}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+      } else if (parseInt(dateParts[1]) > 12) {
+        // MM/DD/YY 
+        return `${year}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
+      } else {
+        // Can't tell for sure, default to DD/MM/YY (international format)
+        return `${year}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+      }
+    }
+  }
+  
+  // If we couldn't parse it, return the original string or fallback to today
+  try {
+    // Try to let JavaScript figure it out
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+  } catch (e) {
+    // Ignore parsing errors
+  }
+  
+  // Return current date as a last resort
+  const today = new Date();
+  return today.toISOString().split('T')[0];
 }

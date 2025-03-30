@@ -25,7 +25,7 @@ export const useFileProcessing = ({
   setIsWaitingForServer
 }: FileProcessingProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
+  const [preferredAIProvider, setPreferredAIProvider] = useState<string>("fallback");
   const [processing, setProcessing] = useState(false);
 
   // Check authentication status on mount
@@ -85,30 +85,12 @@ export const useFileProcessing = ({
                             errorMessage.toLowerCase().includes('sign in') ||
                             errorMessage.toLowerCase().includes('token');
                             
-          const isAnthropicError = errorMessage.toLowerCase().includes('anthropic') ||
-                           errorMessage.toLowerCase().includes('api key') || 
-                           errorMessage.toLowerCase().includes('overloaded');
-
-          const isDeepSeekError = errorMessage.toLowerCase().includes('deepseek');
-          
           // Show the error message to the user
           handleError(errorMessage);
           
-          // For service overload errors with CSV files, continue with warning
-          if ((isAnthropicError || isDeepSeekError) && file.name.toLowerCase().endsWith('.csv')) {
-            showFallbackMessage("AI service is currently unavailable. Using basic CSV parser as fallback.");
-            // Don't reset progress to allow fallback to continue
-            return false;
-          }
-          
-          // For auth or critical API errors, don't try to fallback
-          if (isAuthError || (isAnthropicError && isDeepSeekError)) {
+          // For auth errors, don't try to fallback
+          if (isAuthError) {
             resetProgress();
-            
-            if ((isAnthropicError || isDeepSeekError) && !file.name.toLowerCase().endsWith('.csv')) {
-              toast.error("Both AI processing services are currently unavailable. Try using a CSV file format instead.");
-            }
-            
             return true;
           }
           

@@ -13,7 +13,7 @@ export const useStatementUpload = (
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
+  const [preferredAIProvider, setPreferredAIProvider] = useState<string>("fallback");
 
   // Check authentication status
   useEffect(() => {
@@ -133,24 +133,13 @@ export const useStatementUpload = (
           const isAuthError = errorMessage.toLowerCase().includes('auth') || 
                             errorMessage.toLowerCase().includes('sign in') ||
                             errorMessage.toLowerCase().includes('token');
-                            
-          const isAnthropicError = errorMessage.toLowerCase().includes('anthropic') ||
-                           errorMessage.toLowerCase().includes('api key') || 
-                           errorMessage.toLowerCase().includes('overloaded');
-
-          const isDeepSeekError = errorMessage.toLowerCase().includes('deepseek');
           
           // Show the error message to the user
           handleError(errorMessage);
           
-          // For auth or critical API errors, don't try to fallback
-          if (isAuthError || (isAnthropicError && isDeepSeekError)) {
+          // For auth errors, reset progress
+          if (isAuthError) {
             resetProgress();
-            
-            if ((isAnthropicError || isDeepSeekError) && !file.name.toLowerCase().endsWith('.csv')) {
-              toast.error("Both AI processing services are currently unavailable. Try using a CSV file format instead.");
-            }
-            
             return true;
           }
           

@@ -24,7 +24,7 @@ export const parseViaEdgeFunction = async (
     formData.append('fileName', file.name);
     formData.append('authToken', sessionData.session.access_token);
     formData.append('context', context);
-    formData.append('useEnhancedFallback', 'true'); // Prefer enhanced fallback processing
+    formData.append('useEnhancedFallback', 'true'); // Always use enhanced fallback processing
 
     console.log(`Processing ${file.name} (${file.type}, ${file.size} bytes) via edge function`);
 
@@ -47,7 +47,7 @@ export const parseViaEdgeFunction = async (
     // Log the response from the server for debugging
     console.log("Edge function response:", data);
     console.log("Retrieved transactions count:", data.transactions.length);
-    console.log("AI service used:", data.serviceUsed || "unknown");
+    console.log("Processing service used:", data.serviceUsed || "unknown");
     
     // Log account information if available
     if (data.account) {
@@ -62,17 +62,9 @@ export const parseViaEdgeFunction = async (
       amount: Math.abs(tx.amount), // Ensure positive amount
       type: tx.type,
       selected: context === 'expense' ? tx.type === 'debit' : tx.type === 'credit', // Pre-select based on context
-      categorySuggestion: context === 'expense' && tx.type === 'debit' ? {
-        category: guessCategoryFromDescription(tx.description),
-        confidence: 0.7
-      } : undefined,
-      sourceSuggestion: context === 'revenue' && tx.type === 'credit' ? {
-        source: guessSourceFromDescription(tx.description),
-        confidence: 0.7
-      } : undefined,
       batchId: data.batchId || null,
       balance: tx.balance || null,
-      source: context === 'revenue' ? guessSourceFromDescription(tx.description) : null
+      source: context === 'revenue' ? tx.source || null : null
     }));
 
     // Send the transactions to the caller
@@ -85,70 +77,3 @@ export const parseViaEdgeFunction = async (
     onError(error.message || "Unexpected error processing file");
   }
 };
-
-/**
- * Basic logic to guess expense category from transaction description
- */
-function guessCategoryFromDescription(description: string): string {
-  const lowerDesc = description.toLowerCase();
-  
-  if (lowerDesc.includes('food') || lowerDesc.includes('restaurant') || 
-      lowerDesc.includes('cafe') || lowerDesc.includes('coffee') ||
-      lowerDesc.includes('uber eats') || lowerDesc.includes('doordash')) {
-    return 'food';
-  }
-  
-  if (lowerDesc.includes('uber') || lowerDesc.includes('lyft') || 
-      lowerDesc.includes('taxi') || lowerDesc.includes('transport') ||
-      lowerDesc.includes('train') || lowerDesc.includes('subway')) {
-    return 'transportation';
-  }
-  
-  if (lowerDesc.includes('amazon') || lowerDesc.includes('walmart') || 
-      lowerDesc.includes('target') || lowerDesc.includes('purchase')) {
-    return 'shopping';
-  }
-  
-  if (lowerDesc.includes('rent') || lowerDesc.includes('mortgage') || 
-      lowerDesc.includes('apartment') || lowerDesc.includes('housing')) {
-    return 'housing';
-  }
-  
-  if (lowerDesc.includes('phone') || lowerDesc.includes('internet') || 
-      lowerDesc.includes('wireless') || lowerDesc.includes('broadband')) {
-    return 'utilities';
-  }
-  
-  // Default
-  return 'other';
-}
-
-/**
- * Basic logic to guess revenue source from transaction description
- */
-function guessSourceFromDescription(description: string): string {
-  const lowerDesc = description.toLowerCase();
-  
-  if (lowerDesc.includes('salary') || lowerDesc.includes('payroll') || 
-      lowerDesc.includes('payment') || lowerDesc.includes('commission')) {
-    return 'salary';
-  }
-  
-  if (lowerDesc.includes('dividend') || lowerDesc.includes('interest') || 
-      lowerDesc.includes('investment')) {
-    return 'investment';
-  }
-  
-  if (lowerDesc.includes('client') || lowerDesc.includes('customer') || 
-      lowerDesc.includes('invoice') || lowerDesc.includes('payment')) {
-    return 'sales';
-  }
-  
-  if (lowerDesc.includes('refund') || lowerDesc.includes('rebate') || 
-      lowerDesc.includes('cashback')) {
-    return 'refund';
-  }
-  
-  // Default
-  return 'other';
-}
