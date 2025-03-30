@@ -1,63 +1,78 @@
 
 import { processWithAnthropic } from "./anthropicProcessor.ts";
 import { processWithDeepseek } from "./deepseekProcessor.ts";
-import { fallbackCSVProcessing } from "./fallbackProcessor.ts";
 
 /**
- * Handles provider selection and fallback logic
+ * Process extracted text with AI services
  */
-export async function processWithAI(text: string, fileType: string, preferredProvider?: string | null, context?: string): Promise<any[]> {
-  // Check which providers are available
-  const hasAnthropic = !!Deno.env.get("ANTHROPIC_API_KEY");
-  const hasDeepseek = !!Deno.env.get("DEEPSEEK_API_KEY");
+export async function processWithAI(text: string, fileType: string, context?: string): Promise<any> {
+  // Check available AI providers
+  const hasAnthropicKey = !!Deno.env.get("ANTHROPIC_API_KEY");
+  const hasDeepseekKey = !!Deno.env.get("DEEPSEEK_API_KEY");
   
-  // Use provided preferredProvider or default to "anthropic"
-  const providerToUse = preferredProvider || "anthropic";
+  // Check preferred provider if set
+  const preferredProvider = Deno.env.get("PREFERRED_AI_PROVIDER")?.toLowerCase() || "anthropic";
   
-  console.log(`AI processing: using ${providerToUse} as preferred provider`);
-  console.log(`Available providers: ${hasAnthropic ? 'Anthropic' : ''}${hasDeepseek ? ', DeepSeek' : ''}`);
-  console.log(`Processing context: ${context || 'unknown'}`);
+  console.log(`Available providers: ${hasAnthropicKey ? 'Anthropic, ' : ''}${hasDeepseekKey ? 'DeepSeek' : ''}`);
+  console.log(`AI processing: using ${preferredProvider} as preferred provider`);
+  
+  // Handle PDF files with more detailed instructions
+  let enhancedText = text;
+  if (fileType === 'pdf') {
+    enhancedText += `\n\nIMPORTANT INSTRUCTIONS FOR PDF BANK STATEMENT PROCESSING:
+1. Focus EXCLUSIVELY on extracting the actual transactions from the PDF statement
+2. Extract EVERY transaction with exact dates, descriptions, and amounts
+3. For transaction amounts:
+   - Use NEGATIVE numbers for withdrawals/debits (money leaving the account)
+   - Use POSITIVE numbers for deposits/credits (money entering the account)
+4. Dates must be in ISO format (YYYY-MM-DD) regardless of how they appear in the statement
+5. Include ALL transaction details in the description field
+6. Return ONLY valid transaction data, ignoring headers, footers, and marketing content
+7. Format your response as a JSON array of transaction objects with the schema:
+   [{"date": "YYYY-MM-DD", "description": "Transaction description", "amount": 123.45, "type": "credit|debit"}]
 
-  if (!hasAnthropic && !hasDeepseek) {
-    throw new Error("No AI providers are configured. Please configure at least one AI provider in the settings.");
+If you are unsure about any transaction, do your best to extract the information accurately rather than skipping it.
+`;
+
+    if (context === "revenue") {
+      enhancedText += "\nSince the context is revenue tracking, pay special attention to incoming payments and credits.";
+    }
   }
-
-  // Try with preferred provider first
-  try {
-    if (providerToUse === "deepseek" && hasDeepseek) {
-      return await processWithDeepseek(text, context);
-    } else if (providerToUse === "anthropic" && hasAnthropic) {
-      return await processWithAnthropic(text, context);
-    } else {
-      // If preferred provider is not available, throw an error to trigger fallback
-      throw new Error(`Preferred provider ${providerToUse} is not configured`);
-    }
-  } catch (error) {
-    console.error(`Error processing with ${providerToUse}:`, error);
-    
-    // Try fallback to the other provider
+  
+  // First try the preferred provider
+  if (preferredProvider === "anthropic" && hasAnthropicKey) {
     try {
-      // If we failed with Anthropic and DeepSeek is available, try DeepSeek
-      if (providerToUse === "anthropic" && hasDeepseek) {
+      return await processWithAnthropic(enhancedText, context);
+    } catch (error) {
+      console.error("Error processing with Anthropic:", error);
+      
+      // Fall back to DeepSeek if available
+      if (hasDeepseekKey) {
         console.log("Falling back to DeepSeek...");
-        return await processWithDeepseek(text, context);
+        return await processWithDeepseek(enhancedText, context);
+      } else {
+        throw error;
       }
-      // If we failed with DeepSeek and Anthropic is available, try Anthropic
-      else if (providerToUse === "deepseek" && hasAnthropic) {
+    }
+  } else if (preferredProvider === "deepseek" && hasDeepseekKey) {
+    try {
+      return await processWithDeepseek(enhancedText, context);
+    } catch (error) {
+      console.error("Error processing with DeepSeek:", error);
+      
+      // Fall back to Anthropic if available
+      if (hasAnthropicKey) {
         console.log("Falling back to Anthropic...");
-        return await processWithAnthropic(text, context);
+        return await processWithAnthropic(enhancedText, context);
+      } else {
+        throw error;
       }
-    } catch (fallbackError) {
-      console.error("Fallback provider also failed:", fallbackError);
     }
-    
-    // If both providers fail or are not available, try CSV fallback
-    if (fileType.toLowerCase() === "csv") {
-      console.log("All AI providers failed. Using CSV fallback processor...");
-      return await fallbackCSVProcessing(text, context);
-    }
-    
-    // If it's not a CSV or all methods fail, propagate the error
-    throw new Error(`AI processing failed with all available providers and no suitable fallback found. Original error: ${error.message}`);
+  } else if (hasAnthropicKey) {
+    return await processWithAnthropic(enhancedText, context);
+  } else if (hasDeepseekKey) {
+    return await processWithDeepseek(enhancedText, context);
+  } else {
+    throw new Error("No AI provider is configured. Please set up either Anthropic API key (ANTHROPIC_API_KEY) or DeepSeek API key (DEEPSEEK_API_KEY) in Supabase.");
   }
 }

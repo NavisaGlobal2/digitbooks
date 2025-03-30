@@ -1,12 +1,13 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Invoice, InvoiceItem, InvoiceStatus } from '@/types/invoice';
+import { Invoice, InvoiceItem, InvoiceStatus, PaymentRecord } from '@/types/invoice';
 
 interface InvoiceContextType {
   invoices: Invoice[];
   addInvoice: (invoice: Omit<Invoice, 'id' | 'invoiceNumber'>) => void;
   getNextInvoiceNumber: () => string;
   updateInvoiceStatus: (invoiceId: string, status: InvoiceStatus) => void;
+  markInvoiceAsPaid: (invoiceId: string, payments: PaymentRecord[]) => void;
 }
 
 const InvoiceContext = createContext<InvoiceContextType | undefined>(undefined);
@@ -22,18 +23,23 @@ export const useInvoices = () => {
 export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
-  // Load invoices from localStorage on mount
   useEffect(() => {
     const storedInvoices = localStorage.getItem('invoices');
     if (storedInvoices) {
       try {
         const parsedInvoices = JSON.parse(storedInvoices);
         
-        // Convert string dates back to Date objects
         const processedInvoices = parsedInvoices.map((invoice: any) => ({
           ...invoice,
           issuedDate: new Date(invoice.issuedDate),
           dueDate: new Date(invoice.dueDate),
+          paidDate: invoice.paidDate ? new Date(invoice.paidDate) : null,
+          payments: invoice.payments 
+            ? invoice.payments.map((payment: any) => ({
+                ...payment,
+                date: new Date(payment.date)
+              })) 
+            : undefined
         }));
         
         setInvoices(processedInvoices);
@@ -43,9 +49,12 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, []);
 
-  // Save invoices to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('invoices', JSON.stringify(invoices));
+    try {
+      localStorage.setItem('invoices', JSON.stringify(invoices));
+    } catch (error) {
+      console.error("Failed to store invoices:", error);
+    }
   }, [invoices]);
 
   const getNextInvoiceNumber = () => {
@@ -85,12 +94,33 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
   };
 
+  const markInvoiceAsPaid = (invoiceId: string, payments: PaymentRecord[]) => {
+    setInvoices(prev => 
+      prev.map(invoice => {
+        if (invoice.id === invoiceId) {
+          const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+          
+          const status = totalPaid >= invoice.amount ? 'paid' : 'partially-paid';
+          
+          return { 
+            ...invoice, 
+            status,
+            payments: payments,
+            paidDate: status === 'paid' ? new Date() : invoice.paidDate
+          };
+        }
+        return invoice;
+      })
+    );
+  };
+
   return (
     <InvoiceContext.Provider value={{ 
       invoices, 
       addInvoice, 
       getNextInvoiceNumber,
-      updateInvoiceStatus 
+      updateInvoiceStatus,
+      markInvoiceAsPaid
     }}>
       {children}
     </InvoiceContext.Provider>

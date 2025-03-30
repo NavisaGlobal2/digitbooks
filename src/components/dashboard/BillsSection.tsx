@@ -17,7 +17,7 @@ const BillsSection = () => {
   ];
 
   return (
-    <Card className="border-none shadow-sm mb-6">
+    <Card className="border-none shadow-sm h-full">
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 pt-4 md:pt-6 px-4 md:px-6">
         <CardTitle className="text-lg font-semibold mb-2 sm:mb-0">Upcoming Bills</CardTitle>
         <Button variant="outline" size="sm" className="text-sm gap-2 h-9 w-full sm:w-auto">
@@ -26,7 +26,7 @@ const BillsSection = () => {
         </Button>
       </CardHeader>
       <CardContent className="px-4 md:px-6 pb-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {bills.map((bill, index) => (
             <Card key={index} className="p-4 border border-border hover:border-primary/20 transition-all">
               <div className="flex flex-col items-center text-center">

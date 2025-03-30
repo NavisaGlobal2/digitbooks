@@ -1,21 +1,25 @@
 
-import { Button } from "@/components/ui/button";
-import { Download, Share2 } from "lucide-react";
-import { InvoiceItem } from "@/types/invoice";
-import { downloadInvoice, shareInvoice } from "@/utils/invoice/documentActions";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { Download, Share } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { InvoiceItem } from '@/types/invoice';
+import { downloadInvoice, shareInvoice, captureInvoiceAsImage } from '@/utils/invoice/documentActions';
 
 interface ActionButtonsProps {
   logoPreview: string | null;
   invoiceItems: InvoiceItem[];
-  invoiceDate: Date | undefined;
-  dueDate: Date | undefined;
+  invoiceDate?: Date;
+  dueDate?: Date;
   additionalInfo: string;
   bankName: string;
   accountNumber: string;
   accountName: string;
   clientName: string;
+  clientEmail?: string;
+  clientAddress?: string;
   selectedTemplate: string;
+  invoiceNumber?: string;
 }
 
 const ActionButtons = ({
@@ -28,62 +32,119 @@ const ActionButtons = ({
   accountNumber,
   accountName,
   clientName,
-  selectedTemplate
+  clientEmail,
+  clientAddress,
+  selectedTemplate,
+  invoiceNumber
 }: ActionButtonsProps) => {
-  const handleDownloadInvoice = async () => {
-    const invoiceDetails = {
-      logoPreview,
-      invoiceItems,
-      invoiceDate,
-      dueDate,
-      additionalInfo,
-      bankName,
-      accountNumber,
-      accountName,
-      clientName,
-      selectedTemplate,
-      invoiceNumber: `INV-${new Date().getTime().toString().slice(-6)}`
-    };
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+
+  const handleDownload = async () => {
+    if (isDownloading) return; // Prevent multiple clicks
     
-    await downloadInvoice(invoiceDetails);
+    try {
+      setIsDownloading(true);
+      await downloadInvoice({
+        logoPreview,
+        invoiceItems,
+        invoiceDate,
+        dueDate,
+        additionalInfo,
+        bankName,
+        accountNumber,
+        accountName,
+        clientName,
+        clientEmail,
+        clientAddress,
+        selectedTemplate,
+        invoiceNumber
+      });
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+    } finally {
+      setIsDownloading(false);
+    }
   };
-  
-  const handleShareInvoice = async () => {
-    const invoiceDetails = {
-      logoPreview,
-      invoiceItems,
-      invoiceDate,
-      dueDate,
-      additionalInfo,
-      bankName,
-      accountNumber,
-      accountName,
-      clientName,
-      selectedTemplate,
-      invoiceNumber: `INV-${new Date().getTime().toString().slice(-6)}`
-    };
+
+  const handleShare = async () => {
+    if (isSharing) return; // Prevent multiple clicks
     
-    await shareInvoice(invoiceDetails);
+    try {
+      setIsSharing(true);
+      await shareInvoice({
+        logoPreview,
+        invoiceItems,
+        invoiceDate,
+        dueDate,
+        additionalInfo,
+        bankName,
+        accountNumber,
+        accountName,
+        clientName,
+        clientEmail,
+        clientAddress,
+        selectedTemplate,
+        invoiceNumber
+      });
+    } catch (error) {
+      console.error('Error sharing invoice:', error);
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleCaptureAsImage = async () => {
+    if (isCapturing) return; // Prevent multiple clicks
+    
+    setIsCapturing(true);
+    
+    const invoiceElement = document.querySelector('.invoice-preview');
+    if (invoiceElement) {
+      try {
+        await captureInvoiceAsImage(invoiceElement as HTMLElement, clientName);
+      } catch (error) {
+        console.error('Error capturing invoice as image:', error);
+      } finally {
+        setIsCapturing(false);
+      }
+    } else {
+      toast.error('Invoice preview not found');
+      setIsCapturing(false);
+    }
   };
 
   return (
-    <div className="flex flex-col xs:flex-row gap-3">
-      <Button 
-        variant="outline" 
-        className="w-full flex items-center gap-2"
-        onClick={handleDownloadInvoice}
+    <div className="flex flex-col sm:flex-row gap-2">
+      <Button
+        variant="outline"
+        className="flex-1"
+        onClick={handleDownload}
+        disabled={isDownloading}
       >
-        <Download className="h-4 w-4" />
-        <span>Download PDF</span>
+        <Download className="h-4 w-4 mr-2" />
+        {isDownloading ? 'Downloading...' : 'Download PDF'}
       </Button>
       
-      <Button 
-        variant="outline" 
-        className="w-full flex items-center gap-2"
-        onClick={handleShareInvoice}
+      <Button
+        variant="outline"
+        className="flex-1"
+        onClick={handleShare}
+        disabled={isSharing}
       >
-        <Share2 className="h-4 w-4" />
-        <span>Share Invoice</span>
+        <Share className="h-4 w-4 mr-2" />
+        {isSharing ? 'Sharing...' : 'Share Invoice'}
+      </Button>
+      
+      <Button
+        variant="outline"
+        className="flex-1"
+        onClick={handleCaptureAsImage}
+        disabled={isCapturing}
+      >
+        <Download className="h-4 w-4 mr-2" />
+        {isCapturing ? 'Downloading...' : 'Download as Image'}
       </Button>
     </div>
   );

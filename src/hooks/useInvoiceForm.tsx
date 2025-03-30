@@ -1,11 +1,13 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import { InvoiceItem, InvoiceStatus } from "@/types/invoice";
 import { calculateTotal } from "@/utils/invoice";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
 
 export const useInvoiceForm = () => {
+  const { user } = useAuth();
   const { addInvoice } = useInvoices();
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([
     { description: 'Website design service', quantity: 1, price: 50000, tax: 7.5 }
@@ -19,41 +21,87 @@ export const useInvoiceForm = () => {
   const [additionalInfo, setAdditionalInfo] = useState("Payment can be made directly to the bank account provided.");
   const [isAccountVerified, setIsAccountVerified] = useState(false);
   const [clientName, setClientName] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
   
   // Bank details
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [bankName, setBankName] = useState("");
   
+  // Fetch business profile data on component mount
+  useEffect(() => {
+    const fetchBusinessProfile = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('logo_url, business_name')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching business profile:', error);
+          return;
+        }
+        
+        if (data && data.logo_url) {
+          setLogoPreview(data.logo_url);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+    
+    fetchBusinessProfile();
+  }, [user]);
+
   const addInvoiceItem = () => {
     setInvoiceItems([...invoiceItems, { description: '', quantity: 1, price: 0, tax: 7.5 }]);
   };
 
+  const handleClientSelect = (name: string, email?: string, address?: string) => {
+    setClientName(name);
+    if (email) {
+      setClientEmail(email);
+    } else {
+      setClientEmail("");
+    }
+    if (address) {
+      setClientAddress(address);
+    } else {
+      setClientAddress("");
+    }
+  };
+
   const handleSaveInvoice = () => {
-    // Validate required fields
+    const toastId = toast.loading("Creating invoice...");
+    
     if (!clientName.trim()) {
-      toast.error("Please select or enter a client name");
+      toast.error("Please select or enter a client name", { id: toastId });
       return;
     }
 
     if (!invoiceDate || !dueDate) {
-      toast.error("Please set both invoice date and due date");
+      toast.error("Please set both invoice date and due date", { id: toastId });
       return;
     }
 
     if (invoiceItems.some(item => !item.description.trim() || item.quantity <= 0 || item.price <= 0)) {
-      toast.error("Please complete all invoice items with valid quantities and prices");
+      toast.error("Please complete all invoice items with valid quantities and prices", { id: toastId });
       return;
     }
 
     if (!accountName || !accountNumber || !bankName) {
-      toast.error("Please complete the bank details");
+      toast.error("Please complete the bank details", { id: toastId });
       return;
     }
 
-    // Create and save the invoice
     addInvoice({
       clientName,
+      clientEmail,
+      clientAddress,
       issuedDate: invoiceDate,
       dueDate: dueDate,
       amount: calculateTotal(invoiceItems),
@@ -68,9 +116,8 @@ export const useInvoiceForm = () => {
       }
     });
 
-    toast.success("Invoice created successfully!");
+    toast.success("Invoice created successfully!", { id: toastId });
     
-    // Dispatch event to notify that an invoice was created
     window.dispatchEvent(new CustomEvent('invoiceCreated'));
   };
 
@@ -100,7 +147,9 @@ export const useInvoiceForm = () => {
     isAccountVerified,
     setIsAccountVerified,
     clientName,
-    setClientName,
+    clientEmail,
+    clientAddress,
+    handleClientSelect,
     accountName,
     setAccountName,
     accountNumber,

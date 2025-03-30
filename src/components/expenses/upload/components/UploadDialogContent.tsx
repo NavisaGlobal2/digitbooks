@@ -1,12 +1,13 @@
 
 import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, AlertTriangle } from "lucide-react";
 import FileUploadArea from "../FileUploadArea";
 import ErrorDisplay from "../ErrorDisplay";
 import ProgressIndicator from "./ProgressIndicator";
 import ProcessingModeToggle from "./ProcessingModeToggle";
 import SupportedFormatsInfo from "./SupportedFormatsInfo";
+import ConnectionStatistics from "./ConnectionStatistics";
 import { useState, useEffect } from "react";
 
 interface UploadDialogContentProps {
@@ -21,6 +22,7 @@ interface UploadDialogContentProps {
   isAuthenticated?: boolean;
   preferredAIProvider?: string;
   setPreferredAIProvider?: (provider: string) => void;
+  isWaitingForServer?: boolean;
 }
 
 const UploadDialogContent = ({
@@ -34,7 +36,8 @@ const UploadDialogContent = ({
   step,
   isAuthenticated,
   preferredAIProvider,
-  setPreferredAIProvider
+  setPreferredAIProvider,
+  isWaitingForServer = false
 }: UploadDialogContentProps) => {
   const [useEdgeFunction, setUseEdgeFunction] = useState(true);
   const [edgeFunctionAvailable, setEdgeFunctionAvailable] = useState(true);
@@ -73,10 +76,23 @@ const UploadDialogContent = ({
             progress={progress} 
             step={step} 
             isVisible={true}
+            isWaitingForServer={isWaitingForServer}
             onCancel={onClose}
           />
         ) : (
           <>
+            {!isAuthenticated && (
+              <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded mb-4">
+                <div className="flex items-start">
+                  <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5 mr-2" />
+                  <div>
+                    <p className="font-bold">Authentication Required</p>
+                    <p>You need to be signed in to upload bank statements. Please sign in and try again.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <FileUploadArea 
               file={file} 
               onFileChange={handleFileChange} 
@@ -102,12 +118,15 @@ const UploadDialogContent = ({
             <div className="flex justify-end">
               <Button
                 type="button"
-                disabled={!file || uploading}
+                disabled={!file || uploading || !isAuthenticated}
                 onClick={parseFile}
+                className="bg-green-500 hover:bg-green-600 text-white"
               >
                 Process Statement
               </Button>
             </div>
+            
+            <ConnectionStatistics />
           </>
         )}
       </div>

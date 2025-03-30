@@ -9,34 +9,34 @@ interface TaggingDialogFooterProps {
   onSave: () => void;
 }
 
-const TaggingDialogFooter = ({
-  isReadyToSave,
-  selectedCount,
-  taggedCount,
-  onCancel,
-  onSave
+const TaggingDialogFooter = ({ 
+  isReadyToSave, 
+  selectedCount, 
+  taggedCount, 
+  onCancel, 
+  onSave 
 }: TaggingDialogFooterProps) => {
-  const footerText = !isReadyToSave && selectedCount > 0
-    ? `Please assign sources to all selected transactions (${taggedCount}/${selectedCount} tagged)`
-    : selectedCount === 0
-      ? "Please select at least one income transaction"
-      : `${selectedCount} transactions ready to import`;
-
   return (
-    <div className="p-4 bg-gray-50 border-t mt-auto flex flex-col gap-4">
-      <p className={`text-sm ${isReadyToSave ? "text-green-600" : "text-amber-600"}`}>
-        {footerText}
-      </p>
-      <div className="flex justify-end gap-2">
+    <div className="p-4 border-t sticky bottom-0 bg-white flex justify-between items-center">
+      <div className="text-sm text-gray-500">
+        {selectedCount > 0 ? (
+          <span>
+            {selectedCount} transaction{selectedCount !== 1 ? "s" : ""} selected, {taggedCount} with source assigned
+          </span>
+        ) : (
+          <span>No transactions selected</span>
+        )}
+      </div>
+      <div className="flex gap-2">
         <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button 
-          disabled={!isReadyToSave} 
+        <Button
           onClick={onSave}
+          disabled={!isReadyToSave}
           className="bg-green-500 hover:bg-green-600 text-white"
         >
-          Save {selectedCount} Transactions
+          Import {selectedCount} Transaction{selectedCount !== 1 ? "s" : ""}
         </Button>
       </div>
     </div>

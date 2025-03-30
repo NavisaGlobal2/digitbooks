@@ -13,16 +13,18 @@ import {
 } from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Client } from '@/types/client';
 
 interface ClientSelectorProps {
   selectedClientName: string;
-  onClientSelect: (clientName: string) => void;
+  onClientSelect: (clientName: string, clientEmail?: string, clientAddress?: string) => void;
 }
 
 const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorProps) => {
   const { clients } = useClients();
   const [isCustomClient, setIsCustomClient] = useState(!clients.some(client => client.name === selectedClientName) && selectedClientName !== '');
   const [customClientName, setCustomClientName] = useState(isCustomClient ? selectedClientName : '');
+  const [customClientEmail, setCustomClientEmail] = useState('');
 
   // Update state when the selected client changes externally
   useEffect(() => {
@@ -39,21 +41,36 @@ const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorPr
     if (value === "custom") {
       setIsCustomClient(true);
       setCustomClientName('');
+      setCustomClientEmail('');
     } else {
       setIsCustomClient(false);
-      onClientSelect(value);
+      
+      // Find client to get their email and address
+      const selectedClient = clients.find(client => client.name === value);
+      if (selectedClient) {
+        onClientSelect(value, selectedClient.email, selectedClient.address);
+      } else {
+        onClientSelect(value);
+      }
     }
   };
 
   const handleCustomClientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setCustomClientName(value);
-    onClientSelect(value);
+    onClientSelect(value, customClientEmail);
+  };
+
+  const handleCustomClientEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCustomClientEmail(value);
+    onClientSelect(customClientName, value);
   };
 
   const handleAddCustomClient = () => {
     setIsCustomClient(true);
     setCustomClientName('');
+    setCustomClientEmail('');
   };
 
   return (
@@ -70,7 +87,7 @@ const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorPr
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Existing Clients</SelectLabel>
-                {clients.map((client) => (
+                {Array.isArray(clients) && clients.map((client) => (
                   <SelectItem key={client.id} value={client.name}>
                     <div className="flex items-center">
                       <User className="mr-2 h-4 w-4" />
@@ -88,7 +105,7 @@ const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorPr
             </SelectContent>
           </Select>
           
-          {clients.length === 0 && (
+          {Array.isArray(clients) && clients.length === 0 && (
             <Button 
               type="button" 
               variant="outline" 
@@ -108,6 +125,13 @@ const ClientSelector = ({ selectedClientName, onClientSelect }: ClientSelectorPr
             onChange={handleCustomClientChange}
             placeholder="Enter client name"
             className="w-full"
+          />
+          <Input
+            value={customClientEmail}
+            onChange={handleCustomClientEmailChange}
+            placeholder="Enter client email"
+            className="w-full"
+            type="email"
           />
           <Button 
             type="button" 

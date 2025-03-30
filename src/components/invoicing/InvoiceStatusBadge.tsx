@@ -9,12 +9,14 @@ const InvoiceStatusBadge = ({ status }: StatusBadgeProps) => {
   const statusStyles = {
     pending: "bg-blue-100 text-blue-700",
     paid: "bg-green-100 text-green-700",
+    "partially-paid": "bg-amber-100 text-amber-700",
     overdue: "bg-red-100 text-red-700"
   };
   
   const statusText = {
     pending: "Pending",
     paid: "Paid",
+    "partially-paid": "Partially Paid",
     overdue: "Overdue"
   };
   

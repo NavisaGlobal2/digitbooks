@@ -6,6 +6,9 @@ import { processWithAI } from "./lib/aiService.ts";
 import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
 
 serve(async (req) => {
+  // Log request information
+  console.log(`Received ${req.method} request from origin: ${req.headers.get("origin") || "unknown"}`);
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return handleCorsRequest();
@@ -18,8 +21,19 @@ serve(async (req) => {
     
     // Get the preferred AI provider from the request, if provided
     const preferredProvider = formData.get("preferredProvider")?.toString() || null;
-    // Store the preferred provider in a variable instead of trying to set it in env
-    console.log(`Using preferred AI provider: ${preferredProvider || "anthropic"}`);
+    
+    // Only try to set the environment variable if explicitly provided
+    // This avoids the "operation not supported" error for PDF files
+    if (preferredProvider) {
+      try {
+        console.log(`Setting preferred AI provider to: ${preferredProvider}`);
+        Deno.env.set("PREFERRED_AI_PROVIDER", preferredProvider);
+      } catch (envError) {
+        // Log but don't fail if we can't set the environment variable
+        console.log(`Could not set preferred AI provider: ${envError.message}`);
+        // Continue processing without failing
+      }
+    }
     
     if (!file || !(file instanceof File)) {
       return new Response(
@@ -33,6 +47,12 @@ serve(async (req) => {
     // Extract file type for potential fallback decisions
     const fileType = file.name.split('.').pop()?.toLowerCase() || '';
     
+    // Get processing context if provided
+    const context = formData.get("context")?.toString() || null;
+    if (context) {
+      console.log(`Processing context: ${context}`);
+    }
+    
     // Generate batch ID for tracking
     const batchId = crypto.randomUUID();
     
@@ -43,8 +63,8 @@ serve(async (req) => {
       let usedFallback = false;
       
       try {
-        // 2. Try to process with AI service, passing the preferredProvider
-        transactions = await processWithAI(fileText, fileType, preferredProvider);
+        // 2. Try to process with AI service
+        transactions = await processWithAI(fileText, fileType, context);
         
         if (transactions.length === 0) {
           throw new Error("No transactions were extracted by the AI service");
