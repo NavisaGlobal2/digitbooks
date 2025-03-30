@@ -19,7 +19,7 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
   const [useVisionApi, setUseVisionApi] = useState<boolean>(true);
 
-  // Use boolean type instead of string for isAuthenticated
+  // isAuthenticated is correctly typed as boolean | null from useStatementAuth
   const { isAuthenticated, verifyAuth } = useStatementAuth();
   
   const { validateFile } = useFileValidation();
@@ -90,8 +90,9 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
       return;
     }
     
-    // Process the file - pass isAuthenticated as boolean
-    await processStatement(file, preferredAIProvider, isAuthenticated === true, useVisionApi);
+    // Pass isAuthenticated as boolean, ensuring it's not null with !!
+    // This fixes the type error by explicitly converting to boolean
+    await processStatement(file, preferredAIProvider, !!isAuthenticated, useVisionApi);
   }, [file, verifyAuth, validateFile, processStatement, preferredAIProvider, isAuthenticated, useVisionApi]);
 
   const clearFile = useCallback(() => {

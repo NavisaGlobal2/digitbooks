@@ -30,7 +30,7 @@ export const useStatementProcessor = ({
   const processStatement = async (
     file: File, 
     preferredAIProvider: string, 
-    isAuthenticated: boolean, 
+    isAuthenticated: boolean, // Explicitly typed as boolean
     useVisionApi: boolean = true
   ) => {
     // Prevent double processing

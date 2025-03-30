@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useStatementAuth = () => {
-  // Changed from string to boolean to match how it's used in useStatementUpload
+  // Boolean type is correct here - we want to know if authenticated or not
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
