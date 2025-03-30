@@ -10,6 +10,10 @@
  */
 export function isCSVFile(file: File): boolean {
   try {
+    if (!file || !file.name) {
+      return false;
+    }
+    
     // First check content type
     if (file.type === 'text/csv') {
       return true;
@@ -41,6 +45,10 @@ export function isCSVFile(file: File): boolean {
  */
 export function isExcelFile(file: File): boolean {
   try {
+    if (!file || !file.name) {
+      return false;
+    }
+    
     // Check content type first
     if (file.type === 'application/vnd.ms-excel' || 
         file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
@@ -73,6 +81,10 @@ export function isExcelFile(file: File): boolean {
  */
 export function isPDFFile(file: File): boolean {
   try {
+    if (!file || !file.name) {
+      return false;
+    }
+    
     // Check content type first
     if (file.type === 'application/pdf') {
       return true;

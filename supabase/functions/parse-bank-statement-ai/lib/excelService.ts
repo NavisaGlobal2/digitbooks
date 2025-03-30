@@ -235,8 +235,12 @@ const extractTabularData = (data: Uint8Array, textSegments: string[]): string[][
  * @returns boolean indicating if the file is an Excel file
  */
 export const isExcelFile = (file: File): boolean => {
+  if (!file || !file.name) {
+    return false;
+  }
+  
   const fileName = file.name.toLowerCase();
-  const mimeType = file.type.toLowerCase();
+  const mimeType = file.type ? file.type.toLowerCase() : '';
   
   return mimeType.includes("excel") || 
          mimeType.includes("spreadsheet") ||
