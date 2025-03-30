@@ -67,7 +67,7 @@ export const useStatementProcessor = ({
               completeProgress();
               
               // Check if we got transactions array or CSV parse result
-              const transactions = Array.isArray(result) ? result : result.data;
+              const transactions = Array.isArray(result) ? result : result.transactions;
               console.log(`Successfully parsed ${transactions.length} transactions`);
               
               onTransactionsParsed(transactions);
@@ -84,21 +84,50 @@ export const useStatementProcessor = ({
           // If authenticated, we want to use the edge function for all file types
           setProcessingStatus(`Processing ${fileExt} file with AI...`);
           
-          const { processServerSide } = await import("../../../../hooks/useFileProcessing");
-          processServerSide(
-            file,
-            onTransactionsParsed,
-            onError,
-            resetProgress,
-            completeProgress,
-            isCancelled,
-            setIsWaitingForServer,
-            {
-              preferredProvider: preferredAIProvider,
-              useVision: useVisionApi,
-              storePdfInSupabase
+          try {
+            const fileProcessingModule = await import("../../../../hooks/useFileProcessing");
+            
+            // Check if processServerSide exists in the module
+            if (typeof fileProcessingModule.processServerSide === 'function') {
+              fileProcessingModule.processServerSide(
+                file,
+                onTransactionsParsed,
+                onError,
+                resetProgress,
+                completeProgress,
+                isCancelled,
+                setIsWaitingForServer,
+                {
+                  preferredProvider: preferredAIProvider,
+                  useVision: useVisionApi,
+                  storePdfInSupabase
+                }
+              );
+            } else {
+              // Fallback if processServerSide doesn't exist
+              const { useFileProcessing } = fileProcessingModule;
+              const { processServerSide } = useFileProcessing();
+              
+              processServerSide(
+                file,
+                onTransactionsParsed,
+                onError,
+                resetProgress,
+                completeProgress,
+                isCancelled,
+                setIsWaitingForServer,
+                {
+                  preferredProvider: preferredAIProvider,
+                  useVision: useVisionApi,
+                  storePdfInSupabase
+                }
+              );
             }
-          );
+          } catch (error: any) {
+            console.error("Error importing or using processServerSide:", error);
+            onError("Failed to load server processing module. Please try again.");
+            stopProcessing();
+          }
         }
       }
     } catch (error: any) {

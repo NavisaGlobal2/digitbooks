@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 
 interface ProgressIndicatorProps {
   progress: number;
-  step: string;
-  isVisible: boolean;
+  step: string | null;
+  isVisible?: boolean;
   isWaitingForServer?: boolean;
   onCancel?: () => void;
 }
@@ -14,7 +14,7 @@ interface ProgressIndicatorProps {
 const ProgressIndicator = ({ 
   progress, 
   step, 
-  isVisible,
+  isVisible = true,
   isWaitingForServer = false,
   onCancel
 }: ProgressIndicatorProps) => {

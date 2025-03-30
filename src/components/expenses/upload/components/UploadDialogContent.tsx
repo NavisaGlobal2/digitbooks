@@ -76,7 +76,7 @@ const UploadDialogContent = ({
           <>
             <FileUploadArea
               file={file}
-              onChange={handleFileChange}
+              onFileChange={handleFileChange}
               disabled={uploading}
             />
 
