@@ -1,4 +1,3 @@
-
 /**
  * Extract text from various file types
  */
@@ -22,19 +21,27 @@ export async function extractTextFromFile(file: File, options: any = {}): Promis
       if (useGoogleVision) {
         try {
           console.log("🔍 Attempting to extract text with Google Vision API...");
-          // Use a non-recursive approach to handle Vision API processing with memory safety
-          const pdfText = await extractTextWithGoogleVisionSafe(file, safeProcessing);
           
-          if (pdfText && pdfText.length > 100) {
-            console.log('✅ Successfully extracted text from PDF with Google Vision API');
-            console.log(`✅ Extracted ${pdfText.length} characters of text`);
-            console.log('Sample of extracted text:', pdfText.substring(0, 200) + '...');
+          // Convert file to base64 directly using arrayBuffer and btoa
+          // This avoids complex chunking that could be causing issues
+          const arrayBuffer = await file.arrayBuffer();
+          const base64 = arrayBufferToBase64(arrayBuffer);
+          
+          console.log(`✅ Successfully converted PDF to base64 (${base64.length} chars)`);
+          
+          if (base64) {
+            const pdfText = await callVisionAPI(base64, Deno.env.get("GOOGLE_VISION_API_KEY") || '');
             
-            // Log a unique identifier to confirm Google Vision is being called
-            console.log('VISION_API_EXTRACTION_SUCCESS_MARKER');
-            
-            // Add a clear marker to indicate real extracted content and explicitly prevent dummy data
-            return `[PDF BANK STATEMENT EXTRACTED WITH GOOGLE VISION API: ${fileName} (${fileSize})]
+            if (pdfText && pdfText.length > 100) {
+              console.log('✅ Successfully extracted text from PDF with Google Vision API');
+              console.log(`✅ Extracted ${pdfText.length} characters of text`);
+              console.log('Sample of extracted text:', pdfText.substring(0, 200) + '...');
+              
+              // Log a unique identifier to confirm Google Vision is being called
+              console.log('VISION_API_EXTRACTION_SUCCESS_MARKER');
+              
+              // Add a clear marker to indicate real extracted content and explicitly prevent dummy data
+              return `[PDF BANK STATEMENT EXTRACTED WITH GOOGLE VISION API: ${fileName} (${fileSize})]
 
 ACTUAL STATEMENT TEXT FOLLOWS:
 ${pdfText}
@@ -48,8 +55,11 @@ CRITICAL INSTRUCTION FOR AI: This is REAL text extracted from an ACTUAL bank sta
 6. The user's financial decisions depend on this data being accurate
 7. DO NOT generate fictional or placeholder transactions under ANY circumstances
 8. THIS IS REAL DATA, NOT A TEST - I REPEAT, DO NOT GENERATE EXAMPLE DATA`;
+            } else {
+              console.warn("⚠️ Google Vision API returned insufficient text:", pdfText?.length || 0, "characters");
+            }
           } else {
-            console.warn("⚠️ Google Vision API returned insufficient text:", pdfText?.length || 0, "characters");
+            console.error("❌ Failed to convert PDF to base64");
           }
         } catch (visionError) {
           console.error("❌ Google Vision extraction failed:", visionError);
@@ -103,112 +113,60 @@ RESPOND ONLY with a valid JSON array of real transactions extracted from the sta
 }
 
 /**
- * Extract text from PDF using Google Vision API - safe implementation that avoids stack overflow
- * With added safeguards against memory issues
+ * Convert ArrayBuffer to Base64 efficiently
+ * This method avoids excessive recursion that could cause stack overflows
  */
-async function extractTextWithGoogleVisionSafe(file: File, safeMode = false): Promise<string> {
-  const GOOGLE_VISION_API_KEY = Deno.env.get("GOOGLE_VISION_API_KEY");
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunkSize = 1024; // Process in smaller chunks to avoid call stack issues
   
-  if (!GOOGLE_VISION_API_KEY) {
-    throw new Error('Google Vision API key is not configured');
+  // Process in chunks to prevent stack overflow
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.slice(i, Math.min(i + chunkSize, bytes.length));
+    const binaryChunk = Array.from(chunk).map(b => String.fromCharCode(b)).join('');
+    binary += binaryChunk;
   }
-
-  try {
-    console.log("Starting Google Vision extraction with API key length:", GOOGLE_VISION_API_KEY.length);
-    
-    // Convert file to base64 without recursive calls
-    const arrayBuffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    
-    console.log(`PDF size: ${bytes.length} bytes`);
-    
-    // For large files, we need to chunk the process
-    // Google Vision has limitations on input size
-    const MAX_CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
-    
-    // Memory-safe processing strategy for large files
-    if (bytes.length > MAX_CHUNK_SIZE || safeMode) {
-      console.log(`Using safe chunking approach for PDF (${bytes.length} bytes)`);
-      
-      // Process only a portion of the file in safe mode to ensure we don't hit stack limits
-      // For most bank statements, important transaction data is in the first few pages
-      const processingSize = safeMode ? 
-        Math.min(2 * 1024 * 1024, bytes.length) : // 2MB in safe mode
-        Math.min(MAX_CHUNK_SIZE, bytes.length);
-      
-      const chunk = bytes.slice(0, processingSize);
-      console.log(`Processing first ${processingSize} bytes of PDF`);
-      
-      // Convert to base64 using iterative approach instead of recursive
-      return await chunkToBase64AndProcess(chunk, GOOGLE_VISION_API_KEY);
-    } else {
-      // For smaller files, use the same safe approach
-      return await chunkToBase64AndProcess(bytes, GOOGLE_VISION_API_KEY);
-    }
-  } catch (error) {
-    console.error("Error in extractTextWithGoogleVisionSafe:", error);
-    throw error;
-  }
-}
-
-/**
- * Memory-efficient conversion of byte array to base64 and Vision API processing
- * Uses an iterative approach to avoid recursion stack issues
- */
-async function chunkToBase64AndProcess(bytes: Uint8Array, apiKey: string): Promise<string> {
-  try {
-    // Use a safe chunk size for string conversion to avoid call stack issues
-    const SAFE_CHUNK_SIZE = 256 * 1024; // 256KB sub-chunks for string conversion
-    let base64 = '';
-    
-    console.log(`Converting ${bytes.length} bytes to base64 in chunks of ${SAFE_CHUNK_SIZE} bytes`);
-    
-    // Iterative approach instead of using .apply which can cause stack overflow
-    for (let i = 0; i < bytes.length; i += SAFE_CHUNK_SIZE) {
-      const subChunk = bytes.slice(i, Math.min(i + SAFE_CHUNK_SIZE, bytes.length));
-      const binaryString = Array.from(subChunk)
-        .map(byte => String.fromCharCode(byte))
-        .join('');
-      base64 += btoa(binaryString);
-    }
-    
-    console.log(`Base64 conversion complete, length: ${base64.length}`);
-    
-    // Call Vision API with the base64 data
-    return await callVisionAPI(base64, apiKey);
-  } catch (error) {
-    console.error("Error in chunkToBase64AndProcess:", error);
-    throw new Error(`PDF processing error: ${error.message}`);
-  }
+  
+  return btoa(binary);
 }
 
 /**
  * Call Google Vision API with proper error handling
  */
 async function callVisionAPI(base64Data: string, apiKey: string): Promise<string> {
+  if (!apiKey) {
+    throw new Error('Google Vision API key is not configured');
+  }
+
   try {
     console.log("🔍 Calling Google Vision API...");
+    console.log(`Using API key with length: ${apiKey.length} chars`);
     
+    // Create the proper request body for Google Vision API with base64 content
+    const requestBody = JSON.stringify({
+      requests: [
+        {
+          image: {
+            content: base64Data  // Make sure we're sending the base64 string directly
+          },
+          features: [
+            {
+              type: 'DOCUMENT_TEXT_DETECTION',  // Use DOCUMENT_TEXT_DETECTION for better results with documents
+              maxResults: 1
+            }
+          ]
+        }
+      ]
+    });
+    
+    // Make the API request
     const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        requests: [
-          {
-            image: {
-              content: base64Data
-            },
-            features: [
-              {
-                type: 'DOCUMENT_TEXT_DETECTION',
-                maxResults: 1
-              }
-            ]
-          }
-        ]
-      })
+      body: requestBody
     });
     
     if (!response.ok) {

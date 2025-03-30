@@ -15,14 +15,31 @@ export const handlePDFError = (
     error.message.includes("Google Vision API") ||
     error.message.includes("Vision API") || 
     error.message.includes("vision api") ||
-    error.message.includes("VISION_API")
+    error.message.includes("VISION_API") ||
+    error.message.toLowerCase().includes("vision")
   );
   
   if (isVisionApiError) {
     console.error('Google Vision API error detected:', error);
     trackFailedConnection('google_vision_api_error', error);
     
-    // Google Vision API errors might be due to configuration issues, not worth retrying
+    // Provide more specific error message based on error content
+    if (error.message.includes("API key")) {
+      return {
+        shouldRetry: false,
+        message: "Missing or invalid Google Vision API key. Please contact your administrator."
+      };
+    }
+    
+    // Check for content errors (large file, format issues)
+    if (error.message.includes("content") || error.message.includes("image")) {
+      return {
+        shouldRetry: true, // Try one more time with different encoding
+        message: "Error processing PDF with Google Vision. Retrying with different approach..."
+      };
+    }
+    
+    // Generic Vision API error
     return {
       shouldRetry: false,
       message: "Google Vision API failed to extract text from your PDF. This is likely a configuration issue. Please try a different file format like CSV."
@@ -138,5 +155,7 @@ export const addPDFOptions = (
   if (pdfAttemptCount > 3) {
     console.log("Multiple PDF attempts detected, using enhanced PDF handling");
     formData.append("enhancedPdfMode", "true");
+    // Force base64 encoding on multiple attempts
+    formData.append("forceBase64", "true");
   }
 };

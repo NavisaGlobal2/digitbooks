@@ -27,12 +27,16 @@ export const prepareFormData = (
     const useVision = options?.useVision !== false; // Default to true unless explicitly set to false
     formData.append("useVision", useVision ? "true" : "false");
     
+    // Force base64 encoding for Vision API to ensure proper format
+    formData.append("forceBase64Encoding", "true");
+    
     // Log the options being used for debugging
     console.log("PDF processing options being sent:", {
       isPdf,
       useVision: useVision ? "true" : "false",
       pdfAttemptCount,
       safeProcessing: options?.safeProcessing === true ? "true" : "false",
+      forceBase64: "true",
       debugMode: true
     });
   } else {
