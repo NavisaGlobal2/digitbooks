@@ -1,13 +1,8 @@
-
 import { ParsedTransaction } from "../types";
-import { 
-  getAuthToken,
-  MAX_RETRIES,
-  sleep,
-  trackSuccessfulConnection,
-  trackFailedConnection,
-  showFallbackMessage
-} from "./index";
+import { getAuthToken } from "./authHandler";
+import { MAX_RETRIES, sleep } from "./retryHandler";
+import { trackSuccessfulConnection, trackFailedConnection } from "./connectionStats";
+import { showFallbackMessage } from "../edge-function/index";
 import { handleCSVFallback } from "./fallbackHandler";
 import { callEdgeFunction, handleResponseError } from "./apiClient";
 import { processSuccessfulResult } from "./responseProcessor";

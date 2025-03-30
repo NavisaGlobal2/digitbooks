@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RotateCcw, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
-import { getConnectionStats, resetConnectionStats, ConnectionStats } from '../parsers/edge-function';
+import { getConnectionStats, resetConnectionStats } from '../parsers/edge-function';
+import type { ConnectionStats as ConnectionStatsType } from '../parsers/edge-function/connectionStats';
 import { format } from 'date-fns';
 
 interface ConnectionStatsProps {
@@ -12,7 +13,7 @@ interface ConnectionStatsProps {
 }
 
 export function ConnectionStats({ className, onReset }: ConnectionStatsProps) {
-  const [stats, setStats] = useState<ConnectionStats>(getConnectionStats());
+  const [stats, setStats] = useState<ConnectionStatsType>(getConnectionStats());
   const [expanded, setExpanded] = useState(false);
   
   useEffect(() => {
@@ -111,7 +112,7 @@ export function ConnectionStats({ className, onReset }: ConnectionStatsProps) {
         )}
       </div>
       
-      {(stats.failureReasons && Object.keys(stats.failureReasons).length > 0) && (
+      {stats.failureReasons && Object.keys(stats.failureReasons).length > 0 && (
         <div className="bg-slate-50 p-4 rounded-lg">
           <div className="text-sm font-medium mb-2">Failure Reasons</div>
           <div className="space-y-1">

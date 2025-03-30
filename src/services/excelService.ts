@@ -37,9 +37,11 @@ export const ExcelService = {
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
             
             // Identify headers (first row)
-            const headers = jsonData.length > 0 ? jsonData[0].map(String) : [];
+            const headers = jsonData.length > 0 ? 
+              (jsonData[0] as any[]).map(cell => String(cell || '')) : [];
+            
             // Get data rows (everything after first row)
-            const rows = jsonData.slice(1);
+            const rows = jsonData.slice(1) as any[][];
             
             resolve({
               headers,
@@ -79,9 +81,11 @@ export const ExcelService = {
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
     
     // Identify headers (first row)
-    const headers = jsonData.length > 0 ? jsonData[0].map(String) : [];
+    const headers = jsonData.length > 0 ? 
+      (jsonData[0] as any[]).map(cell => String(cell || '')) : [];
+      
     // Get data rows (everything after first row)
-    const rows = jsonData.slice(1);
+    const rows = jsonData.slice(1) as any[][];
     
     return {
       headers,
