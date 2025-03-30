@@ -19,7 +19,7 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
   const [useVisionApi, setUseVisionApi] = useState<boolean>(true);
 
-  // Changed from string to boolean to match the setState calls
+  // Use boolean type instead of string for isAuthenticated
   const { isAuthenticated, verifyAuth } = useStatementAuth();
   
   const { validateFile } = useFileValidation();
@@ -90,7 +90,7 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
       return;
     }
     
-    // Process the file - make sure we pass the correct type
+    // Process the file - pass isAuthenticated as boolean
     await processStatement(file, preferredAIProvider, isAuthenticated === true, useVisionApi);
   }, [file, verifyAuth, validateFile, processStatement, preferredAIProvider, isAuthenticated, useVisionApi]);
 
