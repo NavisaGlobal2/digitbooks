@@ -1,108 +1,111 @@
-
-// Track connection statistics to help diagnose issues
-interface ConnectionStats {
-  successCount: number;
-  failCount: number;
-  failureCount: number; // Alias for failCount
-  lastSuccess: Date | null;
-  lastError: Error | null;
-  lastFailure: Date | null;
-  errors: string[];
-  endpoint?: string;
-  corsErrorDetected: boolean;
-  failureReasons: Map<string, number>;
-  successRate: number;
-  failureRate: number;
-}
-
-// Initialize stats object
-const connectionStats: ConnectionStats = {
+// Track connection success and failure stats
+let connectionStats = {
   successCount: 0,
   failCount: 0,
-  failureCount: 0, // Alias for failCount
-  lastSuccess: null,
-  lastError: null,
-  lastFailure: null,
-  errors: [],
-  endpoint: undefined,
-  corsErrorDetected: false,
-  failureReasons: new Map<string, number>(),
-  successRate: 0,
-  failureRate: 0
+  lastSuccess: null as number | null,
+  lastFailure: null as number | null,
+  endpoint: null as string | null,
+  failureReasons: {} as { [key: string]: number },
+  corsErrorDetected: false
 };
 
-// Track a successful connection
-export const trackSuccessfulConnection = (endpoint?: string) => {
+// Technical details object for debugging
+const technicalDetails = {
+  errors: [] as any[],
+  lastError: null as any,
+  browserInfo: typeof navigator !== 'undefined' ? {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    vendor: navigator.vendor
+  } : null
+};
+
+/**
+ * Track successful connection
+ */
+export const trackSuccessfulConnection = (endpoint: string) => {
   connectionStats.successCount++;
-  connectionStats.lastSuccess = new Date();
-  if (endpoint) connectionStats.endpoint = endpoint;
-  
-  // Update success/failure rates
-  const total = connectionStats.successCount + connectionStats.failCount;
-  connectionStats.successRate = total > 0 ? (connectionStats.successCount / total) * 100 : 0;
-  connectionStats.failureRate = total > 0 ? (connectionStats.failCount / total) * 100 : 0;
+  connectionStats.lastSuccess = Date.now();
+  connectionStats.endpoint = endpoint;
 };
 
-// Track a failed connection - takes optional endpoint parameter
-export const trackFailedConnection = (reason: string, error: Error, endpoint?: string) => {
+/**
+ * Track failed connection
+ */
+export const trackFailedConnection = (reason: string, error: any) => {
+  // Update counts
   connectionStats.failCount++;
-  connectionStats.failureCount = connectionStats.failCount; // Keep in sync
-  connectionStats.lastError = error;
-  connectionStats.lastFailure = new Date();
-  connectionStats.errors.push(error.message || 'Unknown error');
+  connectionStats.lastFailure = Date.now();
   
-  // Store endpoint if provided
-  if (endpoint) connectionStats.endpoint = endpoint;
+  // Track failure reasons
+  if (!connectionStats.failureReasons[reason]) {
+    connectionStats.failureReasons[reason] = 0;
+  }
+  connectionStats.failureReasons[reason]++;
   
-  // Detect CORS errors
-  if (
-    error.message?.includes('CORS') ||
-    error.message?.includes('cross-origin') ||
-    error.message?.includes('Cross-Origin')
-  ) {
+  // Check for CORS error
+  if (error?.message && (
+    error.message.toLowerCase().includes('cors') ||
+    error.message.toLowerCase().includes('origin')
+  )) {
     connectionStats.corsErrorDetected = true;
   }
   
-  // Track failure reasons
-  const currentCount = connectionStats.failureReasons.get(reason) || 0;
-  connectionStats.failureReasons.set(reason, currentCount + 1);
+  // Store technical details
+  technicalDetails.lastError = {
+    message: error?.message || 'Unknown error',
+    stack: error?.stack,
+    name: error?.name,
+    reason
+  };
   
-  // Update success/failure rates
-  const total = connectionStats.successCount + connectionStats.failCount;
-  connectionStats.successRate = total > 0 ? (connectionStats.successCount / total) * 100 : 0;
-  connectionStats.failureRate = total > 0 ? (connectionStats.failCount / total) * 100 : 0;
+  // Keep last 5 errors for debugging
+  technicalDetails.errors.unshift(technicalDetails.lastError);
+  if (technicalDetails.errors.length > 5) {
+    technicalDetails.errors.pop();
+  }
 };
 
-// Get current stats
+/**
+ * Get current connection statistics
+ */
 export const getConnectionStats = () => {
-  return { ...connectionStats };
+  const total = connectionStats.successCount + connectionStats.failCount;
+  const successRate = total > 0 ? Math.round((connectionStats.successCount / total) * 100) : 0;
+  const failureRate = total > 0 ? Math.round((connectionStats.failCount / total) * 100) : 0;
+  
+  return {
+    ...connectionStats,
+    successRate,
+    failureRate
+  };
 };
 
-// Reset stats
-export const resetConnectionStats = () => {
-  connectionStats.successCount = 0;
-  connectionStats.failCount = 0;
-  connectionStats.failureCount = 0;
-  connectionStats.lastSuccess = null;
-  connectionStats.lastError = null;
-  connectionStats.lastFailure = null;
-  connectionStats.errors = [];
-  connectionStats.corsErrorDetected = false;
-  connectionStats.failureReasons = new Map<string, number>();
-  connectionStats.successRate = 0;
-  connectionStats.failureRate = 0;
-};
-
-// Get technical error details for debugging
+/**
+ * Get technical error details for debugging
+ */
 export const getTechnicalErrorDetails = () => {
   return {
-    errors: connectionStats.errors,
-    corsErrorDetected: connectionStats.corsErrorDetected,
-    failureReasons: Object.fromEntries(connectionStats.failureReasons),
-    lastError: connectionStats.lastError ? {
-      message: connectionStats.lastError.message,
-      name: connectionStats.lastError.name,
-      stack: connectionStats.lastError.stack
-    } : null
+    ...technicalDetails,
+    stats: connectionStats
   };
+};
+
+/**
+ * Reset connection statistics
+ */
+export const resetConnectionStats = () => {
+  connectionStats = {
+    successCount: 0,
+    failCount: 0,
+    lastSuccess: null,
+    lastFailure: null,
+    endpoint: connectionStats.endpoint, // Keep the endpoint
+    failureReasons: {},
+    corsErrorDetected: false
+  };
+  
+  // Keep browser info but reset errors
+  technicalDetails.errors = [];
+  technicalDetails.lastError = null;
 };

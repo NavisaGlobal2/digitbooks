@@ -121,8 +121,12 @@ export const parsePDFFile = (
         console.error(`❌ PDF PARSER STEP 14: No transactions found in PDF:`, errorMessage);
         toast.warning(`No ${context} transactions were found in your PDF. Please check if this statement contains transaction data.`);
         onError(`No ${context} transactions found in PDF. Please verify this is a bank statement with transaction data.`);
+      } else if (errorMessage.includes("404")) {
+        console.error(`❌ PDF PARSER STEP 15: Edge function not found:`, errorMessage);
+        toast.error("Server error: The parsing service is currently unavailable. Please try again later or contact support.");
+        onError(`The document parsing service is temporarily unavailable (404). Please try again later.`);
       } else {
-        console.error(`❌ PDF PARSER STEP 15: General PDF parsing error:`, errorMessage);
+        console.error(`❌ PDF PARSER STEP 16: General PDF parsing error:`, errorMessage);
         onError(`PDF parsing failed: ${errorMessage}`);
       }
       return true;

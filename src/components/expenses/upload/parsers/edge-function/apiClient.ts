@@ -1,57 +1,43 @@
 
-import { trackFailedConnection } from "./connectionStats";
+import { trackSuccessfulConnection, trackFailedConnection } from './connectionStats';
 
-// Function to handle successful API responses
+/**
+ * Handle successful response from API
+ */
 export const handleResponseSuccess = async (response: Response) => {
   try {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error("Error parsing JSON:", error);
-    throw new Error("Failed to parse JSON from response");
+    console.error('Error parsing JSON response:', error);
+    throw new Error('Invalid response format');
   }
 };
 
-// Function to handle API errors
+/**
+ * Handle error response from API
+ */
 export const handleResponseError = async (response: Response) => {
-  let errorData;
-  try {
-    errorData = await response.json();
-  } catch (jsonError) {
-    console.error("Failed to parse error JSON:", jsonError);
-    errorData = { message: `Failed to parse error JSON: ${response.statusText}` };
-  }
-
-  const errorMessage = errorData?.message || response.statusText || "Unknown error";
-  console.error(`API Error: ${response.status} - ${errorMessage}`);
-
-  // Enhanced error details
-  const errorDetails = {
-    status: response.status,
-    message: errorMessage,
-    details: errorData?.details || null,
-    timestamp: new Date().toISOString()
-  };
-
-  console.error("Error details:", errorDetails);
-  trackFailedConnection('response_error', new Error('Response error occurred'));
+  let errorMessage = `Error ${response.status}: ${response.statusText}`;
   
-  const error = new Error(errorMessage);
-  (error as any).status = response.status;
-  (error as any).details = errorDetails;
-  return error;
+  try {
+    // Try to get detailed error from JSON response
+    const errorData = await response.json();
+    if (errorData.error) {
+      errorMessage = errorData.error;
+    }
+  } catch {
+    // If JSON parsing fails, use the status text
+    console.warn('Could not parse error response JSON');
+  }
+  
+  throw new Error(errorMessage);
 };
 
-// Function to handle network errors (e.g., server not found)
+/**
+ * Handle network error
+ */
 export const handleNetworkError = (error: Error) => {
-  console.error("Network error:", error);
   trackFailedConnection('network_error', error);
-  return new Error("Network error occurred. Please check your connection and try again.");
-};
-
-// Function to handle unexpected errors
-export const handleUnexpectedError = (error: any) => {
-  console.error("Unexpected error:", error);
-  trackFailedConnection('unexpected_error', error);
-  return new Error("An unexpected error occurred. Please try again later.");
+  throw error;
 };
