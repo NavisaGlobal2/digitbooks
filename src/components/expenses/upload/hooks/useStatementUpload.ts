@@ -19,7 +19,7 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
   const [useVisionApi, setUseVisionApi] = useState<boolean>(true);
 
-  const { isAuthenticated } = useStatementAuth();
+  const { isAuthenticated, verifyAuth } = useStatementAuth();
   const { validateFile } = useFileValidation();
   const { 
     progress, 
@@ -67,14 +67,6 @@ export const useStatementUpload = ({ onTransactionsParsed }: StatementUploadHook
       return;
     }
   }, [validateFile]);
-
-  // Simple auth verification function since useStatementAuth doesn't have verifyAuth
-  const verifyAuth = useCallback(async () => {
-    if (!isAuthenticated) {
-      return "You must be logged in to process bank statements";
-    }
-    return null;
-  }, [isAuthenticated]);
 
   const parseFile = useCallback(async () => {
     // Verify auth first
