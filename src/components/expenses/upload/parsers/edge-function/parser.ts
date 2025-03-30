@@ -31,11 +31,17 @@ export const parseViaEdgeFunction = async (
     const isPdf = file.name.toLowerCase().endsWith('.pdf');
     if (isPdf && options.useVision !== false) {
       options.useVision = true;
+      
       // Update dummyData prevention flags
       options.disableFakeDataGeneration = true;
       options.strictExtractMode = true;
       options.forceRealData = true;
+      options.debugMode = true; // Add debug flag
+      
       console.log("Vision API and anti-dummy data protections enabled for PDF processing");
+      
+      // Add explicit console log for Google Vision API usage
+      console.log("🔍 Attempting to use Google Vision API for PDF text extraction");
     }
     
     // Prepare form data
@@ -75,6 +81,8 @@ export const parseViaEdgeFunction = async (
             
             if (realDataExtracted) {
               console.log("✅ Confirmed that real data was extracted via Google Vision");
+            } else if (isFilePdf && options.useVision) {
+              console.warn("⚠️ No Vision API success markers found. Google Vision API might not have been used.");
             }
             
             // Filter out any marker transactions
@@ -104,6 +112,18 @@ export const parseViaEdgeFunction = async (
       } catch (error: any) {
         lastError = error;
         console.error(`Error in attempt ${retryCount + 1}:`, error);
+        
+        // Check specifically for Vision API related errors
+        const isVisionApiError = error.message && (
+          error.message.includes("Google Vision API") ||
+          error.message.includes("Vision API") ||
+          error.message.includes("vision")
+        );
+        
+        if (isVisionApiError) {
+          console.error("Google Vision API error detected:", error);
+          return onError("Google Vision API error: " + error.message);
+        }
         
         // Handle network errors
         const isNetworkError = error.name === 'AbortError' || 

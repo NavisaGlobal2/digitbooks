@@ -10,6 +10,25 @@ export const handlePDFError = (
   retryCount: number,
   isPdfError: boolean
 ): { shouldRetry: boolean; message: string } => {
+  // Check for Google Vision API specific errors
+  const isVisionApiError = error.message && (
+    error.message.includes("Google Vision API") ||
+    error.message.includes("Vision API") || 
+    error.message.includes("vision api") ||
+    error.message.includes("VISION_API")
+  );
+  
+  if (isVisionApiError) {
+    console.error('Google Vision API error detected:', error);
+    trackFailedConnection('google_vision_api_error', error);
+    
+    // Google Vision API errors might be due to configuration issues, not worth retrying
+    return {
+      shouldRetry: false,
+      message: "Google Vision API failed to extract text from your PDF. This is likely a configuration issue. Please try a different file format like CSV."
+    };
+  }
+  
   // Check for PDF-specific errors
   const isPdfProcessingError = isPdfError || 
     (error.message && (
@@ -97,6 +116,9 @@ export const addPDFOptions = (
   formData.append("useVision", useVision ? "true" : "false");
   console.log(`Setting useVision flag to: ${useVision}`);
   
+  // Add debug mode to get more information about the Google Vision API
+  formData.append("debugMode", "true");
+  
   formData.append("forceRealData", options?.forceRealData ? "true" : "false");
   
   if (options?.context) {
@@ -105,6 +127,12 @@ export const addPDFOptions = (
   
   // Add safe processing option to prevent stack overflows
   formData.append("safeProcessing", options?.safeProcessing ? "true" : "false");
+  
+  // Make sure to force using Google Vision API
+  if (useVision) {
+    formData.append("FORCE_VISION_API", "true");
+    console.log("Adding FORCE_VISION_API flag to ensure Vision API is used");
+  }
   
   // After multiple attempts with the same PDF, try a different approach
   if (pdfAttemptCount > 3) {

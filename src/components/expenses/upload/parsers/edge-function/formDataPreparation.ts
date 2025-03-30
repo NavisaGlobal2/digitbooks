@@ -20,12 +20,20 @@ export const prepareFormData = (
     pdfAttemptCount = trackPDFAttempt();
     addPDFOptions(formData, options, pdfAttemptCount);
     
+    // Add debug mode to get more verbose logs
+    formData.append("debugMode", "true");
+    
+    // Add clear indication that we want to use Vision API
+    const useVision = options?.useVision !== false; // Default to true unless explicitly set to false
+    formData.append("useVision", useVision ? "true" : "false");
+    
     // Log the options being used for debugging
     console.log("PDF processing options being sent:", {
       isPdf,
-      useVision: options?.useVision === true ? "true" : "false",
+      useVision: useVision ? "true" : "false",
       pdfAttemptCount,
-      safeProcessing: options?.safeProcessing === true ? "true" : "false"
+      safeProcessing: options?.safeProcessing === true ? "true" : "false",
+      debugMode: true
     });
   } else {
     // Reset PDF attempt counter for non-PDF files
@@ -36,6 +44,23 @@ export const prepareFormData = (
   if (options?.preferredProvider) {
     formData.append("preferredProvider", options.preferredProvider);
     console.log(`Using preferred AI provider: ${options.preferredProvider}`);
+  }
+  
+  // Add additional flags to enforce real data extraction
+  if (options?.forceRealData) {
+    formData.append("forceRealData", "true");
+  }
+  
+  if (options?.disableFakeDataGeneration) {
+    formData.append("disableFakeDataGeneration", "true");
+  }
+  
+  if (options?.strictExtractMode) {
+    formData.append("strictExtractMode", "true");
+  }
+  
+  if (options?.debugMode) {
+    formData.append("debugMode", "true");
   }
   
   return { formData, isPdf, pdfAttemptCount };

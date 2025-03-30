@@ -22,8 +22,9 @@ export const parsePDFFile = (
     extractRealData: true,
     noDummyData: true,
     safeProcessing: true,
-    disableFakeDataGeneration: true, // Add new flag to be extra clear
-    strictExtractMode: true // Add new flag for strict extraction mode
+    disableFakeDataGeneration: true,
+    strictExtractMode: true,
+    debugMode: true // Add debug mode to get more info
   };
   
   console.log("PDF processing options:", options);
@@ -40,6 +41,14 @@ export const parsePDFFile = (
         return;
       }
       
+      // Check for Vision API success marker
+      const visionApiUsed = transactions.some(tx => 
+        tx.description?.includes('VISION_API_EXTRACTION_SUCCESS_MARKER') ||
+        tx.amount?.toString().includes('VISION_API_EXTRACTION_SUCCESS_MARKER')
+      );
+      
+      console.log("Vision API used successfully:", visionApiUsed);
+      
       // Enhanced validation to detect AI-generated content
       const suspiciousTransactions = detectSuspiciousTransactions(transactions);
       if (suspiciousTransactions.length > 0) {
@@ -51,6 +60,12 @@ export const parsePDFFile = (
       
       // Ensure transactions have proper dates
       const processedTransactions = transactions.map(tx => {
+        // Filter out any marker transactions
+        if (tx.description?.includes('VISION_API_EXTRACTION_SUCCESS_MARKER') ||
+            tx.amount?.toString().includes('VISION_API_EXTRACTION_SUCCESS_MARKER')) {
+          return null;
+        }
+        
         if (tx.date) {
           // Ensure date is in YYYY-MM-DD format
           try {
@@ -74,7 +89,7 @@ export const parsePDFFile = (
         }
         
         return tx;
-      });
+      }).filter(tx => tx !== null) as ParsedTransaction[];
       
       console.log(`${context} PDF transactions after processing:`, processedTransactions);
       onComplete(processedTransactions);
@@ -82,8 +97,15 @@ export const parsePDFFile = (
     (errorMessage) => {
       console.error("PDF parsing error:", errorMessage);
       
+      // Check for specific Vision API errors
+      if (errorMessage.includes("Google Vision API") || 
+          errorMessage.includes("Vision API") ||
+          errorMessage.includes("vision")) {
+        toast.error("Google Vision API error. This might be due to missing API keys or configuration issues.");
+        onError("Google Vision API failed to extract text from your PDF. Please try again or use a CSV format if available.");
+      } 
       // For typical stack overflow errors, provide clear guidance
-      if (errorMessage.includes("Maximum call stack size exceeded") || 
+      else if (errorMessage.includes("Maximum call stack size exceeded") || 
           errorMessage.includes("operation is not supported") ||
           errorMessage.includes("sandbox environment internal error")) {
         toast.warning("Technical issue with PDF processing. Please try uploading a CSV version if available.");
@@ -104,6 +126,12 @@ export const parsePDFFile = (
  * Enhanced detection of suspicious/AI-generated transactions
  */
 function detectSuspiciousTransactions(transactions: ParsedTransaction[]): ParsedTransaction[] {
+  // Filter out any marker transactions first
+  const filteredTransactions = transactions.filter(tx => 
+    !tx.description?.includes('VISION_API_EXTRACTION_SUCCESS_MARKER') &&
+    !tx.amount?.toString().includes('VISION_API_EXTRACTION_SUCCESS_MARKER')
+  );
+  
   // Common patterns in AI-generated example data
   const suspiciousTerms = [
     'placeholder', 'example', 'sample', 'dummy', 'test transaction', 'demo',
@@ -114,7 +142,7 @@ function detectSuspiciousTransactions(transactions: ParsedTransaction[]): Parsed
   ];
   
   // Find transactions that are likely AI-generated
-  const suspicious = transactions.filter(tx => {
+  const suspicious = filteredTransactions.filter(tx => {
     // Check if description contains suspicious terms
     if (tx.description && suspiciousTerms.some(term => 
       tx.description.toLowerCase().includes(term.toLowerCase()))) {
@@ -131,9 +159,9 @@ function detectSuspiciousTransactions(transactions: ParsedTransaction[]): Parsed
   });
   
   // Reject if all transaction dates are perfectly sequential (likely fake data)
-  if (transactions.length > 3) {
+  if (filteredTransactions.length > 3) {
     let sequentialDateCount = 0;
-    const sortedTxs = [...transactions].sort((a, b) => {
+    const sortedTxs = [...filteredTransactions].sort((a, b) => {
       if (!a.date || !b.date) return 0;
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
@@ -156,7 +184,7 @@ function detectSuspiciousTransactions(transactions: ParsedTransaction[]): Parsed
     // If more than 70% of dates are sequential, it's likely fake data
     if (sequentialDateCount > sortedTxs.length * 0.7) {
       console.warn("Warning: Detected suspiciously sequential dates in transactions");
-      return transactions; // Return all transactions to trigger the error
+      return filteredTransactions; // Return all transactions to trigger the error
     }
   }
   

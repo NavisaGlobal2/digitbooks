@@ -77,7 +77,7 @@ const ProcessingModeToggle = ({
               <div className="space-y-0.5">
                 <div className="flex items-center">
                   <Label htmlFor="use-vision-api" className="text-sm font-medium">
-                    Use Vision API
+                    Use Google Vision API
                   </Label>
                   <TooltipProvider>
                     <Tooltip>
@@ -86,7 +86,7 @@ const ProcessingModeToggle = ({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p className="w-[220px] text-xs">
-                          Vision API helps extract text from PDFs with better accuracy. 
+                          Google Vision API extracts text from PDFs with better accuracy. 
                           <strong>Required for real data extraction.</strong>
                         </p>
                       </TooltipContent>
