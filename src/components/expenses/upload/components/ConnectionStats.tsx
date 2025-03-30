@@ -1,126 +1,162 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowDownCircle, ExternalLink, RefreshCw, StopCircle, XCircle } from "lucide-react";
-import { getTechnicalErrorDetails, getConnectionStats, resetConnectionStats } from "../parsers/edge-function/connectionStats";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { RotateCcw, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { getConnectionStats, resetConnectionStats, ConnectionStats } from '../parsers/edge-function';
+import { format } from 'date-fns';
 
-const ConnectionStats = ({ isVisible = true }) => {
-  const [showDetails, setShowDetails] = useState(false);
-  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+interface ConnectionStatsProps {
+  className?: string;
+  onReset?: () => void;
+}
+
+export function ConnectionStats({ className, onReset }: ConnectionStatsProps) {
+  const [stats, setStats] = useState<ConnectionStats>(getConnectionStats());
+  const [expanded, setExpanded] = useState(false);
   
-  if (!isVisible) return null;
+  useEffect(() => {
+    // Update stats every 5 seconds if the component is mounted
+    const interval = setInterval(() => {
+      setStats(getConnectionStats());
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
   
-  const stats = getConnectionStats();
-  const technicalDetails = getTechnicalErrorDetails();
-  
-  const statusColor = stats.failureCount > 0 
-    ? "bg-red-100 text-red-800" 
-    : stats.successCount > 0 
-      ? "bg-green-100 text-green-800" 
-      : "bg-gray-100 text-gray-800";
-  
-  const resetStats = () => {
+  const handleReset = () => {
     resetConnectionStats();
-    setShowDetails(false);
-    setShowTechnicalDetails(false);
+    setStats(getConnectionStats());
+    if (onReset) onReset();
   };
   
+  // If no stats are available yet, don't render anything
+  if (stats.successCount === 0 && stats.failCount === 0) {
+    return null;
+  }
+  
+  const totalRequests = stats.successCount + stats.failCount;
+  
   return (
-    <div className="mt-4 rounded-md border p-4 text-sm">
+    <div className={`space-y-4 ${className}`}>
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <span className="font-medium">Edge function connection status:</span>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}>
-            {stats.corsErrorDetected ? "CORS Error" : 
-              stats.failureCount > 0 ? "Connection Issues" : 
-              stats.successCount > 0 ? "Connected" : "No Connections"}
-          </span>
+        <h3 className="text-lg font-medium">AI Service Connection Statistics</h3>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleReset}
+        >
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Reset Stats
+        </Button>
+      </div>
+      
+      {stats.corsErrorDetected && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>CORS Error Detected</AlertTitle>
+          <AlertDescription>
+            There appears to be a cross-origin resource sharing issue connecting to the AI service.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-slate-50 p-4 rounded-lg">
+          <div className="text-sm text-muted-foreground">Total Requests</div>
+          <div className="text-2xl font-bold">{totalRequests}</div>
         </div>
         
-        <div className="flex space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setShowDetails(!showDetails)}
-          >
-            {showDetails ? "Hide Details" : "Show Details"}
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={resetStats}
-          >
-            <RefreshCw className="h-4 w-4 mr-1" />
-            Reset Stats
-          </Button>
+        <div className="bg-green-50 p-4 rounded-lg">
+          <div className="text-sm text-muted-foreground">Success Rate</div>
+          <div className="text-2xl font-bold text-green-700">{stats.successRate?.toFixed(0)}%</div>
+        </div>
+        
+        <div className="bg-red-50 p-4 rounded-lg">
+          <div className="text-sm text-muted-foreground">Failure Rate</div>
+          <div className="text-2xl font-bold text-red-700">{stats.failureRate?.toFixed(0)}%</div>
+        </div>
+        
+        <div className="bg-slate-50 p-4 rounded-lg">
+          <div className="text-sm text-muted-foreground">Endpoint</div>
+          <div className="text-sm font-medium truncate" title={stats.endpoint}>
+            {stats.endpoint ? (stats.endpoint.length > 30 ? `...${stats.endpoint.slice(-30)}` : stats.endpoint) : "N/A"}
+          </div>
         </div>
       </div>
       
-      {showDetails && (
-        <div className="mt-3 p-3 bg-gray-50 rounded-md">
-          <h4 className="font-medium mb-2">Connection Statistics</h4>
-          <ul className="space-y-1">
-            <li><span className="font-medium">Success:</span> {stats.successCount} ({stats.successRate}%)</li>
-            <li><span className="font-medium">Failures:</span> {stats.failureCount} ({stats.failureRate}%)</li>
-            <li>
-              <span className="font-medium">Endpoint:</span> {stats.endpoint || "Not available"}
-              {stats.endpoint && (
-                <button 
-                  className="ml-1 text-blue-600 hover:text-blue-800"
-                  onClick={() => navigator.clipboard.writeText(stats.endpoint || "")}
-                >
-                  (Copy)
-                </button>
-              )}
-            </li>
-            
-            {stats.lastFailure && (
-              <li><span className="font-medium">Last failure:</span> {new Date(stats.lastFailure).toLocaleString()}</li>
-            )}
-            
-            {stats.failureCount > 0 && (
-              <li>
-                <span className="font-medium">Failure reasons:</span> 
-                <ul className="ml-4 list-disc">
-                  {Object.entries(stats.failureReasons).map(([reason, count]) => (
-                    <li key={reason}>{reason}: {count}</li>
-                  ))}
-                </ul>
-              </li>
-            )}
-            
-            {stats.corsErrorDetected && (
-              <li className="text-red-600">
-                <span className="font-medium">CORS error detected!</span> 
-                <p className="mt-1 text-xs">
-                  CORS issues are usually server-side configuration problems. This happens when the server doesn't allow cross-origin requests from your browser.
-                </p>
-              </li>
-            )}
-            
-            <li className="mt-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
-              >
-                {showTechnicalDetails ? "Hide Technical Details" : "Show Technical Details"}
-              </Button>
-            </li>
-            
-            {showTechnicalDetails && (
-              <div className="mt-2 p-3 bg-gray-100 rounded-md overflow-x-auto">
-                <h5 className="font-medium mb-1 text-xs">Technical Details:</h5>
-                <pre className="text-xs whitespace-pre-wrap">
-                  {JSON.stringify(technicalDetails, null, 2)}
-                </pre>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {stats.lastSuccess && (
+          <div className="bg-green-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+              <div className="text-sm text-muted-foreground">Last Successful Request</div>
+            </div>
+            <div className="text-sm font-medium">
+              {format(new Date(stats.lastSuccess), 'MMM d, yyyy HH:mm:ss')}
+            </div>
+          </div>
+        )}
+        
+        {stats.lastFail && (
+          <div className="bg-red-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <XCircle className="h-4 w-4 text-red-600 mr-2" />
+              <div className="text-sm text-muted-foreground">Last Failed Request</div>
+            </div>
+            <div className="text-sm font-medium">
+              {format(new Date(stats.lastFail), 'MMM d, yyyy HH:mm:ss')}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {(stats.failureReasons && Object.keys(stats.failureReasons).length > 0) && (
+        <div className="bg-slate-50 p-4 rounded-lg">
+          <div className="text-sm font-medium mb-2">Failure Reasons</div>
+          <div className="space-y-1">
+            {Object.entries(stats.failureReasons).map(([reason, count]) => (
+              <div key={reason} className="flex justify-between items-center text-sm">
+                <span className="capitalize">{reason.replace('_', ' ')}</span>
+                <span className="font-medium">{count}</span>
               </div>
-            )}
-          </ul>
+            ))}
+          </div>
         </div>
+      )}
+      
+      {stats.corsErrorDetected && (
+        <div className="text-sm text-gray-500 mt-2">
+          <p>
+            CORS errors typically occur when the browser blocks requests to different domains for security reasons. 
+            This may indicate an issue with the server configuration.
+          </p>
+        </div>
+      )}
+      
+      {expanded && stats.errors.length > 0 && (
+        <div className="bg-slate-50 p-4 rounded-lg">
+          <div className="text-sm font-medium mb-2">Recent Errors</div>
+          <div className="space-y-2 max-h-40 overflow-y-auto">
+            {stats.errors.map((error, index) => (
+              <div key={index} className="text-xs p-2 bg-slate-100 rounded">
+                {error}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {stats.errors.length > 0 && (
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setExpanded(!expanded)} 
+          className="w-full text-sm"
+        >
+          {expanded ? "Hide Detailed Errors" : "Show Detailed Errors"}
+        </Button>
       )}
     </div>
   );
-};
-
-export default ConnectionStats;
+}

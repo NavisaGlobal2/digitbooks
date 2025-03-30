@@ -366,6 +366,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ocr_results: {
+        Row: {
+          created_at: string
+          extracted_text: string
+          file_name: string
+          file_type: string
+          id: string
+          metadata: Json | null
+          service_used: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          extracted_text: string
+          file_name: string
+          file_type: string
+          id?: string
+          metadata?: Json | null
+          service_used: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          extracted_text?: string
+          file_name?: string
+          file_type?: string
+          id?: string
+          metadata?: Json | null
+          service_used?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       payment_methods: {
         Row: {
           created_at: string

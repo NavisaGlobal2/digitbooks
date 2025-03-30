@@ -1,119 +1,105 @@
 
-// Track connection success/failure for edge functions
-let successCount = 0;
-let failureCount = 0;
-let failureReasons: Record<string, number> = {};
-let lastFailure: number | null = null;
-let lastError: any = null;
-let endpoint: string | null = null;
-let corsErrorDetected = false;
-let corsDetails: any = null;
+export interface ConnectionStats {
+  successCount: number;
+  failCount: number;
+  lastSuccess: Date | null;
+  lastFail: Date | null;
+  errors: string[];
+  endpoint?: string;
+  corsErrorDetected?: boolean;
+  successRate?: number;
+  failureRate?: number;
+  failureReasons?: Record<string, number>;
+}
 
-/**
- * Track a successful connection to the edge function
- */
-export const trackSuccessfulConnection = (url?: string) => {
-  successCount++;
-  corsErrorDetected = false;
-  if (url) {
-    endpoint = url;
-  }
+const stats: ConnectionStats = {
+  successCount: 0,
+  failCount: 0,
+  lastSuccess: null,
+  lastFail: null,
+  errors: [],
+  endpoint: "",
+  corsErrorDetected: false,
+  successRate: 0,
+  failureRate: 0,
+  failureReasons: {}
 };
 
-/**
- * Track a failed connection to the edge function
- */
-export const trackFailedConnection = (reason: string = 'unknown', error?: any, url?: string) => {
-  failureCount++;
-  failureReasons[reason] = (failureReasons[reason] || 0) + 1;
-  lastFailure = Date.now();
+export function recordSuccess(endpoint: string) {
+  stats.successCount++;
+  stats.lastSuccess = new Date();
+  stats.endpoint = endpoint;
   
-  if (error) {
-    lastError = error;
-    
-    // Check for CORS related errors
-    if (
-      error.message && (
-        error.message.includes('CORS') || 
-        error.message.includes('origin') ||
-        error.message.includes('cross-origin')
-      )
-    ) {
-      corsErrorDetected = true;
-      corsDetails = {
-        url: url || endpoint,
-        message: error.message,
-        time: new Date().toISOString()
-      };
-    }
-  }
+  // Calculate rates
+  const total = stats.successCount + stats.failCount;
+  stats.successRate = (stats.successCount / total) * 100;
+  stats.failureRate = (stats.failCount / total) * 100;
+}
+
+export function recordFailure(endpoint: string, error: string) {
+  stats.failCount++;
+  stats.lastFail = new Date();
+  stats.errors.push(error);
+  stats.endpoint = endpoint;
   
-  if (url) {
-    endpoint = url;
-  }
-};
-
-/**
- * Reset connection stats
- */
-export const resetConnectionStats = () => {
-  successCount = 0;
-  failureCount = 0;
-  failureReasons = {};
-  lastFailure = null;
-  lastError = null;
-  corsErrorDetected = false;
-  corsDetails = null;
-};
-
-/**
- * Get the connection stats for the edge function
- */
-export const getConnectionStats = () => {
-  const total = successCount + failureCount;
-  const successRate = total > 0 ? (successCount / total) * 100 : 0;
-  const failureRate = total > 0 ? (failureCount / total) * 100 : 0;
-  
-  return {
-    successCount,
-    failureCount,
-    successRate: Math.round(successRate),
-    failureRate: Math.round(failureRate),
-    failureReasons,
-    total,
-    attempts: total,
-    failures: failureCount,
-    lastFailure,
-    lastError,
-    endpoint,
-    corsErrorDetected,
-    corsDetails
-  };
-};
-
-/**
- * Show a fallback message to the user when appropriate
- */
-export const showFallbackMessage = (toast: any, message?: string) => {
-  const defaultMessage = "Using local CSV parser as fallback due to server connectivity issues";
-  toast.info(message || defaultMessage);
-};
-
-/**
- * Get detailed error information for debugging
- */
-export const getTechnicalErrorDetails = () => {
-  if (!lastError) {
-    return "No error details available";
+  // Limit errors array to latest 10 entries
+  if (stats.errors.length > 10) {
+    stats.errors = stats.errors.slice(stats.errors.length - 10);
   }
   
-  return {
-    message: lastError.message || "Unknown error",
-    stack: lastError.stack,
-    endpoint,
-    corsErrorDetected,
-    corsDetails,
-    failureReasons: Object.keys(failureReasons).map(key => `${key}: ${failureReasons[key]}`).join(', '),
-    timestamp: lastFailure ? new Date(lastFailure).toISOString() : null
-  };
-};
+  // Check if this is a CORS error
+  if (error.toLowerCase().includes('cors') || 
+      error.toLowerCase().includes('cross-origin') ||
+      error.toLowerCase().includes('not allowed')) {
+    stats.corsErrorDetected = true;
+  }
+  
+  // Track common error patterns
+  if (!stats.failureReasons) {
+    stats.failureReasons = {};
+  }
+  
+  let errorCategory = categorizeError(error);
+  stats.failureReasons[errorCategory] = (stats.failureReasons[errorCategory] || 0) + 1;
+  
+  // Calculate rates
+  const total = stats.successCount + stats.failCount;
+  stats.successRate = (stats.successCount / total) * 100;
+  stats.failureRate = (stats.failCount / total) * 100;
+}
+
+export function getConnectionStats(): ConnectionStats {
+  return { ...stats };
+}
+
+export function resetConnectionStats() {
+  stats.successCount = 0;
+  stats.failCount = 0;
+  stats.lastSuccess = null;
+  stats.lastFail = null;
+  stats.errors = [];
+  stats.corsErrorDetected = false;
+  stats.successRate = 0;
+  stats.failureRate = 0;
+  stats.failureReasons = {};
+}
+
+function categorizeError(error: string): string {
+  const errorLower = error.toLowerCase();
+  
+  if (errorLower.includes('auth') || errorLower.includes('unauthorized') || errorLower.includes('401')) {
+    return 'authentication';
+  } else if (errorLower.includes('cors') || errorLower.includes('cross-origin')) {
+    return 'cors';
+  } else if (errorLower.includes('timeout') || errorLower.includes('timed out')) {
+    return 'timeout';
+  } else if (errorLower.includes('404') || errorLower.includes('not found')) {
+    return 'not_found';
+  } else if (errorLower.includes('network') || errorLower.includes('connection')) {
+    return 'network';
+  } else if (errorLower.includes('parse') || errorLower.includes('json')) {
+    return 'parsing';
+  } else {
+    return 'other';
+  }
+}
