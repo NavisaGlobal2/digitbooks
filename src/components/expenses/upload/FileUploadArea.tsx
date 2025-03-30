@@ -30,9 +30,9 @@ const FileUploadArea = ({ file, onFileChange, disabled = false, errorState }: Fi
                     Large file might take longer to process
                   </p>
                 )}
-                {file.name.toLowerCase().endsWith('.pdf') && (
-                  <p className="text-xs text-amber-500 mt-1">
-                    PDF files require AI-powered processing with authentication
+                {!file.name.toLowerCase().endsWith('.csv') && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Only CSV format is supported
                   </p>
                 )}
               </div>
@@ -43,7 +43,7 @@ const FileUploadArea = ({ file, onFileChange, disabled = false, errorState }: Fi
                   Drop your bank statement here or click to browse
                 </span>
                 <span className="text-xs text-gray-400">
-                  Supports CSV, Excel, PDF with AI-powered processing
+                  Supports CSV format only
                 </span>
               </div>
             )}
@@ -51,7 +51,7 @@ const FileUploadArea = ({ file, onFileChange, disabled = false, errorState }: Fi
               id="bank-statement"
               type="file"
               className="hidden"
-              accept=".csv,.xlsx,.xls,.pdf"
+              accept=".csv"
               onChange={onFileChange}
               disabled={disabled}
             />

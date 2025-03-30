@@ -6,6 +6,7 @@ import ProgressIndicator from "./ProgressIndicator";
 import SupportedFormatsInfo from "./SupportedFormatsInfo";
 import UploadDialogFooter from "../UploadDialogFooter";
 import DialogHeader from "../DialogHeader";
+import { downloadCSVTemplate } from "@/utils/csvTemplateGenerator";
 
 interface UploadDialogContentProps {
   file: File | null;
@@ -30,11 +31,15 @@ const UploadDialogContent = ({
   step,
   isAuthenticated
 }: UploadDialogContentProps) => {
+  const handleDownloadTemplate = () => {
+    downloadCSVTemplate();
+  };
+
   return (
     <>
       <DialogHeader title="Upload Bank Statement" />
       <DialogDescription className="text-center text-sm text-muted-foreground">
-        Upload your bank statement to automatically create expenses with AI
+        Upload your bank statement CSV to automatically create expenses
       </DialogDescription>
       
       <div className="space-y-4 p-4 pt-2">
@@ -59,13 +64,16 @@ const UploadDialogContent = ({
           isVisible={uploading}
         />
         
-        <SupportedFormatsInfo />
+        <SupportedFormatsInfo 
+          isAuthenticated={isAuthenticated} 
+          onDownloadTemplate={handleDownloadTemplate}
+        />
         
         <UploadDialogFooter
           onCancel={onClose}
           onParse={parseFile}
           uploading={uploading}
-          disabled={!file || !isAuthenticated}
+          disabled={!file || !isAuthenticated || (file && !file.name.toLowerCase().endsWith('.csv'))}
           showCancelButton={uploading}
         />
       </div>
