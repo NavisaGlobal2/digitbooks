@@ -1,76 +1,67 @@
 
-import { parse as parseCSV } from 'https://deno.land/std@0.170.0/encoding/csv.ts';
+import { parse as parseCSV } from "https://deno.land/std@0.170.0/encoding/csv.ts";
+import { sanitizeTextForAPI } from "./utils.ts";
 
 /**
- * Process CSV content and convert to structured text
- * @param content The CSV content as a string
- * @returns Processed text representation of the CSV
+ * Process CSV content to extract a formatted text representation
+ * suitable for AI processing
+ * @param content Raw CSV content
+ * @returns Formatted text content
  */
-export function processCSVContent(content: string): string {
+export async function processCSVContent(content: string): Promise<string> {
+  if (!content || typeof content !== 'string') {
+    throw new Error("Invalid CSV content provided");
+  }
+  
   try {
-    // Parse CSV to get rows and columns
-    const rows = parseCSV(content);
+    // Sanitize the content for better processing
+    const sanitizedContent = sanitizeTextForAPI(content);
     
-    if (!rows || rows.length === 0) {
-      return "Empty CSV file";
+    // Parse the CSV
+    const rows = await parseCSV(sanitizedContent);
+    
+    // Format as readable text
+    let formattedText = "CSV DOCUMENT:\n\n";
+    
+    // Check if we have data
+    if (rows.length === 0) {
+      return formattedText + "No data found in CSV.";
     }
     
-    // Convert to a text representation
-    let textContent = "CSV DOCUMENT:\n\n";
-    
-    // Check if we have headers
-    const headers = rows[0];
-    if (headers && headers.length > 0) {
-      textContent += "Headers: " + headers.join(", ") + "\n\n";
+    // Add header row
+    if (rows.length > 0) {
+      formattedText += rows[0].join("\t") + "\n";
+      formattedText += "-".repeat(40) + "\n";
     }
     
     // Add data rows
-    textContent += "Data:\n";
     for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      if (row && row.length > 0) {
-        textContent += row.join(", ") + "\n";
-      }
+      formattedText += rows[i].join("\t") + "\n";
     }
     
-    // Add some context for parsing
-    textContent += "\nNOTE: This is a bank statement in CSV format. Please extract all transactions with dates, descriptions, and amounts.";
-    
-    return textContent;
+    return formattedText;
   } catch (error) {
     console.error("Error processing CSV content:", error);
-    
-    // Fallback: Return the raw content with some context
-    return "Failed to parse CSV structure. Raw content:\n\n" + content;
+    throw new Error(`Failed to process CSV content: ${error.message}`);
   }
 }
 
 /**
- * Check if a file is a CSV file based on file name or type
- * @param file The file to check
- * @returns boolean indicating if file is CSV
+ * Check if the file is a CSV file based on its mime type or extension
+ * @param file File object to check
+ * @returns boolean
  */
 export function isCSVFile(file: File): boolean {
   if (!file) {
     return false;
   }
   
-  // Check MIME type if available
+  // Check by mime type
   if (file.type === 'text/csv') {
     return true;
   }
   
-  // Check file extension as fallback
-  const fileName = file.name;
-  if (!fileName) {
-    return false;
-  }
-  
-  const parts = fileName.split('.');
-  if (parts.length < 2) {
-    return false;
-  }
-  
-  const extension = parts[parts.length - 1];
-  return extension.toLowerCase() === 'csv';
+  // Check by extension
+  const name = file.name || '';
+  return name.toLowerCase().endsWith('.csv');
 }
