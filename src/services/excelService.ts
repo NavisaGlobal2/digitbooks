@@ -1,4 +1,3 @@
-
 import * as XLSX from 'xlsx';
 import { toast } from "sonner";
 
@@ -171,6 +170,32 @@ export const ExcelService = {
       console.error('Error exporting to Excel:', error);
       toast.error('Failed to export data to Excel');
     }
+  },
+
+  /**
+   * Extract text content from an Excel file
+   * @param file The Excel file to extract text from
+   * @returns Promise with the extracted text content
+   */
+  extractTextFromExcel: async (file: File): Promise<string> => {
+    try {
+      const sheetData = await ExcelService.readFile(file);
+      let textContent = `[EXCEL FILE: ${file.name}]\n\n`;
+      
+      // Add sheet name and headers
+      textContent += `Sheet: ${sheetData.activeSheet}\n`;
+      textContent += sheetData.headers.join('\t') + '\n';
+      
+      // Add all rows
+      for (const row of sheetData.rows) {
+        textContent += row.join('\t') + '\n';
+      }
+      
+      return textContent;
+    } catch (error) {
+      console.error('Error extracting text from Excel file:', error);
+      throw new Error(`Failed to extract text from Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 };
 
@@ -202,3 +227,26 @@ function isDateLike(value: any): boolean {
   
   return false;
 }
+
+/**
+ * Check if a file is an Excel file based on extension and/or mime type
+ * @param file The file to check
+ * @returns boolean indicating if the file is an Excel file
+ */
+export const isExcelFile = (file: File): boolean => {
+  const excelMimeTypes = [
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  ];
+  
+  const excelExtensions = ['.xlsx', '.xls', '.xlsm', '.xlsb'];
+  
+  // Check mime type
+  if (excelMimeTypes.includes(file.type)) {
+    return true;
+  }
+  
+  // Check file extension
+  const fileName = file.name.toLowerCase();
+  return excelExtensions.some(ext => fileName.endsWith(ext));
+};

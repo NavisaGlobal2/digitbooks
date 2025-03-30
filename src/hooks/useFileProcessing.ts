@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -67,7 +68,8 @@ export const useFileProcessing = () => {
     });
   };
 
-  const processServerSide = async (file: File, 
+  const processServerSide = async (
+    file: File, 
     onSuccess: (transactions: any[]) => void, 
     onError: (errorMessage: string) => boolean,
     resetProgress: () => void,
