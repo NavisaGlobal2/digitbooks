@@ -58,13 +58,14 @@ function extractTextFromExcelBinary(data: Uint8Array): string[] {
   const textSegments: string[] = [];
   let currentSegment = '';
   let inTextSegment = false;
+  let currentChar = ''; // Initialize currentChar to avoid undefined reference
   
   // Look for text patterns in the binary data
   for (let i = 0; i < data.length - 1; i++) {
     // Look for potential text characters (printable ASCII)
     if ((data[i] >= 32 && data[i] < 127) && data[i+1] === 0) {
       // Possible UTF-16LE encoded text found (common in Excel)
-      const currentChar = String.fromCharCode(data[i]);
+      currentChar = String.fromCharCode(data[i]);
       
       // Check if it's a likely text character
       if (/[a-zA-Z0-9.,\-$€£\s\/:]/.test(currentChar)) {
@@ -82,7 +83,7 @@ function extractTextFromExcelBinary(data: Uint8Array): string[] {
     
     // For standard ASCII text sections
     if (data[i] >= 32 && data[i] < 127 && data[i+1] !== 0) {
-      const currentChar = String.fromCharCode(data[i]);
+      currentChar = String.fromCharCode(data[i]);
       
       // Check if it looks like human-readable text
       if (/[a-zA-Z0-9.,\-$€£\s\/:]/.test(currentChar)) {
