@@ -1,3 +1,4 @@
+
 /**
  * Service for handling Excel file operations in Edge Function context
  * Simplified version of the client-side service for Edge Function use
@@ -17,33 +18,34 @@ export const ExcelService = {
       
       console.log(`Extracting text from Excel file: ${file.name} (${bytes.length} bytes)`);
       
-      // Extract text content from Excel binary data
-      // Since we can't use SheetJS directly in the edge function, we'll use
-      // a simpler approach to find text patterns
+      // Start with basic file info
       let textContent = `[EXCEL FILE: ${file.name}]\n\n`;
       
-      // Extract any visible text from the binary data
-      const textSegments = extractTextFromExcelBinary(bytes);
+      // Extract text content from Excel binary data
+      const extractedSegments = extractTextFromExcelBinary(bytes);
       
-      if (textSegments.length > 0) {
-        console.log(`Found ${textSegments.length} text segments in Excel file`);
-        textContent += "Extracted Text Content:\n";
-        textContent += textSegments.join('\n');
+      if (extractedSegments.length > 0) {
+        console.log(`Found ${extractedSegments.length} text segments in Excel file`);
+        
+        // Look for potential header row that might contain column names
+        const headerIndex = findHeaderRow(extractedSegments);
+        if (headerIndex !== -1) {
+          textContent += "Headers detected: " + extractedSegments[headerIndex] + "\n\n";
+          
+          // Add data rows after the header
+          textContent += "Data rows:\n";
+          for (let i = headerIndex + 1; i < extractedSegments.length; i++) {
+            textContent += extractedSegments[i] + "\n";
+          }
+        } else {
+          // If no header found, just add all segments as data
+          textContent += "Extracted Content:\n";
+          textContent += extractedSegments.join('\n');
+        }
       } else {
         console.log("No text segments extracted from Excel file");
         textContent += "Warning: Could not extract meaningful text from Excel file. The file may be in a complex format or encrypted.\n";
       }
-      
-      // Add specific instructions for bank statement parsing
-      textContent += `\n\nThis is an Excel spreadsheet containing bank transaction data.
-Please extract all financial transactions with PRECISE attention to:
-1. Transaction dates (convert to YYYY-MM-DD format if possible)
-2. Transaction descriptions/narratives
-3. Transaction amounts (use negative for debits/expenses)
-4. Transaction types (debit or credit)
-
-Format the response as a structured array of transaction objects.
-`;
       
       return textContent;
     } catch (error) {
@@ -52,6 +54,37 @@ Format the response as a structured array of transaction objects.
     }
   }
 };
+
+/**
+ * Attempt to find a header row in the extracted segments
+ * @param segments Array of extracted text segments
+ * @returns Index of the likely header row, or -1 if none found
+ */
+function findHeaderRow(segments: string[]): number {
+  // Common header keywords in bank statements
+  const headerKeywords = ['date', 'description', 'amount', 'balance', 'debit', 'credit', 
+                         'transaction', 'reference', 'details', 'withdrawal', 'deposit'];
+  
+  // Check the first 10 rows for header-like content
+  for (let i = 0; i < Math.min(10, segments.length); i++) {
+    const lowercaseSegment = segments[i].toLowerCase();
+    let keywordMatches = 0;
+    
+    // Count how many header keywords appear in this segment
+    for (const keyword of headerKeywords) {
+      if (lowercaseSegment.includes(keyword)) {
+        keywordMatches++;
+      }
+    }
+    
+    // If we find at least 2 keyword matches, this is likely a header row
+    if (keywordMatches >= 2) {
+      return i;
+    }
+  }
+  
+  return -1;
+}
 
 /**
  * Attempt to extract text segments from Excel binary data
@@ -138,7 +171,7 @@ function extractUtf16Segments(data: Uint8Array): string[] {
     }
     
     // Check for newlines to separate rows
-    if (currentSegment.length > 0 && data[i] === 10 || data[i] === 13) {
+    if (currentSegment.length > 0 && (data[i] === 10 || data[i] === 13)) {
       if (currentSegment.length > 3) {
         segments.push(currentSegment.trim());
       }

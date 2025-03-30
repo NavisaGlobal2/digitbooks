@@ -15,7 +15,21 @@ export async function extractTextFromFile(file: File): Promise<string> {
     // Handle Excel files
     if (isExcelFile(file)) {
       console.log("Detected Excel file, using Excel service");
-      return await ExcelService.extractTextFromExcel(file);
+      const excelText = await ExcelService.extractTextFromExcel(file);
+      
+      // Add specific instructions for bank statement parsing
+      const enhancedText = excelText + `\n\nThis is an Excel spreadsheet containing bank transaction data.
+Please extract all financial transactions with PRECISE attention to:
+1. Transaction dates (convert to YYYY-MM-DD format if possible)
+2. Transaction descriptions/narratives
+3. Transaction amounts (use negative for debits/expenses)
+4. Transaction types (debit or credit)
+
+Format the response as a structured array of transaction objects.
+`;
+      
+      console.log(`Enhanced Excel text with ${enhancedText.length} characters`);
+      return enhancedText;
     }
     
     // Handle CSV files
