@@ -24,15 +24,29 @@ export async function extractTextFromFile(file: File, options: any = {}): Promis
         try {
           console.log("🔍 Attempting to extract text with Google Vision API...");
           
+          // Get API key and log its presence (not the actual key)
+          const apiKey = Deno.env.get("GOOGLE_VISION_API_KEY");
+          console.log("🔑 Google Vision API Key is loaded:", !!apiKey);
+          
+          if (!apiKey) {
+            console.error("❌ Google Vision API key is not configured");
+            throw new Error('Google Vision API key is not configured');
+          }
+          
           // Convert file to base64 directly using arrayBuffer and btoa
           // This avoids complex chunking that could be causing issues
           const arrayBuffer = await file.arrayBuffer();
           const base64 = arrayBufferToBase64(arrayBuffer);
           
-          console.log(`✅ Successfully converted PDF to base64 (${base64.length} chars)`);
+          console.log(`📦 Base64 content length: ${base64.length} chars`);
+          
+          if (base64.length < 100) {
+            console.error("❌ Base64 encoding failed or file is too small");
+            throw new Error('Base64 encoding failed - file may be corrupted');
+          }
           
           if (base64) {
-            const pdfText = await callVisionAPI(base64, Deno.env.get("GOOGLE_VISION_API_KEY") || '');
+            const pdfText = await callVisionAPI(base64, apiKey);
             
             if (pdfText && pdfText.length > 100) {
               console.log('✅ Successfully extracted text from PDF with Google Vision API');
@@ -183,6 +197,9 @@ async function callVisionAPI(base64Data: string, apiKey: string): Promise<string
       ]
     });
     
+    // Log request size but not content
+    console.log(`📦 Request body size: ${requestBody.length} chars`);
+    
     // Make the API request
     const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
       method: 'POST',
@@ -192,6 +209,8 @@ async function callVisionAPI(base64Data: string, apiKey: string): Promise<string
       body: requestBody
     });
     
+    console.log("📡 Vision API status:", response.status);
+    
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Vision API error status: ${response.status}`);
@@ -200,7 +219,27 @@ async function callVisionAPI(base64Data: string, apiKey: string): Promise<string
     }
     
     const data = await response.json();
-    console.log("✅ Google Vision API response received");
+    console.log("📨 Vision API response received");
+    
+    // Log important parts of the response for debugging
+    if (data.responses) {
+      // Check for errors in the response
+      if (data.responses[0].error) {
+        console.error("❌ Vision API returned error:", JSON.stringify(data.responses[0].error, null, 2));
+        throw new Error(`Google Vision API error: ${data.responses[0].error.message}`);
+      }
+      
+      // Check if text was extracted
+      if (data.responses[0].fullTextAnnotation) {
+        console.log("✅ Text annotation found in response");
+        console.log(`✅ Text length: ${data.responses[0].fullTextAnnotation.text.length}`);
+      } else {
+        console.warn("⚠️ No fullTextAnnotation in Vision API response");
+        console.log("Response structure:", JSON.stringify(data, null, 2).substring(0, 500) + "...");
+      }
+    } else {
+      console.warn("⚠️ Unexpected Vision API response format");
+    }
     
     // Extract text from response
     if (data.responses && 
@@ -211,7 +250,7 @@ async function callVisionAPI(base64Data: string, apiKey: string): Promise<string
       console.log(`✅ Successfully extracted ${extractedText.length} characters of text`);
       return extractedText;
     } else {
-      console.warn("⚠️ Google Vision API returned no text:", data);
+      console.warn("⚠️ Google Vision API returned no text:", JSON.stringify(data, null, 2).substring(0, 500) + "...");
       return '';
     }
   } catch (error) {

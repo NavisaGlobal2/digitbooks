@@ -12,6 +12,9 @@ export const prepareFormData = (
   const formData = new FormData();
   formData.append("file", file);
   
+  // Add diagnostic flag to get detailed Vision API information
+  formData.append("diagnosticMode", "true");
+  
   // Check if this is a PDF file
   const isPdf = file.name.toLowerCase().endsWith('.pdf');
   let pdfAttemptCount = 0;
@@ -34,6 +37,9 @@ export const prepareFormData = (
     formData.append("neverGenerateDummyData", "true");
     formData.append("returnEmptyOnFailure", "true");
     
+    // Add diagnostic flag for Vision API
+    formData.append("returnVisionDiagnostics", "true");
+    
     // Log the options being used for debugging
     console.log("PDF processing options being sent:", {
       isPdf,
@@ -42,8 +48,10 @@ export const prepareFormData = (
       safeProcessing: options?.safeProcessing === true ? "true" : "false",
       forceBase64: "true",
       debugMode: true,
+      diagnosticMode: true,
       neverGenerateDummyData: true,
-      returnEmptyOnFailure: true
+      returnEmptyOnFailure: true,
+      returnVisionDiagnostics: true
     });
   } else {
     // Reset PDF attempt counter for non-PDF files

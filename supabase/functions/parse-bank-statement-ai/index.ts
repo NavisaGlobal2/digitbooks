@@ -21,6 +21,8 @@ function handleCors(req: Request): Response | null {
 }
 
 serve(async (req) => {
+  console.log("🔁 Supabase Edge Function: parse-bank-statement-ai is running...");
+  
   // Handle CORS
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -55,6 +57,14 @@ serve(async (req) => {
     let bodyData;
     const contentType = req.headers.get('content-type') || '';
     
+    // Log environment variables for debugging (only presence, not values)
+    console.log("🔑 Environment variables check:");
+    console.log("- SUPABASE_URL:", !!Deno.env.get('SUPABASE_URL'));
+    console.log("- SUPABASE_SERVICE_ROLE_KEY:", !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
+    console.log("- GOOGLE_VISION_API_KEY:", !!Deno.env.get('GOOGLE_VISION_API_KEY'));
+    console.log("- ANTHROPIC_API_KEY:", !!Deno.env.get('ANTHROPIC_API_KEY'));
+    console.log("- DEEPSEEK_API_KEY:", !!Deno.env.get('DEEPSEEK_API_KEY'));
+    
     if (contentType.includes('application/json')) {
       bodyData = await req.json();
       
@@ -72,8 +82,12 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('Error processing request:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    console.error('❌ Error processing request:', error);
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error',
+      details: error.message,
+      stack: error.stack
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
