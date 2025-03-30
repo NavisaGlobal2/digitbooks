@@ -44,6 +44,17 @@ export const CSVService = {
         textContent += row.join('\t') + '\n';
       }
       
+      // Add specific instructions for bank statement parsing
+      textContent += `\nThis is a CSV spreadsheet containing bank transaction data.
+Please extract all financial transactions with PRECISE attention to:
+1. Transaction dates (convert to YYYY-MM-DD format if possible)
+2. Transaction descriptions/narratives
+3. Transaction amounts (use negative for debits/expenses)
+4. Transaction types (debit or credit)
+
+Format the response as a structured array of transaction objects.
+`;
+      
       return textContent;
     } catch (error) {
       console.error('Error extracting text from CSV file:', error);

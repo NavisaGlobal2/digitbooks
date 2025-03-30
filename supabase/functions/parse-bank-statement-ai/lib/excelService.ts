@@ -12,14 +12,24 @@ export const ExcelService = {
    */
   extractTextFromExcel: async (file: File): Promise<string> => {
     try {
-      // For edge functions, we'll use a simple approach
-      // Convert the Excel file to text format
+      // For edge functions, we need to work with the raw file data
       const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
       
-      // Return a structured text representation
-      return `[EXCEL FILE: ${file.name}]
-
-This is an Excel spreadsheet file containing bank transaction data.
+      // Try to extract text content from Excel binary data
+      // Since we can't use SheetJS directly in the edge function, we'll use
+      // a simpler approach to find text patterns
+      let textContent = `[EXCEL FILE: ${file.name}]\n\n`;
+      
+      // Extract any visible text from the binary data
+      const textSegments = extractTextFromExcelBinary(bytes);
+      if (textSegments.length > 0) {
+        textContent += "Extracted Text Content:\n";
+        textContent += textSegments.join('\n');
+      }
+      
+      // Add specific instructions for bank statement parsing
+      textContent += `\n\nThis is an Excel spreadsheet containing bank transaction data.
 Please extract all financial transactions with PRECISE attention to:
 1. Transaction dates (convert to YYYY-MM-DD format if possible)
 2. Transaction descriptions/narratives
@@ -28,12 +38,92 @@ Please extract all financial transactions with PRECISE attention to:
 
 Format the response as a structured array of transaction objects.
 `;
+      
+      return textContent;
     } catch (error) {
       console.error('Error extracting text from Excel file:', error);
       throw new Error(`Failed to extract text from Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 };
+
+/**
+ * Attempt to extract text segments from Excel binary data
+ * This is a simplified method that won't work perfectly, but should
+ * extract some useful text from simple Excel files
+ * @param data The binary data as Uint8Array
+ * @returns Array of extracted text segments
+ */
+function extractTextFromExcelBinary(data: Uint8Array): string[] {
+  const textSegments: string[] = [];
+  let currentSegment = '';
+  let inTextSegment = false;
+  
+  // Look for text patterns in the binary data
+  for (let i = 0; i < data.length - 1; i++) {
+    // Look for potential text characters (printable ASCII)
+    if ((data[i] >= 32 && data[i] < 127) && data[i+1] === 0) {
+      // Possible UTF-16LE encoded text found (common in Excel)
+      const char = String.fromCharCode(data[i]);
+      
+      // Check if it's a likely text character
+      if (/[a-zA-Z0-9.,\-$€£\s\/:]/.test(char)) {
+        inTextSegment = true;
+        currentSegment += char;
+      } else if (inTextSegment) {
+        // End of text segment
+        if (currentSegment.length > 3) { // Ignore very short segments
+          textSegments.push(currentSegment.trim());
+        }
+        currentSegment = '';
+        inTextSegment = false;
+      }
+    }
+    
+    // For standard ASCII text sections
+    if (data[i] >= 32 && data[i] < 127 && data[i+1] !== 0) {
+      const char = String.fromCharCode(data[i]);
+      
+      // Check if it looks like human-readable text
+      if (/[a-zA-Z0-9.,\-$€£\s\/:]/.test(char)) {
+        if (!inTextSegment) {
+          inTextSegment = true;
+        }
+        currentSegment += char;
+      } else if (inTextSegment) {
+        // End of text segment
+        if (currentSegment.length > 3) { // Ignore very short segments
+          textSegments.push(currentSegment.trim());
+        }
+        currentSegment = '';
+        inTextSegment = false;
+      }
+    }
+    
+    // Check for potential row boundaries
+    if (inTextSegment && (char === '\n' || char === '\r')) {
+      if (currentSegment.length > 3) { // Ignore very short segments
+        textSegments.push(currentSegment.trim());
+      }
+      currentSegment = '';
+    }
+  }
+  
+  // Add any remaining segment
+  if (currentSegment.length > 3) {
+    textSegments.push(currentSegment.trim());
+  }
+  
+  // Filter out duplicates and very short segments
+  return [...new Set(textSegments)]
+    .filter(segment => segment.length > 3)
+    .filter(segment => {
+      // Try to filter out binary junk that looks like text
+      const wordCount = segment.split(/\s+/).length;
+      const hasLetters = /[a-zA-Z]/.test(segment);
+      return hasLetters && wordCount > 1;
+    });
+}
 
 /**
  * Check if a file is an Excel file based on extension and/or mime type
