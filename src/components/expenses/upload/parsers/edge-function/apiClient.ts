@@ -1,97 +1,56 @@
+import { trackFailedConnection } from "./connectionStats";
 
-import { ParsedTransaction } from "../types";
-import { trackSuccessfulConnection, trackFailedConnection } from "./connectionStats";
-
-/**
- * Handle response error from the edge function
- */
-export const handleResponseError = async (response: Response): Promise<any> => {
-  console.error(`Server responded with status: ${response.status}`);
-  let errorMessage = "Error processing file on server";
-  
+// Function to handle successful API responses
+export const handleResponseSuccess = async (response: Response) => {
   try {
-    // Try to parse error response as JSON
-    const errorText = await response.text();
-    console.error("Error text:", errorText);
-    
-    try {
-      const errorData = JSON.parse(errorText);
-      errorMessage = errorData.error || errorMessage;
-    } catch (e) {
-      // If parsing fails, use the raw error text
-      errorMessage = errorText || errorMessage;
-    }
-  } catch (e) {
-    console.error("Failed to read error response:", e);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error parsing JSON:", error);
+    throw new Error("Failed to parse JSON from response");
   }
-  
-  // Add special handling for PDF-specific errors
-  if (errorMessage.includes("operation is not supported") || 
-      errorMessage.includes("The operation is not supported")) {
-    return {
-      message: "PDF processing requires multiple attempts. Please try uploading again.", 
-      status: response.status,
-      isPdfError: true
-    };
-  }
-  
-  return { 
-    message: errorMessage, 
-    status: response.status 
-  };
 };
 
-/**
- * Call the edge function API with retries and error handling
- */
-export const callEdgeFunction = async (
-  url: string,
-  token: string,
-  formData: FormData,
-  onSuccess: (result: any) => boolean,
-  onError: (error: any) => boolean
-): Promise<boolean> => {
+// Function to handle API errors
+export const handleResponseError = async (response: Response) => {
+  let errorData;
   try {
-    console.log(`Calling edge function: ${url}`);
-    
-    // Track that we're attempting to connect
-    trackSuccessfulConnection(url);
-    
-    // Custom fetch to edge function with explicit timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-    
-    console.log("Request headers:", {
-      Authorization: `Bearer ${token.substring(0, 10)}...` // Only log part of the token for security
-    });
-    
-    const response = await fetch(
-      url,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-        signal: controller.signal
-      }
-    );
-    
-    clearTimeout(timeoutId);
-    
-    console.log(`Edge function response status: ${response.status}`);
-    
-    if (!response.ok) {
-      const errorData = await handleResponseError(response);
-      throw errorData;
-    }
-    
-    const result = await response.json();
-    console.log("Edge function response data:", result);
-    return onSuccess(result);
-  } catch (error: any) {
-    console.error("Error calling edge function:", error);
-    trackFailedConnection('api_call_error', error, url);
-    return onError(error);
+    errorData = await response.json();
+  } catch (jsonError) {
+    console.error("Failed to parse error JSON:", jsonError);
+    errorData = { message: `Failed to parse error JSON: ${response.statusText}` };
   }
+
+  const errorMessage = errorData?.message || response.statusText || "Unknown error";
+  console.error(`API Error: ${response.status} - ${errorMessage}`);
+
+  // Enhanced error details
+  const errorDetails = {
+    status: response.status,
+    message: errorMessage,
+    details: errorData?.details || null,
+    timestamp: new Date().toISOString()
+  };
+
+  console.error("Error details:", errorDetails);
+  trackFailedConnection('response_error', new Error('Response error occurred'));
+  
+  const error = new Error(errorMessage);
+  (error as any).status = response.status;
+  (error as any).details = errorDetails;
+  return error;
+};
+
+// Function to handle network errors (e.g., server not found)
+export const handleNetworkError = (error: Error) => {
+  console.error("Network error:", error);
+  trackFailedConnection('network_error', error);
+  return new Error("Network error occurred. Please check your connection and try again.");
+};
+
+// Function to handle unexpected errors
+export const handleUnexpectedError = (error: any) => {
+  console.error("Unexpected error:", error);
+  trackFailedConnection('unexpected_error', error);
+  return new Error("An unexpected error occurred. Please try again later.");
 };

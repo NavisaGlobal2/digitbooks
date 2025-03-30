@@ -13,7 +13,7 @@ const ConnectionStats = ({ isVisible = true }) => {
   const stats = getConnectionStats();
   const technicalDetails = getTechnicalErrorDetails();
   
-  const statusColor = stats.failureCount > 0 
+  const statusColor = stats.failCount > 0 
     ? "bg-red-100 text-red-800" 
     : stats.successCount > 0 
       ? "bg-green-100 text-green-800" 
@@ -32,7 +32,7 @@ const ConnectionStats = ({ isVisible = true }) => {
           <span className="font-medium">Edge function connection status:</span>
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}>
             {stats.corsErrorDetected ? "CORS Error" : 
-              stats.failureCount > 0 ? "Connection Issues" : 
+              stats.failCount > 0 ? "Connection Issues" : 
               stats.successCount > 0 ? "Connected" : "No Connections"}
           </span>
         </div>
@@ -61,7 +61,7 @@ const ConnectionStats = ({ isVisible = true }) => {
           <h4 className="font-medium mb-2">Connection Statistics</h4>
           <ul className="space-y-1">
             <li><span className="font-medium">Success:</span> {stats.successCount} ({stats.successRate}%)</li>
-            <li><span className="font-medium">Failures:</span> {stats.failureCount} ({stats.failureRate}%)</li>
+            <li><span className="font-medium">Failures:</span> {stats.failCount} ({stats.failureRate}%)</li>
             <li>
               <span className="font-medium">Endpoint:</span> {stats.endpoint || "Not available"}
               {stats.endpoint && (
@@ -78,12 +78,12 @@ const ConnectionStats = ({ isVisible = true }) => {
               <li><span className="font-medium">Last failure:</span> {new Date(stats.lastFailure).toLocaleString()}</li>
             )}
             
-            {stats.failureCount > 0 && (
+            {stats.failCount > 0 && (
               <li>
                 <span className="font-medium">Failure reasons:</span> 
                 <ul className="ml-4 list-disc">
-                  {Object.entries(stats.failureReasons).map(([reason, count]) => (
-                    <li key={reason}>{reason}: {count}</li>
+                  {Object.entries(stats.failureReasons || {}).map(([reason, count]) => (
+                    <li key={reason}>{reason}: {count as number}</li>
                   ))}
                 </ul>
               </li>

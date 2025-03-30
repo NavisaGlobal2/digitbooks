@@ -1,4 +1,3 @@
-
 import { trackSuccessfulConnection } from "./connectionStats";
 import { handleResponseError } from "./apiClient";
 import { processSuccessfulResult } from "./responseProcessor";
@@ -18,7 +17,7 @@ export const makeEdgeFunctionRequest = async (
 ): Promise<{ success: boolean; error?: any }> => {
   try {
     console.log("🔄 STEP 3.1: Making fetch request to edge function...");
-    trackSuccessfulConnection(endpoint);
+    trackSuccessfulConnection(endpoint); // Pass the endpoint parameter
     
     const response = await fetch(
       endpoint,

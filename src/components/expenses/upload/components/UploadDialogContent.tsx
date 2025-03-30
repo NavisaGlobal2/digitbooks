@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -82,7 +81,7 @@ const UploadDialogContent: React.FC<UploadDialogContentProps> = ({
       )}
       
       {useOcrSpace && error?.includes('OCR.space API key is not configured') && (
-        <Alert variant="warning" className="mb-4 border-yellow-500 text-yellow-800 bg-yellow-50">
+        <Alert variant="default" className="mb-4 border-yellow-500 text-yellow-800 bg-yellow-50">
           <AlertCircle className="h-4 w-4 text-yellow-800" />
           <AlertDescription className="ml-2">
             <strong>OCR.space API Key Missing</strong>
@@ -98,7 +97,7 @@ const UploadDialogContent: React.FC<UploadDialogContentProps> = ({
       )}
       
       {showOcrSpaceWarning && (
-        <Alert variant="warning" className="mb-4 border-amber-200 bg-amber-50">
+        <Alert variant="default" className="mb-4 border-amber-200 bg-amber-50">
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="ml-2">
             You must be logged in to use OCR.space processing.

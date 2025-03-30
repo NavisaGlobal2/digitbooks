@@ -11,7 +11,7 @@ export const getAuthToken = async (): Promise<{ token: string | null; error: str
     
     if (authError || !authData.session) {
       console.error("Authentication error:", authError?.message || "No active session");
-      trackFailedConnection('auth_error');
+      trackFailedConnection('auth_error', authError || new Error("No active session"));
       return { 
         token: null, 
         error: authError?.message || "You need to be signed in to use this feature"
@@ -21,7 +21,7 @@ export const getAuthToken = async (): Promise<{ token: string | null; error: str
     const token = authData.session.access_token;
     if (!token) {
       console.error("No access token found in session");
-      trackFailedConnection('no_token');
+      trackFailedConnection('no_token', new Error("Missing access token"));
       return { 
         token: null, 
         error: "Authentication token is missing. Please sign in again."
@@ -31,7 +31,7 @@ export const getAuthToken = async (): Promise<{ token: string | null; error: str
     return { token, error: null };
   } catch (error: any) {
     console.error("Error getting auth token:", error);
-    trackFailedConnection('auth_error');
+    trackFailedConnection('auth_error', error);
     return { 
       token: null, 
       error: error.message || "Authentication error occurred"
