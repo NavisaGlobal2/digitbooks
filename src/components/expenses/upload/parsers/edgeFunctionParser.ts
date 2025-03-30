@@ -7,7 +7,8 @@ export const parseViaEdgeFunction = async (
   file: File,
   onSuccess: (transactions: ParsedTransaction[]) => void,
   onError: (errorMessage: string) => boolean,
-  preferredProvider: string = 'anthropic'
+  preferredProvider: string = 'anthropic',
+  context: string = 'expense'
 ): Promise<void> => {
   try {
     // Check authentication first
@@ -22,6 +23,7 @@ export const parseViaEdgeFunction = async (
     formData.append('preferredProvider', preferredProvider);
     formData.append('fileName', file.name);
     formData.append('authToken', sessionData.session.access_token);
+    formData.append('context', context);
 
     console.log(`Processing ${file.name} (${file.type}, ${file.size} bytes) via edge function`);
 
@@ -41,6 +43,15 @@ export const parseViaEdgeFunction = async (
       return;
     }
 
+    // Log the response from the server for debugging
+    console.log("Edge function response:", data);
+    console.log("Retrieved transactions count:", data.transactions.length);
+    
+    // Log account information if available
+    if (data.account) {
+      console.log("Account information:", data.account);
+    }
+
     // Transform the response to match our expected ParsedTransaction format
     const parsedTransactions: ParsedTransaction[] = data.transactions.map((tx: any) => ({
       id: uuidv4(),
@@ -48,15 +59,25 @@ export const parseViaEdgeFunction = async (
       description: tx.description,
       amount: Math.abs(tx.amount), // Ensure positive amount
       type: tx.type,
-      selected: tx.type === 'debit', // Pre-select debit transactions
-      categorySuggestion: tx.type === 'debit' ? {
+      selected: context === 'expense' ? tx.type === 'debit' : tx.type === 'credit', // Pre-select based on context
+      categorySuggestion: context === 'expense' && tx.type === 'debit' ? {
         category: guessCategoryFromDescription(tx.description),
         confidence: 0.7
-      } : undefined
+      } : undefined,
+      sourceSuggestion: context === 'revenue' && tx.type === 'credit' ? {
+        source: guessSourceFromDescription(tx.description),
+        confidence: 0.7
+      } : undefined,
+      batchId: data.batchId || null,
+      balance: tx.balance || null,
+      source: context === 'revenue' ? guessSourceFromDescription(tx.description) : null
     }));
 
     // Send the transactions to the caller
     onSuccess(parsedTransactions);
+    
+    // Show success toast with the transaction count and batch ID
+    console.log(`Successfully processed ${parsedTransactions.length} transactions with batch ID: ${data.batchId}`);
   } catch (error: any) {
     console.error("Error in parseViaEdgeFunction:", error);
     onError(error.message || "Unexpected error processing file");
@@ -94,6 +115,36 @@ function guessCategoryFromDescription(description: string): string {
   if (lowerDesc.includes('phone') || lowerDesc.includes('internet') || 
       lowerDesc.includes('wireless') || lowerDesc.includes('broadband')) {
     return 'utilities';
+  }
+  
+  // Default
+  return 'other';
+}
+
+/**
+ * Basic logic to guess revenue source from transaction description
+ */
+function guessSourceFromDescription(description: string): string {
+  const lowerDesc = description.toLowerCase();
+  
+  if (lowerDesc.includes('salary') || lowerDesc.includes('payroll') || 
+      lowerDesc.includes('payment') || lowerDesc.includes('commission')) {
+    return 'salary';
+  }
+  
+  if (lowerDesc.includes('dividend') || lowerDesc.includes('interest') || 
+      lowerDesc.includes('investment')) {
+    return 'investment';
+  }
+  
+  if (lowerDesc.includes('client') || lowerDesc.includes('customer') || 
+      lowerDesc.includes('invoice') || lowerDesc.includes('payment')) {
+    return 'sales';
+  }
+  
+  if (lowerDesc.includes('refund') || lowerDesc.includes('rebate') || 
+      lowerDesc.includes('cashback')) {
+    return 'refund';
   }
   
   // Default
