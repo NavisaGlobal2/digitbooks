@@ -10,6 +10,8 @@ interface ProcessingModeToggleProps {
   edgeFunctionAvailable: boolean;
   disabled: boolean;
   isAuthenticated?: boolean;
+  preferredAIProvider?: string;
+  setPreferredAIProvider?: (provider: string) => void;
 }
 
 const ProcessingModeToggle = ({
@@ -17,7 +19,9 @@ const ProcessingModeToggle = ({
   toggleEdgeFunction,
   edgeFunctionAvailable,
   disabled,
-  isAuthenticated = true
+  isAuthenticated = true,
+  preferredAIProvider,
+  setPreferredAIProvider
 }: ProcessingModeToggleProps) => {
   // Determine if server-side processing needs auth warning
   const showAuthWarning = useEdgeFunction && !isAuthenticated;

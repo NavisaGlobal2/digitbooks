@@ -54,17 +54,39 @@ export const parseViaEdgeFunction = async (
     }
 
     // Transform the response to match our expected ParsedTransaction format
-    const parsedTransactions: ParsedTransaction[] = data.transactions.map((tx: any) => ({
-      id: uuidv4(),
-      date: tx.date,
-      description: tx.description,
-      amount: Math.abs(tx.amount), // Ensure positive amount
-      type: tx.type,
-      selected: context === 'expense' ? tx.type === 'debit' : tx.type === 'credit', // Pre-select based on context
-      batchId: data.batchId || null,
-      balance: tx.balance || null,
-      source: context === 'revenue' ? tx.source || null : null
-    }));
+    // Ensure dates are valid before adding transactions
+    const parsedTransactions: ParsedTransaction[] = data.transactions
+      .filter(tx => {
+        // Validate the date before including in results
+        if (!tx.date || tx.date === 'unknown') {
+          console.warn(`Skipping transaction with invalid date: ${JSON.stringify(tx)}`);
+          return false;
+        }
+        
+        try {
+          // Test if date can be parsed
+          const testDate = new Date(tx.date);
+          if (isNaN(testDate.getTime())) {
+            console.warn(`Skipping transaction with unparseable date: ${tx.date}`);
+            return false;
+          }
+          return true;
+        } catch (e) {
+          console.warn(`Error validating date for transaction: ${e}`);
+          return false;
+        }
+      })
+      .map((tx: any) => ({
+        id: uuidv4(),
+        date: tx.date,
+        description: tx.description || "Unknown transaction",
+        amount: Math.abs(tx.amount) || 0, // Ensure positive amount
+        type: tx.type || "debit",
+        selected: context === 'expense' ? tx.type === 'debit' : tx.type === 'credit', // Pre-select based on context
+        batchId: data.batchId || null,
+        balance: tx.balance || null,
+        source: context === 'revenue' ? tx.source || null : null
+      }));
 
     // Send the transactions to the caller
     onSuccess(parsedTransactions);

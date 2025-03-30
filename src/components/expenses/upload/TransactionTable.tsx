@@ -31,6 +31,29 @@ const TransactionTable = ({
   // Log for debugging
   console.log(`TransactionTable rendering: ${transactions.length} transactions, ${transactions.filter(t => t.selected).length} selected`);
   
+  // Helper function to safely format a date
+  const safeFormatDate = (dateStr: string) => {
+    try {
+      // Check if we have a valid date string
+      if (!dateStr || dateStr === "unknown") {
+        return "Unknown date";
+      }
+      
+      const date = new Date(dateStr);
+      
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        console.warn(`Invalid date: ${dateStr}`);
+        return "Invalid date";
+      }
+      
+      return format(date, "yyyy-MM-dd");
+    } catch (error) {
+      console.error(`Error formatting date ${dateStr}:`, error);
+      return "Error";
+    }
+  };
+  
   return (
     <div className="flex-1 overflow-auto p-0 max-h-[calc(90vh-210px)]">
       <Table>
@@ -64,7 +87,7 @@ const TransactionTable = ({
                 />
               </TableCell>
               <TableCell className="font-mono text-xs">
-                {format(new Date(transaction.date), "yyyy-MM-dd")}
+                {safeFormatDate(transaction.date)}
               </TableCell>
               <TableCell className="font-medium">
                 {formatCurrency(transaction.amount)}
