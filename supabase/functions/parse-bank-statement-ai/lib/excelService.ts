@@ -64,12 +64,12 @@ function extractTextFromExcelBinary(data: Uint8Array): string[] {
     // Look for potential text characters (printable ASCII)
     if ((data[i] >= 32 && data[i] < 127) && data[i+1] === 0) {
       // Possible UTF-16LE encoded text found (common in Excel)
-      const char = String.fromCharCode(data[i]);
+      const currentChar = String.fromCharCode(data[i]);
       
       // Check if it's a likely text character
-      if (/[a-zA-Z0-9.,\-$€£\s\/:]/.test(char)) {
+      if (/[a-zA-Z0-9.,\-$€£\s\/:]/.test(currentChar)) {
         inTextSegment = true;
-        currentSegment += char;
+        currentSegment += currentChar;
       } else if (inTextSegment) {
         // End of text segment
         if (currentSegment.length > 3) { // Ignore very short segments
@@ -82,14 +82,14 @@ function extractTextFromExcelBinary(data: Uint8Array): string[] {
     
     // For standard ASCII text sections
     if (data[i] >= 32 && data[i] < 127 && data[i+1] !== 0) {
-      const char = String.fromCharCode(data[i]);
+      const currentChar = String.fromCharCode(data[i]);
       
       // Check if it looks like human-readable text
-      if (/[a-zA-Z0-9.,\-$€£\s\/:]/.test(char)) {
+      if (/[a-zA-Z0-9.,\-$€£\s\/:]/.test(currentChar)) {
         if (!inTextSegment) {
           inTextSegment = true;
         }
-        currentSegment += char;
+        currentSegment += currentChar;
       } else if (inTextSegment) {
         // End of text segment
         if (currentSegment.length > 3) { // Ignore very short segments
@@ -101,7 +101,7 @@ function extractTextFromExcelBinary(data: Uint8Array): string[] {
     }
     
     // Check for potential row boundaries
-    if (inTextSegment && (char === '\n' || char === '\r')) {
+    if (inTextSegment && (currentChar === '\n' || currentChar === '\r')) {
       if (currentSegment.length > 3) { // Ignore very short segments
         textSegments.push(currentSegment.trim());
       }
