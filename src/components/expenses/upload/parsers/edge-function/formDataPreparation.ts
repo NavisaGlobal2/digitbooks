@@ -43,6 +43,10 @@ export const prepareFormData = (
     // Force base64 encoding for Vision API to ensure proper format
     formData.append("forceBase64Encoding", "true");
     
+    // Add new improved base64 flags
+    formData.append("useSafeBase64", "true");
+    formData.append("useChunkedBase64", "true");
+    
     // Never generate dummy data
     formData.append("neverGenerateDummyData", "true");
     formData.append("returnEmptyOnFailure", "true");
@@ -58,6 +62,8 @@ export const prepareFormData = (
       pdfAttemptCount,
       safeProcessing: options?.safeProcessing === true ? "true" : "false",
       forceBase64: "true",
+      useSafeBase64: "true",
+      useChunkedBase64: "true",
       debugMode: true,
       diagnosticMode: true,
       neverGenerateDummyData: true,

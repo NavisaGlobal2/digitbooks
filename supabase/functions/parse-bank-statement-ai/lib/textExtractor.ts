@@ -33,12 +33,14 @@ export async function extractTextFromFile(file: File, options: any = {}): Promis
             throw new Error('Google Vision API key is not configured');
           }
           
-          // Convert file to base64 directly using arrayBuffer and btoa
-          // This avoids complex chunking that could be causing issues
+          // IMPROVED: More robust base64 conversion with progress logs
+          console.log(`🔄 Starting PDF to base64 conversion for ${fileName} (${fileSize})`);
           const arrayBuffer = await file.arrayBuffer();
-          const base64 = arrayBufferToBase64(arrayBuffer);
+          console.log(`✅ Successfully obtained arrayBuffer of size: ${arrayBuffer.byteLength} bytes`);
           
-          console.log(`📦 Base64 content length: ${base64.length} chars`);
+          // Use the improved base64 encoding function
+          const base64 = await safeArrayBufferToBase64(arrayBuffer);
+          console.log(`📦 Base64 conversion complete. Content length: ${base64.length} chars`);
           
           if (base64.length < 100) {
             console.error("❌ Base64 encoding failed or file is too small");
@@ -150,22 +152,96 @@ IF NO CLEAR TRANSACTIONS ARE FOUND, RESPOND WITH [] (an empty array).`;
 }
 
 /**
- * Convert ArrayBuffer to Base64 efficiently
- * This method avoids excessive recursion that could cause stack overflows
+ * IMPROVED: Safer base64 conversion for large PDFs
+ * This implementation handles large PDFs more reliably by:
+ * 1. Using a smaller chunk size
+ * 2. Adding proper error handling
+ * 3. Using a more efficient encoding approach
  */
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  const chunkSize = 1024; // Process in smaller chunks to avoid call stack issues
+async function safeArrayBufferToBase64(buffer: ArrayBuffer): Promise<string> {
+  try {
+    console.log(`🔄 Starting base64 conversion of ${buffer.byteLength} bytes`);
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunkSize = 512; // Smaller chunks to prevent call stack issues
+    const totalChunks = Math.ceil(bytes.length / chunkSize);
+    
+    console.log(`🔄 Converting in ${totalChunks} chunks of ${chunkSize} bytes each`);
+    
+    // Process in smaller chunks with progress logging
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunkIndex = Math.floor(i / chunkSize) + 1;
+      if (chunkIndex % 20 === 0) {
+        // Log progress every 20 chunks to avoid console flooding
+        console.log(`🔄 Base64 conversion progress: ${Math.round((chunkIndex / totalChunks) * 100)}% (chunk ${chunkIndex}/${totalChunks})`);
+      }
+      
+      const chunk = bytes.slice(i, Math.min(i + chunkSize, bytes.length));
+      
+      // Alternative approach to avoid Array.from + map which can be slow
+      let binaryChunk = '';
+      for (let j = 0; j < chunk.length; j++) {
+        binaryChunk += String.fromCharCode(chunk[j]);
+      }
+      
+      binary += binaryChunk;
+    }
+    
+    console.log(`✅ Binary conversion complete, encoding to base64...`);
+    
+    try {
+      // Use btoa for the final encoding step
+      const result = btoa(binary);
+      console.log(`✅ Base64 encoding successful, length: ${result.length}`);
+      return result;
+    } catch (btoaError) {
+      // If btoa fails (which might happen with very large strings), try an alternative approach
+      console.warn(`⚠️ Standard btoa failed, trying alternative method: ${btoaError}`);
+      return fallbackBase64Encode(binary);
+    }
+  } catch (error) {
+    console.error(`❌ Base64 conversion failed: ${error}`);
+    throw new Error(`Base64 conversion failed: ${error.message}`);
+  }
+}
+
+/**
+ * Fallback base64 encoding function for cases where btoa fails
+ * This implements a manual base64 encoding for large strings
+ */
+function fallbackBase64Encode(binaryString: string): string {
+  console.log(`🔄 Using fallback base64 encoding for string of length ${binaryString.length}`);
   
-  // Process in chunks to prevent stack overflow
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.slice(i, Math.min(i + chunkSize, bytes.length));
-    const binaryChunk = Array.from(chunk).map(b => String.fromCharCode(b)).join('');
-    binary += binaryChunk;
+  // Base64 character table
+  const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  let result = '';
+  let i = 0;
+  
+  // Process 3 bytes at a time
+  while (i < binaryString.length) {
+    const a = binaryString.charCodeAt(i++) || 0;
+    const b = binaryString.charCodeAt(i++) || 0;
+    const c = binaryString.charCodeAt(i++) || 0;
+    
+    const triplet = (a << 16) | (b << 8) | c;
+    
+    // Extract 4 6-bit chunks and convert to base64 characters
+    for (let j = 18; j >= 0; j -= 6) {
+      const index = (triplet >> j) & 0x3F; // Get 6 bits
+      result += base64Chars[index];
+    }
   }
   
-  return btoa(binary);
+  // Handle padding
+  const padding = binaryString.length % 3;
+  if (padding === 1) {
+    result = result.slice(0, -2) + '==';
+  } else if (padding === 2) {
+    result = result.slice(0, -1) + '=';
+  }
+  
+  console.log(`✅ Fallback base64 encoding complete, length: ${result.length}`);
+  return result;
 }
 
 /**
