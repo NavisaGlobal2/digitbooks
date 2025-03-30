@@ -14,6 +14,7 @@ export const prepareFormData = (
   
   // Add diagnostic flag to get detailed Vision API information
   formData.append("diagnosticMode", "true");
+  formData.append("returnDiagnostics", "true");
   
   // Check if this is a PDF file
   const isPdf = file.name.toLowerCase().endsWith('.pdf');
@@ -39,9 +40,10 @@ export const prepareFormData = (
     
     // Add diagnostic flag for Vision API
     formData.append("returnVisionDiagnostics", "true");
+    formData.append("includeExtractedText", "true");
     
     // Log the options being used for debugging
-    console.log("PDF processing options being sent:", {
+    console.log("📋 PDF processing options being sent:", {
       isPdf,
       useVision: useVision ? "true" : "false",
       pdfAttemptCount,
@@ -51,7 +53,8 @@ export const prepareFormData = (
       diagnosticMode: true,
       neverGenerateDummyData: true,
       returnEmptyOnFailure: true,
-      returnVisionDiagnostics: true
+      returnVisionDiagnostics: true,
+      includeExtractedText: true
     });
   } else {
     // Reset PDF attempt counter for non-PDF files
@@ -61,7 +64,7 @@ export const prepareFormData = (
   // Add preferred provider if specified
   if (options?.preferredProvider) {
     formData.append("preferredProvider", options.preferredProvider);
-    console.log(`Using preferred AI provider: ${options.preferredProvider}`);
+    console.log(`📋 Using preferred AI provider: ${options.preferredProvider}`);
   }
   
   // Add additional flags to enforce real data extraction
@@ -89,9 +92,11 @@ export const createRequestConfig = (token: string): RequestInit => {
   // Add a stronger timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
-    console.log("Request timeout reached, aborting...");
+    console.log("⏱️ Request timeout reached, aborting...");
     controller.abort();
   }, 60000); // 60-second timeout for PDFs
+  
+  console.log("🔑 Request configured with auth token and 60s timeout");
   
   return {
     method: "POST",
