@@ -1,4 +1,6 @@
 
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -9,7 +11,7 @@ import { RevenueProvider } from "@/contexts/RevenueContext";
 import { BudgetProvider } from "@/contexts/BudgetContext";
 import { LedgerProvider } from "@/contexts/LedgerContext";
 import { AuthProvider } from "@/contexts/auth";
-import { VendorProvider } from "@/contexts/VendorContext";
+import { VendorProvider } from "@/contexts/VendorContext"; // Add import for VendorProvider
 
 // Import all the page components
 import Index from "./pages/Index";
@@ -48,7 +50,9 @@ const App = () => (
               <RevenueProvider>
                 <BudgetProvider>
                   <LedgerProvider>
-                    <VendorProvider>
+                    <VendorProvider>  {/* Add VendorProvider here */}
+                      <Toaster />
+                      <Sonner />
                       <BrowserRouter>
                         <Routes>
                           {/* Public routes */}
@@ -142,7 +146,7 @@ const App = () => (
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </BrowserRouter>
-                    </VendorProvider>
+                    </VendorProvider>  {/* Close VendorProvider */}
                   </LedgerProvider>
                 </BudgetProvider>
               </RevenueProvider>

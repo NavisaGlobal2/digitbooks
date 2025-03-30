@@ -1,11 +1,14 @@
+import { useTheme } from "next-themes"
+import { Toaster as Sonner } from "sonner"
 
-import { Toaster as Sonner } from "sonner";
+type ToasterProps = React.ComponentProps<typeof Sonner>
 
-type ToasterProps = React.ComponentProps<typeof Sonner>;
+const Toaster = ({ ...props }: ToasterProps) => {
+  const { theme = "system" } = useTheme()
 
-function Toaster({ ...props }: ToasterProps) {
   return (
     <Sonner
+      theme={theme as ToasterProps["theme"]}
       className="toaster group"
       toastOptions={{
         classNames: {
@@ -17,15 +20,10 @@ function Toaster({ ...props }: ToasterProps) {
           cancelButton:
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
-        duration: 4000, // 4 seconds instead of default long duration
-        closeButton: true,
       }}
-      // These props need to be passed directly to the Sonner component, not inside toastOptions
-      position="top-right"
-      richColors={true}
       {...props}
     />
-  );
+  )
 }
 
-export { Toaster };
+export { Toaster }

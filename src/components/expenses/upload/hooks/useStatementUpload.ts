@@ -1,126 +1,143 @@
 
-import { useState, useCallback } from "react";
-import { parseStatementFile, ParsedTransaction } from "../parsers";
-import { useStatementProcessor } from "./useStatementProcessor";
-import { useProcessingState } from "./useProcessingState";
+import { useState, useEffect } from "react";
+import { ParsedTransaction } from "../parsers";
 import { useUploadProgress } from "./useUploadProgress";
-import { useStatementAuth } from "./useStatementAuth";
-import { useFileValidation } from "./useFileValidation";
+import { useUploadError } from "./useUploadError";
+import { useFileProcessing } from "./useFileProcessing";
+import { supabase } from "@/integrations/supabase/client";
 
-interface StatementUploadHookProps {
-  onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
-  storePdfInSupabase?: boolean;
-  extractPdfText?: boolean;
-  setIsProcessingPdf?: (isProcessing: boolean) => void;
-  useOcrSpace?: boolean;
-}
-
-export const useStatementUpload = ({ 
-  onTransactionsParsed,
-  storePdfInSupabase = false,
-  extractPdfText = false,
-  setIsProcessingPdf,
-  useOcrSpace = false
-}: StatementUploadHookProps) => {
+export const useStatementUpload = (
+  onTransactionsParsed: (transactions: ParsedTransaction[]) => void
+) => {
   const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isWaitingForServer, setIsWaitingForServer] = useState<boolean>(false);
+  const [uploading, setUploading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
-  const [useVisionApi, setUseVisionApi] = useState<boolean>(true);
 
-  // isAuthenticated is correctly typed as boolean | null from useStatementAuth
-  const { isAuthenticated, verifyAuth } = useStatementAuth();
-  
-  const { validateFile } = useFileValidation();
-  const { 
-    progress, 
-    step, 
-    startProgress, 
-    completeProgress, 
-    resetProgress, 
-    isCancelled, 
-    setCancelled,
-    cancelProgress 
-  } = useUploadProgress();
-  
-  const onError = useCallback((errorMessage: string): boolean => {
-    setError(errorMessage);
-    setUploading(false);
-    resetProgress();
-    return true;
-  }, [resetProgress]);
-  
-  const { processStatement } = useStatementProcessor({
-    onTransactionsParsed,
-    onError,
+  // Check authentication status
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+    
+    checkAuthStatus();
+    
+    // Subscribe to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const {
+    progress,
+    step,
+    isCancelled,
+    isWaitingForServer,
+    setIsWaitingForServer,
     startProgress,
     resetProgress,
     completeProgress,
+    cancelProgress,
+    updateProgress
+  } = useUploadProgress();
+
+  const {
+    error,
+    setError,
+    handleError,
+    clearError
+  } = useUploadError();
+
+  const {
+    processServerSide,
+    isAuthenticated: fileProcessingIsAuthenticated,
+    preferredAIProvider: processingPreferredProvider,
+    setPreferredAIProvider: processingSetPreferredProvider
+  } = useFileProcessing({
+    onTransactionsParsed,
+    handleError,
+    resetProgress,
+    completeProgress,
+    showFallbackMessage: () => {}, // We no longer need fallback processing
     isCancelled,
-    setIsWaitingForServer,
-    startProcessing: () => setUploading(true),
-    stopProcessing: () => setUploading(false),
-    storePdfInSupabase,
-    extractPdfText,
-    setIsProcessingPdf,
-    useOcrSpace
+    setIsWaitingForServer
   });
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) {
-      return;
+  // Sync preferred AI provider between hooks
+  useEffect(() => {
+    if (processingSetPreferredProvider) {
+      processingSetPreferredProvider(preferredAIProvider);
     }
-    
-    const selectedFile = e.target.files[0];
-    setFile(selectedFile);
-    setError(null);
-    
-    // Validate the file format
-    const validationError = validateFile(selectedFile);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-  }, [validateFile]);
+  }, [preferredAIProvider, processingSetPreferredProvider]);
 
-  const parseFile = useCallback(async () => {
-    // Verify auth first
-    const authErrorMessage = await verifyAuth();
-    if (authErrorMessage) {
-      setError(authErrorMessage);
-      return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      clearError();
+      
+      // Check file type
+      const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
+      if (!['csv', 'xlsx', 'xls', 'pdf'].includes(fileExt || '')) {
+        setError('Unsupported file format. Please upload CSV, Excel, or PDF files only.');
+        return;
+      }
+      
+      // Check file size
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      if (selectedFile.size > MAX_FILE_SIZE) {
+        setError('File is too large. Maximum file size is 10MB.');
+        return;
+      }
+      
+      // If not authenticated, warn the user
+      if (!isAuthenticated) {
+        setError('Processing requires authentication. Please sign in to use this feature.');
+        return;
+      }
     }
-    
-    // Validate the file again just to be sure
+  };
+
+  const parseFile = async () => {
     if (!file) {
-      setError("Please select a bank statement file");
+      handleError("Please select a bank statement file");
       return;
     }
-    
-    const validationError = validateFile(file);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    
-    // Pass isAuthenticated as boolean, ensuring it's not null with !!
-    // This fixes the type error by explicitly converting to boolean
-    await processStatement(file, preferredAIProvider, !!isAuthenticated, useVisionApi);
-  }, [file, verifyAuth, validateFile, processStatement, preferredAIProvider, isAuthenticated, useVisionApi]);
 
-  const clearFile = useCallback(() => {
+    setUploading(true);
+    clearError();
+
+    try {
+      // Start progress simulation
+      startProgress();
+      
+      // If not authenticated, show error
+      if (!isAuthenticated) {
+        handleError("Processing requires authentication. Please sign in to use this feature.");
+        resetProgress();
+        setUploading(false);
+        return;
+      }
+      
+      await processServerSide(file);
+    } catch (error) {
+      console.error("Unexpected error in parseFile:", error);
+      handleError("An unexpected error occurred. Please try again.");
+      setUploading(false);
+    }
+  };
+
+  const clearFile = () => {
     setFile(null);
-    setError(null);
-    resetProgress();
-  }, [resetProgress]);
-
-  const cancelUpload = useCallback(() => {
-    setCancelled(true);
+    clearError();
     setUploading(false);
-    setIsWaitingForServer(false);
     resetProgress();
-  }, [setCancelled, resetProgress]);
+  };
 
   return {
     file,
@@ -129,15 +146,14 @@ export const useStatementUpload = ({
     handleFileChange,
     parseFile,
     clearFile,
+    // Progress related
     progress,
     step,
-    cancelProgress: cancelUpload,
     isWaitingForServer,
+    cancelProgress,
     isAuthenticated,
+    // AI provider selection
     preferredAIProvider,
-    setPreferredAIProvider,
-    useVisionApi,
-    setUseVisionApi,
-    useOcrSpace
+    setPreferredAIProvider
   };
 };

@@ -1,68 +1,18 @@
 
 /**
- * Process extracted text with Anthropic API
+ * Process extracted text with Anthropic Claude API
  */
-export async function processWithAnthropic(
-  text: string, 
-  context?: string,
-  options?: any
-): Promise<any> {
+export async function processWithAnthropic(text: string, context?: string): Promise<any> {
   const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
   if (!ANTHROPIC_API_KEY) {
     throw new Error("ANTHROPIC_API_KEY is not configured. Please set up your Anthropic API key in Supabase.");
   }
 
+  console.log("Sending to Anthropic for processing...");
   console.log(`Processing context: ${context || 'general'}`);
   
-  // Check if this is Vision API extracted text
-  const isVisionExtracted = text.includes('[PDF BANK STATEMENT EXTRACTED WITH GOOGLE VISION API:') || options?.isVisionExtracted;
-  const isEmptyExtraction = text.includes('[EMPTY PDF EXTRACTION') || text.includes('[VISION API ERROR');
-  
-  // Create a stronger system prompt to prevent dummy data generation
-  let systemPrompt = `You are a financial data extraction assistant specialized in bank statement analysis.
-  
-YOUR SOLE PURPOSE IS TO EXTRACT ACTUAL TRANSACTIONS FROM REAL FINANCIAL STATEMENTS.
-DO NOT INVENT, GENERATE OR HALLUCINATE ANY TRANSACTIONS UNDER ANY CIRCUMSTANCES.
-
-If you cannot clearly identify transactions from the input text, return an empty array [].
-
-CRITICAL WARNING: Users have reported that you sometimes generate fictional transactions instead of extracting real ones. This is causing serious problems with their financial tracking. NEVER do this - only extract REAL transactions visible in the data.`;
-  
-  if (isEmptyExtraction) {
-    console.log("Empty extraction detected - will force empty array response");
-    return [];
-  }
-  
-  if (isVisionExtracted) {
-    systemPrompt += `
-
-SPECIAL INSTRUCTION: The input contains OCR-extracted text from a real PDF bank statement.
-This is actual transaction data that a user has uploaded. Trust this data and extract the transactions from it.
-DO NOT make up transactions - the user's financial decisions depend on this being accurate.
-RETURN AN EMPTY ARRAY [] IF NO CLEAR TRANSACTIONS ARE IDENTIFIED.`;
-  }
-  
-  if (text.includes('[PDF BANK STATEMENT:') || text.includes('ACTUAL STATEMENT TEXT FOLLOWS:')) {
-    systemPrompt += `
-    
-CRITICAL INSTRUCTION: You are processing a REAL PDF bank statement that was uploaded by a user.
-Your task is to analyze the content and extract ONLY actual transactions that appear in this bank statement.
-This is NOT a simulation or test - a user has uploaded their real bank statement.
-If you cannot determine clear transaction patterns, return an empty array rather than inventing fake transactions.
-NEVER create fictional data - only extract what appears to be genuine financial transactions.
-RETURNING AN EMPTY ARRAY [] IS THE CORRECT RESPONSE WHEN NO CLEAR TRANSACTIONS ARE FOUND.`;
-  }
-  
-  if (options?.forceRealData || options?.neverGenerateDummyData || options?.returnEmptyOnFailure) {
-    systemPrompt += `
-
-EXTREMELY IMPORTANT: The user is receiving placeholder/dummy transactions instead of their real data.
-This is causing a severe problem in their financial tracking application.
-DO NOT GENERATE ANY FICTIONAL TRANSACTIONS under any circumstances.
-If you can't extract real transactions, return an empty array [].
-The user's financial decisions depend on this data being accurate.
-RETURNING AN EMPTY ARRAY [] IS THE CORRECT RESPONSE WHEN NO CLEAR TRANSACTIONS ARE FOUND.`;
-  }
+  // Adjust the system prompt based on the context (revenue or expense)
+  let systemPrompt = `You are a financial data extraction assistant. Your task is to parse bank statement data from various formats and output a clean JSON array of transactions.`;
   
   if (context === "revenue") {
     systemPrompt += `
@@ -85,10 +35,11 @@ RETURNING AN EMPTY ARRAY [] IS THE CORRECT RESPONSE WHEN NO CLEAR TRANSACTIONS A
     - affiliate: Commission from partnerships
     - other: Miscellaneous or unclassifiable income
     
-    Focus only on credit (incoming money) transactions, which represent revenue. These have positive amounts.
+    For each credit transaction, add a "sourceSuggestion" object containing:
+    - "source": the suggested revenue category (from the list above)
+    - "confidence": a number between 0 and 1 indicating your confidence level
     
-    IMPORTANT: Only include transactions that appear to be real based on the input. If you don't see clear transaction data, return an empty array.
-    DO NOT generate any fictional transactions.
+    Focus only on credit (incoming money) transactions, which represent revenue. These have positive amounts.
     
     Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
   } else {
@@ -96,53 +47,66 @@ RETURNING AN EMPTY ARRAY [] IS THE CORRECT RESPONSE WHEN NO CLEAR TRANSACTIONS A
     
     For each transaction, extract:
     - date (in YYYY-MM-DD format)
-    - description (the complete transaction narrative with all details)
-    - amount (as a number, negative for debits/expenses, positive for credits/income)
+    - description (the transaction narrative)
+    - amount (as a number, negative for debits/expenses)
     - type ("debit" or "credit")
     
-    Only return transactions that appear to be real based on the input.
-    If you don't see clear transaction data, return an empty array.
-    
-    IMPORTANT: NEVER generate fictional transactions. Only extract data that appears genuine.
-    RETURN AN EMPTY ARRAY [] IF NO CLEAR TRANSACTIONS ARE IDENTIFIED.
-    
-    Respond ONLY with a valid JSON array of transactions, with NO additional text or explanation.`;
+    Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.
+    Sample format:
+    [
+      {
+        "date": "2023-05-15",
+        "description": "GROCERY STORE PURCHASE",
+        "amount": -58.97,
+        "type": "debit"
+      },
+      {
+        "date": "2023-05-17",
+        "description": "SALARY PAYMENT",
+        "amount": 1500.00,
+        "type": "credit"
+      }
+    ]`;
   }
 
   try {
-    console.log("Sending to Anthropic for processing...");
-    
-    // Include explicit detection for OCR text
-    const userMessage = isVisionExtracted
-      ? `THIS IS OCR-EXTRACTED TEXT FROM A REAL BANK STATEMENT PDF. EXTRACT ONLY REAL TRANSACTIONS FROM THIS TEXT. IF YOU CAN'T FIND ANY CLEAR TRANSACTIONS, RETURN AN EMPTY ARRAY [].
-
-${text}`
-      : `EXTRACT ONLY REAL TRANSACTIONS FROM THIS TEXT. IF YOU CAN'T FIND ANY CLEAR TRANSACTIONS, RETURN AN EMPTY ARRAY [].
-          
-${text}`;
-
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
+        "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
         model: "claude-3-haiku-20240307",
         max_tokens: 4000,
-        temperature: 0,  // Using 0 temperature for maximum determinism
         system: systemPrompt,
-        messages: [{
-          role: "user", 
-          content: userMessage
-        }]
+        messages: [
+          {
+            role: "user",
+            content: text
+          }
+        ]
       }),
     });
 
     if (!response.ok) {
       const error = await response.json();
       console.error("Anthropic API error:", error);
+      
+      // Handle authentication error specifically
+      if (error.error?.type === "authentication_error") {
+        throw new Error("Anthropic API authentication error: Please check your API key.");
+      }
+      
+      if (error.error?.type === "rate_limit_error") {
+        throw new Error("Anthropic API rate limit exceeded. Please try again later.");
+      }
+      
+      if (error.error?.type === "overloaded_error") {
+        throw new Error("Anthropic API is currently overloaded. Please try again in a few minutes.");
+      }
+      
       throw new Error(`Anthropic API error: ${error.error?.message || "Unknown error"}`);
     }
 
@@ -150,45 +114,18 @@ ${text}`;
     const content = data.content?.[0]?.text;
     
     if (!content) {
-      console.log("No content returned from Anthropic, returning empty array");
-      return [];
+      throw new Error("No content returned from Anthropic");
     }
 
-    console.log("Raw Anthropic response:", content.slice(0, 200) + "...");
-
-    // Try to parse JSON response
+    // Parse the JSON response - Anthropic should return only JSON
     try {
-      // Find JSON array in the response
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        const parsedData = JSON.parse(jsonMatch[0]);
-        console.log(`Extracted ${parsedData.length} transactions from Anthropic response`);
-        return parsedData;
-      }
-      
-      // Try parsing the whole response
-      try {
-        const parsedContent = JSON.parse(content);
-        console.log(`Parsed entire content with ${parsedContent.length} transactions`);
-        return parsedContent;
-      } catch (parseWholeError) {
-        // If we couldn't parse the JSON, it might be because Anthropic added explanatory text
-        console.log("Couldn't parse entire response, looking for JSON array");
-      }
-
-      // If we got here, we couldn't find a valid JSON array
-      console.error("No valid JSON structure found in Anthropic response");
-      console.log("Response content:", content);
-      console.log("Returning empty array due to parsing failure");
-      return [];
+      return JSON.parse(content);
     } catch (parseError) {
       console.error("Error parsing Anthropic response:", content);
-      console.log("Returning empty array due to parsing error");
-      return [];
+      throw new Error("Could not parse transactions from Anthropic response");
     }
   } catch (error) {
     console.error("Error processing with Anthropic:", error);
-    console.log("Returning empty array due to processing error");
-    return [];
+    throw error;
   }
 }

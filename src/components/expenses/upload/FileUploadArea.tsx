@@ -1,6 +1,5 @@
 
 import { Upload } from "lucide-react";
-import { useState } from "react";
 
 interface FileUploadAreaProps {
   file: File | null;
@@ -9,52 +8,8 @@ interface FileUploadAreaProps {
 }
 
 const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadAreaProps) => {
-  const [isDragging, setIsDragging] = useState(false);
-  
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    if (!disabled) {
-      setIsDragging(true);
-    }
-  };
-  
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-  
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    if (disabled) return;
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      // Create a synthetic event to pass to onFileChange
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      
-      // Create a new DataTransfer object and add the file
-      const dataTransfer = new DataTransfer();
-      dataTransfer.items.add(e.dataTransfer.files[0]);
-      fileInput.files = dataTransfer.files;
-      
-      const event = { target: fileInput } as unknown as React.ChangeEvent<HTMLInputElement>;
-      onFileChange(event);
-    }
-  };
-
   return (
-    <div 
-      className={`border-2 ${isDragging ? 'border-green-500 bg-green-50' : 'border-dashed'} rounded-lg p-6 flex flex-col items-center justify-center transition-colors ${disabled ? 'opacity-70' : 'cursor-pointer'}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      onClick={() => {
-        if (!disabled) {
-          document.getElementById('file-upload')?.click();
-        }
-      }}
-    >
+    <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center">
       <div className="flex flex-col items-center justify-center space-y-2">
         <div className="p-3 bg-muted rounded-full">
           <Upload className="h-6 w-6 text-muted-foreground" />
@@ -67,9 +22,8 @@ const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadArea
         </p>
       </div>
       <div className="mt-4">
-        <label className={`${disabled ? '' : 'cursor-pointer'}`}>
+        <label className="cursor-pointer">
           <input
-            id="file-upload"
             type="file"
             className="hidden"
             accept=".csv, .xlsx, .xls, .pdf"

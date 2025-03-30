@@ -1,9 +1,8 @@
 
 import { useState } from "react";
-import { toast } from "sonner";
-import { ParsedTransaction } from "../parsers";
-import { parseViaEdgeFunction } from "../parsers/edgeFunctionParser";
+import { parseViaEdgeFunction, ParsedTransaction } from "../parsers";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface FileProcessingProps {
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
@@ -26,7 +25,6 @@ export const useFileProcessing = ({
 }: FileProcessingProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
-  const [processing, setProcessing] = useState(false);
 
   // Check authentication status on mount
   useState(() => {
@@ -40,8 +38,6 @@ export const useFileProcessing = ({
 
   const processServerSide = async (file: File) => {
     try {
-      setProcessing(true);
-      
       // If we're waiting for server, update the UI
       if (setIsWaitingForServer) {
         setIsWaitingForServer(true);
@@ -56,7 +52,6 @@ export const useFileProcessing = ({
         if (setIsWaitingForServer) {
           setIsWaitingForServer(false);
         }
-        setProcessing(false);
         return;
       }
       
@@ -69,13 +64,10 @@ export const useFileProcessing = ({
           if (setIsWaitingForServer) {
             setIsWaitingForServer(false);
           }
-          setProcessing(false);
           onTransactionsParsed(transactions);
         },
         (errorMessage) => {
           if (isCancelled) return true;
-          
-          setProcessing(false);
           
           if (setIsWaitingForServer) {
             setIsWaitingForServer(false);
@@ -120,8 +112,6 @@ export const useFileProcessing = ({
     } catch (error: any) {
       if (isCancelled) return;
       
-      setProcessing(false);
-      
       if (setIsWaitingForServer) {
         setIsWaitingForServer(false);
       }
@@ -138,7 +128,6 @@ export const useFileProcessing = ({
   };
 
   return {
-    processing,
     processServerSide,
     isAuthenticated,
     preferredAIProvider,

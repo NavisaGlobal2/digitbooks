@@ -15,7 +15,6 @@ export const parseViaEdgeFunction = async (
     const formData = new FormData();
     formData.append("file", file);
     formData.append("context", context); // Add context for the parser to identify revenue transactions
-    formData.append("isRealData", "true"); // Flag to tell the AI this is real data
     
     const endpoint = 'parse-bank-statement-ai';
 
@@ -29,37 +28,10 @@ export const parseViaEdgeFunction = async (
       return [];
     }
     
+    // Call the serverless function with error handling
     try {
-      // First upload file to storage for more reliable processing
-      const filePath = `${context}_imports/${authData.session.user.id}/${uuidv4()}`;
-      const fileName = file.name;
-      
-      // Upload file to storage
-      const { data: storageData, error: storageError } = await supabase.storage
-        .from('revenue_imports')
-        .upload(filePath, file);
-        
-      if (storageError) {
-        console.error("Storage upload error:", storageError);
-        onError(`Storage error: ${storageError.message}`);
-        return [];
-      }
-      
-      // Generate a job tracking ID
-      const jobId = uuidv4();
-      const batchId = jobId;
-
-      // Call the serverless function with error handling
       const { data, error } = await supabase.functions.invoke(endpoint, {
-        body: {
-          filePath,
-          fileName,
-          context,
-          jobId,
-          processingMode: file.name.toLowerCase().endsWith('.pdf') ? 'full_extraction' : 'standard',
-          fileType: file.type,
-          useGoogleVision: file.name.toLowerCase().endsWith('.pdf') // Enable Google Vision for PDFs
-        },
+        body: formData,
       });
 
       if (error) {
@@ -76,6 +48,9 @@ export const parseViaEdgeFunction = async (
       console.log(`Raw transaction data from server:`, data.transactions);
       console.log(`Transaction count from server: ${data.transactions.length}`);
 
+      // Generate a batch ID as a proper UUID to avoid database errors
+      const batchId = data.batchId || uuidv4();
+
       // Map the server response to our ParsedTransaction type
       const parsedTransactions: ParsedTransaction[] = data.transactions.map((tx: any) => ({
         id: `transaction-${Math.random().toString(36).substr(2, 9)}`,
@@ -91,27 +66,25 @@ export const parseViaEdgeFunction = async (
 
       console.log(`Parsed ${parsedTransactions.length} transactions with batch ID: ${batchId}`);
 
-      // Only include transactions based on context
-      const filteredTransactions = context === 'revenue' 
-        ? parsedTransactions.filter(tx => tx.type === 'credit')
-        : parsedTransactions.filter(tx => tx.type === 'debit');
+      // Only include credit transactions (revenue)
+      const filteredTransactions = parsedTransactions.filter(tx => tx.type === 'credit');
       
       if (filteredTransactions.length === 0) {
-        onError(`No ${context} transactions found in the statement.`);
+        onError("No revenue transactions found in the statement. Only income transactions can be imported.");
         return [];
       }
 
-      console.log(`Found ${filteredTransactions.length} ${context} transactions to display`);
+      console.log(`Found ${filteredTransactions.length} revenue transactions to display`);
 
       // Call success callback with transactions
       onSuccess(filteredTransactions);
       
       // Show success message with the transaction count
-      toast.success(`Successfully parsed ${filteredTransactions.length} ${context} entries from your statement`);
+      toast.success(`Successfully parsed ${filteredTransactions.length} revenue entries from your statement`);
       
       return filteredTransactions;
     } catch (supabaseError: any) {
-      console.error("Supabase error:", supabaseError);
+      console.error("Supabase functions.invoke error:", supabaseError);
       if (supabaseError.message?.includes("Network")) {
         onError("Network error when calling the server. Please check your internet connection and try again.");
       } else {

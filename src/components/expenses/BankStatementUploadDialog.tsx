@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useExpenses } from "@/contexts/ExpenseContext";
 import TransactionTaggingDialog from "./TransactionTaggingDialog";
@@ -30,27 +30,9 @@ const BankStatementUploadDialog = ({
   const [showTaggingDialog, setShowTaggingDialog] = useState(false);
   const [parsedTransactions, setParsedTransactions] = useState<ParsedTransaction[]>([]);
   const [processingComplete, setProcessingComplete] = useState(false);
-  const [storePdfInSupabase, setStorePdfInSupabase] = useState(true);
-  const [extractPdfText, setExtractPdfText] = useState(true);
-  const [useOcrSpace, setUseOcrSpace] = useState(false);
-  const [isProcessingPdf, setIsProcessingPdf] = useState(false);
   
-  const handleOcrSpaceToggle = (value: boolean) => {
-    setUseOcrSpace(value);
-    // When OCR.space is enabled, we must store the PDF in Supabase
-    if (value) {
-      setStorePdfInSupabase(true);
-    }
-  };
-
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
     console.log(`Received ${transactions.length} parsed transactions`);
-    console.log("Sample parsed transactions:", transactions.slice(0, 2));
-    
-    if (transactions.length === 0) {
-      toast.warning("No transactions were found in your statement. The document may not contain recognizable transaction data.");
-      return;
-    }
     
     // Pre-select all debit transactions by default
     const preSelectedTransactions = transactions.map(tx => ({
@@ -76,16 +58,8 @@ const BankStatementUploadDialog = ({
     cancelProgress,
     isAuthenticated,
     preferredAIProvider,
-    setPreferredAIProvider,
-    useVisionApi,
-    setUseVisionApi
-  } = useStatementUpload({ 
-    onTransactionsParsed: handleTransactionsParsed,
-    storePdfInSupabase,
-    extractPdfText,
-    setIsProcessingPdf,
-    useOcrSpace
-  });
+    setPreferredAIProvider
+  } = useStatementUpload(handleTransactionsParsed);
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
     // Generate a unique batch ID using UUID for this import
@@ -140,6 +114,10 @@ const BankStatementUploadDialog = ({
     }
   };
 
+  const closeTaggingDialog = () => {
+    setShowTaggingDialog(false);
+  };
+
   const handleClose = () => {
     if (uploading) {
       cancelProgress();
@@ -149,19 +127,6 @@ const BankStatementUploadDialog = ({
       setProcessingComplete(false);
       onOpenChange(false);
     }
-  };
-
-  const handleStorePdfToggle = (value: boolean) => {
-    setStorePdfInSupabase(value);
-    // If turning off storage but OCR.space is enabled, we need to disable OCR.space
-    if (!value && useOcrSpace) {
-      setUseOcrSpace(false);
-      toast.info("OCR.space requires PDF storage. OCR.space has been disabled.");
-    }
-  };
-  
-  const handleExtractPdfTextToggle = (value: boolean) => {
-    setExtractPdfText(value);
   };
 
   return (
@@ -180,16 +145,6 @@ const BankStatementUploadDialog = ({
             isAuthenticated={isAuthenticated}
             preferredAIProvider={preferredAIProvider}
             setPreferredAIProvider={setPreferredAIProvider}
-            isWaitingForServer={isWaitingForServer}
-            useVisionApi={useVisionApi}
-            setUseVisionApi={setUseVisionApi}
-            storePdfInSupabase={storePdfInSupabase}
-            onStorePdfToggle={handleStorePdfToggle}
-            extractPdfText={extractPdfText}
-            onExtractPdfTextToggle={handleExtractPdfTextToggle}
-            isProcessingPdf={isProcessingPdf}
-            useOcrSpace={useOcrSpace}
-            onOcrSpaceToggle={handleOcrSpaceToggle}
           />
         </DialogContent>
       </Dialog>
@@ -198,7 +153,7 @@ const BankStatementUploadDialog = ({
       {showTaggingDialog && (
         <TransactionTaggingDialog
           open={showTaggingDialog}
-          onOpenChange={() => setShowTaggingDialog(false)}
+          onOpenChange={closeTaggingDialog}
           transactions={parsedTransactions}
           onTaggingComplete={handleTaggingComplete}
         />

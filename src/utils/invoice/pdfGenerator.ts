@@ -24,10 +24,8 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
     accountNumber,
     accountName,
     clientName = "Client",
-    clientEmail,
-    clientAddress,
     invoiceNumber = format(new Date(), "yyyyMMdd"),
-    selectedTemplate = "default"
+    selectedTemplate = "professional" // Change default to professional template
   } = invoiceDetails;
 
   // Create a new PDF document with A4 size and improved precision
@@ -95,10 +93,7 @@ export const generateInvoice = async (invoiceDetails: InvoiceDetails): Promise<B
     logoPreview: processedLogo,
     subtotal,
     tax,
-    total,
-    clientEmail,
-    clientAddress,
-    selectedTemplate
+    total
   });
   
   // Convert the PDF to a Blob with proper content type

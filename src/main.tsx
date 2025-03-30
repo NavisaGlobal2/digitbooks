@@ -2,11 +2,11 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import { Toaster } from 'sonner';
+import { toast, Toaster } from 'sonner';
 
 createRoot(document.getElementById("root")!).render(
   <>
     <App />
-    <Toaster />
+    <Toaster position="top-right" />
   </>
 );

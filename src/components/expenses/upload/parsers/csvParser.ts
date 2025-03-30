@@ -9,7 +9,6 @@ export interface CSVParseResult {
   headers: string[];
   rows: string[][];
   hasHeader: boolean;
-  data: ParsedTransaction[]; // Add this for backward compatibility
 }
 
 /**
@@ -47,8 +46,7 @@ export const parseCSVFile = (
             transactions,
             headers,
             rows,
-            hasHeader,
-            data: transactions // Add this for backward compatibility
+            hasHeader
           });
         } else {
           // Just return headers and data for mapping UI
@@ -56,8 +54,7 @@ export const parseCSVFile = (
             transactions: [],
             headers,
             rows,
-            hasHeader,
-            data: [] // Add this for backward compatibility
+            hasHeader
           });
         }
       } catch (error) {

@@ -4,7 +4,6 @@ import { useRevenue } from "@/contexts/RevenueContext";
 import { toast } from "sonner";
 import { PieChart, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import RevenueContent from "@/components/revenue/RevenueContent";
 import AddRevenueDialog from "@/components/revenue/AddRevenueDialog";
 import ImportRevenueDialog from "@/components/revenue/ImportRevenueDialog";
@@ -17,7 +16,6 @@ const RevenuePage = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [editRevenueId, setEditRevenueId] = useState<string | null>(null);
-  const navigate = useNavigate();
   
   const handleAddRevenue = () => {
     setShowAddDialog(true);
@@ -49,10 +47,6 @@ const RevenuePage = () => {
     toast.success(`${revenues.length} revenues imported successfully`);
     setShowImportDialog(false);
   };
-
-  const handleNavigateToReports = () => {
-    navigate("/reports");
-  };
   
   return (
     <DashboardContainer>
@@ -67,7 +61,7 @@ const RevenuePage = () => {
             <Button
               variant="outline" 
               className="border-green-500 text-green-600 hover:bg-green-50"
-              onClick={handleNavigateToReports}
+              onClick={() => {}}
             >
               <BarChart3 className="h-4 w-4 mr-2" />
               Revenue Reports
