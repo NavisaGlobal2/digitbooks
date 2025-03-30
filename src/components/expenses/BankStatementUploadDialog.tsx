@@ -32,6 +32,7 @@ const BankStatementUploadDialog = ({
   const [processingComplete, setProcessingComplete] = useState(false);
   const [storePdfInSupabase, setStorePdfInSupabase] = useState(true);
   const [extractPdfText, setExtractPdfText] = useState(true);
+  const [useOcrSpace, setUseOcrSpace] = useState(false);
   const [isProcessingPdf, setIsProcessingPdf] = useState(false);
   
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
@@ -74,7 +75,8 @@ const BankStatementUploadDialog = ({
     onTransactionsParsed: handleTransactionsParsed,
     storePdfInSupabase,
     extractPdfText,
-    setIsProcessingPdf
+    setIsProcessingPdf,
+    useOcrSpace
   });
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
@@ -148,6 +150,10 @@ const BankStatementUploadDialog = ({
   const handleExtractPdfTextToggle = (value: boolean) => {
     setExtractPdfText(value);
   };
+  
+  const handleOcrSpaceToggle = (value: boolean) => {
+    setUseOcrSpace(value);
+  };
 
   return (
     <>
@@ -173,6 +179,8 @@ const BankStatementUploadDialog = ({
             extractPdfText={extractPdfText}
             onExtractPdfTextToggle={handleExtractPdfTextToggle}
             isProcessingPdf={isProcessingPdf}
+            useOcrSpace={useOcrSpace}
+            onOcrSpaceToggle={handleOcrSpaceToggle}
           />
         </DialogContent>
       </Dialog>

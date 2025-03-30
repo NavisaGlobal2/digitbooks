@@ -12,13 +12,15 @@ interface StatementUploadHookProps {
   storePdfInSupabase?: boolean;
   extractPdfText?: boolean;
   setIsProcessingPdf?: (isProcessing: boolean) => void;
+  useOcrSpace?: boolean;
 }
 
 export const useStatementUpload = ({ 
   onTransactionsParsed,
   storePdfInSupabase = false,
   extractPdfText = false,
-  setIsProcessingPdf
+  setIsProcessingPdf,
+  useOcrSpace = false
 }: StatementUploadHookProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
@@ -61,7 +63,8 @@ export const useStatementUpload = ({
     stopProcessing: () => setUploading(false),
     storePdfInSupabase,
     extractPdfText,
-    setIsProcessingPdf
+    setIsProcessingPdf,
+    useOcrSpace
   });
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,6 +137,7 @@ export const useStatementUpload = ({
     preferredAIProvider,
     setPreferredAIProvider,
     useVisionApi,
-    setUseVisionApi
+    setUseVisionApi,
+    useOcrSpace
   };
 };

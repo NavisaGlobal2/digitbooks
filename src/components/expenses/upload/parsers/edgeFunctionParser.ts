@@ -10,3 +10,8 @@ export {
   processPdfAsImages,
   extractStructuredDataFromPdf
 } from './edge-function/pdfToImageProcessor';
+
+// Export the OCR.space processor
+export {
+  processPdfWithOcrSpace
+} from './edge-function/ocrSpaceProcessor';

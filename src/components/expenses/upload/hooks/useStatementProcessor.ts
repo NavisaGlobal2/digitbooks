@@ -1,9 +1,8 @@
-
 import { useState, useCallback } from "react";
 import { parsePDFFile } from "../parsers/pdfParser";
 import { parseStatementFile, ParsedTransaction } from "../parsers";
 import { useProcessingState } from "./useProcessingState";
-import { processPdfAsImages } from "../parsers/edge-function/pdfToImageProcessor";
+import { processPdfAsImages, processPdfWithOcrSpace } from "../parsers/edgeFunctionParser";
 
 interface StatementProcessorProps {
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
@@ -18,6 +17,7 @@ interface StatementProcessorProps {
   storePdfInSupabase?: boolean;
   extractPdfText?: boolean;
   setIsProcessingPdf?: (isProcessing: boolean) => void;
+  useOcrSpace?: boolean;
 }
 
 export const useStatementProcessor = ({
@@ -32,7 +32,8 @@ export const useStatementProcessor = ({
   stopProcessing,
   storePdfInSupabase = false,
   extractPdfText = false,
-  setIsProcessingPdf
+  setIsProcessingPdf,
+  useOcrSpace = false
 }: StatementProcessorProps) => {
   const [processingStatus, setProcessingStatus] = useState<string | null>(null);
   
@@ -49,44 +50,64 @@ export const useStatementProcessor = ({
       const fileExt = file.name.split('.').pop()?.toLowerCase();
       setProcessingStatus(`Processing ${fileExt === 'pdf' ? 'PDF' : fileExt} file...`);
       
-      // For PDFs with extractPdfText enabled, convert to images first
-      if (fileExt === 'pdf' && extractPdfText) {
-        console.log(`Processing PDF file as images with Vision API: ${useVisionApi}`);
+      // Process PDFs based on selected extraction method
+      if (fileExt === 'pdf') {
+        console.log(`Processing PDF file with options: 
+          - Extract text: ${extractPdfText}
+          - Use Vision API: ${useVisionApi}
+          - Store in Supabase: ${storePdfInSupabase}
+          - Use OCR.space: ${useOcrSpace}`
+        );
         
         if (setIsProcessingPdf) {
           setIsProcessingPdf(true);
         }
         
-        const result = await processPdfAsImages(
-          file,
-          (result) => {
-            if (isCancelled) return;
-            
-            if (setIsProcessingPdf) {
-              setIsProcessingPdf(false);
-            }
-            
-            completeProgress();
-            
-            if (result.transactions && result.transactions.length > 0) {
-              console.log(`Successfully extracted ${result.transactions.length} transactions from PDF images`);
-              onTransactionsParsed(result.transactions);
-            } else if (result.extractedText) {
-              // If we have text but no structured transactions, try to parse the text
-              console.log("Got extracted text but no structured transactions, attempting to parse text");
+        // If OCR.space is selected and user is authenticated
+        if (useOcrSpace && isAuthenticated) {
+          console.log("Using OCR.space for PDF processing");
+          
+          const result = await processPdfWithOcrSpace(
+            file,
+            (result) => {
+              if (isCancelled) return;
               
-              // Create an async function to handle the text parsing
-              const parseExtractedText = async () => {
-                try {
-                  const { extractStructuredDataFromPdf } = await import("../parsers/edge-function/pdfToImageProcessor");
-                  const structuredData = extractStructuredDataFromPdf(result.extractedText);
-                  
-                  if (structuredData.transactions.length > 0) {
-                    console.log(`Parsed ${structuredData.transactions.length} transactions from extracted text`);
-                    onTransactionsParsed(structuredData.transactions);
-                  } else {
-                    // If we couldn't parse structured data, fall back to regular PDF parsing
-                    console.log("Could not extract structured data from text, falling back to regular PDF parsing");
+              if (setIsProcessingPdf) {
+                setIsProcessingPdf(false);
+              }
+              
+              completeProgress();
+              
+              if (result.transactions && result.transactions.length > 0) {
+                console.log(`Successfully extracted ${result.transactions.length} transactions from OCR.space`);
+                onTransactionsParsed(result.transactions);
+              } else if (result.extractedText) {
+                // If we have text but no structured transactions, try to parse the text
+                console.log("Got extracted text but no structured transactions, attempting to parse text");
+                
+                // Create an async function to handle the text parsing
+                const parseExtractedText = async () => {
+                  try {
+                    const { extractStructuredDataFromPdf } = await import("../parsers/edge-function/pdfToImageProcessor");
+                    const structuredData = extractStructuredDataFromPdf(result.extractedText);
+                    
+                    if (structuredData.transactions.length > 0) {
+                      console.log(`Parsed ${structuredData.transactions.length} transactions from OCR text`);
+                      onTransactionsParsed(structuredData.transactions);
+                    } else {
+                      // If we couldn't parse structured data, fall back to regular PDF parsing
+                      console.log("Could not extract structured data from text, falling back to regular PDF parsing");
+                      parsePDFFile(
+                        file,
+                        onTransactionsParsed,
+                        onError,
+                        "expense",
+                        storePdfInSupabase
+                      );
+                    }
+                  } catch (error) {
+                    console.error("Error extracting structured data from text:", error);
+                    // Fall back to regular PDF parsing
                     parsePDFFile(
                       file,
                       onTransactionsParsed,
@@ -95,24 +116,34 @@ export const useStatementProcessor = ({
                       storePdfInSupabase
                     );
                   }
-                } catch (error) {
-                  console.error("Error extracting structured data from text:", error);
-                  // Fall back to regular PDF parsing
-                  parsePDFFile(
-                    file,
-                    onTransactionsParsed,
-                    onError,
-                    "expense",
-                    storePdfInSupabase
-                  );
-                }
-              };
+                };
+                
+                // Execute the async function
+                parseExtractedText();
+              } else {
+                // If we couldn't extract text or transactions, fall back to regular PDF parsing
+                console.log("No transactions or text extracted, falling back to regular PDF parsing");
+                parsePDFFile(
+                  file,
+                  onTransactionsParsed,
+                  onError,
+                  "expense",
+                  storePdfInSupabase
+                );
+              }
               
-              // Execute the async function
-              parseExtractedText();
-            } else {
-              // If we couldn't extract text or transactions, fall back to regular PDF parsing
-              console.log("No transactions or text extracted, falling back to regular PDF parsing");
+              stopProcessing();
+            },
+            (errorMessage) => {
+              if (isCancelled) return true;
+              
+              if (setIsProcessingPdf) {
+                setIsProcessingPdf(false);
+              }
+              
+              console.log("OCR.space processing failed, falling back to regular PDF parsing:", errorMessage);
+              
+              // Fall back to regular PDF parsing
               parsePDFFile(
                 file,
                 onTransactionsParsed,
@@ -120,44 +151,117 @@ export const useStatementProcessor = ({
                 "expense",
                 storePdfInSupabase
               );
+              
+              return false; // Don't trigger error yet, as we're falling back
             }
-            
-            stopProcessing();
-          },
-          (errorMessage) => {
-            if (isCancelled) return true;
-            
-            if (setIsProcessingPdf) {
-              setIsProcessingPdf(false);
-            }
-            
-            console.log("PDF image processing failed, falling back to regular PDF parsing:", errorMessage);
-            
-            // Fall back to regular PDF parsing
-            parsePDFFile(
-              file,
-              onTransactionsParsed,
-              onError,
-              "expense",
-              storePdfInSupabase
-            );
-            
-            return false; // Don't trigger error yet, as we're falling back
-          },
-          setIsProcessingPdf
-        );
+          );
+        }
+        // Otherwise use Google Vision or standard PDF processing
+        else if (extractPdfText) {
+          console.log(`Processing PDF file as images with Vision API: ${useVisionApi}`);
+          
+          const result = await processPdfAsImages(
+            file,
+            (result) => {
+              if (isCancelled) return;
+              
+              if (setIsProcessingPdf) {
+                setIsProcessingPdf(false);
+              }
+              
+              completeProgress();
+              
+              if (result.transactions && result.transactions.length > 0) {
+                console.log(`Successfully extracted ${result.transactions.length} transactions from PDF images`);
+                onTransactionsParsed(result.transactions);
+              } else if (result.extractedText) {
+                // If we have text but no structured transactions, try to parse the text
+                console.log("Got extracted text but no structured transactions, attempting to parse text");
+                
+                // Create an async function to handle the text parsing
+                const parseExtractedText = async () => {
+                  try {
+                    const { extractStructuredDataFromPdf } = await import("../parsers/edge-function/pdfToImageProcessor");
+                    const structuredData = extractStructuredDataFromPdf(result.extractedText);
+                    
+                    if (structuredData.transactions.length > 0) {
+                      console.log(`Parsed ${structuredData.transactions.length} transactions from extracted text`);
+                      onTransactionsParsed(structuredData.transactions);
+                    } else {
+                      // If we couldn't parse structured data, fall back to regular PDF parsing
+                      console.log("Could not extract structured data from text, falling back to regular PDF parsing");
+                      parsePDFFile(
+                        file,
+                        onTransactionsParsed,
+                        onError,
+                        "expense",
+                        storePdfInSupabase
+                      );
+                    }
+                  } catch (error) {
+                    console.error("Error extracting structured data from text:", error);
+                    // Fall back to regular PDF parsing
+                    parsePDFFile(
+                      file,
+                      onTransactionsParsed,
+                      onError,
+                      "expense",
+                      storePdfInSupabase
+                    );
+                  }
+                };
+                
+                // Execute the async function
+                parseExtractedText();
+              } else {
+                // If we couldn't extract text or transactions, fall back to regular PDF parsing
+                console.log("No transactions or text extracted, falling back to regular PDF parsing");
+                parsePDFFile(
+                  file,
+                  onTransactionsParsed,
+                  onError,
+                  "expense",
+                  storePdfInSupabase
+                );
+              }
+              
+              stopProcessing();
+            },
+            (errorMessage) => {
+              if (isCancelled) return true;
+              
+              if (setIsProcessingPdf) {
+                setIsProcessingPdf(false);
+              }
+              
+              console.log("PDF image processing failed, falling back to regular PDF parsing:", errorMessage);
+              
+              // Fall back to regular PDF parsing
+              parsePDFFile(
+                file,
+                onTransactionsParsed,
+                onError,
+                "expense",
+                storePdfInSupabase
+              );
+              
+              return false; // Don't trigger error yet, as we're falling back
+            },
+            setIsProcessingPdf
+          );
+        } else {
+          console.log(`Processing PDF file with standard parser and Vision API: ${useVisionApi}`);
+          parsePDFFile(
+            file, 
+            onTransactionsParsed, 
+            onError,
+            "expense", 
+            storePdfInSupabase
+          );
+        }
       } 
-      // For PDFs without image extraction or other file types
-      else if (fileExt === 'pdf') {
-        console.log(`Processing PDF file with standard parser and Vision API: ${useVisionApi}`);
-        parsePDFFile(
-          file, 
-          onTransactionsParsed, 
-          onError,
-          "expense", 
-          storePdfInSupabase
-        );
-      } else {
+      // For non-PDFs
+      else {
         console.log(`Processing ${fileExt} file with standard parser`);
         
         if (!isAuthenticated) {
@@ -204,7 +308,8 @@ export const useStatementProcessor = ({
                   preferredProvider: preferredAIProvider,
                   useVision: useVisionApi,
                   storePdfInSupabase,
-                  extractPdfText
+                  extractPdfText,
+                  useOcrSpace
                 }
               );
             } else {
@@ -224,7 +329,8 @@ export const useStatementProcessor = ({
                   preferredProvider: preferredAIProvider,
                   useVision: useVisionApi,
                   storePdfInSupabase,
-                  extractPdfText
+                  extractPdfText,
+                  useOcrSpace
                 }
               );
             }
@@ -257,7 +363,8 @@ export const useStatementProcessor = ({
     stopProcessing,
     storePdfInSupabase,
     extractPdfText,
-    setIsProcessingPdf
+    setIsProcessingPdf,
+    useOcrSpace
   ]);
 
   return {
