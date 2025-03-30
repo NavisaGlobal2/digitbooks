@@ -4,6 +4,7 @@ import { useProcessingState } from "./file-processing/useProcessingState";
 import { useFileValidation } from "./file-processing/useFileValidation";
 import { useServerProcessing } from "./file-processing/useServerProcessing";
 import { useEdgeFunctionProcessing } from "./file-processing/useEdgeFunctionProcessing";
+import { createProcessingOptions } from "./file-processing/utils/processingOptions";
 
 export const useFileProcessing = () => {
   const [isCancelled, setIsCancelled] = useState(false);
@@ -23,8 +24,7 @@ export const useFileProcessing = () => {
   
   const { 
     isWaitingForServer,
-    setIsWaitingForServer, 
-    createProcessingOptions 
+    setIsWaitingForServer
   } = useServerProcessing();
   
   const { 
@@ -56,8 +56,8 @@ export const useFileProcessing = () => {
         setIsWaitingForServer(true);
       }
       
-      // Create processing options
-      const processingOptions = createProcessingOptions(options, preferredAIProvider, fileType);
+      // Create processing options with imported utility function
+      const processingOptions = createProcessingOptions(preferredAIProvider, fileType, options);
       
       console.log("Processing options:", processingOptions);
       
