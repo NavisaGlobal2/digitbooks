@@ -1,5 +1,6 @@
 
 import { sanitizeTextForAPI } from "./utils.ts";
+import * as XLSX from 'https://cdn.sheetjs.com/xlsx-0.18.12/package/xlsx.mjs';
 
 /**
  * Service for extracting content from Excel files
@@ -21,7 +22,7 @@ export const ExcelService = {
       // Convert to base64
       const base64Data = uint8ArrayToBase64(data);
       
-      // Use the improved extraction function
+      // Use the provided extraction function
       const extractedText = await extractTextFromExcel(base64Data, file.name);
       
       console.log(`Successfully extracted text content of length: ${extractedText.length} characters`);
@@ -52,36 +53,95 @@ const extractTextFromExcel = async (base64Data: string, fileName: string): Promi
     // Convert base64 to binary array
     const data = base64ToUint8Array(cleanBase64);
     
-    // Since we don't have XLSX in Deno, we'll implement a simple binary text extraction
-    // Extract text segments using our fallback method
-    let extractedText = `EXCEL DOCUMENT: ${fileName}\n\n`;
-    
-    // Extract text segments
-    const textSegments = extractTextSegments(data);
-    
-    // Look for tabular data patterns
-    const tableData = extractTabularData(data, textSegments);
-    
-    // Add structured data if found
-    if (tableData.length > 0) {
-      extractedText += "STRUCTURED DATA:\n";
-      for (const row of tableData) {
-        extractedText += row.join("\t") + "\n";
-      }
-    } else {
-      // If no structured data found, include the text segments
-      extractedText += "EXTRACTED TEXT:\n";
-      extractedText += textSegments
-        .filter(segment => segment.length >= 3)
-        .join("\n");
-    }
+    try {
+      // Parse the Excel file
+      const workbook = XLSX.read(data, { type: 'array' });
+      
+      let extractedText = `EXCEL DOCUMENT: ${fileName}\n\n`;
+      
+      // Process each worksheet
+      workbook.SheetNames.forEach(sheetName => {
+        const worksheet = workbook.Sheets[sheetName];
+        const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        // Add sheet name
+        extractedText += `Sheet: ${sheetName}\n`;
+        
+        // Format data as table
+        if (sheetData.length > 0) {
+          // Filter out empty rows
+          const nonEmptyRows = sheetData.filter((row: any[]) => 
+            Array.isArray(row) && row.some(cell => cell !== undefined && cell !== null && cell !== '')
+          );
+          
+          if (nonEmptyRows.length > 0) {
+            // Convert data to string representation
+            nonEmptyRows.forEach((row: any[]) => {
+              if (Array.isArray(row)) {
+                const rowText = row
+                  .map(cell => cell !== undefined && cell !== null ? String(cell) : "")
+                  .join("\t");
+                if (rowText.trim()) {
+                  extractedText += rowText + "\n";
+                }
+              }
+            });
+          } else {
+            extractedText += "No data found in this sheet.\n";
+          }
+        } else {
+          extractedText += "Empty sheet\n";
+        }
+        
+        extractedText += "\n";
+      });
 
-    console.log("Excel extraction complete");
-    return extractedText;
+      console.log("Excel extraction complete");
+      return extractedText;
+    } catch (xlsxError) {
+      console.error("Error using XLSX library:", xlsxError);
+      console.log("Falling back to basic binary text extraction");
+      
+      // If XLSX parsing fails, fall back to basic binary extraction
+      return extractTextWithFallback(data, fileName);
+    }
   } catch (error) {
     console.error("Error extracting text from Excel:", error);
     throw new Error(`Failed to extract text from Excel: ${error.message}`);
   }
+};
+
+/**
+ * Helper function for fallback text extraction from binary data
+ * @param data The Excel file binary data
+ * @param fileName The name of the Excel file
+ * @returns Extracted text
+ */
+const extractTextWithFallback = (data: Uint8Array, fileName: string): string => {
+  // Extract text segments using simple binary extraction
+  let extractedText = `EXCEL DOCUMENT: ${fileName}\n\n`;
+  
+  // Extract text segments
+  const textSegments = extractTextSegments(data);
+  
+  // Look for tabular data patterns
+  const tableData = extractTabularData(data, textSegments);
+  
+  // Add structured data if found
+  if (tableData.length > 0) {
+    extractedText += "STRUCTURED DATA:\n";
+    for (const row of tableData) {
+      extractedText += row.join("\t") + "\n";
+    }
+  } else {
+    // If no structured data found, include the text segments
+    extractedText += "EXTRACTED TEXT:\n";
+    extractedText += textSegments
+      .filter(segment => segment.length >= 3)
+      .join("\n");
+  }
+
+  return extractedText;
 };
 
 /**
