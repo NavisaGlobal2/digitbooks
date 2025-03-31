@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { ColumnMapping } from "../parsers/columnMapper";
 import { ParsedTransaction } from "../parsers";
 import { useUploadProgress } from "./useUploadProgress";
 import { useUploadError } from "./useUploadError";

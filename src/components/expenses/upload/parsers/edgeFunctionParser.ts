@@ -22,6 +22,7 @@ export const parseViaEdgeFunction = async (
     // Check authentication status before making the request
     const { data: authData } = await supabase.auth.getSession();
     if (!authData.session) {
+      console.error('No authentication session found');
       const errorMsg = "You need to be signed in to use this feature. Please sign in and try again.";
       onError(errorMsg);
       return [];
