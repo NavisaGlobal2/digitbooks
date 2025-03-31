@@ -29,7 +29,9 @@ export const parseStatementFile = (
         onSuccess(transactions);
       }, 
       onError,
-      "revenue" // Pass context to indicate we're looking for revenue transactions
+      undefined, // reset progress callback
+      undefined, // complete progress callback
+      true // Use AI formatting by default
     );
   } catch (error) {
     console.error("Error in parseStatementFile:", error);
