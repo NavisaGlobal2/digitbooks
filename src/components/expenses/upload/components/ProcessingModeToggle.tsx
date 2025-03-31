@@ -13,6 +13,8 @@ interface ProcessingModeToggleProps {
   isAuthenticated?: boolean;
   preferredAIProvider?: string;
   setPreferredAIProvider?: (provider: string) => void;
+  useAIFormatting?: boolean;
+  setUseAIFormatting?: (value: boolean) => void;
 }
 
 const ProcessingModeToggle = ({
@@ -22,7 +24,9 @@ const ProcessingModeToggle = ({
   disabled,
   isAuthenticated = true,
   preferredAIProvider = "anthropic",
-  setPreferredAIProvider
+  setPreferredAIProvider,
+  useAIFormatting = true,
+  setUseAIFormatting
 }: ProcessingModeToggleProps) => {
   // Determine if server-side processing needs auth warning
   const showAuthWarning = useEdgeFunction && !isAuthenticated;
@@ -39,7 +43,7 @@ const ProcessingModeToggle = ({
         <Label htmlFor="server-processing" className="flex flex-col">
           <div className="flex items-center gap-1">
             <span>
-              {useEdgeFunction ? "AI-powered processing" : "Client-side processing with column mapping"}
+              {useEdgeFunction ? "Server-side processing" : "Client-side processing with column mapping"}
               {!edgeFunctionAvailable && " (server unavailable)"}
             </span>
             
@@ -50,7 +54,7 @@ const ProcessingModeToggle = ({
                     <Info className="h-4 w-4 text-amber-500" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Authentication required for AI-powered processing</p>
+                    <p>Authentication required for server-side processing</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -58,7 +62,7 @@ const ProcessingModeToggle = ({
           </div>
           <span className="text-xs text-muted-foreground">
             {useEdgeFunction 
-              ? "Uses AI to intelligently extract transactions from any statement format" 
+              ? "Process the file on our server to extract transactions" 
               : "Process and customize column mapping in the browser (CSV only)"}
           </span>
         </Label>
@@ -66,29 +70,50 @@ const ProcessingModeToggle = ({
       
       {showAuthWarning && (
         <p className="text-xs text-amber-500 mt-1">
-          You need to be signed in to use AI-powered processing.
+          You need to be signed in to use server-side processing.
         </p>
       )}
 
-      {useEdgeFunction && isAuthenticated && setPreferredAIProvider && (
-        <div className="flex flex-col space-y-1 mt-2">
-          <Label htmlFor="ai-provider" className="text-sm">Preferred AI Provider</Label>
-          <Select
-            value={preferredAIProvider}
-            onValueChange={setPreferredAIProvider}
-            disabled={disabled}
-          >
-            <SelectTrigger id="ai-provider" className="w-[200px]">
-              <SelectValue placeholder="Select AI provider" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="anthropic">Anthropic Claude (Default)</SelectItem>
-              <SelectItem value="deepseek">DeepSeek AI</SelectItem>
-            </SelectContent>
-          </Select>
-          <span className="text-xs text-muted-foreground">
-            Select your preferred AI provider for transaction extraction
-          </span>
+      {useEdgeFunction && isAuthenticated && (
+        <div className="flex flex-col space-y-3 mt-2">
+          {setUseAIFormatting && (
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="ai-formatting" 
+                checked={useAIFormatting} 
+                onCheckedChange={setUseAIFormatting}
+                disabled={disabled}
+              />
+              <Label htmlFor="ai-formatting" className="flex flex-col">
+                <span>Use AI for transaction formatting</span>
+                <span className="text-xs text-muted-foreground">
+                  Apply AI to standardize transaction data format (preserves all original data)
+                </span>
+              </Label>
+            </div>
+          )}
+          
+          {setPreferredAIProvider && (
+            <div className="flex flex-col space-y-1">
+              <Label htmlFor="ai-provider" className="text-sm">Preferred AI Provider</Label>
+              <Select
+                value={preferredAIProvider}
+                onValueChange={setPreferredAIProvider}
+                disabled={disabled}
+              >
+                <SelectTrigger id="ai-provider" className="w-[200px]">
+                  <SelectValue placeholder="Select AI provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="anthropic">Anthropic Claude (Default)</SelectItem>
+                  <SelectItem value="deepseek">DeepSeek AI</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-xs text-muted-foreground">
+                Select your preferred AI provider for processing assistance
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -120,6 +120,10 @@ export const useFileProcessing = () => {
           
           return onError(errorMessage);
         },
+        resetProgress,
+        completeProgress,
+        isCancelled,
+        setIsWaitingForServer,
         preferredProvider || preferredAIProvider
       );
     } catch (error: any) {

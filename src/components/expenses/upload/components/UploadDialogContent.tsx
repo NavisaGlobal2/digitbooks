@@ -1,11 +1,11 @@
 
-import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { X, AlertTriangle, Server } from "lucide-react";
-import FileUploadArea from "../FileUploadArea";
-import ErrorDisplay from "../ErrorDisplay";
+import { FileType, UploadArea } from "lucide-react";
+import { ParsedTransaction } from "../parsers/types";
+import ProcessingModeToggle from "./ProcessingModeToggle";
 import ProgressIndicator from "./ProgressIndicator";
 import SupportedFormatsInfo from "./SupportedFormatsInfo";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface UploadDialogContentProps {
   file: File | null;
@@ -19,7 +19,8 @@ interface UploadDialogContentProps {
   isAuthenticated?: boolean;
   preferredAIProvider?: string;
   setPreferredAIProvider?: (provider: string) => void;
-  isWaitingForServer?: boolean;
+  useAIFormatting?: boolean;
+  setUseAIFormatting?: (value: boolean) => void;
 }
 
 const UploadDialogContent = ({
@@ -31,78 +32,97 @@ const UploadDialogContent = ({
   onClose,
   progress,
   step,
-  isAuthenticated,
-  isWaitingForServer = false
+  isAuthenticated = true,
+  preferredAIProvider,
+  setPreferredAIProvider,
+  useAIFormatting = true,
+  setUseAIFormatting
 }: UploadDialogContentProps) => {
+  const [useEdgeFunction, setUseEdgeFunction] = useState(true);
+  
+  // Edge function is always available but requires authentication
+  const edgeFunctionAvailable = true;
+  
+  const toggleEdgeFunction = () => {
+    setUseEdgeFunction(prev => !prev);
+  };
+  
   return (
     <>
-      <DialogHeader>
-        <div className="flex items-center justify-between">
-          <DialogTitle>Upload Bank Statement</DialogTitle>
-          <Button variant="ghost" size="icon" onClick={onClose} disabled={uploading}>
-            <X className="h-4 w-4" />
-          </Button>
+      <div className="flex flex-col gap-4">
+        <h2 className="text-xl font-semibold">Upload bank statement</h2>
+        <p className="text-muted-foreground text-sm">
+          Upload your bank statement to automatically extract and categorize expenses.
+        </p>
+        
+        {/* File upload area */}
+        <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 hover:border-gray-300 transition-colors bg-background">
+          <div className="flex flex-col items-center text-center">
+            <FileType className="h-8 w-8 text-muted-foreground mb-2" />
+            <h3 className="text-base font-medium text-gray-900">Upload bank statement</h3>
+            <p className="text-sm text-muted-foreground">
+              {file ? file.name : "Drag and drop or click to select a file"}
+            </p>
+            <div className="mt-3">
+              <label htmlFor="file-upload" className="text-sm text-blue-600 hover:text-blue-500 cursor-pointer">
+                Browse files
+                <input 
+                  id="file-upload" 
+                  name="file-upload" 
+                  type="file" 
+                  className="sr-only" 
+                  onChange={handleFileChange}
+                  accept=".csv,.xlsx,.xls"
+                  disabled={uploading}
+                />
+              </label>
+            </div>
+          </div>
         </div>
-        <DialogDescription>
-          Upload your CSV bank statement to extract transactions
-        </DialogDescription>
-      </DialogHeader>
-
-      <div className="space-y-4">
-        {uploading ? (
+        
+        {/* Processing mode toggle */}
+        <ProcessingModeToggle 
+          useEdgeFunction={useEdgeFunction}
+          toggleEdgeFunction={toggleEdgeFunction}
+          edgeFunctionAvailable={edgeFunctionAvailable}
+          disabled={uploading || !file}
+          isAuthenticated={isAuthenticated}
+          preferredAIProvider={preferredAIProvider}
+          setPreferredAIProvider={setPreferredAIProvider}
+          useAIFormatting={useAIFormatting}
+          setUseAIFormatting={setUseAIFormatting}
+        />
+        
+        {/* Format info */}
+        <SupportedFormatsInfo />
+        
+        {/* Error message */}
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+            {error}
+          </div>
+        )}
+        
+        {/* Progress bar if uploading */}
+        {uploading && (
           <ProgressIndicator 
             progress={progress} 
-            step={step} 
-            isVisible={true}
-            isWaitingForServer={isWaitingForServer}
-            onCancel={onClose}
+            step={step}
           />
-        ) : (
-          <>
-            {!isAuthenticated && (
-              <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded mb-4">
-                <div className="flex items-start">
-                  <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5 mr-2" />
-                  <div>
-                    <p className="font-bold">Authentication Required</p>
-                    <p>You need to be signed in to upload bank statements. Please sign in and try again.</p>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded mb-4">
-              <div className="flex items-start">
-                <Server className="h-5 w-5 flex-shrink-0 mt-0.5 mr-2" />
-                <div>
-                  <p className="font-medium">Server-side Processing</p>
-                  <p className="text-sm">All CSV processing is done securely on our servers</p>
-                </div>
-              </div>
-            </div>
-            
-            <FileUploadArea 
-              file={file} 
-              onFileChange={handleFileChange} 
-              disabled={uploading} 
-            />
-            
-            {error && <ErrorDisplay error={error} />}
-            
-            <SupportedFormatsInfo />
-            
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                disabled={!file || uploading || !isAuthenticated}
-                onClick={parseFile}
-                className="bg-green-500 hover:bg-green-600 text-white"
-              >
-                Process CSV Statement
-              </Button>
-            </div>
-          </>
         )}
+      </div>
+      
+      {/* Footer buttons */}
+      <div className="flex justify-between mt-4 pt-3 border-t">
+        <Button variant="outline" onClick={onClose} disabled={uploading}>
+          Cancel
+        </Button>
+        <Button 
+          onClick={parseFile} 
+          disabled={!file || uploading || (!useEdgeFunction && !file?.name.toLowerCase().endsWith('.csv'))}
+        >
+          {uploading ? 'Processing...' : 'Process Statement'}
+        </Button>
       </div>
     </>
   );

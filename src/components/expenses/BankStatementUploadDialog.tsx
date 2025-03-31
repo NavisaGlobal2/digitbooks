@@ -30,6 +30,7 @@ const BankStatementUploadDialog = ({
   const [showTaggingDialog, setShowTaggingDialog] = useState(false);
   const [parsedTransactions, setParsedTransactions] = useState<ParsedTransaction[]>([]);
   const [processingComplete, setProcessingComplete] = useState(false);
+  const [useAIFormatting, setUseAIFormatting] = useState(true);
   
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
     console.log(`Received ${transactions.length} parsed transactions`);
@@ -145,6 +146,8 @@ const BankStatementUploadDialog = ({
             isAuthenticated={isAuthenticated}
             preferredAIProvider={preferredAIProvider}
             setPreferredAIProvider={setPreferredAIProvider}
+            useAIFormatting={useAIFormatting}
+            setUseAIFormatting={setUseAIFormatting}
           />
         </DialogContent>
       </Dialog>

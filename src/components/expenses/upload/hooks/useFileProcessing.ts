@@ -40,7 +40,7 @@ export const useFileProcessing = () => {
       const { data: sessionData } = await supabase.auth.getSession();
       
       if (!sessionData.session || !sessionData.session.access_token) {
-        handleError("You need to be signed in to use server-side processing. Please sign in and try again.");
+        onError("You need to be signed in to use server-side processing. Please sign in and try again.");
         resetProgress();
         if (setIsWaitingForServer) {
           setIsWaitingForServer(false);

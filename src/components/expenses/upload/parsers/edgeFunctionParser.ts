@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ParsedTransaction } from "../types";
+import { ParsedTransaction } from "./types";
 
 export const parseViaEdgeFunction = async (
   file: File,
@@ -11,7 +11,7 @@ export const parseViaEdgeFunction = async (
   isCancelled?: boolean,
   setIsWaitingForServer?: (isWaiting: boolean) => void,
   preferredProvider?: string,
-  useAIFormatting: boolean = true // New parameter to control AI formatting
+  useAIFormatting: boolean = true // Parameter to control AI formatting
 ): Promise<void> => {
   try {
     // Check authentication first

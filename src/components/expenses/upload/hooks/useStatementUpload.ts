@@ -14,6 +14,7 @@ export const useStatementUpload = (
   const [uploading, setUploading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
+  const [useAIFormatting, setUseAIFormatting] = useState<boolean>(true);
 
   // Check authentication status
   useEffect(() => {
@@ -121,8 +122,11 @@ export const useStatementUpload = (
       }
       
       console.log("Starting file processing with edge function");
+      console.log("AI formatting is:", useAIFormatting ? "enabled" : "disabled");
       
-      await processServerSide(
+      const { parseViaEdgeFunction } = await import("../parsers/edgeFunctionParser");
+      
+      await parseViaEdgeFunction(
         file,
         (transactions) => {
           setUploading(false);
@@ -135,26 +139,8 @@ export const useStatementUpload = (
                             errorMessage.toLowerCase().includes('sign in') ||
                             errorMessage.toLowerCase().includes('token');
                             
-          const isAnthropicError = errorMessage.toLowerCase().includes('anthropic') ||
-                           errorMessage.toLowerCase().includes('api key') || 
-                           errorMessage.toLowerCase().includes('overloaded');
-
-          const isDeepSeekError = errorMessage.toLowerCase().includes('deepseek');
-          
           // Show the error message to the user
           handleError(errorMessage);
-          
-          // For auth or critical API errors, don't try to fallback
-          if (isAuthError || (isAnthropicError && isDeepSeekError)) {
-            resetProgress();
-            
-            if ((isAnthropicError || isDeepSeekError) && !file.name.toLowerCase().endsWith('.csv')) {
-              toast.error("Both AI processing services are currently unavailable. Try using a CSV file format instead.");
-            }
-            
-            return true;
-          }
-          
           resetProgress();
           return true;
         },
@@ -162,7 +148,8 @@ export const useStatementUpload = (
         completeProgress,
         isCancelled,
         setIsWaitingForServer,
-        preferredAIProvider
+        preferredAIProvider,
+        useAIFormatting
       );
     } catch (error) {
       console.error("Unexpected error in parseFile:", error);
@@ -193,6 +180,9 @@ export const useStatementUpload = (
     isAuthenticated,
     // AI provider selection
     preferredAIProvider,
-    setPreferredAIProvider
+    setPreferredAIProvider,
+    // AI formatting option
+    useAIFormatting,
+    setUseAIFormatting
   };
 };
