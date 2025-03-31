@@ -46,7 +46,7 @@ const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
 
       try {
         setIsLoading(true);
-        // Fetch all invoices that have payments
+        // Fetch all invoices that have payments (both paid and partially-paid)
         const { data: invoicesData, error } = await supabase
           .from('invoices')
           .select('*')
@@ -77,12 +77,10 @@ const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
           }));
 
           // Parse JSON fields from the database
-          const parsedItems = Array.isArray(invoice.items) ? invoice.items : [];
-          const parsedBankDetails = typeof invoice.bank_details === 'object' ? invoice.bank_details : {
-            accountName: '',
-            accountNumber: '',
-            bankName: ''
-          };
+          const parsedItems = typeof invoice.items === 'string' ? JSON.parse(invoice.items) : invoice.items;
+          const parsedBankDetails = typeof invoice.bank_details === 'string' ? 
+            JSON.parse(invoice.bank_details) : 
+            invoice.bank_details;
 
           // Convert DB invoice to our Invoice format with type assertion
           const formattedInvoice = {
@@ -107,7 +105,24 @@ const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
         });
 
         const results = await Promise.all(invoicesWithPaymentsPromises);
-        setInvoicesWithPayments(results.filter(Boolean) as Invoice[]);
+        
+        // Sort by payment date (most recent first)
+        const sortedInvoices = results
+          .filter(Boolean) as Invoice[]
+          .sort((a, b) => {
+            // Get the most recent payment date for each invoice
+            const latestPaymentA = a.payments && a.payments.length > 0 
+              ? Math.max(...a.payments.map(p => p.date.getTime())) 
+              : a.issuedDate.getTime();
+              
+            const latestPaymentB = b.payments && b.payments.length > 0 
+              ? Math.max(...b.payments.map(p => p.date.getTime())) 
+              : b.issuedDate.getTime();
+              
+            return latestPaymentB - latestPaymentA;
+          });
+          
+        setInvoicesWithPayments(sortedInvoices);
       } catch (error) {
         console.error("Failed to fetch payment history:", error);
         toast.error("Failed to load payment history");
@@ -131,6 +146,16 @@ const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
       console.error("Error downloading receipt:", error);
       toast.error("Failed to download receipt");
     }
+  };
+
+  const getTotalPaid = (payments?: PaymentRecord[]) => {
+    if (!payments || payments.length === 0) return 0;
+    return payments.reduce((sum, payment) => sum + payment.amount, 0);
+  };
+
+  const getRemainingAmount = (invoice: Invoice) => {
+    const totalPaid = getTotalPaid(invoice.payments);
+    return invoice.amount - totalPaid;
   };
 
   return (
@@ -170,7 +195,15 @@ const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
               </div>
 
               <div className="p-4">
-                <h4 className="text-sm font-medium mb-3">Payment Records</h4>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="text-sm font-medium">Payment Records</h4>
+                  {invoice.status === 'partially-paid' && (
+                    <div className="text-sm text-amber-600 font-medium">
+                      Remaining: {formatNaira(getRemainingAmount(invoice))}
+                    </div>
+                  )}
+                </div>
+                
                 <div className="space-y-3">
                   {invoice.payments?.map((payment, idx) => (
                     <div key={idx} className="flex justify-between items-center py-2 border-b last:border-0">
@@ -196,6 +229,13 @@ const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
                       )}
                     </div>
                   ))}
+                  
+                  <div className="pt-2 flex justify-end">
+                    <div className="bg-gray-50 px-3 py-1.5 rounded-md">
+                      <span className="text-sm text-gray-500">Total paid: </span>
+                      <span className="font-medium">{formatNaira(getTotalPaid(invoice.payments))}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

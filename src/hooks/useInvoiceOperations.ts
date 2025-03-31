@@ -145,7 +145,37 @@ export const useInvoiceOperations = (invoices: Invoice[], setInvoices: React.Dis
       
       const status = totalPaid >= invoice.amount ? 'paid' : 'partially-paid';
       
-      // Update in database - don't try to update paid_date as it doesn't exist
+      // Save each payment to the database
+      for (const payment of payments) {
+        // Check if this payment is already stored (for example, when updating a partially paid invoice)
+        const isNewPayment = !invoice.payments?.some(
+          p => p.date.getTime() === payment.date.getTime() && 
+               p.amount === payment.amount &&
+               p.method === payment.method
+        );
+
+        if (isNewPayment) {
+          const paymentData = {
+            invoice_id: invoiceId,
+            user_id: user?.id,
+            amount: payment.amount,
+            payment_date: payment.date.toISOString(),
+            payment_method: payment.method,
+            reference: payment.reference || null,
+            receipt_url: payment.receiptUrl || null
+          };
+          
+          const { error: paymentError } = await supabase
+            .from('invoice_payments')
+            .insert(paymentData);
+          
+          if (paymentError) {
+            throw paymentError;
+          }
+        }
+      }
+      
+      // Update invoice status
       const { error } = await supabase
         .from('invoices')
         .update({ status })

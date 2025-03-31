@@ -86,15 +86,11 @@ export function useInvoicePayments() {
       
       // Determine new status
       const status = totalPaid >= invoiceData.amount ? 'paid' : 'partially-paid';
-      const paidDate = status === 'paid' ? new Date().toISOString() : null;
       
       // Update invoice status
       const { error: updateError } = await supabase
         .from('invoices')
-        .update({ 
-          status,
-          paid_date: paidDate
-        })
+        .update({ status })
         .eq('id', invoiceId);
         
       if (updateError) {
@@ -104,7 +100,6 @@ export function useInvoicePayments() {
       return {
         payment: newPayment,
         status,
-        paidDate: paidDate ? new Date(paidDate) : null,
         allPayments
       };
       
