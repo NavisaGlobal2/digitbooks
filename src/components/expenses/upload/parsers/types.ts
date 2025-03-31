@@ -17,6 +17,7 @@ export interface ParsedTransaction {
   category?: ExpenseCategory;
   selected?: boolean;
   categorySuggestion?: CategorySuggestion;
+  batchId?: string; // Added to fix type errors
 }
 
 export interface CSVParseResult {

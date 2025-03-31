@@ -102,6 +102,74 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_statement_accounts: {
+        Row: {
+          account_holder: string | null
+          account_number: string | null
+          created_at: string
+          currency: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          account_holder?: string | null
+          account_number?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          account_holder?: string | null
+          account_number?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bank_statement_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          balance: number | null
+          created_at: string
+          date: string
+          description: string
+          id: string
+          type: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          balance?: number | null
+          created_at?: string
+          date: string
+          description: string
+          id?: string
+          type: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          balance?: number | null
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_statement_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_statement_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budgets: {
         Row: {
           created_at: string
