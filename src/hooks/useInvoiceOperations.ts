@@ -90,7 +90,7 @@ export const useInvoiceOperations = (invoices: Invoice[], setInvoices: React.Dis
         logoUrl: data.logo_url || undefined,
         additionalInfo: data.additional_info || undefined,
         bankDetails: parsedBankDetails,
-        paidDate: data.paid_date ? new Date(data.paid_date) : undefined
+        paidDate: undefined // Since DB doesn't have paid_date, set it to undefined
       };
       
       // Update local state
