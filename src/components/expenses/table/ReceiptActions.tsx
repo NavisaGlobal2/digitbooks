@@ -23,7 +23,7 @@ const ReceiptActions = ({ expense, onViewReceipt, onDeleteReceipt }: ReceiptActi
       a.click();
       document.body.removeChild(a);
       
-      // No toast for download - it's obvious from browser behavior
+      toast.success("Receipt download started");
     } catch (error) {
       console.error("Failed to download receipt:", error);
       toast.error("Failed to download receipt");

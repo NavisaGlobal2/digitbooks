@@ -11,20 +11,30 @@ import { calculateSubtotal, calculateTax, calculateTotal } from "../calculations
  * Function to download the invoice using image capture and PDF conversion
  */
 export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
+  // Prevent multiple generation attempts
+  const toastId = toast.loading("Generating PDF...");
+  
   try {
-    toast.loading("Generating PDF...");
-    
     // Process the logo if it exists to avoid CORS issues
+    let processedLogo = invoiceDetails.logoPreview;
+    
     if (invoiceDetails.logoPreview) {
       try {
         // Create a new Image to properly load the logo with CORS handling
         const img = new Image();
         img.crossOrigin = "Anonymous";
         
-        // Wait for the image to load before proceeding
+        // Wait for the image to load before proceeding with a timeout
         await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
+          const timeout = setTimeout(() => reject(new Error("Logo load timeout")), 3000);
+          img.onload = () => {
+            clearTimeout(timeout);
+            resolve(null);
+          };
+          img.onerror = () => {
+            clearTimeout(timeout);
+            reject(new Error("Failed to load logo"));
+          };
           img.src = invoiceDetails.logoPreview;
         });
         
@@ -33,16 +43,22 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
         canvas.width = img.width;
         canvas.height = img.height;
         const ctx = canvas.getContext("2d");
-        ctx?.drawImage(img, 0, 0);
-        
-        // Replace the logo with a clean base64 version
-        invoiceDetails.logoPreview = canvas.toDataURL("image/png");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          // Replace the logo with a clean base64 version
+          processedLogo = canvas.toDataURL("image/png");
+        }
       } catch (error) {
         console.error("Error preprocessing logo:", error);
-        // If there's an error with the logo, we continue but without it
-        toast.error("Could not process logo, continuing without it");
+        processedLogo = null;
       }
     }
+    
+    // Create a modified invoice details object with the processed logo
+    const modifiedInvoiceDetails = {
+      ...invoiceDetails,
+      logoPreview: processedLogo
+    };
     
     // First try to find an existing preview element
     const previewElement = document.querySelector('.invoice-preview');
@@ -54,7 +70,15 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
         logging: false,
         useCORS: true, // Enable CORS for images
         allowTaint: true,
-        backgroundColor: "#ffffff"
+        backgroundColor: "#ffffff",
+        onclone: (clonedDoc) => {
+          // Find all images and ensure they load correctly
+          const images = clonedDoc.getElementsByTagName('img');
+          for (let i = 0; i < images.length; i++) {
+            const img = images[i];
+            img.crossOrigin = "anonymous";
+          }
+        }
       });
       
       // Create a new PDF document
@@ -76,21 +100,34 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
       // Save the PDF
       pdf.save(fileName);
       
-      toast.success("Invoice downloaded successfully!");
+      toast.success("Invoice downloaded successfully!", {
+        id: toastId
+      });
       return true;
     } else {
       // If no preview element exists, create a temporary one
-      const tempDiv = createTemporaryInvoiceElement(invoiceDetails);
+      const tempDiv = createTemporaryInvoiceElement(modifiedInvoiceDetails);
       document.body.appendChild(tempDiv);
       
       try {
+        // Wait longer for images to load properly before capturing
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        
         // Capture the temporary element
         const canvas = await html2canvas(tempDiv, {
           scale: 2,
           logging: false,
           useCORS: true,
           allowTaint: true,
-          backgroundColor: "#ffffff"
+          backgroundColor: "#ffffff",
+          onclone: (clonedDoc) => {
+            // Find all images and ensure they load correctly
+            const images = clonedDoc.getElementsByTagName('img');
+            for (let i = 0; i < images.length; i++) {
+              const img = images[i];
+              img.crossOrigin = "anonymous";
+            }
+          }
         });
         
         // Create a new PDF document
@@ -112,7 +149,9 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
         // Save the PDF
         pdf.save(fileName);
         
-        toast.success("Invoice downloaded successfully!");
+        toast.success("Invoice downloaded successfully!", {
+          id: toastId
+        });
         return true;
       } finally {
         // Always remove the temporary element
@@ -121,7 +160,9 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
     }
   } catch (error) {
     console.error("Error downloading invoice:", error);
-    toast.error("Failed to download invoice. Please try again.");
+    toast.error("Failed to download invoice. Please try again.", {
+      id: toastId
+    });
     return false;
   }
 };

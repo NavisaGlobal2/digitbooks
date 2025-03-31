@@ -29,7 +29,7 @@ export const useVendors = () => {
 export const VendorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { expenses } = useExpenses(); // This now works because VendorProvider is inside ExpenseProvider
+  const { expenses } = useExpenses();
   
   const calculateVendorStats = (vendorNames: string[], allExpenses: Expense[]) => {
     return vendorNames.map(name => {

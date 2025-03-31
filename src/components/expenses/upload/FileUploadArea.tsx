@@ -1,83 +1,88 @@
 
 import { Upload } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { useRef } from "react";
+import { useState } from "react";
 
 interface FileUploadAreaProps {
   file: File | null;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   disabled?: boolean;
-  errorState?: string | null;
 }
 
-const FileUploadArea = ({ file, onFileChange, disabled = false, errorState }: FileUploadAreaProps) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadAreaProps) => {
+  const [isDragging, setIsDragging] = useState(false);
   
-  const handleAreaClick = () => {
-    if (!disabled && fileInputRef.current) {
-      fileInputRef.current.click();
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!disabled) {
+      setIsDragging(true);
     }
   };
   
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+  
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    if (disabled) return;
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      // Create a synthetic event to pass to onFileChange
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      
+      // Create a new DataTransfer object and add the file
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(e.dataTransfer.files[0]);
+      fileInput.files = dataTransfer.files;
+      
+      const event = { target: fileInput } as unknown as React.ChangeEvent<HTMLInputElement>;
+      onFileChange(event);
+    }
+  };
+
   return (
-    <div>
-      <Label htmlFor="bank-statement" className="mb-2 block">
-        Select statement file
-      </Label>
-      <div className="mt-1">
-        <div 
-          onClick={handleAreaClick}
-          className={`flex items-center justify-center w-full h-32 px-4 transition bg-white border-2 
-            ${file ? (errorState ? 'border-red-300' : 'border-green-300') : 'border-gray-300'} 
-            ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'border-dashed hover:border-gray-400 cursor-pointer'} 
-            rounded-md appearance-none focus:outline-none`}
-        >
-          {file ? (
-            <div className="text-center">
-              <p className="text-sm text-gray-600">{file.name}</p>
-              <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-              {file.size > 5 * 1024 * 1024 && (
-                <p className="text-xs text-amber-500 mt-1">
-                  Large file might take longer to process
-                </p>
-              )}
-              {!isAcceptedFileType(file.name) && (
-                <p className="text-xs text-red-500 mt-1">
-                  Unsupported file format. Please upload CSV, Excel or PDF files only
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center space-y-2">
-              <Upload className="w-8 h-8 text-gray-400" />
-              <span className="text-sm text-gray-500">
-                Drop your bank statement here or click to browse
-              </span>
-              <span className="text-xs text-gray-400">
-                Supports CSV, Excel and PDF formats
-              </span>
-            </div>
-          )}
+    <div 
+      className={`border-2 ${isDragging ? 'border-green-500 bg-green-50' : 'border-dashed'} rounded-lg p-6 flex flex-col items-center justify-center transition-colors ${disabled ? 'opacity-70' : 'cursor-pointer'}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      onClick={() => {
+        if (!disabled) {
+          document.getElementById('file-upload')?.click();
+        }
+      }}
+    >
+      <div className="flex flex-col items-center justify-center space-y-2">
+        <div className="p-3 bg-muted rounded-full">
+          <Upload className="h-6 w-6 text-muted-foreground" />
         </div>
-        {/* Hidden file input that gets triggered by the area click */}
-        <input
-          ref={fileInputRef}
-          id="bank-statement"
-          type="file"
-          className="hidden"
-          accept=".csv,.xls,.xlsx,.pdf"
-          onChange={onFileChange}
-          disabled={disabled}
-        />
+        <p className="text-sm font-medium">
+          {file ? file.name : 'Drag and drop your statement file, or click to select'}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Supports CSV, Excel, and PDF files
+        </p>
+      </div>
+      <div className="mt-4">
+        <label className={`${disabled ? '' : 'cursor-pointer'}`}>
+          <input
+            id="file-upload"
+            type="file"
+            className="hidden"
+            accept=".csv, .xlsx, .xls, .pdf"
+            onChange={onFileChange}
+            disabled={disabled}
+          />
+          <div className="px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md text-sm font-medium">
+            Select File
+          </div>
+        </label>
       </div>
     </div>
   );
-};
-
-// Helper function to check if file type is accepted
-const isAcceptedFileType = (filename: string): boolean => {
-  const ext = filename.toLowerCase().split('.').pop();
-  return ext === 'csv' || ext === 'xls' || ext === 'xlsx' || ext === 'pdf';
 };
 
 export default FileUploadArea;

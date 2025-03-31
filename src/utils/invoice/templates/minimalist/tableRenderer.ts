@@ -3,67 +3,79 @@
  * Table component for minimalist invoice template
  */
 import jsPDF from "jspdf";
-import { formatTableCurrency } from "../../formatters";
+import { InvoiceItem } from "@/types/invoice";
+import { formatNaira } from "../../formatters";
 
 /**
- * Render invoice items table with minimalist styling
+ * Render items table with minimalist styling
  */
 export const renderTable = (
   doc: jsPDF,
-  invoiceItems: any[],
+  invoiceItems: InvoiceItem[],
   yPos: number,
   colors: any,
   margins: any
 ): number => {
-  // Set up table headers and data
-  const tableHeaders = ["Item", "Qty", "Price", "Tax", "Amount"];
+  // Column positions
+  const startX = margins.left;
+  const col1 = startX; // Description
+  const col2 = startX + 120; // Quantity
+  const col3 = startX + 150; // Price
+  const col4 = startX + 180; // Tax
+  const col5 = startX + 210; // Amount
   
-  const tableBody = invoiceItems.map(item => [
-    item.description,
-    item.quantity.toString(),
-    formatTableCurrency(item.price),
-    `${item.tax}%`,
-    formatTableCurrency(item.quantity * item.price)
-  ]);
+  // Header
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text("DESCRIPTION", col1, yPos);
+  doc.text("QTY", col2, yPos);
+  doc.text("PRICE", col3, yPos);
+  doc.text("TAX", col4, yPos);
+  doc.text("AMOUNT", col5, yPos);
   
-  // Create the table with minimal styling
-  (doc as any).autoTable({
-    startY: yPos,
-    head: [tableHeaders],
-    body: tableBody,
-    margin: { left: margins.left, right: margins.right },
-    headStyles: {
-      fillColor: [255, 255, 255], // White background
-      textColor: [80, 80, 80],    // Dark gray text
-      fontSize: 10,
-      fontStyle: 'bold',
-      lineWidth: 0,
-      lineColor: [220, 220, 220],
-      cellPadding: 5
-    },
-    bodyStyles: {
-      fontSize: 9,
-      lineColor: [240, 240, 240],
-      lineWidth: 0.1,
-      cellPadding: 5
-    },
-    columnStyles: {
-      0: { cellWidth: 'auto' },
-      1: { halign: 'center' },
-      2: { halign: 'right' },
-      3: { halign: 'center' },
-      4: { halign: 'right' }
-    },
-    didParseCell: (data: any) => {
-      // Add subtle bottom border to header cells only
-      if (data.row.index === 0) {
-        data.cell.styles.lineWidth = [0, 0, 0.5, 0];
-        data.cell.styles.lineColor = [220, 220, 220];
-      }
-    },
-    tableLineColor: [255, 255, 255], // No border around table
-    tableLineWidth: 0
-  });
+  // Simple separator
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.5);
+  doc.line(startX, yPos + 3, startX + 220, yPos + 3);
   
-  return (doc as any).lastAutoTable.finalY;
+  // Content
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  
+  let rowY = yPos + 15;
+  const rowHeight = 12;
+  
+  for (const item of invoiceItems) {
+    // Split long descriptions to multiple lines if needed
+    const descriptionLines = doc.splitTextToSize(item.description, 110);
+    const descriptionHeight = descriptionLines.length * 5;
+    
+    // Calculate row height based on description length
+    const currentRowHeight = Math.max(rowHeight, descriptionHeight);
+    
+    // Description (possibly multi-line)
+    doc.text(descriptionLines, col1, rowY);
+    
+    // Quantity (centered)
+    doc.text(item.quantity.toString(), col2, rowY, { align: 'left' });
+    
+    // Price (right-aligned)
+    doc.text(formatNaira(item.price), col3, rowY, { align: 'left' });
+    
+    // Tax (centered)
+    doc.text(`${item.tax}%`, col4, rowY, { align: 'left' });
+    
+    // Amount (right-aligned)
+    doc.text(formatNaira(item.quantity * item.price), col5, rowY, { align: 'left' });
+    
+    // Row separator
+    doc.setDrawColor(240, 240, 240);
+    doc.setLineWidth(0.2);
+    doc.line(startX, rowY + 5, startX + 220, rowY + 5);
+    
+    // Update position for next row
+    rowY += currentRowHeight;
+  }
+  
+  return rowY + 5;
 };

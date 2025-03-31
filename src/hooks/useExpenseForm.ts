@@ -81,7 +81,7 @@ export const useExpenseForm = (onComplete?: () => void, initialValues?: {
             receiptUrl: reader.result as string
           });
           
-          toast.success("Expense added");
+          toast.success("Expense added successfully");
           clearForm();
           if (onComplete) onComplete();
         };
@@ -96,7 +96,7 @@ export const useExpenseForm = (onComplete?: () => void, initialValues?: {
       } else {
         // Add expense without receipt
         addExpense(newExpense);
-        toast.success("Expense added");
+        toast.success("Expense added successfully");
         clearForm();
         if (onComplete) onComplete();
       }

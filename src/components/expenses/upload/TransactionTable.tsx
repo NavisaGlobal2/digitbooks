@@ -14,6 +14,8 @@ import { EXPENSE_CATEGORIES } from "@/utils/expenseCategories";
 import { ExpenseCategory } from "@/types/expense";
 import { ParsedTransaction } from "./parsers/types";
 import { formatCurrency } from "@/utils/invoice/formatters";
+import { Sparkles } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TransactionTableProps {
   transactions: ParsedTransaction[];
@@ -77,24 +79,47 @@ const TransactionTable = ({
               </TableCell>
               <TableCell>
                 {transaction.type === 'debit' ? (
-                  <Select
-                    value={transaction.category}
-                    onValueChange={(value) => 
-                      onSetCategory(transaction.id, value as ExpenseCategory)
-                    }
-                    disabled={!transaction.selected}
-                  >
-                    <SelectTrigger className={`w-full ${!transaction.category && transaction.selected ? "border-red-300" : ""}`}>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EXPENSE_CATEGORIES.map((category) => (
-                        <SelectItem key={category.value} value={category.value}>
-                          {category.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-1">
+                    <Select
+                      value={transaction.category}
+                      onValueChange={(value) => 
+                        onSetCategory(transaction.id, value as ExpenseCategory)
+                      }
+                      disabled={!transaction.selected}
+                    >
+                      <SelectTrigger className={`w-full ${!transaction.category && transaction.selected ? "border-red-300" : ""}`}>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {EXPENSE_CATEGORIES.map((category) => (
+                          <SelectItem key={category.value} value={category.value}>
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {transaction.categorySuggestion && transaction.categorySuggestion.confidence > 0.5 && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="cursor-help">
+                              <Sparkles 
+                                className={`h-4 w-4 ml-1 ${transaction.category ? 'text-gray-400' : 'text-yellow-500 animate-pulse'}`} 
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            <p className="text-sm">
+                              Suggested: <span className="font-medium">{EXPENSE_CATEGORIES.find(c => c.value === transaction.categorySuggestion?.category)?.label}</span>
+                              <br />
+                              <span className="text-xs opacity-70">Confidence: {Math.round(transaction.categorySuggestion.confidence * 100)}%</span>
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
                 ) : (
                   <span className="text-sm text-gray-500 italic">N/A</span>
                 )}

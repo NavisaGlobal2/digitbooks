@@ -48,18 +48,24 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const dbExpenses = await loadExpenses();
         
         if (dbExpenses && dbExpenses.length > 0) {
+          console.log(`Loaded ${dbExpenses.length} expenses from database`);
           setExpenses(dbExpenses);
         } else {
+          console.log('No expenses found in database, checking local storage');
           // Fallback to local storage if no database expenses found
           const localExpenses = loadExpensesFromLocalStorage();
           
-          if (localExpenses) {
+          if (localExpenses && localExpenses.length > 0) {
+            console.log(`Loaded ${localExpenses.length} expenses from local storage`);
             setExpenses(localExpenses);
             
             // If user is authenticated, sync local expenses to database
             if (currentUserId && localExpenses.length > 0) {
+              console.log(`Syncing ${localExpenses.length} local expenses to database`);
               syncLocalExpensesToDatabase(localExpenses);
             }
+          } else {
+            console.log('No expenses found in local storage either');
           }
         }
       } catch (error) {
@@ -78,7 +84,12 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Sync local expenses to database when user is authenticated
   const syncLocalExpensesToDatabase = async (localExpenses: Expense[]) => {
-    await addExpensesBatch(localExpenses);
+    try {
+      const result = await addExpensesBatch(localExpenses);
+      console.log(`Synced ${result.syncedCount} of ${localExpenses.length} expenses to database`);
+    } catch (error) {
+      console.error("Failed to sync local expenses to database:", error);
+    }
   };
 
   // Add a single expense
@@ -88,11 +99,22 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       id: crypto.randomUUID(),
     };
     
+    console.log('Adding new expense:', newExpense);
     setExpenses(prev => [newExpense, ...prev]);
     
-    const result = await dbAddExpense(newExpense);
-    if (!result.success) {
-      toast.error(result.message);
+    try {
+      const result = await dbAddExpense(newExpense);
+      console.log('Database add expense result:', result);
+      
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.warning(result.message);
+        console.warn('Database sync issue:', result.message);
+      }
+    } catch (error) {
+      console.error("Failed to save expense to database:", error);
+      toast.error("Expense saved locally but failed to sync with database");
     }
   };
 
@@ -103,13 +125,21 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       id: crypto.randomUUID(),
     }));
     
+    console.log(`Adding ${newExpenses.length} new expenses`);
     setExpenses(prev => [...newExpenses, ...prev]);
     
-    const result = await addExpensesBatch(newExpenses);
-    if (!result.success) {
-      toast.error(result.message);
-    } else if (newExpenses.length > 5) {
-      toast.success(`${newExpenses.length} expenses imported`);
+    try {
+      const result = await addExpensesBatch(newExpenses);
+      console.log('Database add expenses batch result:', result);
+      
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.warning(result.message);
+      }
+    } catch (error) {
+      console.error("Failed to save expenses batch to database:", error);
+      toast.error("Expenses saved locally but failed to sync with database");
     }
   };
 
@@ -126,9 +156,18 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const expense = expenses.find(e => e.id === expenseId);
     
     if (expense) {
-      const result = await dbUpdateExpenseStatus(expense, status);
-      if (!result.success) {
-        toast.error(result.message);
+      try {
+        const result = await dbUpdateExpenseStatus(expense, status);
+        console.log('Database update expense status result:', result);
+        
+        if (result.success) {
+          toast.success(result.message);
+        } else {
+          toast.warning(result.message);
+        }
+      } catch (error) {
+        console.error("Failed to update expense status in database:", error);
+        toast.error("Status updated locally but failed to sync with database");
       }
     }
   };
@@ -143,9 +182,18 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       )
     );
     
-    const result = await dbUpdateExpense(updatedExpense);
-    if (!result.success) {
-      toast.error(result.message);
+    try {
+      const result = await dbUpdateExpense(updatedExpense);
+      console.log('Database update expense result:', result);
+      
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.warning(result.message);
+      }
+    } catch (error) {
+      console.error("Failed to update expense in database:", error);
+      toast.error("Expense updated locally but failed to sync with database");
     }
   };
 
@@ -153,9 +201,18 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const deleteExpense = async (expenseId: string) => {
     setExpenses(prev => prev.filter(expense => expense.id !== expenseId));
     
-    const result = await dbDeleteExpense(expenseId);
-    if (!result.success) {
-      toast.error(result.message);
+    try {
+      const result = await dbDeleteExpense(expenseId);
+      console.log('Database delete expense result:', result);
+      
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error("Failed to delete expense from database:", error);
+      toast.error("Expense removed locally but failed to sync with database");
     }
   };
 

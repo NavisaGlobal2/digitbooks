@@ -13,7 +13,7 @@ import {
 } from "./upload/transactionStorage";
 import UploadDialogContent from "./upload/components/UploadDialogContent";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 interface BankStatementUploadDialogProps {
   open: boolean;
@@ -32,7 +32,15 @@ const BankStatementUploadDialog = ({
   const [processingComplete, setProcessingComplete] = useState(false);
   
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
-    setParsedTransactions(transactions);
+    console.log(`Received ${transactions.length} parsed transactions`);
+    
+    // Pre-select all debit transactions by default
+    const preSelectedTransactions = transactions.map(tx => ({
+      ...tx,
+      selected: tx.type === 'debit' // Automatically select debit transactions
+    }));
+    
+    setParsedTransactions(preSelectedTransactions);
     setProcessingComplete(true);
     setShowTaggingDialog(true);
   };
@@ -46,20 +54,31 @@ const BankStatementUploadDialog = ({
     clearFile,
     progress,
     step,
+    isWaitingForServer,
     cancelProgress,
-    isAuthenticated
+    isAuthenticated,
+    preferredAIProvider,
+    setPreferredAIProvider
   } = useStatementUpload(handleTransactionsParsed);
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
-    // Generate a unique batch ID for this import using UUID
+    // Generate a unique batch ID using UUID for this import
     const batchId = uuidv4();
     
     try {
+      const selectedCount = taggedTransactions.filter(tx => tx.selected).length;
+      console.log(`Processing ${selectedCount} selected transactions out of ${taggedTransactions.length} tagged transactions with batch ID: ${batchId}`);
+      
+      if (selectedCount === 0) {
+        toast.warning("No transactions selected. Please select at least one transaction.");
+        return;
+      }
+      
       // Save transactions to database first
       const dbSaveSuccess = await saveTransactionsToDatabase(taggedTransactions, batchId);
       
       if (!dbSaveSuccess) {
-        toast.error("Failed to store transaction data");
+        toast.error("Failed to save bank transaction data. Please try again.");
         return;
       }
       
@@ -71,12 +90,16 @@ const BankStatementUploadDialog = ({
       );
       
       if (expensesToSave.length === 0) {
-        toast.warning("No expenses to save. Please tag at least one transaction.");
+        toast.warning("No expenses to save. Please tag at least one transaction as an expense category.");
         return;
       }
       
+      console.log(`Saving ${expensesToSave.length} expenses to the expense tracker`);
+      
       // Save the expenses
-      addExpenses(expensesToSave);
+      await addExpenses(expensesToSave);
+      
+      toast.success(`${expensesToSave.length} expenses imported successfully!`);
       
       // Reset state
       clearFile();
@@ -120,6 +143,8 @@ const BankStatementUploadDialog = ({
             progress={progress}
             step={step}
             isAuthenticated={isAuthenticated}
+            preferredAIProvider={preferredAIProvider}
+            setPreferredAIProvider={setPreferredAIProvider}
           />
         </DialogContent>
       </Dialog>

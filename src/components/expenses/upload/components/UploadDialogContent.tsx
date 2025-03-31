@@ -1,14 +1,14 @@
 
-import { DialogDescription } from "@/components/ui/dialog";
+import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { X, AlertTriangle } from "lucide-react";
 import FileUploadArea from "../FileUploadArea";
 import ErrorDisplay from "../ErrorDisplay";
 import ProgressIndicator from "./ProgressIndicator";
+import ProcessingModeToggle from "./ProcessingModeToggle";
 import SupportedFormatsInfo from "./SupportedFormatsInfo";
-import UploadDialogFooter from "../UploadDialogFooter";
-import DialogHeader from "../DialogHeader";
-import { downloadCSVTemplate } from "@/utils/csvTemplateGenerator";
-import { AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import ConnectionStatistics from "./ConnectionStatistics";
+import { useState, useEffect } from "react";
 
 interface UploadDialogContentProps {
   file: File | null;
@@ -19,7 +19,10 @@ interface UploadDialogContentProps {
   onClose: () => void;
   progress: number;
   step: string;
-  isAuthenticated: boolean | null;
+  isAuthenticated?: boolean;
+  preferredAIProvider?: string;
+  setPreferredAIProvider?: (provider: string) => void;
+  isWaitingForServer?: boolean;
 }
 
 const UploadDialogContent = ({
@@ -31,70 +34,101 @@ const UploadDialogContent = ({
   onClose,
   progress,
   step,
-  isAuthenticated
+  isAuthenticated,
+  preferredAIProvider,
+  setPreferredAIProvider,
+  isWaitingForServer = false
 }: UploadDialogContentProps) => {
-  const handleDownloadTemplate = () => {
-    downloadCSVTemplate();
+  const [useEdgeFunction, setUseEdgeFunction] = useState(true);
+  const [edgeFunctionAvailable, setEdgeFunctionAvailable] = useState(true);
+  
+  const toggleEdgeFunction = () => {
+    setUseEdgeFunction(!useEdgeFunction);
   };
-
-  // Helper function to check if file is supported for parsing
-  const isFileSupported = (file: File | null): boolean => {
-    if (!file) return false;
-    const ext = file.name.toLowerCase().split('.').pop();
-    return ext === 'csv' || ext === 'xlsx' || ext === 'xls' || ext === 'pdf';
-  };
+  
+  // Check if the CSV file has been selected
+  const isCsvFile = file && file.name.toLowerCase().endsWith('.csv');
+  
+  // For non-CSV files, we should force edge function processing
+  useEffect(() => {
+    if (file && !file.name.toLowerCase().endsWith('.csv')) {
+      setUseEdgeFunction(true);
+    }
+  }, [file]);
 
   return (
     <>
-      <DialogHeader title="Upload Bank Statement" />
-      <DialogDescription className="text-center text-sm text-muted-foreground">
-        Upload your bank statement CSV, Excel or PDF to automatically create expenses
-      </DialogDescription>
-      
-      <div className="space-y-4 p-4 pt-2">
-        <ErrorDisplay error={error} />
-        
-        <FileUploadArea 
-          file={file} 
-          onFileChange={handleFileChange} 
-          disabled={uploading}
-          errorState={error}
-        />
-        
-        {isAuthenticated === false && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
-            <div className="text-sm text-yellow-800">
-              <p>You need to be signed in to use this feature.</p>
-              <Button 
-                variant="link" 
-                className="p-0 h-auto text-yellow-700 font-semibold"
-                onClick={() => window.location.href = '/auth'}
+      <DialogHeader>
+        <div className="flex items-center justify-between">
+          <DialogTitle>Upload Bank Statement</DialogTitle>
+          <Button variant="ghost" size="icon" onClick={onClose} disabled={uploading}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <DialogDescription>
+          Upload your bank statement to extract transactions
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="space-y-4">
+        {uploading ? (
+          <ProgressIndicator 
+            progress={progress} 
+            step={step} 
+            isVisible={true}
+            isWaitingForServer={isWaitingForServer}
+            onCancel={onClose}
+          />
+        ) : (
+          <>
+            {!isAuthenticated && (
+              <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded mb-4">
+                <div className="flex items-start">
+                  <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5 mr-2" />
+                  <div>
+                    <p className="font-bold">Authentication Required</p>
+                    <p>You need to be signed in to upload bank statements. Please sign in and try again.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <FileUploadArea 
+              file={file} 
+              onFileChange={handleFileChange} 
+              disabled={uploading} 
+            />
+            
+            {file && isCsvFile && (
+              <ProcessingModeToggle 
+                useEdgeFunction={useEdgeFunction} 
+                toggleEdgeFunction={toggleEdgeFunction}
+                edgeFunctionAvailable={edgeFunctionAvailable}
+                disabled={uploading}
+                isAuthenticated={isAuthenticated}
+                preferredAIProvider={preferredAIProvider}
+                setPreferredAIProvider={setPreferredAIProvider}
+              />
+            )}
+            
+            {error && <ErrorDisplay error={error} />}
+            
+            <SupportedFormatsInfo />
+            
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                disabled={!file || uploading || !isAuthenticated}
+                onClick={parseFile}
+                className="bg-green-500 hover:bg-green-600 text-white"
               >
-                Sign in now
+                Process Statement
               </Button>
             </div>
-          </div>
+            
+            <ConnectionStatistics />
+          </>
         )}
-        
-        <ProgressIndicator 
-          progress={progress} 
-          step={step} 
-          isVisible={uploading}
-        />
-        
-        <SupportedFormatsInfo 
-          isAuthenticated={isAuthenticated} 
-          onDownloadTemplate={handleDownloadTemplate}
-        />
-        
-        <UploadDialogFooter
-          onCancel={onClose}
-          onParse={parseFile}
-          uploading={uploading}
-          disabled={!file || isAuthenticated === false || !isFileSupported(file)}
-          showCancelButton={uploading}
-        />
       </div>
     </>
   );

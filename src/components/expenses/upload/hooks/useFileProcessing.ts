@@ -1,20 +1,18 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { supabase } from '@/integrations/supabase/client';
-import { ParsedTransaction } from "../parsers/types";
-import { getAuthToken, getApiEndpoint, API_BASE } from "../parsers/api/apiHelpers";
-import { mapDatabaseTransactions, mapApiResponseTransactions } from "../parsers/api/transactionMapper";
-import { ApiResponse } from "../parsers/api/types";
+import { ParsedTransaction } from "../parsers";
+import { parseViaEdgeFunction } from "../parsers/edgeFunctionParser";
+import { supabase } from "@/integrations/supabase/client";
 
-interface UseFileProcessingProps {
+interface FileProcessingProps {
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
-  handleError: (message: string) => void;
+  handleError: (errorMessage: string) => boolean;
   resetProgress: () => void;
   completeProgress: () => void;
-  showFallbackMessage: () => void;
+  showFallbackMessage: (message?: string) => void;
   isCancelled: boolean;
-  setIsWaitingForServer: (waiting: boolean) => void;
+  setIsWaitingForServer?: (isWaiting: boolean) => void;
 }
 
 export const useFileProcessing = ({
@@ -25,138 +23,125 @@ export const useFileProcessing = ({
   showFallbackMessage,
   isCancelled,
   setIsWaitingForServer
-}: UseFileProcessingProps) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+}: FileProcessingProps) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
+  const [processing, setProcessing] = useState(false);
 
-  // Process using API
-  const processServerSide = async (file: File): Promise<void> => {
+  // Check authentication status on mount
+  useState(() => {
+    const checkAuthStatus = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+    
+    checkAuthStatus();
+  });
+
+  const processServerSide = async (file: File) => {
     try {
-      setIsWaitingForServer(true);
+      setProcessing(true);
       
-      // Check authentication
-      const token = await getAuthToken();
+      // If we're waiting for server, update the UI
+      if (setIsWaitingForServer) {
+        setIsWaitingForServer(true);
+      }
       
-      if (!token) {
-        setIsAuthenticated(false);
-        handleError("Authentication required to process bank statements. Please sign in and try again.");
+      // Check authentication before starting the server request
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session || !sessionData.session.access_token) {
+        handleError("You need to be signed in to use server-side processing. Please sign in and try again.");
         resetProgress();
+        if (setIsWaitingForServer) {
+          setIsWaitingForServer(false);
+        }
+        setProcessing(false);
         return;
       }
       
-      console.log(`Processing ${file.name} (${file.type}) to API endpoint...`);
-      
-      // Prepare form data
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      // Get appropriate endpoint
-      const endpoint = getApiEndpoint(file);
-      
-      try {
-        // Call the API
-        const response = await fetch(`${API_BASE}/${endpoint}`, {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`API returned status ${response.status}: ${errorText}`);
-        }
-        
-        const responseData = await response.json() as ApiResponse;
-        
-        // Handle API errors
-        if (responseData.success === false) {
-          handleError(`API Error: ${responseData.message || "Unknown error processing statement"}`);
-          resetProgress();
-          return;
-        }
-        
-        // Check if we're getting the new API format with statement_id
-        if (responseData.success && responseData.statement_id && !responseData.transactions) {
-          // Fetch transactions from database
-          const transactions = await mapDatabaseTransactions(responseData.statement_id);
-          
-          if (transactions.length === 0) {
-            handleError("Transactions were processed but couldn't be retrieved from the database.");
-            resetProgress();
-            return;
-          }
-          
-          console.log(`Successfully parsed ${transactions.length} transactions`);
+      // Now process with edge function
+      await parseViaEdgeFunction(
+        file,
+        (transactions) => {
+          if (isCancelled) return;
           completeProgress();
+          if (setIsWaitingForServer) {
+            setIsWaitingForServer(false);
+          }
+          setProcessing(false);
           onTransactionsParsed(transactions);
-          return;
-        }
-        
-        // Handle the legacy response format
-        if (!responseData.transactions || !Array.isArray(responseData.transactions)) {
-          console.error('Invalid response data:', responseData);
-          handleError("The server returned an invalid response. Please try again.");
+        },
+        (errorMessage) => {
+          if (isCancelled) return true;
+          
+          setProcessing(false);
+          
+          if (setIsWaitingForServer) {
+            setIsWaitingForServer(false);
+          }
+          
+          const isAuthError = errorMessage.toLowerCase().includes('auth') || 
+                            errorMessage.toLowerCase().includes('sign in') ||
+                            errorMessage.toLowerCase().includes('token');
+                            
+          const isAnthropicError = errorMessage.toLowerCase().includes('anthropic') ||
+                           errorMessage.toLowerCase().includes('api key') || 
+                           errorMessage.toLowerCase().includes('overloaded');
+
+          const isDeepSeekError = errorMessage.toLowerCase().includes('deepseek');
+          
+          // Show the error message to the user
+          handleError(errorMessage);
+          
+          // For service overload errors with CSV files, continue with warning
+          if ((isAnthropicError || isDeepSeekError) && file.name.toLowerCase().endsWith('.csv')) {
+            showFallbackMessage("AI service is currently unavailable. Using basic CSV parser as fallback.");
+            // Don't reset progress to allow fallback to continue
+            return false;
+          }
+          
+          // For auth or critical API errors, don't try to fallback
+          if (isAuthError || (isAnthropicError && isDeepSeekError)) {
+            resetProgress();
+            
+            if ((isAnthropicError || isDeepSeekError) && !file.name.toLowerCase().endsWith('.csv')) {
+              toast.error("Both AI processing services are currently unavailable. Try using a CSV file format instead.");
+            }
+            
+            return true;
+          }
+          
           resetProgress();
-          return;
-        }
-        
-        // Map the transactions
-        const transactions = mapApiResponseTransactions(responseData.transactions, responseData.batchId);
-        
-        if (transactions.length === 0) {
-          handleError("No transactions found in the file. Please check the format and try again.");
-          resetProgress();
-          return;
-        }
-        
-        console.log(`Successfully parsed ${transactions.length} transactions`);
-        completeProgress();
-        onTransactionsParsed(transactions);
-        
-      } catch (invokeError) {
-        console.error("Error calling API:", invokeError);
-        handleError(`Server error: ${invokeError instanceof Error ? invokeError.message : 'Unknown error'}`);
-        resetProgress();
-        return;
-      }
-    } catch (error) {
-      console.error('Error in processServerSide:', error);
+          return true;
+        },
+        preferredAIProvider
+      );
+    } catch (error: any) {
+      if (isCancelled) return;
       
-      if ((error as Error).message.includes('network') || (error as Error).message.includes('fetch')) {
-        handleError("Network error. Please check your connection and try again.");
-      } else {
-        handleError(`Error processing file: ${(error as Error).message}`);
+      setProcessing(false);
+      
+      if (setIsWaitingForServer) {
+        setIsWaitingForServer(false);
       }
       
+      console.error("Edge function error:", error);
+      handleError(error.message || "Error processing file on server.");
       resetProgress();
-      showFallbackMessage();
-    } finally {
-      setIsWaitingForServer(false);
+      
+      // For CSV files, suggest using client-side parsing as fallback
+      if (file.name.toLowerCase().endsWith('.csv')) {
+        toast.info("Server processing failed. You can try uploading the file again.");
+      }
     }
   };
 
-  // Helper function to process receipt files
-  const processReceiptFile = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      
-      reader.onload = () => {
-        const receiptUrl = reader.result as string;
-        resolve(receiptUrl);
-      };
-      
-      reader.onerror = () => {
-        toast.error("Failed to process receipt file");
-        reject("Failed to process receipt file");
-      };
-    });
-  };
-
   return {
+    processing,
     processServerSide,
-    processReceiptFile,
-    isAuthenticated
+    isAuthenticated,
+    preferredAIProvider,
+    setPreferredAIProvider
   };
 };

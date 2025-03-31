@@ -24,11 +24,11 @@ const ExpensesPage = () => {
   
   const handleDeleteExpense = (id: string) => {
     deleteExpense(id);
-    toast.success("Expense deleted");
+    toast.success("Expense deleted successfully");
   };
 
   const handleStatementProcessed = () => {
-    toast.success("Bank statement processed");
+    toast.success("Bank statement processed successfully! Transactions have been added to your expenses.");
   };
   
   return (

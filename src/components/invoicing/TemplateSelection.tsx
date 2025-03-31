@@ -42,7 +42,11 @@ const TemplateSelection = ({ selectedTemplate, setSelectedTemplate }: TemplateSe
           onClick={() => setSelectedTemplate("minimalist")}
         >
           <div className="aspect-[3/4] bg-white rounded border border-gray-200 flex items-center justify-center">
-            <FileText className="text-gray-400" size={48} />
+            <img 
+              src="/lovable-uploads/a24925e2-43db-4889-a722-45a1c1440051.png" 
+              alt="Minimalist template" 
+              className="w-full h-full object-contain"
+            />
           </div>
           <p className="text-sm text-center mt-2">Minimalist template</p>
         </div>

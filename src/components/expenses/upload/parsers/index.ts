@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { ParsedTransaction } from "./types";
 import { parseCSVFile, CSVParseResult } from "./csvParser";
 import { parseExcelFile } from "./excelParser";
+import { parsePDFFile } from "./pdfParser";
 import { parseViaEdgeFunction } from "./edgeFunctionParser";
 
 export type { ParsedTransaction } from "./types";
@@ -39,15 +40,15 @@ export const parseStatementFile = (
         onError
       );
     } else if (fileExt === 'xlsx' || fileExt === 'xls') {
-      parseExcelFile(
-        file,
-        (transactions: ParsedTransaction[]) => {
-          onSuccess(transactions);
-        },
-        onError
-      );
+      parseExcelFile(file, (transactions: ParsedTransaction[]) => {
+        onSuccess(transactions);
+      }, onError);
+    } else if (fileExt === 'pdf') {
+      parsePDFFile(file, (transactions: ParsedTransaction[]) => {
+        onSuccess(transactions);
+      }, onError);
     } else {
-      onError(`Unsupported file format: ${fileExt || 'unknown'}. Please upload CSV or Excel files only.`);
+      onError(`Unsupported file format: ${fileExt || 'unknown'}. Please upload CSV, Excel, or PDF files.`);
     }
   } catch (error) {
     console.error("Error in parseStatementFile:", error);
