@@ -9,13 +9,11 @@ export interface InvoiceItem {
 }
 
 export interface PaymentRecord {
-  id?: string;  // Making id optional to maintain compatibility
   amount: number;
   date: Date;
   method: string;
   receiptUrl?: string | null;
   reference?: string;
-  notes?: string;  // Added notes field from InvoiceTable's interface
 }
 
 export interface Invoice {

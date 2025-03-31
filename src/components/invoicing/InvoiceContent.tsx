@@ -39,18 +39,19 @@ const InvoiceContent = ({
   }, [invoices, searchQuery]);
   
   const handleMarkAsPaid = useCallback(async (invoiceId: string, payments: PaymentRecord[]) => {
-    if (isProcessingPayment) return Promise.reject("Already processing payment");
+    if (isProcessingPayment) return;
     
     setIsProcessingPayment(true);
     
     try {
-      await markInvoiceAsPaid(invoiceId, payments);
+      // Add a delay to ensure proper state updates and prevent UI glitches
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      markInvoiceAsPaid(invoiceId, payments);
       toast.success("Payment recorded successfully");
-      return Promise.resolve();
     } catch (error) {
       console.error("Error marking invoice as paid:", error);
       toast.error("Failed to record payment");
-      return Promise.reject(error);
     } finally {
       // Add a delay before resetting the processing state
       setTimeout(() => {

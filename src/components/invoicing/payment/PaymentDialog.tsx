@@ -7,14 +7,13 @@ import { PaymentRecord } from "@/types/invoice";
 import { PaymentRecordComponent } from "./PaymentRecord";
 import { PaymentSummary } from "./PaymentSummary";
 import { usePaymentDialog } from "./usePaymentDialog";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface PaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   invoiceId: string;
   invoiceAmount: number;
-  onMarkAsPaid: (invoiceId: string, payments: PaymentRecord[]) => Promise<void>;
+  onMarkAsPaid: (invoiceId: string, payments: PaymentRecord[]) => void;
   existingPayments?: PaymentRecord[];
 }
 
@@ -30,7 +29,6 @@ export const PaymentDialog = ({
     payments,
     totalPaid,
     isSubmitting,
-    isLoading,
     handleAddPayment,
     handleRemovePayment,
     handlePaymentChange,
@@ -69,38 +67,29 @@ export const PaymentDialog = ({
         </DialogHeader>
         
         <div className="space-y-6 py-4">
-          {isLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-          ) : (
-            <>
-              {payments.map((payment, index) => (
-                <PaymentRecordComponent
-                  key={payment.id}
-                  payment={payment}
-                  index={index}
-                  isRemovable={payments.length > 1}
-                  onChange={handlePaymentChange}
-                  onRemove={handleRemovePayment}
-                  onFileUpload={handleFileUpload}
-                />
-              ))}
-              
-              <Button 
-                type="button" 
-                variant="outline"
-                className="w-full"
-                onClick={handleAddPayment}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Another Payment
-              </Button>
-              
-              <PaymentSummary totalPaid={totalPaid} invoiceAmount={invoiceAmount} />
-            </>
-          )}
+          {payments.map((payment, index) => (
+            <PaymentRecordComponent
+              key={payment.id}
+              payment={payment}
+              index={index}
+              isRemovable={payments.length > 1}
+              onChange={handlePaymentChange}
+              onRemove={handleRemovePayment}
+              onFileUpload={handleFileUpload}
+            />
+          ))}
+          
+          <Button 
+            type="button" 
+            variant="outline"
+            className="w-full"
+            onClick={handleAddPayment}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Another Payment
+          </Button>
+          
+          <PaymentSummary totalPaid={totalPaid} invoiceAmount={invoiceAmount} />
         </div>
         
         <DialogFooter>
@@ -109,7 +98,7 @@ export const PaymentDialog = ({
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={isSubmitting || isLoading || totalPaid === 0}
+            disabled={isSubmitting || totalPaid === 0}
           >
             {isSubmitting ? "Saving..." : "Save Payment Records"}
           </Button>

@@ -1,9 +1,9 @@
 
-import React, { useState } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useState, useEffect } from "react";
+import InvoiceTabs from "./InvoiceTabs";
 import InvoiceContent from "./InvoiceContent";
-import InvoiceHistoryTab from "./history/InvoiceHistoryTab";
-import PaymentContent from "./payment/PaymentContent";
+import ClientContent from "./ClientContent";
+import ClientForm from "../clients/ClientForm";
 
 interface InvoiceDashboardProps {
   activeTab: string;
@@ -11,45 +11,52 @@ interface InvoiceDashboardProps {
   setIsCreatingInvoice: (value: boolean) => void;
 }
 
-const InvoiceDashboard = ({
-  activeTab,
-  setActiveTab,
-  setIsCreatingInvoice
+const InvoiceDashboard = ({ 
+  activeTab, 
+  setActiveTab, 
+  setIsCreatingInvoice 
 }: InvoiceDashboardProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-
+  const [isAddingClient, setIsAddingClient] = useState(false);
+  
+  useEffect(() => {
+    const handleInvoiceCreated = () => {
+      setIsCreatingInvoice(false);
+    };
+    
+    window.addEventListener('invoiceCreated', handleInvoiceCreated);
+    
+    return () => {
+      window.removeEventListener('invoiceCreated', handleInvoiceCreated);
+    };
+  }, [setIsCreatingInvoice]);
+  
   return (
-    <div className="container px-4 py-6">
-      <Tabs 
-        value={activeTab} 
-        onValueChange={setActiveTab}
-        className="w-full"
-      >
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="invoices">Invoices</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="invoices" className="mt-6">
+    <div className="flex flex-col h-full">
+      <InvoiceTabs 
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+      
+      <div className="flex-1 py-3 sm:py-4 px-4 sm:px-6">
+        {activeTab === "invoices" && (
           <InvoiceContent 
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             setIsCreatingInvoice={setIsCreatingInvoice}
           />
-        </TabsContent>
-
-        <TabsContent value="payments" className="mt-6">
-          <PaymentContent 
+        )}
+        
+        {activeTab === "clients" && (
+          <ClientContent 
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
+            setIsAddingClient={setIsAddingClient}
           />
-        </TabsContent>
-        
-        <TabsContent value="history" className="mt-6">
-          <InvoiceHistoryTab />
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
+      
+      <ClientForm open={isAddingClient} onOpenChange={setIsAddingClient} />
     </div>
   );
 };

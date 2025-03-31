@@ -10,13 +10,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { ReceiptUploader } from "./ReceiptUploader";
 
-// Internal interface that ensures we have an ID for UI operations
-interface PaymentRecordWithId extends PaymentRecord {
-  id: string;
-}
-
 interface PaymentRecordProps {
-  payment: PaymentRecordWithId;
+  payment: PaymentRecord & { id: string };
   index: number;
   isRemovable: boolean;
   onChange: (id: string, field: keyof PaymentRecord, value: any) => void;

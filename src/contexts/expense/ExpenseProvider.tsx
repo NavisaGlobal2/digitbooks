@@ -92,12 +92,12 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (result.success) {
         toast.success(result.message);
       } else {
-        // Don't show warning when local save works but database sync fails
+        toast.warning(result.message);
         console.warn('Database sync issue:', result.message);
       }
     } catch (error) {
       console.error("Failed to save expense to database:", error);
-      // Silent fail - don't show error to user as state was updated successfully
+      toast.error("Expense saved locally but failed to sync with database");
     }
   };
 
@@ -118,11 +118,11 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (result.success) {
         toast.success(result.message);
       } else {
-        console.warn(result.message);
+        toast.warning(result.message);
       }
     } catch (error) {
       console.error("Failed to save expenses batch to database:", error);
-      // No toast here - local update succeeded
+      toast.error("Expenses saved locally but failed to sync with database");
     }
   };
 
@@ -146,11 +146,11 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (result.success) {
           toast.success(result.message);
         } else {
-          console.warn(result.message);
+          toast.warning(result.message);
         }
       } catch (error) {
         console.error("Failed to update expense status in database:", error);
-        // No toast here - local update succeeded
+        toast.error("Status updated locally but failed to sync with database");
       }
     }
   };
@@ -172,11 +172,11 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (result.success) {
         toast.success(result.message);
       } else {
-        console.warn(result.message);
+        toast.warning(result.message);
       }
     } catch (error) {
       console.error("Failed to update expense in database:", error);
-      // No toast here - local update succeeded
+      toast.error("Expense updated locally but failed to sync with database");
     }
   };
 
@@ -190,16 +190,18 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       
       if (result.success) {
         toast.success(result.message);
+      } else {
+        toast.error(result.message);
       }
     } catch (error) {
       console.error("Failed to delete expense from database:", error);
-      // No toast here - local update succeeded
+      toast.error("Expense removed locally but failed to sync with database");
     }
   };
 
-  // Store expenses in local storage when they change - only for smaller datasets
+  // Store expenses in local storage when they change
   useEffect(() => {
-    if (expenses.length > 0 && expenses.length <= 100) {
+    if (expenses.length > 0) {
       safelyStoreExpenses(expenses);
     }
   }, [expenses]);

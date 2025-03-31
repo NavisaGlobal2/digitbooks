@@ -1,13 +1,11 @@
 
 import React, { RefObject } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, Printer, History, Calendar } from "lucide-react";
+import { ArrowLeft, Download, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { saveReportToDatabase } from "@/services/reportService";
-import ReportDateFilter from "../filters/ReportDateFilter";
 
 interface ReportActionsProps {
   onBack: () => void;
@@ -17,7 +15,6 @@ interface ReportActionsProps {
   reportRef: RefObject<HTMLDivElement>;
   reportData?: any;
   onDirectGeneration?: () => void;
-  onDateRangeChange?: (range: { startDate: Date; endDate: Date } | null) => void;
 }
 
 export const ReportActions: React.FC<ReportActionsProps> = ({
@@ -27,8 +24,7 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
   dateRange,
   reportRef,
   reportData,
-  onDirectGeneration,
-  onDateRangeChange
+  onDirectGeneration
 }) => {
   const handleDownload = async () => {
     try {
@@ -45,6 +41,7 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
       }
 
       toast.info(`Generating ${title} PDF...`);
+      console.log("Capturing report content element:", reportRef.current);
       
       // Capture the report content as an image
       const canvas = await html2canvas(reportRef.current, {
@@ -52,6 +49,7 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
+        logging: true, // Enable logging for debugging
       });
 
       // Create new PDF
@@ -73,23 +71,6 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
       const fileName = `${title.toLowerCase().replace(/\s+/g, "-")}_report_${format(new Date(), "yyyy-MM-dd")}.pdf`;
       pdf.save(fileName);
       
-      // Save report metadata to database for history
-      if (reportData) {
-        try {
-          await saveReportToDatabase(
-            title.toLowerCase().replace(/\s+/g, "-"),
-            title,
-            period,
-            dateRange,
-            reportData,
-            "pdf"
-          );
-        } catch (saveError) {
-          console.error("Error saving report to database:", saveError);
-          // Continue with success message even if database save fails
-        }
-      }
-      
       toast.success(`${title} report downloaded successfully!`);
     } catch (error) {
       console.error(`${title} PDF generation error:`, error);
@@ -102,54 +83,34 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
   };
 
   return (
-    <div className="space-y-4 print:hidden">
-      <div className="flex flex-col space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Report Details</h2>
-        </div>
-        <p className="text-muted-foreground">View and export your financial report</p>
-        
-        <div className="flex flex-wrap justify-between items-center gap-4 py-2">
-          {onDateRangeChange && (
-            <ReportDateFilter 
-              dateRange={dateRange}
-              onChange={onDateRangeChange}
-              onGenerateReport={handleDownload}
-            />
-          )}
-        </div>
-      </div>
-
-      <div className="flex flex-col xs:flex-row items-center justify-between gap-3">
+    <div className="flex flex-col xs:flex-row items-center justify-between gap-3 print:hidden">
+      <Button
+        variant="outline"
+        onClick={onBack}
+        className="flex items-center gap-1 w-full xs:w-auto"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Reports
+      </Button>
+      
+      <div className="flex items-center gap-2 w-full xs:w-auto">
         <Button
           variant="outline"
-          onClick={onBack}
-          className="flex items-center gap-1 w-full xs:w-auto"
+          onClick={handlePrint}
+          className="flex items-center gap-1 flex-1"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Reports
+          <Printer className="h-4 w-4" />
+          <span className="hidden sm:inline">Print</span>
         </Button>
         
-        <div className="flex items-center gap-2 w-full xs:w-auto">
-          <Button
-            variant="outline"
-            onClick={handlePrint}
-            className="flex items-center gap-1 flex-1"
-          >
-            <Printer className="h-4 w-4" />
-            <span className="hidden sm:inline">Print</span>
-          </Button>
-          
-          <Button
-            onClick={handleDownload}
-            variant="success"
-            className="flex items-center gap-1 flex-1"
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Download PDF</span>
-            <span className="sm:hidden">PDF</span>
-          </Button>
-        </div>
+        <Button
+          onClick={handleDownload}
+          className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-1 flex-1"
+        >
+          <Download className="h-4 w-4" />
+          <span className="hidden sm:inline">Download PDF</span>
+          <span className="sm:hidden">PDF</span>
+        </Button>
       </div>
     </div>
   );

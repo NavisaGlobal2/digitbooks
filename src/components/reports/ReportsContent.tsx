@@ -1,11 +1,11 @@
 
-import React, { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ReportsHeader } from "./ReportsHeader";
+import React from "react";
 import { ReportView } from "./ReportView";
 import { ReportList } from "./ReportList";
 import ReportDateFilter from "./filters/ReportDateFilter";
-import ReportHistoryTab from "./saved/ReportHistoryTab";
+import SavedReportsSection from "./saved/SavedReportsSection";
+import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
 
 interface ReportsContentProps {
   selectedReportType: string | null;
@@ -14,8 +14,8 @@ interface ReportsContentProps {
   isCustomDateRange: boolean;
   onBack: () => void;
   onSelectReport: (reportType: string) => void;
-  onDateRangeChange: (dateRange: { startDate: Date; endDate: Date } | null) => void;
-  onGenerateReport: () => void;
+  onDateRangeChange: (range: { startDate: Date; endDate: Date } | null) => void;
+  onGenerateReport?: () => void;
 }
 
 export const ReportsContent: React.FC<ReportsContentProps> = ({
@@ -26,58 +26,58 @@ export const ReportsContent: React.FC<ReportsContentProps> = ({
   onBack,
   onSelectReport,
   onDateRangeChange,
-  onGenerateReport
+  onGenerateReport,
 }) => {
-  const [activeTab, setActiveTab] = useState("browse");
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
-
-  if (selectedReportType) {
-    return (
-      <ReportView
-        selectedReportType={selectedReportType}
-        reportPeriod={reportPeriod}
-        dateRange={dateRange}
-        isCustomDateRange={isCustomDateRange}
-        onBack={onBack}
-      />
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <ReportsHeader
-        onGenerateReport={onGenerateReport}
-        onMobileMenuOpen={() => {}}
-        showGenerateButton={true}
-      />
-
-      <Tabs defaultValue="browse" value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="browse">Browse Reports</TabsTrigger>
-          <TabsTrigger value="history">Report History</TabsTrigger>
-        </TabsList>
-
-        <div className="mt-6">
-          <TabsContent value="browse" className="space-y-6 mt-0">
-            <div className="w-full sm:w-auto">
-              <ReportDateFilter
-                onChange={onDateRangeChange}
-                dateRange={dateRange}
-                onGenerateReport={onGenerateReport}
-              />
-            </div>
-            
-            <ReportList onSelectReport={onSelectReport} />
-          </TabsContent>
-
-          <TabsContent value="history" className="mt-0">
-            <ReportHistoryTab />
-          </TabsContent>
+    <div className="max-w-5xl mx-auto w-full">
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold mb-4">
+          {selectedReportType ? "Report Details" : "Financial Reports"}
+        </h2>
+        <p className="text-muted-foreground mb-5">
+          {selectedReportType 
+            ? "View and export your financial report" 
+            : "Generate financial reports and export them to analyze your business performance"}
+        </p>
+        <div className="mb-4 flex items-center justify-between flex-wrap gap-3">
+          <ReportDateFilter
+            dateRange={dateRange}
+            onDateRangeChange={onDateRangeChange}
+          />
+          {selectedReportType && dateRange?.startDate && dateRange?.endDate ? (
+            <Button 
+              onClick={onGenerateReport}
+              className="bg-green-500 hover:bg-green-600 text-white"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Generate Report
+            </Button>
+          ) : !selectedReportType && onGenerateReport ? (
+            <Button
+              onClick={onGenerateReport}
+              className="bg-green-500 hover:bg-green-600 text-white"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Generate Report
+            </Button>
+          ) : null}
         </div>
-      </Tabs>
+      </div>
+
+      {selectedReportType ? (
+        <ReportView
+          selectedReportType={selectedReportType}
+          reportPeriod={reportPeriod}
+          dateRange={dateRange}
+          isCustomDateRange={isCustomDateRange}
+          onBack={onBack}
+        />
+      ) : (
+        <div className="space-y-8">
+          <ReportList onSelectReport={onSelectReport} />
+          <SavedReportsSection />
+        </div>
+      )}
     </div>
   );
 };

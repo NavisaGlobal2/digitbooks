@@ -3,7 +3,6 @@ import { format } from "date-fns";
 import { InvoiceItem } from "@/types/invoice";
 import { formatNaira } from "@/utils/invoice/formatters";
 import { Logo } from "@/components/Logo";
-import { useEffect, useState } from "react";
 
 interface InvoicePreviewProps {
   logoPreview: string | null;
@@ -40,19 +39,62 @@ const InvoicePreview = ({
   clientAddress,
   selectedTemplate = "default"
 }: InvoicePreviewProps) => {
-  // State to track if logo failed to load
-  const [logoError, setLogoError] = useState(false);
-  
-  // Reset logo error if logoPreview changes
-  useEffect(() => {
-    setLogoError(false);
-  }, [logoPreview]);
+  // Template-specific styles
+  const getTemplateStyles = () => {
+    switch (selectedTemplate) {
+      case "professional":
+        return {
+          container: "bg-white rounded-lg border border-gray-300 p-8 shadow",
+          title: "text-2xl font-bold text-gray-800",
+          subtitle: "text-base font-medium text-gray-600",
+          text: "text-sm text-gray-600",
+          header: "mb-8 border-b pb-4",
+          section: "mb-6",
+          table: "border-collapse w-full",
+          tableHeader: "border-b-2 border-gray-300 bg-gray-100",
+          tableHeaderCell: "text-left py-3 px-4 text-sm font-semibold text-gray-700",
+          tableRow: "border-b border-gray-200",
+          tableCell: "py-3 px-4 text-sm",
+          summary: "mt-6 text-right"
+        };
+      case "minimalist":
+        return {
+          container: "bg-white rounded-lg border border-gray-200 p-6 shadow-sm",
+          title: "text-xl font-normal text-gray-900",
+          subtitle: "text-sm font-normal text-gray-500",
+          text: "text-sm text-gray-500",
+          header: "mb-8",
+          section: "mb-6",
+          table: "border-collapse w-full",
+          tableHeader: "border-b border-gray-200",
+          tableHeaderCell: "text-left py-2 px-1 text-xs font-medium text-gray-500 uppercase",
+          tableRow: "border-b border-gray-100",
+          tableCell: "py-2 px-1 text-sm",
+          summary: "mt-4 text-right"
+        };
+      case "default":
+      default:
+        return {
+          container: "bg-white rounded-lg border border-border p-8 shadow-sm",
+          title: "text-2xl font-bold text-gray-900",
+          subtitle: "text-sm font-medium text-gray-700",
+          text: "text-sm text-gray-500",
+          header: "mb-8",
+          section: "mb-8",
+          table: "border-collapse w-full",
+          tableHeader: "border-b border-gray-200",
+          tableHeaderCell: "text-left py-2 px-2 text-sm font-medium",
+          tableRow: "border-b border-gray-100",
+          tableCell: "py-3 px-2 text-sm",
+          summary: "mt-6 text-right"
+        };
+    }
+  };
 
-  // Template-specific styles based on the selected template
-  const styles = getTemplateStyles(selectedTemplate);
-  
+  const styles = getTemplateStyles();
+
   return (
-    <div className={`invoice-preview ${styles.container}`}>
+    <div className={styles.container}>
       {/* Invoice Header */}
       <div className={`flex justify-between items-start ${styles.header}`}>
         <div>
@@ -69,21 +111,31 @@ const InvoicePreview = ({
         </div>
         
         <div className="flex-shrink-0">
-          {logoPreview && !logoError ? (
+          {logoPreview ? (
             <div className="h-16 w-auto">
               <img 
                 src={logoPreview} 
                 alt="Company Logo" 
                 className="h-16 w-auto object-contain" 
                 crossOrigin="anonymous"
-                onError={() => {
-                  console.error("Logo failed to load in preview");
-                  setLogoError(true);
+                onError={(e) => {
+                  console.error("Error loading logo in preview:", e);
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  
+                  // Add fallback logo
+                  const parent = target.parentNode as HTMLElement;
+                  if (parent) {
+                    const fallback = document.createElement('div');
+                    fallback.className = 'bg-green-500 text-white h-16 w-32 flex items-center justify-center font-bold rounded';
+                    fallback.textContent = 'DigiBooks';
+                    parent.appendChild(fallback);
+                  }
                 }}
               />
             </div>
           ) : (
-            <div className="h-16 w-16 bg-green-500 text-white flex items-center justify-center font-bold rounded">
+            <div className="h-16 w-16">
               <Logo className="w-full h-full" />
             </div>
           )}
@@ -164,57 +216,5 @@ const InvoicePreview = ({
     </div>
   );
 };
-
-// Function to get template-specific styles
-function getTemplateStyles(selectedTemplate: string) {
-  switch (selectedTemplate) {
-    case "professional":
-      return {
-        container: "bg-white rounded-lg border border-gray-300 p-8 shadow",
-        title: "text-2xl font-bold text-gray-800",
-        subtitle: "text-base font-medium text-gray-600",
-        text: "text-sm text-gray-600",
-        header: "mb-8 border-b pb-4",
-        section: "mb-6",
-        table: "border-collapse w-full",
-        tableHeader: "border-b-2 border-gray-300 bg-gray-100",
-        tableHeaderCell: "text-left py-3 px-4 text-sm font-semibold text-gray-700",
-        tableRow: "border-b border-gray-200",
-        tableCell: "py-3 px-4 text-sm",
-        summary: "mt-6 text-right"
-      };
-    case "minimalist":
-      return {
-        container: "bg-white rounded-lg border border-gray-200 p-6 shadow-sm",
-        title: "text-xl font-normal text-gray-900",
-        subtitle: "text-sm font-normal text-gray-500",
-        text: "text-sm text-gray-500",
-        header: "mb-8",
-        section: "mb-6",
-        table: "border-collapse w-full",
-        tableHeader: "border-b border-gray-200",
-        tableHeaderCell: "text-left py-2 px-1 text-xs font-medium text-gray-500 uppercase",
-        tableRow: "border-b border-gray-100",
-        tableCell: "py-2 px-1 text-sm",
-        summary: "mt-4 text-right"
-      };
-    case "default":
-    default:
-      return {
-        container: "bg-white rounded-lg border border-border p-8 shadow-sm",
-        title: "text-2xl font-bold text-gray-900",
-        subtitle: "text-sm font-medium text-gray-700",
-        text: "text-sm text-gray-500",
-        header: "mb-8",
-        section: "mb-8",
-        table: "border-collapse w-full",
-        tableHeader: "border-b border-gray-200",
-        tableHeaderCell: "text-left py-2 px-2 text-sm font-medium",
-        tableRow: "border-b border-gray-100",
-        tableCell: "py-3 px-2 text-sm",
-        summary: "mt-6 text-right"
-      };
-  }
-}
 
 export default InvoicePreview;

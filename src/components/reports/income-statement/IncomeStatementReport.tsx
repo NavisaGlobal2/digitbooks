@@ -2,14 +2,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRevenue } from "@/contexts/RevenueContext";
 import { useExpenses } from "@/contexts/ExpenseContext";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
+import { format } from "date-fns";
 import { ReportCard } from "./ReportCard";
 import { ReportHeader } from "./ReportHeader";
 import { ReportTimeline } from "./ReportTimeline";
 import { ReportSummary } from "./ReportSummary";
 import { ReportFooter } from "./ReportFooter";
 import { ReportActions } from "./ReportActions";
-import { formatReportDates } from "./utils/dateFormatters";
-import { calculateFinancialMetrics } from "./utils/financialCalculations";
+import { formatCurrency } from "@/utils/invoice/formatters";
+import { useIncomeStatementData } from "./hooks/useIncomeStatementData";
 
 interface IncomeStatementReportProps {
   onBack: () => void;
@@ -19,95 +22,22 @@ interface IncomeStatementReportProps {
 }
 
 const IncomeStatementReport = ({ onBack, period, dateRange, onDirectGeneration }: IncomeStatementReportProps) => {
-  const reportRef = useRef<HTMLDivElement>(null);
-  const [localDateRange, setLocalDateRange] = useState<{ startDate: Date; endDate: Date } | null>(dateRange);
-  const [isLoading, setIsLoading] = useState(true);
-  const [reportData, setReportData] = useState<any>(null);
   const { revenues, getTotalRevenue, getRevenueBySource, getRevenueByPeriod } = useRevenue();
   const { getTotalExpenses, getExpensesByCategory } = useExpenses();
+  const reportRef = useRef<HTMLDivElement>(null);
   
-  // Format the date information using the utility function
-  const {
-    formattedDate,
-    startDateFormatted,
-    endDateFormatted,
-    reportDuration
-  } = formatReportDates(localDateRange);
-
-  // Load report data
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      // Extract revenue data based on date range if available
-      let filteredRevenues = revenues;
-      let totalRevenue = 0;
-      let revenueBySource = {};
-      
-      if (localDateRange) {
-        filteredRevenues = getRevenueByPeriod(localDateRange.startDate, localDateRange.endDate);
-        totalRevenue = filteredRevenues.reduce((total, revenue) => total + revenue.amount, 0);
-        
-        revenueBySource = filteredRevenues.reduce((acc, revenue) => {
-          const source = revenue.source;
-          if (!acc[source]) {
-            acc[source] = 0;
-          }
-          acc[source] += revenue.amount;
-          return acc;
-        }, {} as Record<string, number>);
-      } else {
-        totalRevenue = getTotalRevenue();
-        revenueBySource = getRevenueBySource();
-      }
-      
-      // Get expense data
-      const totalExpenses = getTotalExpenses();
-      const expensesByCategory = getExpensesByCategory();
-      
-      // Calculate financial metrics
-      const { grossProfit, netProfit, profitMargin } = calculateFinancialMetrics(
-        totalRevenue, 
-        totalExpenses
-      );
-      
-      // Set the report data state
-      setReportData({
-        totalRevenue,
-        revenueBySource,
-        totalExpenses,
-        expensesByCategory,
-        grossProfit,
-        netProfit,
-        profitMargin
-      });
-      
-      setIsLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
-  }, [revenues, getTotalRevenue, getRevenueBySource, getTotalExpenses, getExpensesByCategory, localDateRange, getRevenueByPeriod]);
-  
-  useEffect(() => {
-    if (dateRange && !localDateRange) {
-      setLocalDateRange(dateRange);
-    }
-  }, [dateRange]);
-
-  const handleDateRangeChange = (newRange: { startDate: Date; endDate: Date } | null) => {
-    setLocalDateRange(newRange);
-    setIsLoading(true); // Trigger reloading of data when date range changes
-  };
+  const { isLoading, reportData, formattedDate, startDateFormatted, endDateFormatted, reportDuration } = 
+    useIncomeStatementData(revenues, getTotalRevenue, getRevenueBySource, getRevenueByPeriod, getTotalExpenses, getExpensesByCategory, dateRange);
 
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <ReportActions
-          onBack={onBack}
-          title="Income Statement"
-          period={period}
-          dateRange={localDateRange}
-          reportRef={reportRef}
-          onDateRangeChange={handleDateRangeChange}
-        />
+        <div className="flex flex-col xs:flex-row items-center justify-between gap-3">
+          <Button variant="outline" onClick={onBack} className="w-full xs:w-auto">
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Back to Reports
+          </Button>
+        </div>
         <ReportCard isLoading={true} />
       </div>
     );
@@ -123,11 +53,10 @@ const IncomeStatementReport = ({ onBack, period, dateRange, onDirectGeneration }
         onBack={onBack}
         title="Income Statement"
         period={period}
-        dateRange={localDateRange}
+        dateRange={dateRange}
         reportRef={reportRef}
-        reportData={reportData}
         onDirectGeneration={onDirectGeneration}
-        onDateRangeChange={handleDateRangeChange}
+        reportData={reportData}
       />
 
       <ReportCard ref={reportRef} id="report-container">
@@ -137,7 +66,7 @@ const IncomeStatementReport = ({ onBack, period, dateRange, onDirectGeneration }
           formattedDate={formattedDate}
         />
         
-        {localDateRange && (
+        {dateRange && (
           <ReportTimeline 
             startDateFormatted={startDateFormatted}
             endDateFormatted={endDateFormatted}

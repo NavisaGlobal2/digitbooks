@@ -1,7 +1,7 @@
 
 // This file configures the Supabase client for database connection.
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from './database.types';
+import type { Database } from './types';
 
 // Use actual Supabase credentials for database connection
 const SUPABASE_URL = "https://naxmgtoskeijvdofqyik.supabase.co";

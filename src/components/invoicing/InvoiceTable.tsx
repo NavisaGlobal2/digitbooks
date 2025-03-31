@@ -2,7 +2,7 @@
 import { format } from "date-fns";
 import { CheckCircle, Download, ExternalLink, MoreVertical, Receipt } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Invoice, PaymentRecord } from "@/types/invoice";
+import { Invoice } from "@/types/invoice";
 import { formatNaira } from "@/utils/invoice/formatters";
 import { downloadInvoice, downloadReceipt, shareInvoice } from "@/utils/invoice/documentActions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 interface InvoiceTableProps {
   invoices: Invoice[];
-  onMarkAsPaid: (invoiceId: string, payments: PaymentRecord[]) => Promise<void>;
+  onMarkAsPaid: (invoiceId: string, payments: any[]) => void;
   isProcessingPayment?: boolean;
 }
 
@@ -22,11 +22,13 @@ const InvoiceTable = ({ invoices, onMarkAsPaid, isProcessingPayment = false }: I
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [isPaidDialogOpen, setIsPaidDialogOpen] = useState(false);
   
+  // Close dialog when isProcessingPayment changes
   useEffect(() => {
     if (isProcessingPayment) {
       return;
     }
     
+    // Wait a bit before allowing to select a new invoice
     const timer = setTimeout(() => {
       if (!isPaidDialogOpen) {
         setSelectedInvoiceId(null);
@@ -42,12 +44,14 @@ const InvoiceTable = ({ invoices, onMarkAsPaid, isProcessingPayment = false }: I
     if (isProcessingPayment) return;
     
     setSelectedInvoiceId(invoiceId);
+    // Add a small delay to avoid UI glitches
     setTimeout(() => {
       setIsPaidDialogOpen(true);
     }, 50);
   };
 
   const handlePaidDialogClose = () => {
+    // Wait a bit before clearing the selected invoice
     setTimeout(() => {
       setSelectedInvoiceId(null);
     }, 200);
@@ -72,7 +76,7 @@ const InvoiceTable = ({ invoices, onMarkAsPaid, isProcessingPayment = false }: I
         clientName: invoice.clientName,
         clientAddress: invoice.clientAddress,
         invoiceNumber: invoice.invoiceNumber,
-        selectedTemplate: "default"
+        selectedTemplate: "default" // Adding the default template
       });
     } catch (error) {
       console.error("Error downloading invoice:", error);
@@ -99,7 +103,7 @@ const InvoiceTable = ({ invoices, onMarkAsPaid, isProcessingPayment = false }: I
         clientName: invoice.clientName,
         clientAddress: invoice.clientAddress,
         invoiceNumber: invoice.invoiceNumber,
-        selectedTemplate: "default"
+        selectedTemplate: "default" // Adding the default template
       });
     } catch (error) {
       console.error("Error sharing invoice:", error);

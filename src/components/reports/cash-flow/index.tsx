@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from "react";
+import React, { useRef } from "react";
 import { ReportActions } from "../income-statement/ReportActions";
 import CashflowChart from "@/components/dashboard/CashflowChart";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,11 +18,6 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
   onDirectGeneration 
 }) => {
   const reportRef = useRef<HTMLDivElement>(null);
-  const [localDateRange, setLocalDateRange] = useState<{ startDate: Date; endDate: Date } | null>(dateRange);
-  
-  const handleDateRangeChange = (newRange: { startDate: Date; endDate: Date } | null) => {
-    setLocalDateRange(newRange);
-  };
   
   return (
     <div className="space-y-4 print:p-6">
@@ -30,10 +25,9 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
         onBack={onBack}
         title="Cash Flow"
         period={period}
-        dateRange={localDateRange || dateRange}
+        dateRange={dateRange}
         reportRef={reportRef}
         onDirectGeneration={onDirectGeneration}
-        onDateRangeChange={handleDateRangeChange}
       />
 
       <div className="bg-white p-6 rounded-lg border shadow-sm print:shadow-none" ref={reportRef}>
