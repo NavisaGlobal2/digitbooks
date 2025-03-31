@@ -12,6 +12,7 @@ interface ReportsContentProps {
   onBack: () => void;
   onSelectReport: (reportType: string) => void;
   onDateRangeChange: (range: { startDate: Date; endDate: Date } | null) => void;
+  onGenerateReport?: () => void;
 }
 
 export const ReportsContent: React.FC<ReportsContentProps> = ({
@@ -22,6 +23,7 @@ export const ReportsContent: React.FC<ReportsContentProps> = ({
   onBack,
   onSelectReport,
   onDateRangeChange,
+  onGenerateReport,
 }) => {
   return (
     <div className="max-w-5xl mx-auto w-full">
@@ -38,6 +40,7 @@ export const ReportsContent: React.FC<ReportsContentProps> = ({
           <ReportDateFilter
             dateRange={dateRange}
             onDateRangeChange={onDateRangeChange}
+            onGenerateReport={onGenerateReport}
           />
         </div>
       </div>

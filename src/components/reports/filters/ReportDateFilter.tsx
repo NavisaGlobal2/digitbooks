@@ -1,100 +1,95 @@
 
-import React from "react";
+import React, { useState } from "react";
+import { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { CalendarRange } from "lucide-react";
+import { CalendarIcon, FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ReportDateFilterProps {
   dateRange: { startDate: Date; endDate: Date } | null;
   onDateRangeChange: (range: { startDate: Date; endDate: Date } | null) => void;
+  onGenerateReport?: () => void;
 }
 
 const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
   dateRange,
   onDateRangeChange,
+  onGenerateReport
 }) => {
-  const [datePickerOpen, setDatePickerOpen] = React.useState(false);
-  const [tempStartDate, setTempStartDate] = React.useState<Date | undefined>(
-    dateRange?.startDate || undefined
-  );
-  const [tempEndDate, setTempEndDate] = React.useState<Date | undefined>(
-    dateRange?.endDate || undefined
+  const [date, setDate] = useState<DateRange | undefined>(
+    dateRange
+      ? { from: dateRange.startDate, to: dateRange.endDate }
+      : undefined
   );
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date) return;
-
-    // If no start date selected yet or end date is already selected, set as start date
-    if (!tempStartDate || tempEndDate) {
-      setTempStartDate(date);
-      setTempEndDate(undefined);
-      return;
+  const handleSelect = (range: DateRange | undefined) => {
+    setDate(range);
+    
+    if (range?.from && range?.to) {
+      onDateRangeChange({
+        startDate: range.from,
+        endDate: range.to
+      });
+    } else if (range?.from) {
+      onDateRangeChange({
+        startDate: range.from,
+        endDate: range.from
+      });
+    } else {
+      onDateRangeChange(null);
     }
-
-    // If date is before start date, make it the new start date
-    if (date < tempStartDate) {
-      setTempStartDate(date);
-      return;
-    }
-
-    // Set as end date and apply filter
-    setTempEndDate(date);
-    if (tempStartDate) {
-      onDateRangeChange({ startDate: tempStartDate, endDate: date });
-      setDatePickerOpen(false);
-    }
-  };
-
-  const formatDateRange = () => {
-    if (!tempStartDate) return "Select date range";
-    if (!tempEndDate) return `${format(tempStartDate, "MMM dd, yyyy")} - Select end date`;
-    return `${format(tempStartDate, "MMM dd, yyyy")} - ${format(tempEndDate, "MMM dd, yyyy")}`;
   };
 
   return (
-    <div>
-      <label className="block text-sm font-medium text-muted-foreground mb-1">Date range</label>
-      <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+    <div className="flex flex-wrap items-center gap-3">
+      <Popover>
         <PopoverTrigger asChild>
           <Button 
             variant="outline" 
-            className="pl-3 pr-2 text-left font-normal flex justify-between bg-white border-[#05D166]/20 hover:border-[#05D166]/50 hover:bg-[#F2FCE2]/40 transition-all"
+            className={cn(
+              "justify-start text-left font-normal",
+              !date && "text-muted-foreground"
+            )}
           >
-            <span className="truncate">{formatDateRange()}</span>
-            <CalendarRange className="ml-2 h-4 w-4 opacity-70" />
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date?.from ? (
+              date.to ? (
+                <>
+                  {format(date.from, "LLL dd, yyyy")} - {format(date.to, "LLL dd, yyyy")}
+                </>
+              ) : (
+                format(date.from, "LLL dd, yyyy")
+              )
+            ) : (
+              <span>Select date range</span>
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
-            mode="single"
-            selected={tempEndDate || tempStartDate}
-            onSelect={handleDateSelect}
             initialFocus
-            className="pointer-events-auto"
-            disabled={(date) => {
-              // Cannot select dates in the future
-              return date > new Date();
-            }}
+            mode="range"
+            defaultMonth={date?.from}
+            selected={date}
+            onSelect={handleSelect}
+            numberOfMonths={2}
+            className={cn("p-3 pointer-events-auto")}
           />
-          <div className="p-3 border-t border-border text-xs">
-            {tempStartDate ? (
-              <p>
-                Selected: <strong>{format(tempStartDate, "MMM dd, yyyy")}</strong>
-                {tempEndDate && (
-                  <>
-                    {" "}
-                    to <strong>{format(tempEndDate, "MMM dd, yyyy")}</strong>
-                  </>
-                )}
-              </p>
-            ) : (
-              <p>Click to select a start date</p>
-            )}
-          </div>
         </PopoverContent>
       </Popover>
+      
+      {date?.from && date?.to && onGenerateReport && (
+        <Button 
+          onClick={onGenerateReport} 
+          className="bg-green-500 hover:bg-green-600 text-white"
+        >
+          <FileText className="h-4 w-4 mr-2" />
+          Generate Report
+        </Button>
+      )}
     </div>
   );
 };

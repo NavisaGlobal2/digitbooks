@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useReportGeneration } from "@/hooks/useReportGeneration";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 export const useFinancialReportState = () => {
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
@@ -30,6 +31,17 @@ export const useFinancialReportState = () => {
     handleGenerateReport(reportType, displayPeriod, "pdf", dateRange || undefined);
   };
 
+  // New function to generate a report with the current date range
+  const handleGenerateWithCurrentDateRange = () => {
+    if (!dateRange) {
+      toast.error("Please select a date range first");
+      return;
+    }
+    
+    // Show report type selection prompt
+    setShowGenerateDialog(true);
+  };
+
   return {
     showGenerateDialog,
     setShowGenerateDialog,
@@ -42,6 +54,7 @@ export const useFinancialReportState = () => {
     setSelectedReportType,
     isCustomDateRange,
     handleSelectReport,
-    handleDateRangeChange
+    handleDateRangeChange,
+    handleGenerateWithCurrentDateRange
   };
 };
