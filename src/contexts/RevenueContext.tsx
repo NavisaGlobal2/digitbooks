@@ -10,7 +10,10 @@ interface RevenueContextType {
   getTotalRevenue: () => number;
   getRevenueBySource: () => Record<string, number>;
   getRevenueByStatus: () => Record<PaymentStatus, number>;
-  importRevenues: (revenues: Omit<Revenue, "id">[]) => void; // Add this line
+  importRevenues: (revenues: Omit<Revenue, "id">[]) => void;
+  getRevenueByPeriod: (startDate: Date, endDate: Date) => Revenue[];
+  getTotalReceivables: () => number;
+  getOutstandingReceivables: () => number;
 }
 
 const RevenueContext = createContext<RevenueContextType | undefined>(undefined);
@@ -99,6 +102,29 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
     return statusTotals;
   };
 
+  // New method to get revenues for a specific time period
+  const getRevenueByPeriod = (startDate: Date, endDate: Date) => {
+    return revenues.filter(revenue => {
+      const revenueDate = revenue.date instanceof Date ? revenue.date : new Date(revenue.date);
+      return revenueDate >= startDate && revenueDate <= endDate;
+    });
+  };
+
+  // Get total receivables (all invoiced revenue)
+  const getTotalReceivables = () => {
+    return revenues.reduce((total, revenue) => total + revenue.amount, 0);
+  };
+
+  // Get outstanding receivables (pending + overdue)
+  const getOutstandingReceivables = () => {
+    return revenues.reduce((total, revenue) => {
+      if (revenue.paymentStatus === 'pending' || revenue.paymentStatus === 'overdue') {
+        return total + revenue.amount;
+      }
+      return total;
+    }, 0);
+  };
+
   return (
     <RevenueContext.Provider
       value={{
@@ -109,7 +135,10 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
         getTotalRevenue,
         getRevenueBySource,
         getRevenueByStatus,
-        importRevenues, // Add this line
+        importRevenues,
+        getRevenueByPeriod,
+        getTotalReceivables,
+        getOutstandingReceivables,
       }}
     >
       {children}

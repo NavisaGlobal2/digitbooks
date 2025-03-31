@@ -8,11 +8,13 @@ import { GenerateReportDialog } from "@/components/reports/GenerateReportDialog"
 import { ReportCard } from "@/components/reports/ReportCard";
 import { toast } from "sonner";
 import MobileSidebar from "../dashboard/layout/MobileSidebar";
+import IncomeStatementReport from "./IncomeStatementReport";
 
 const FinancialReports = () => {
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [selectedReportType, setSelectedReportType] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [reportPeriod, setReportPeriod] = useState("Current Month");
 
   const handleGenerateReport = (
     reportType: string,
@@ -25,10 +27,84 @@ const FinancialReports = () => {
         " "
       )} in ${fileFormat.toUpperCase()} format`
     );
-    // In a real app, this would call an API to generate the report
-    setTimeout(() => {
-      toast.success("Report generated successfully!");
-    }, 2000);
+    
+    setReportPeriod(reportPeriod.replace("-", " "));
+    
+    // Set the selected report type to display the specific report
+    if (reportType === "income-statement") {
+      setSelectedReportType("income-statement");
+    } else {
+      // For other report types, we would implement similar logic
+      setSelectedReportType(reportType);
+      // In a real app, this would call an API to generate the report
+      setTimeout(() => {
+        toast.success("Report generated successfully!");
+      }, 2000);
+    }
+  };
+
+  const renderSelectedReport = () => {
+    switch (selectedReportType) {
+      case "income-statement":
+        return (
+          <IncomeStatementReport 
+            onBack={() => setSelectedReportType(null)}
+            period={reportPeriod}
+          />
+        );
+      case "revenue-summary":
+      case "expense-summary":
+      case "cash-flow":
+      case "budget-analysis":
+      case "profit-loss":
+      default:
+        return (
+          <div className="space-y-6">
+            <div className="flex flex-col xs:flex-row items-center justify-between gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedReportType(null)}
+                className="flex items-center gap-1 w-full xs:w-auto"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Reports
+              </Button>
+              <Button
+                className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2 w-full xs:w-auto"
+                onClick={() => {
+                  toast.success("Report downloaded successfully!");
+                }}
+              >
+                <Download className="h-4 w-4" />
+                Download Report
+              </Button>
+            </div>
+
+            <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
+              <div className="text-center mb-6 sm:mb-8">
+                <BarChart3 className="h-16 sm:h-24 w-16 sm:w-24 mx-auto text-green-500 mb-2" />
+                <h2 className="text-xl sm:text-2xl font-bold">
+                  {selectedReportType?.charAt(0).toUpperCase() +
+                    selectedReportType?.slice(1).replace("-", " ")}{" "}
+                  Report
+                </h2>
+                <p className="text-muted-foreground text-sm sm:text-base">
+                  Generated on {new Date().toLocaleDateString()}
+                </p>
+              </div>
+
+              <div className="bg-gray-100 rounded-lg p-4 sm:p-12 flex items-center justify-center">
+                <div className="text-center">
+                  <FileText className="h-12 sm:h-16 w-12 sm:w-16 mx-auto text-gray-400 mb-4" />
+                  <p className="text-muted-foreground text-sm">
+                    Preview of the report would be displayed here
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+    }
   };
 
   return (
@@ -87,50 +163,7 @@ const FinancialReports = () => {
 
         <main className="flex-1 overflow-auto p-3 sm:p-6">
           {selectedReportType ? (
-            <div className="space-y-6">
-              <div className="flex flex-col xs:flex-row items-center justify-between gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedReportType(null)}
-                  className="flex items-center gap-1 w-full xs:w-auto"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back to Reports
-                </Button>
-                <Button
-                  className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2 w-full xs:w-auto"
-                  onClick={() => {
-                    toast.success("Report downloaded successfully!");
-                  }}
-                >
-                  <Download className="h-4 w-4" />
-                  Download Report
-                </Button>
-              </div>
-
-              <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
-                <div className="text-center mb-6 sm:mb-8">
-                  <BarChart3 className="h-16 sm:h-24 w-16 sm:w-24 mx-auto text-green-500 mb-2" />
-                  <h2 className="text-xl sm:text-2xl font-bold">
-                    {selectedReportType.charAt(0).toUpperCase() +
-                      selectedReportType.slice(1).replace("-", " ")}{" "}
-                    Report
-                  </h2>
-                  <p className="text-muted-foreground text-sm sm:text-base">
-                    Generated on {new Date().toLocaleDateString()}
-                  </p>
-                </div>
-
-                <div className="bg-gray-100 rounded-lg p-4 sm:p-12 flex items-center justify-center">
-                  <div className="text-center">
-                    <FileText className="h-12 sm:h-16 w-12 sm:w-16 mx-auto text-gray-400 mb-4" />
-                    <p className="text-muted-foreground text-sm">
-                      Preview of the report would be displayed here
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            renderSelectedReport()
           ) : (
             <div className="space-y-4 sm:space-y-6">
               <div>
@@ -145,7 +178,7 @@ const FinancialReports = () => {
                   title="Income Statement"
                   description="Summary of revenues, costs, and expenses over a period"
                   variant="green"
-                  onClick={() => setSelectedReportType("income-statement")}
+                  onClick={() => handleGenerateReport("income-statement", "Current Month", "pdf")}
                 />
                 <ReportCard
                   title="Cash Flow Statement"
