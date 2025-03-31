@@ -40,14 +40,12 @@ export function determineTransactionType(tx: any): 'credit' | 'debit' {
     }
     
     // Check for amount indicators
-    const creditAmount = extractCreditAmount(tx);
-    const debitAmount = extractDebitAmount(tx);
-    
-    if (creditAmount > 0 && debitAmount === 0) {
+    // Avoiding circular dependency by checking preservedColumns directly
+    if (tx.preservedColumns["CREDIT"] || tx.preservedColumns["Credit Amount"] || tx.preservedColumns["INFLOW"]) {
       return 'credit';
     }
     
-    if (debitAmount > 0 && creditAmount === 0) {
+    if (tx.preservedColumns["DEBIT"] || tx.preservedColumns["Debit Amount"] || tx.preservedColumns["OUTFLOW"]) {
       return 'debit';
     }
   }

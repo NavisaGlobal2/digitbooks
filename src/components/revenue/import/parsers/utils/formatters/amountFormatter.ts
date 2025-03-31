@@ -3,6 +3,8 @@
  * Helper functions for extracting and formatting amounts from transactions
  */
 
+import { determineTransactionType } from './typeFormatter';
+
 /**
  * Helper function to extract credit amount from transaction
  */
