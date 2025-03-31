@@ -57,25 +57,17 @@ export async function formatTransactionsWithAI(
     }
     
     try {
-      // Extract essential transaction data for AI processing
-      const transactionData = transactions.map(tx => ({
-        date: tx.date || "",
-        description: tx.description || "",
-        amount: tx.amount || 0,
-        type: tx.type || ""
-      }));
-      
-      // Log the simplified data being sent to AI
-      console.log("SIMPLIFIED DATA FOR AI:", 
-        JSON.stringify(transactionData.slice(0, 2), null, 2));
-      console.log(`Total transactions for AI: ${transactionData.length}`);
+      // Send the ENTIRE raw transaction data to the AI model, preserving ALL original structure
+      console.log("Sending RAW transaction data directly to AI without preprocessing");
+      console.log(`Total transactions for AI: ${transactions.length}`);
+      console.log("SAMPLE RAW DATA FOR AI:", JSON.stringify(transactions.slice(0, 2), null, 2));
       
       // Send to the selected AI service
       let aiProcessedData;
       if (provider === "anthropic") {
-        aiProcessedData = await processWithAnthropic(JSON.stringify(transactionData), context);
+        aiProcessedData = await processWithAnthropic(JSON.stringify(transactions), context);
       } else if (provider === "deepseek") {
-        aiProcessedData = await processWithDeepseek(JSON.stringify(transactionData), context);
+        aiProcessedData = await processWithDeepseek(JSON.stringify(transactions), context);
       }
       
       // Log sample of AI response

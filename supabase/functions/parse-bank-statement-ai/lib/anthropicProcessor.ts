@@ -13,12 +13,12 @@ export async function processWithAnthropic(text: string, context?: string | null
   console.log(`Input data size: ${text.length} characters`);
   
   // Adjust the system prompt based on the context (revenue or expense)
-  let systemPrompt = `You are a financial data extraction assistant. Your task is to parse bank statement data from various formats and output a clean JSON array of transactions.`;
+  let systemPrompt = `You are a financial data extraction assistant. Your task is to analyze and format raw bank statement transaction data. Keep all original data but ensure consistent structure.`;
   
   if (context === "revenue") {
     systemPrompt += `
     
-    For each transaction, extract:
+    For each transaction PRESERVE ALL ORIGINAL FIELDS AND VALUES, but ensure these core fields are properly structured:
     - date (in YYYY-MM-DD format)
     - description (the transaction narrative)
     - amount (as a number, negative for debits/expenses, positive for credits/revenue)
@@ -42,32 +42,21 @@ export async function processWithAnthropic(text: string, context?: string | null
     
     Focus only on credit (incoming money) transactions, which represent revenue. These have positive amounts.
     
+    IMPORTANT: Analyze the raw data structure and PRESERVE ALL ORIGINAL FIELDS, but ensure the core fields (date, description, amount, type) are properly structured.
+    
     Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
   } else {
     systemPrompt += `
     
-    For each transaction, extract:
-    - date (in YYYY-MM-DD format)
+    For each transaction PRESERVE ALL ORIGINAL FIELDS AND VALUES, but ensure these core fields are properly structured:
+    - date (in YYYY-MM-DD format if possible)
     - description (the transaction narrative)
-    - amount (as a number, negative for debits/expenses)
+    - amount (as a number, negative for debits/expenses, positive for credits/revenue)
     - type ("debit" or "credit")
     
-    Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.
-    Sample format:
-    [
-      {
-        "date": "2023-05-15",
-        "description": "GROCERY STORE PURCHASE",
-        "amount": -58.97,
-        "type": "debit"
-      },
-      {
-        "date": "2023-05-17",
-        "description": "SALARY PAYMENT",
-        "amount": 1500.00,
-        "type": "credit"
-      }
-    ]`;
+    IMPORTANT: Analyze the raw data structure and PRESERVE ALL ORIGINAL FIELDS, but ensure the core fields (date, description, amount, type) are properly structured.
+    
+    Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
   }
 
   try {
@@ -85,7 +74,7 @@ export async function processWithAnthropic(text: string, context?: string | null
         messages: [
           {
             role: "user",
-            content: text
+            content: `Here is the raw bank statement transaction data, analyze and format it: ${text}`
           }
         ]
       }),
