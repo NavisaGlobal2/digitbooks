@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Message } from "@/types/agent";
 import { getAIInsights } from "@/services/aiService";
@@ -20,6 +19,40 @@ export const useAgentChat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const { user } = useAuth();
   const { financialData, isLoading: isLoadingFinancialData } = useFinancialInsights();
+
+  const formatAIResponse = (response: any): string => {
+    // Check if response is a JSON array or object that needs parsing
+    if (typeof response === 'string') {
+      try {
+        // Check if it's a JSON string (common pattern from the AI service)
+        const parsed = JSON.parse(response);
+        
+        // If it's an array of transactions, format it nicely
+        if (Array.isArray(parsed)) {
+          return `I found the following transactions in your records:\n\n${parsed.map(item => 
+            `- ${new Date(item.date).toLocaleDateString()}: ${item.description} - ${(Math.abs(item.amount)/100).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} (${item.type})`
+          ).join('\n')}`;
+        }
+        
+        // If it's an object with specific fields, return a formatted message
+        if (parsed && typeof parsed === 'object') {
+          return JSON.stringify(parsed, null, 2);
+        }
+        
+        // Otherwise return the parsed content as string
+        return response;
+      } catch (e) {
+        // Not JSON, return as is
+        return response;
+      }
+    } else if (response && typeof response === 'object') {
+      // If it's already an object, stringify it nicely
+      return JSON.stringify(response, null, 2);
+    }
+    
+    // Fallback for unexpected formats
+    return response ? response.toString() : "I couldn't analyze your financial data at the moment.";
+  };
 
   const handleSendMessage = async (input: string) => {
     if (!input.trim()) return;
@@ -67,20 +100,14 @@ export const useAgentChat = () => {
       });
 
       console.log("Raw AI response:", response);
+      
+      // Format the AI response to be human-readable
+      const formattedResponse = formatAIResponse(response);
 
-      // Add AI message - ensure we have a proper string response
-      let responseContent = "";
-      if (typeof response === 'string') {
-        responseContent = response;
-      } else if (response && typeof response === 'object') {
-        responseContent = JSON.stringify(response);
-      } else {
-        responseContent = "I couldn't analyze your financial data at the moment. Please try again later.";
-      }
-
+      // Add AI message with formatted response
       const agentMessage: Message = {
         id: Date.now().toString(),
-        content: responseContent,
+        content: formattedResponse,
         sender: "agent",
         timestamp: new Date(),
       };

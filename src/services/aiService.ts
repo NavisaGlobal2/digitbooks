@@ -24,7 +24,8 @@ export const getAIInsights = async ({ query, financialData, userId }: AIQueryPar
         query,
         context,
         userId,
-        preferredProvider: 'anthropic'
+        preferredProvider: 'anthropic',
+        formatAsHuman: true // Add hint to format response as human text
       },
     });
 
