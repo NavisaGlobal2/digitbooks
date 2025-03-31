@@ -22,19 +22,30 @@ export const prepareExpensesFromTransactions = (
 
   console.log(`Preparing ${selectedAndTagged.length} expenses from ${transactions.length} transactions`);
 
-  return selectedAndTagged.map((transaction) => ({
-    id: uuidv4(), // Generate a new ID for each expense
-    amount: Math.abs(transaction.amount), // Ensure amount is positive
-    date: new Date(transaction.date), // Convert string date to Date object
-    description: transaction.description,
-    category: transaction.category as ExpenseCategory, // Type cast to ExpenseCategory
-    vendor: inferVendorFromDescription(transaction.description),
-    status: "pending", // Changed from "completed" to "pending" to match ExpenseStatus type
-    paymentMethod: "bank transfer",
-    fromStatement: true,
-    batchId: batchId,
-    notes: `Imported from bank statement: ${sourceFileName}`,
-  }));
+  return selectedAndTagged.map((transaction) => {
+    // Use originalDate if available, otherwise use the processed date
+    const transactionDate = transaction.originalDate || transaction.date;
+    // Convert to Date object - but handle string or Date inputs
+    const dateObj = typeof transactionDate === 'string' 
+      ? new Date(transactionDate) 
+      : transactionDate instanceof Date 
+        ? transactionDate 
+        : new Date(transaction.date);
+    
+    return {
+      id: uuidv4(), // Generate a new ID for each expense
+      amount: Math.abs(transaction.amount), // Ensure amount is positive
+      date: dateObj, // Use the original date format when possible
+      description: transaction.description,
+      category: transaction.category as ExpenseCategory, // Type cast to ExpenseCategory
+      vendor: inferVendorFromDescription(transaction.description),
+      status: "pending", // Changed from "completed" to "pending" to match ExpenseStatus type
+      paymentMethod: "bank transfer",
+      fromStatement: true,
+      batchId: batchId,
+      notes: `Imported from bank statement: ${sourceFileName}`,
+    };
+  });
 };
 
 /**

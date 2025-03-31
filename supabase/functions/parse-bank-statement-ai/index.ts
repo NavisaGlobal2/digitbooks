@@ -4,6 +4,7 @@ import { corsHeaders, handleCorsRequest } from "./lib/cors.ts";
 import { extractTextFromFile } from "./lib/textExtractor.ts";
 import { processWithAI } from "./lib/aiService.ts";
 import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
+import { parseExcelDirectly } from "./lib/excelParser.ts";
 
 serve(async (req) => {
   // Log request information
@@ -57,6 +58,31 @@ serve(async (req) => {
     const batchId = crypto.randomUUID();
     
     try {
+      // Special handling for Excel files - parse directly without AI
+      if (fileType === 'xlsx' || fileType === 'xls') {
+        try {
+          console.log('Attempting direct Excel parsing to preserve original data');
+          const transactions = await parseExcelDirectly(file);
+          
+          if (transactions && transactions.length > 0) {
+            console.log(`Successfully parsed ${transactions.length} transactions directly from Excel`);
+            return new Response(
+              JSON.stringify({
+                success: true,
+                transactions,
+                message: `Successfully processed ${transactions.length} transactions directly from Excel`,
+                batchId,
+                preservedOriginalFormat: true
+              }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        } catch (excelError) {
+          console.error("Direct Excel parsing failed:", excelError);
+          // Continue with regular processing as fallback
+        }
+      }
+      
       // 1. Extract text from the file
       const fileText = await extractTextFromFile(file);
       let transactions = [];

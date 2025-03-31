@@ -1,4 +1,3 @@
-
 import { ParsedTransaction } from "./types";
 
 /**
@@ -49,19 +48,42 @@ export const parseViaEdgeFunction = async (
       return;
     }
     
-    // Map the transactions to the expected format
-    const transactions = data.transactions.map((tx: any) => ({
-      id: `tx-${Math.random().toString(36).substr(2, 9)}`,
-      date: tx.date,
-      description: tx.description,
-      amount: typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount),
-      type: tx.type || (parseFloat(tx.amount) < 0 ? "debit" : "credit"),
-      selected: tx.type === "debit" || parseFloat(tx.amount) < 0, // Pre-select debits by default
-      category: tx.category || "",
-      source: tx.source || ""
-    }));
+    console.log("Received response from edge function:", data);
     
-    console.log(`Successfully parsed ${transactions.length} transactions`);
+    // Map the transactions to the expected format, preserving original data
+    const transactions = data.transactions.map((tx: any) => {
+      // Get transaction amount and type, handling different formats
+      let amount = typeof tx.amount === 'number' ? tx.amount : parseFloat(String(tx.amount).replace(/[^\d.-]/g, '') || '0');
+      let type = tx.type || (amount < 0 ? "debit" : "credit");
+      
+      // Construct a parsed transaction with original data preserved
+      const parsedTransaction: ParsedTransaction = {
+        id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
+        date: tx.date || new Date().toISOString(),
+        description: tx.description || "",
+        amount: amount,
+        type: type,
+        selected: type === "debit" || amount < 0, // Pre-select debits by default
+        category: tx.category || "",
+        source: tx.source || "",
+        // Preserve the original date format if available
+        originalDate: tx.originalDate || tx.date
+      };
+      
+      // For Excel files processed directly, preserve all original fields
+      if (data.preservedOriginalFormat) {
+        // Copy all original_* fields to keep the raw data
+        for (const key in tx) {
+          if (key.startsWith('original_')) {
+            parsedTransaction[key] = tx[key];
+          }
+        }
+      }
+      
+      return parsedTransaction;
+    });
+    
+    console.log(`Successfully parsed ${transactions.length} transactions, preserving original format: ${!!data.preservedOriginalFormat}`);
     onSuccess(transactions);
     
   } catch (error: any) {

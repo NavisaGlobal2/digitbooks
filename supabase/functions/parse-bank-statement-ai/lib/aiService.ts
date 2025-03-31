@@ -1,11 +1,18 @@
-
 import { processWithAnthropic } from "./anthropicProcessor.ts";
 import { processWithDeepseek } from "./deepseekProcessor.ts";
 
 /**
  * Process extracted text with AI services
+ * When excelData is provided, it will be used directly without AI processing
  */
-export async function processWithAI(text: string, fileType: string, context?: string): Promise<any> {
+export async function processWithAI(text: string, fileType: string, context?: string, excelData?: any[]): Promise<any> {
+  // If we have direct Excel data, use it without AI processing
+  if (excelData && Array.isArray(excelData)) {
+    console.log(`Using direct Excel data: ${excelData.length} rows`);
+    return excelData;
+  }
+  
+  // Otherwise use AI processing for non-Excel files or as fallback
   // Check available AI providers
   const hasAnthropicKey = !!Deno.env.get("ANTHROPIC_API_KEY");
   const hasDeepseekKey = !!Deno.env.get("DEEPSEEK_API_KEY");
