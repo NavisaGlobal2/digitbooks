@@ -3,7 +3,6 @@
  * Helper functions for determining transaction types
  */
 
-import { extractCreditAmount, extractDebitAmount } from './amountFormatter';
 import { extractDescription } from './descriptionFormatter';
 
 /**

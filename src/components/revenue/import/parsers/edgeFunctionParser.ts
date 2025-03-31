@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./types";
 import { RevenueSource } from "@/types/revenue";
@@ -7,7 +8,6 @@ import {
   extractAmount, 
   determineTransactionType 
 } from "./utils/formatters";
-import { suggestRevenueSource, suggestExpenseCategory } from "./utils/sourcePredictor";
 
 export const parseViaEdgeFunction = async (
   file: File,
@@ -101,10 +101,6 @@ function transformRevenueTransactions(transactions: any[]): ParsedTransaction[] 
       const description = extractDescription(tx);
       const amount = extractAmount(tx);
       
-      // Create a source suggestion based on the description
-      // Use the AI-suggested source if available
-      const sourceSuggestion = tx.sourceSuggestion || suggestRevenueSource(description);
-      
       return {
         id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
         date: txDate,
@@ -112,7 +108,6 @@ function transformRevenueTransactions(transactions: any[]): ParsedTransaction[] 
         amount: amount,
         type: "credit" as const,
         selected: true,
-        sourceSuggestion,
         // Preserve original data
         originalDate: tx.originalDate || tx.date,
         originalAmount: tx.originalAmount || tx.amount,
@@ -142,10 +137,6 @@ function transformExpenseTransactions(transactions: any[]): ParsedTransaction[] 
       const description = extractDescription(tx);
       const amount = extractAmount(tx);
       
-      // Create a category suggestion based on the description
-      // Use the AI-suggested category if available
-      const categorySuggestion = tx.categorySuggestion || suggestExpenseCategory(description);
-      
       return {
         id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
         date: txDate,
@@ -153,7 +144,6 @@ function transformExpenseTransactions(transactions: any[]): ParsedTransaction[] 
         amount: amount,
         type: "debit" as const,
         selected: true,
-        categorySuggestion,
         // Preserve original data
         originalDate: tx.originalDate || tx.date,
         originalAmount: tx.originalAmount || tx.amount,

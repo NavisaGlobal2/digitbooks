@@ -12,49 +12,45 @@ export async function processWithAnthropic(text: string, context?: string | null
   console.log(`Processing context: ${context || 'general'}`);
   console.log(`Input data size: ${text.length} characters`);
   
-  // Adjust the system prompt based on the context (revenue or expense)
-  let systemPrompt = `You are a financial data extraction assistant. Your task is to analyze and format raw bank statement transaction data. Keep all original data but ensure consistent structure.`;
+  // Enhanced system prompt with stronger emphasis on proper description formatting
+  let systemPrompt = `You are a financial data extraction and formatting expert. Your task is to analyze and structure raw bank statement transaction data. KEEP ALL ORIGINAL DATA but ensure consistent formatting.`;
   
   if (context === "revenue") {
     systemPrompt += `
     
-    For each transaction PRESERVE ALL ORIGINAL FIELDS AND VALUES, but ensure these core fields are properly structured:
+    For each transaction, you MUST PRESERVE ALL ORIGINAL FIELDS AND VALUES, while ensuring these core fields are properly structured:
     - date (in YYYY-MM-DD format)
-    - description (the transaction narrative)
+    - description (NEVER use placeholders like "Row 1" or "Row 2" - extract the actual transaction narrative from the data)
     - amount (as a number, negative for debits/expenses, positive for credits/revenue)
     - type ("debit" or "credit")
     
-    Additionally, for credit (revenue) transactions, analyze the description to suggest a source from these categories:
-    - sales: Product or service sales revenue
-    - services: Service fees, consulting
-    - investments: Interest, dividends, capital gains
-    - grants: Grants or institutional funding
-    - donations: Charitable contributions
-    - royalties: Licensing fees, intellectual property income
-    - rental: Property or equipment rental income
-    - consulting: Professional services fees
-    - affiliate: Commission from partnerships
-    - other: Miscellaneous or unclassifiable income
+    CRITICAL INSTRUCTIONS FOR DESCRIPTIONS:
+    1. NEVER output generic terms like "Row 1", "Row 2" in place of descriptions
+    2. Always extract the actual transaction narrative from the "REMARKS", "NARRATION", "PARTICULARS" or similar fields
+    3. If no clear description exists, use merchant name, reference number, or any identifying information
+    4. Combine relevant fields to create meaningful descriptions when necessary
+    5. Remove any unnecessary prefixes, suffixes, or repetitive elements
     
-    For each credit transaction, add a "sourceSuggestion" object containing:
-    - "source": the suggested revenue category (from the list above)
-    - "confidence": a number between 0 and 1 indicating your confidence level
-    
-    Focus only on credit (incoming money) transactions, which represent revenue. These have positive amounts.
-    
-    IMPORTANT: Analyze the raw data structure and PRESERVE ALL ORIGINAL FIELDS, but ensure the core fields (date, description, amount, type) are properly structured.
+    IMPORTANT: Analyze the raw data structure thoroughly and PRESERVE ALL ORIGINAL FIELDS in the preservedColumns property.
     
     Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
   } else {
     systemPrompt += `
     
-    For each transaction PRESERVE ALL ORIGINAL FIELDS AND VALUES, but ensure these core fields are properly structured:
+    For each transaction, you MUST PRESERVE ALL ORIGINAL FIELDS AND VALUES, while ensuring these core fields are properly structured:
     - date (in YYYY-MM-DD format if possible)
-    - description (the transaction narrative)
+    - description (NEVER use placeholders like "Row 1" or "Row 2" - extract the actual transaction narrative from the data)
     - amount (as a number, negative for debits/expenses, positive for credits/revenue)
     - type ("debit" or "credit")
     
-    IMPORTANT: Analyze the raw data structure and PRESERVE ALL ORIGINAL FIELDS, but ensure the core fields (date, description, amount, type) are properly structured.
+    CRITICAL INSTRUCTIONS FOR DESCRIPTIONS:
+    1. NEVER output generic terms like "Row 1", "Row 2" in place of descriptions
+    2. Always extract the actual transaction narrative from the "REMARKS", "NARRATION", "PARTICULARS" or similar fields
+    3. If no clear description exists, use merchant name, reference number, or any identifying information
+    4. Combine relevant fields to create meaningful descriptions when necessary
+    5. Remove any unnecessary prefixes, suffixes, or repetitive elements
+    
+    IMPORTANT: Analyze the raw data structure thoroughly and PRESERVE ALL ORIGINAL FIELDS in the preservedColumns property.
     
     Respond ONLY with a valid JSON array of transactions, with no additional text or explanation.`;
   }
