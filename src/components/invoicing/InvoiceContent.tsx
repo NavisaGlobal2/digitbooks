@@ -1,6 +1,5 @@
-
 import { useState, useEffect, useCallback } from "react";
-import { useInvoices } from "@/contexts/InvoiceContext";
+import { useInvoices } from "@/contexts/invoice";
 import InvoiceEmptyState from "./InvoiceEmptyState";
 import InvoiceStatCards from "./InvoiceStatCards";
 import InvoiceSearchBar from "./InvoiceSearchBar";
@@ -52,7 +51,6 @@ const InvoiceContent = ({
       toast.error("Failed to record payment");
       return Promise.reject(error);
     } finally {
-      // Add a delay before resetting the processing state
       setTimeout(() => {
         setIsProcessingPayment(false);
       }, 500);
