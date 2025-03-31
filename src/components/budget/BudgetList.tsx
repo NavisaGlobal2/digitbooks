@@ -93,7 +93,7 @@ const BudgetList = ({ onSelectBudget, onCreateBudget }: BudgetListProps) => {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>
-                        ${totalSpent.toFixed(2)} / ${budget.totalBudget.toFixed(2)}
+                        ₦{totalSpent.toFixed(2)} / ₦{budget.totalBudget.toFixed(2)}
                       </span>
                       <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </div>
