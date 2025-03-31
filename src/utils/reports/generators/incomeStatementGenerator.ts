@@ -16,44 +16,20 @@ export async function generateIncomeStatementContent(doc: jsPDF): Promise<void> 
       return generateSampleIncomeStatement(doc);
     }
 
-    // Create a clone of the report element to avoid capturing interactive elements
-    const clone = reportElement.cloneNode(true) as HTMLElement;
-    
-    // Set styles for the clone to ensure proper rendering
-    clone.style.position = 'absolute';
-    clone.style.top = '-9999px';
-    clone.style.left = '-9999px';
-    clone.style.width = `${reportElement.clientWidth}px`;
-    clone.style.height = 'auto';
-    clone.style.backgroundColor = 'white';
-    clone.style.overflow = 'visible';
-    
-    // Remove any buttons, navigation, or interactive elements from the clone
-    clone.querySelectorAll('button, a, .print\\:hidden').forEach(el => {
-      el.remove();
-    });
-    
-    // Append clone to body temporarily
-    document.body.appendChild(clone);
-
     // Use html2canvas with improved settings
-    const canvas = await html2canvas(clone, {
+    const canvas = await html2canvas(reportElement as HTMLElement, {
       scale: 2, // Higher scale for better quality
       useCORS: true, // Enable CORS for images
       logging: false, // Disable logging
+      allowTaint: true, // Allow tainted canvas if images are from other domains
       backgroundColor: "#ffffff", // Set white background
+      removeContainer: false, // Don't remove the container to avoid layout shifts
+      // Only capture what's visible
       ignoreElements: (element) => {
-        // Skip elements that shouldn't be in PDF
         const style = window.getComputedStyle(element);
-        return style.display === "none" || 
-               style.visibility === "hidden" || 
-               style.opacity === "0" ||
-               element.classList.contains('print:hidden');
+        return style.display === "none" || style.visibility === "hidden" || style.opacity === "0";
       }
     });
-
-    // Remove the clone from the DOM
-    document.body.removeChild(clone);
 
     // Calculate dimensions to fit the PDF page
     const imgData = canvas.toDataURL('image/png');
