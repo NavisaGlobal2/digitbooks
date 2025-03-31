@@ -2,7 +2,7 @@
 import { format } from "date-fns";
 import { CheckCircle, Download, ExternalLink, MoreVertical, Receipt } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Invoice } from "@/types/invoice";
+import { Invoice, PaymentRecord } from "@/types/invoice";
 import { formatNaira } from "@/utils/invoice/formatters";
 import { downloadInvoice, downloadReceipt, shareInvoice } from "@/utils/invoice/documentActions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 interface InvoiceTableProps {
   invoices: Invoice[];
-  onMarkAsPaid: (invoiceId: string, payments: any[]) => void;
+  onMarkAsPaid: (invoiceId: string, payments: PaymentRecord[]) => Promise<void>;
   isProcessingPayment?: boolean;
 }
 
