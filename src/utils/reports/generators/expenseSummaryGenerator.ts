@@ -2,11 +2,41 @@
 import jsPDF from "jspdf";
 import autoTable from 'jspdf-autotable';
 import { format } from "date-fns";
+import html2canvas from "html2canvas";
 
 /**
  * Generate expense summary report content
  */
-export const generateExpenseSummaryContent = (doc: jsPDF): void => {
+export const generateExpenseSummaryContent = async (doc: jsPDF): Promise<void> => {
+  // First try to use the snapshot approach
+  const reportContainer = document.getElementById("expense-report-content");
+  
+  if (reportContainer) {
+    try {
+      const canvas = await html2canvas(reportContainer, {
+        scale: 2, // Higher quality
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const imgProps = doc.getImageProperties(imgData);
+      const pdfWidth = doc.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      // Add the captured image to the PDF
+      doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      
+      // Success with snapshot - return early
+      return;
+    } catch (error) {
+      console.error("Error capturing expense report snapshot, falling back to manual rendering:", error);
+      // Continue with fallback approach below
+    }
+  }
+  
+  // Fallback to the manual rendering approach
   // Add title for this section
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -17,7 +47,6 @@ export const generateExpenseSummaryContent = (doc: jsPDF): void => {
   doc.setFontSize(11);
   
   // Find the expense data from the DOM to recreate in PDF
-  const reportContainer = document.getElementById("expense-report-content");
   if (!reportContainer) {
     doc.text("Error: Could not find expense report data.", 20, 85);
     return;

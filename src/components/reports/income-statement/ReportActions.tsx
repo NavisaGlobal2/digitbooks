@@ -11,26 +11,53 @@ interface ReportActionsProps {
   title: string;
   period: string;
   dateRange: { startDate: Date; endDate: Date } | null;
+  reportRef?: React.RefObject<HTMLDivElement>;
 }
 
 export const ReportActions: React.FC<ReportActionsProps> = ({ 
   onBack,
   title,
   period,
-  dateRange
+  dateRange,
+  reportRef
 }) => {
   const handlePrint = () => {
     window.print();
   };
 
   const handleDownload = () => {
-    // For Cash Flow reports, we'll use the generateReportPdf function that now includes
-    // the direct snapshot approach
-    generateReportPdf({
-      title,
-      period,
-      dateRange,
-    });
+    // For reports that support snapshots, use the reportRef approach
+    if (reportRef && reportRef.current && (title.toLowerCase() === "cash flow" || title.toLowerCase() === "expense summary")) {
+      const element = reportRef.current;
+      
+      html2canvas(element, {
+        scale: 2, // Better quality
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+      }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+        
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`${title.toLowerCase().replace(/\s+/g, "-")}-report.pdf`);
+      });
+    } else {
+      // For other reports, use the regular generateReportPdf function
+      generateReportPdf({
+        title,
+        period,
+        dateRange,
+      });
+    }
   };
 
   return (

@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { ReportActions } from "../income-statement/ReportActions";
 import { Card, CardContent } from "@/components/ui/card";
 import ExpenseCategoriesBreakdown from "../ExpenseCategoriesBreakdown";
@@ -21,6 +21,7 @@ const ExpenseSummaryReport: React.FC<ExpenseSummaryReportProps> = ({
   const { expenses } = useExpenses();
   const [expenseData, setExpenseData] = useState<ExpenseBreakdown[]>([]);
   const [totalExpenses, setTotalExpenses] = useState<number>(0);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!expenses.length) return;
@@ -66,9 +67,14 @@ const ExpenseSummaryReport: React.FC<ExpenseSummaryReportProps> = ({
         title="Expense Summary"
         period={period}
         dateRange={dateRange}
+        reportRef={reportRef}
       />
 
-      <div className="bg-white p-8 rounded-lg shadow-sm border print:shadow-none" id="expense-report-content">
+      <div 
+        ref={reportRef} 
+        className="bg-white p-8 rounded-lg shadow-sm border print:shadow-none" 
+        id="expense-report-content"
+      >
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold">Expense Summary</h1>
           <p className="text-muted-foreground">
