@@ -52,6 +52,9 @@ const GenericReportView = ({ reportType, onBack }: GenericReportViewProps) => {
             {reportType.charAt(0).toUpperCase() + reportType.slice(1).replace("-", " ")}{" "}
             Report
           </h2>
+          <p className="text-lg font-medium text-muted-foreground">
+            {reportPeriod.start} — {reportPeriod.end}
+          </p>
           <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm sm:text-base mt-1">
             <Calendar className="h-4 w-4" />
             <p>{formattedDate}</p>
@@ -59,10 +62,13 @@ const GenericReportView = ({ reportType, onBack }: GenericReportViewProps) => {
           
           {/* Report Timeline */}
           <div className="mt-4 pt-3 border-t">
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 text-sm">
               <Clock className="h-4 w-4 text-green-500" />
-              <span>Reporting Period:</span>
-              <span className="font-semibold text-gray-700">{reportPeriod.start} — {reportPeriod.end}</span>
+              <span className="text-base font-medium">Reporting Period: 30 days</span>
+            </div>
+            
+            <div className="text-center mt-1 mb-3">
+              <p className="text-base font-semibold text-gray-700">{reportPeriod.start} — {reportPeriod.end}</p>
             </div>
             
             <div className="mt-3 w-full max-w-md mx-auto px-4">
@@ -75,6 +81,10 @@ const GenericReportView = ({ reportType, onBack }: GenericReportViewProps) => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="my-6 border-y py-4 bg-gray-50 rounded">
+          <h3 className="text-center text-lg font-medium">Financial Summary for Period: {reportPeriod.start} - {reportPeriod.end}</h3>
         </div>
 
         <div className="bg-gray-100 rounded-lg p-4 sm:p-12 flex items-center justify-center">

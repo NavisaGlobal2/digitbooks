@@ -64,6 +64,10 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
           />
         )}
 
+        <div className="my-6 border-y py-4 bg-gray-50 rounded">
+          <h3 className="text-center text-lg font-medium">Financial Summary for Period: {startDateFormatted} - {endDateFormatted}</h3>
+        </div>
+
         <ReportSummary reportData={reportData} />
         
         <ReportFooter 
