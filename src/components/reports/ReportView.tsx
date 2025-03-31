@@ -35,6 +35,11 @@ export const ReportView: React.FC<ReportViewProps> = ({
     case "budget-analysis":
     case "profit-loss":
     default:
-      return <GenericReportView reportType={selectedReportType} onBack={onBack} />;
+      return (
+        <GenericReportView 
+          reportType={selectedReportType} 
+          onBack={onBack} 
+        />
+      );
   }
 };

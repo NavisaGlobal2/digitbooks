@@ -47,7 +47,12 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
 
   return (
     <div className="space-y-4 print:p-6">
-      <ReportActions onBack={onBack} />
+      <ReportActions 
+        onBack={onBack}
+        title="Income Statement"
+        period={period}
+        dateRange={dateRange}
+      />
 
       <ReportCard>
         <ReportHeader 

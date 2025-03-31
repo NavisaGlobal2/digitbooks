@@ -2,18 +2,31 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Printer, Download, ChevronLeft } from "lucide-react";
+import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
 
 interface ReportActionsProps {
   onBack: () => void;
+  title: string;
+  period: string;
+  dateRange: { startDate: Date; endDate: Date } | null;
 }
 
-export const ReportActions: React.FC<ReportActionsProps> = ({ onBack }) => {
+export const ReportActions: React.FC<ReportActionsProps> = ({ 
+  onBack,
+  title,
+  period,
+  dateRange
+}) => {
   const handlePrint = () => {
     window.print();
   };
 
   const handleDownload = () => {
-    alert("Download functionality would be implemented here");
+    generateReportPdf({
+      title,
+      period,
+      dateRange,
+    });
   };
 
   return (

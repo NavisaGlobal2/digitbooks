@@ -4,6 +4,7 @@ import { ArrowLeft, BarChart3, Download, FileText, Calendar, Clock } from "lucid
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
 
 interface GenericReportViewProps {
   reportType: string;
@@ -23,6 +24,21 @@ const GenericReportView = ({ reportType, onBack }: GenericReportViewProps) => {
     end: format(endDate, "MMM dd, yyyy")
   };
 
+  const handleDownload = () => {
+    const title = reportType.charAt(0).toUpperCase() + reportType.slice(1).replace("-", " ");
+    
+    generateReportPdf({
+      title,
+      period: `${reportPeriod.start} — ${reportPeriod.end}`,
+      dateRange: {
+        startDate,
+        endDate
+      }
+    });
+    
+    toast.success("Report downloaded successfully!");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col xs:flex-row items-center justify-between gap-3">
@@ -36,9 +52,7 @@ const GenericReportView = ({ reportType, onBack }: GenericReportViewProps) => {
         </Button>
         <Button
           className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2 w-full xs:w-auto"
-          onClick={() => {
-            toast.success("Report downloaded successfully!");
-          }}
+          onClick={handleDownload}
         >
           <Download className="h-4 w-4" />
           Download Report
