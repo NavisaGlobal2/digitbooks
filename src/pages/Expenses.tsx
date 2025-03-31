@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useExpenses } from "@/contexts/ExpenseContext";
+import { useExpenses } from "@/contexts/expense";
 import { toast } from "sonner";
 import { Plus, Upload, ArrowLeft, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
