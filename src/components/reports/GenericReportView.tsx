@@ -1,8 +1,9 @@
 
 import React from "react";
-import { ArrowLeft, BarChart3, Download, FileText } from "lucide-react";
+import { ArrowLeft, BarChart3, Download, FileText, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 interface GenericReportViewProps {
   reportType: string;
@@ -10,6 +11,9 @@ interface GenericReportViewProps {
 }
 
 const GenericReportView = ({ reportType, onBack }: GenericReportViewProps) => {
+  const today = new Date();
+  const formattedDate = format(today, "MMMM dd, yyyy");
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col xs:flex-row items-center justify-between gap-3">
@@ -39,9 +43,10 @@ const GenericReportView = ({ reportType, onBack }: GenericReportViewProps) => {
             {reportType.charAt(0).toUpperCase() + reportType.slice(1).replace("-", " ")}{" "}
             Report
           </h2>
-          <p className="text-muted-foreground text-sm sm:text-base">
-            Generated on {new Date().toLocaleDateString()}
-          </p>
+          <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm sm:text-base mt-1">
+            <Calendar className="h-4 w-4" />
+            <p>{formattedDate}</p>
+          </div>
         </div>
 
         <div className="bg-gray-100 rounded-lg p-4 sm:p-12 flex items-center justify-center">

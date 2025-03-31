@@ -11,9 +11,10 @@ import {
   TableCell 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Printer, Download, ChevronLeft } from "lucide-react";
+import { Printer, Download, ChevronLeft, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/utils/invoice/formatters";
+import { format } from "date-fns";
 
 interface IncomeStatementReportProps {
   onBack: () => void;
@@ -35,19 +36,19 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
     profitMargin: number;
   } | null>(null);
 
+  const today = new Date();
+  const formattedDate = format(today, "MMMM dd, yyyy");
+
   useEffect(() => {
-    // Simulate loading time to fetch data
     const timer = setTimeout(() => {
       let filteredRevenues = revenues;
       let totalRevenue = 0;
       let revenueBySource = {};
       
-      // If dateRange is provided, filter revenues by the date range
       if (dateRange) {
         filteredRevenues = getRevenueByPeriod(dateRange.startDate, dateRange.endDate);
         totalRevenue = filteredRevenues.reduce((total, revenue) => total + revenue.amount, 0);
         
-        // Calculate revenue by source using the filtered revenues
         revenueBySource = filteredRevenues.reduce((acc, revenue) => {
           const source = revenue.source;
           if (!acc[source]) {
@@ -57,7 +58,6 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
           return acc;
         }, {} as Record<string, number>);
       } else {
-        // Otherwise use the context methods for total calculations
         totalRevenue = getTotalRevenue();
         revenueBySource = getRevenueBySource();
       }
@@ -65,9 +65,8 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
       const totalExpenses = getTotalExpenses();
       const expensesByCategory = getExpensesByCategory();
       
-      // Calculate key metrics
       const grossProfit = totalRevenue - totalExpenses;
-      const netProfit = grossProfit; // In a real app, you might subtract taxes, etc.
+      const netProfit = grossProfit;
       const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
       
       setReportData({
@@ -91,7 +90,6 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
   };
 
   const handleDownload = () => {
-    // In a real application, this would generate a PDF or Excel file
     alert("Download functionality would be implemented here");
   };
 
@@ -145,6 +143,10 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
         <div className="text-center mb-6 print:mb-8">
           <h2 className="text-2xl font-bold">Income Statement</h2>
           <p className="text-muted-foreground">{period}</p>
+          <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm mt-1">
+            <Calendar className="h-4 w-4" />
+            <p>Generated on {formattedDate}</p>
+          </div>
         </div>
 
         <Table className="mb-8">
@@ -160,7 +162,6 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
               <TableCell className="text-right">{formatCurrency(reportData.totalRevenue)}</TableCell>
             </TableRow>
             
-            {/* Revenue breakdown by source */}
             {Object.entries(reportData.revenueBySource).map(([source, amount]) => (
               <TableRow key={`revenue-${source}`} className="text-sm text-muted-foreground">
                 <TableCell className="pl-8">- {source}</TableCell>
@@ -175,7 +176,6 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
               </TableCell>
             </TableRow>
             
-            {/* Expenses breakdown by category */}
             {Object.entries(reportData.expensesByCategory).map(([category, amount]) => (
               <TableRow key={`expense-${category}`} className="text-sm text-muted-foreground">
                 <TableCell className="pl-8">- {category}</TableCell>
@@ -210,7 +210,7 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
         
         <div className="text-sm text-muted-foreground">
           <p>This report is generated based on the revenue and expense data recorded in the system.</p>
-          <p>Generated on {new Date().toLocaleDateString()}</p>
+          <p>Generated on {formattedDate}</p>
         </div>
       </Card>
     </div>
