@@ -28,12 +28,6 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
 }) => {
   const handleDownload = async () => {
     try {
-      // Use direct generation if available (this specifically triggers PDF download)
-      if (onDirectGeneration) {
-        onDirectGeneration();
-        return;
-      }
-
       // Check for valid date range and reference to report content
       if (!dateRange) {
         toast.error("Please select a date range to generate a report");

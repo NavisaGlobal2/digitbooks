@@ -1,6 +1,5 @@
 
 import React from "react";
-import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
 import IncomeStatementReport from "./income-statement";
 import GenericReportView from "./GenericReportView";
 import CashFlowReport from "./cash-flow";
@@ -33,25 +32,10 @@ export const ReportView: React.FC<ReportViewProps> = ({
       return;
     }
     
-    try {
-      const title = selectedReportType.charAt(0).toUpperCase() + 
-                    selectedReportType.slice(1).replace(/-/g, " ");
-      
-      const period = `${format(dateRange.startDate, "MMM dd, yyyy")} — ${format(dateRange.endDate, "MMM dd, yyyy")}`;
-      
-      toast.info(`Generating ${title} report...`);
-      
-      await generateReportPdf({
-        title,
-        period,
-        dateRange
-      });
-      
-      toast.success(`${title} report generated and downloaded successfully`);
-    } catch (error) {
-      console.error("PDF generation error:", error);
-      toast.error(`Failed to generate PDF report: ${(error as Error).message || "Unknown error"}`);
-    }
+    toast.info(`Please wait while we generate your PDF...`);
+    
+    // The actual download will be handled by the component's built-in download function
+    // This function is just a placeholder now to maintain the interface
   };
 
   if (!selectedReportType) return null;

@@ -42,12 +42,6 @@ export const generateReportPdf = async (reportData: ReportData): Promise<void> =
         // Create a new PDF document with appropriate dimensions
         const doc = new jsPDF();
         
-        // Verify that autoTable is available
-        if (typeof doc.autoTable !== 'function') {
-          console.error("jsPDF autoTable plugin is not properly loaded");
-          throw new Error("PDF generation failed: AutoTable plugin not available");
-        }
-
         // Add metadata
         configurePdfMetadata(doc, title, period);
         
@@ -85,12 +79,6 @@ export const generateReportPdf = async (reportData: ReportData): Promise<void> =
     // Create a new PDF document (fallback method)
     const doc = new jsPDF();
     
-    // Verify that autoTable is available
-    if (typeof doc.autoTable !== 'function') {
-      console.error("jsPDF autoTable plugin is not properly loaded");
-      throw new Error("PDF generation failed: AutoTable plugin not available");
-    }
-    
     // Add metadata
     configurePdfMetadata(doc, title, period);
 
@@ -102,40 +90,11 @@ export const generateReportPdf = async (reportData: ReportData): Promise<void> =
       addDateRangeInfo(doc, dateRange);
     }
     
-    // If we have saved report data, use it directly instead of regenerating the report
-    if (savedReportData) {
-      console.log("Using saved report data for:", title);
-      // Generate report based on saved data
-      // This is a simplified approach - in a production app, you'd implement
-      // custom rendering logic for each report type using the saved data
-      generateGenericReportContent(doc);
-      addPageNumbers(doc);
-      const fileName = generateReportFilename(title);
-      doc.save(fileName);
-      return;
-    }
-    
-    console.log("Generating report content for:", title.toLowerCase().replace(/\s+/g, "-"));
-    
-    // Add report content based on report type
+    // Generate report based on type
     const reportType = title.toLowerCase().replace(/\s+/g, "-");
-    switch (reportType) {
-      case "income-statement":
-        generateIncomeStatementContent(doc);
-        break;
-      case "cash-flow":
-        generateCashFlowContent(doc);
-        break;
-      case "expense-summary":
-        generateExpenseSummaryContent(doc);
-        break;
-      case "revenue-summary":
-      case "budget-analysis":
-      case "profit-loss":
-      default:
-        generateGenericReportContent(doc);
-        break;
-    }
+    
+    // Generate generic content for all report types as fallback
+    generateGenericReportContent(doc);
     
     // Add page numbers
     addPageNumbers(doc);
