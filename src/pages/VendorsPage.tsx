@@ -10,6 +10,7 @@ import AddVendorDialog from "@/components/vendors/AddVendorDialog";
 
 const VendorsPage = () => {
   const [showVendorDialog, setShowVendorDialog] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState<string | null>(null);
   const navigate = useNavigate();
   
   const handleAddVendor = () => {
@@ -19,6 +20,34 @@ const VendorsPage = () => {
   const handleBackClick = () => {
     navigate('/dashboard');
   };
+  
+  // Only show add button when not viewing a specific vendor
+  const showAddButton = !selectedVendor;
+  
+  // This would be set when navigating to a vendor detail page
+  // For example, could be updated based on URL parameters
+  const checkForSelectedVendor = (pathname: string) => {
+    const segments = pathname.split('/');
+    const vendorName = segments[segments.length - 1];
+    if (vendorName && vendorName !== 'vendors') {
+      setSelectedVendor(vendorName);
+    } else {
+      setSelectedVendor(null);
+    }
+  };
+  
+  // Check current URL when component mounts
+  React.useEffect(() => {
+    checkForSelectedVendor(window.location.pathname);
+    
+    // Listen for route changes
+    const handleRouteChange = () => {
+      checkForSelectedVendor(window.location.pathname);
+    };
+    
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, []);
   
   return (
     <DashboardContainer>
@@ -45,15 +74,17 @@ const VendorsPage = () => {
               <Bell className="h-4 w-4" />
             </Button>
             
-            <Button 
-              className="bg-green-500 hover:bg-green-600 text-white"
-              onClick={handleAddVendor}
-              size="sm"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Add vendor</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
+            {showAddButton && (
+              <Button 
+                className="bg-green-500 hover:bg-green-600 text-white"
+                onClick={handleAddVendor}
+                size="sm"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Add vendor</span>
+                <span className="sm:hidden">Add</span>
+              </Button>
+            )}
           </div>
         </div>
       </header>

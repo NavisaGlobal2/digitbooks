@@ -22,6 +22,9 @@ const Budget = () => {
     setSelectedBudgetId(null);
   };
 
+  // Only show the create button in the header when no specific budget is selected
+  const showCreateButton = !selectedBudgetId;
+
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -30,7 +33,7 @@ const Budget = () => {
         <header className="bg-white border-b px-6 h-16 flex items-center justify-between">
           <h1 className="text-xl font-semibold">Budgeting tools</h1>
           
-          {budgets.length > 0 && !selectedBudgetId && (
+          {budgets.length > 0 && showCreateButton && (
             <Button 
               className="bg-green-500 hover:bg-green-600 text-white"
               onClick={() => setShowCreateDialog(true)}

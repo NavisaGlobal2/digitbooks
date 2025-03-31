@@ -1,10 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRevenue } from "@/contexts/RevenueContext";
 import { toast } from "sonner";
 import { PieChart, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import RevenueContent from "@/components/revenue/RevenueContent";
 import AddRevenueDialog from "@/components/revenue/AddRevenueDialog";
 import ImportRevenueDialog from "@/components/revenue/ImportRevenueDialog";
@@ -17,7 +17,16 @@ const RevenuePage = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [editRevenueId, setEditRevenueId] = useState<string | null>(null);
+  const [isDetailView, setIsDetailView] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Check if we're in a detail view based on the URL
+  useEffect(() => {
+    // This is a simplified check - adapt as needed based on your routing structure
+    const path = location.pathname;
+    setIsDetailView(path.includes('/detail') || editRevenueId !== null);
+  }, [location.pathname, editRevenueId]);
   
   const handleAddRevenue = () => {
     setShowAddDialog(true);
@@ -52,6 +61,9 @@ const RevenuePage = () => {
     navigate("/reports");
   };
   
+  // Only show the Reports button when not in a detail view
+  const showReportsButton = !isDetailView;
+  
   return (
     <DashboardContainer>
       <div className="space-y-6">
@@ -61,16 +73,18 @@ const RevenuePage = () => {
             <h1 className="text-2xl font-semibold">Revenue Tracking</h1>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline" 
-              className="border-green-500 text-green-600 hover:bg-green-50"
-              onClick={handleNavigateToReports}
-            >
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Revenue Reports
-            </Button>
-          </div>
+          {showReportsButton && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline" 
+                className="border-green-500 text-green-600 hover:bg-green-50"
+                onClick={handleNavigateToReports}
+              >
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Revenue Reports
+              </Button>
+            </div>
+          )}
         </div>
         
         <RevenueContent
