@@ -13,7 +13,7 @@ export function detectColumns(row: string[]): { dateCol: number; descCol: number
   
   // Find potential date column
   for (let j = 0; j < row.length; j++) {
-    const cell = row[j].trim();
+    const cell = String(row[j] || '').trim();
     if (/\d{1,4}[-/\.]\d{1,2}[-/\.]\d{1,4}/.test(cell)) {
       dateCol = j;
       break;
@@ -24,7 +24,7 @@ export function detectColumns(row: string[]): { dateCol: number; descCol: number
   let maxLength = 0;
   for (let j = 0; j < row.length; j++) {
     if (j !== dateCol) {
-      const cell = row[j].trim();
+      const cell = String(row[j] || '').trim();
       if (cell.length > maxLength && !cell.match(/^[-+]?\d+(\.\d+)?$/)) {
         maxLength = cell.length;
         descCol = j;
@@ -35,7 +35,7 @@ export function detectColumns(row: string[]): { dateCol: number; descCol: number
   // Find amount column
   for (let j = 0; j < row.length; j++) {
     if (j !== dateCol && j !== descCol) {
-      const cell = row[j].trim().replace(/[,$]/g, '');
+      const cell = String(row[j] || '').trim().replace(/[,$]/g, '');
       if (cell.match(/^[-+]?\d+(\.\d+)?$/)) {
         amountCol = j;
         break;
@@ -52,7 +52,7 @@ export function detectColumns(row: string[]): { dateCol: number; descCol: number
 export function parseTransactionFromRow(
   row: string[], 
   columnIndices: { dateCol: number; descCol: number; amountCol: number }
-): { date: string; description: string; amount: number; type: "debit" | "credit" } | null {
+): { date: string; description: string | null; amount: number; type: "debit" | "credit" } | null {
   const { dateCol, descCol, amountCol } = columnIndices;
   
   // If we couldn't detect all required columns, return null
@@ -60,11 +60,17 @@ export function parseTransactionFromRow(
     return null;
   }
   
-  const amount = parseFloat(row[amountCol].trim().replace(/[,$]/g, ''));
+  // Safely get row data with null checks
+  const rawAmount = row[amountCol] ? String(row[amountCol]).trim().replace(/[,$]/g, '') : '0';
+  const amount = parseFloat(rawAmount || '0');
+  
+  // Safely get description - return null if it's a row placeholder or empty
+  const rawDescription = row[descCol] ? String(row[descCol]).trim() : '';
+  const description = /^Row\s+\d+$/.test(rawDescription) ? null : (rawDescription || null);
   
   return {
-    date: formatDate(row[dateCol].trim()),
-    description: row[descCol].trim(),
+    date: formatDate(String(row[dateCol] || '').trim()),
+    description: description,
     amount: amount,
     type: amount < 0 ? "debit" : "credit"
   };
@@ -73,11 +79,11 @@ export function parseTransactionFromRow(
 /**
  * Parse CSV rows into array of transaction objects
  */
-export function parseTransactions(rows: string[][]): Array<{ date: string; description: string; amount: number; type: "debit" | "credit" }> {
+export function parseTransactions(rows: string[][]): Array<{ date: string; description: string | null; amount: number; type: "debit" | "credit" }> {
   const transactions = [];
   
   // Skip empty rows and ensure we have at least a header and one data row
-  const dataRows = rows.filter(row => row.length > 2);
+  const dataRows = rows.filter(row => row && row.length > 2);
   
   if (dataRows.length < 2) {
     return [];
@@ -100,10 +106,45 @@ export function parseTransactions(rows: string[][]): Array<{ date: string; descr
  * Split CSV content into rows and cells
  */
 export function parseCSVContent(fileContent: string): string[][] {
-  return fileContent
-    .split('\n')
-    .filter(line => line.trim().length > 0)
-    .map(line => line.split(','));
+  if (!fileContent || typeof fileContent !== 'string') {
+    console.log("Invalid CSV content provided:", typeof fileContent);
+    return [];
+  }
+  
+  try {
+    // Handle different line endings and split into rows
+    const lines = fileContent.replace(/\r\n/g, '\n').split('\n');
+    
+    // Filter out empty lines and parse each line
+    return lines
+      .filter(line => line.trim().length > 0)
+      .map(line => {
+        // Handle quoted fields
+        let inQuote = false;
+        let currentField = "";
+        let fields = [];
+        
+        for (let i = 0; i < line.length; i++) {
+          let char = line[i];
+          
+          if (char === '"' && (i === 0 || line[i-1] !== '\\')) {
+            inQuote = !inQuote;
+          } else if (char === ',' && !inQuote) {
+            fields.push(currentField);
+            currentField = "";
+          } else {
+            currentField += char;
+          }
+        }
+        
+        // Add the last field
+        fields.push(currentField);
+        return fields;
+      });
+  } catch (error) {
+    console.error("Error parsing CSV:", error);
+    return [];
+  }
 }
 
 /**
@@ -166,8 +207,18 @@ export async function fallbackCSVProcessing(fileContent: string): Promise<any[]>
   try {
     console.log("Using fallback CSV processing method...");
     
+    if (!fileContent || typeof fileContent !== 'string') {
+      console.error("Invalid or empty CSV content provided");
+      return [];
+    }
+    
     // Parse CSV content into rows and cells
     const rows = parseCSVContent(fileContent);
+    
+    if (!rows || rows.length < 2) {
+      console.log("No valid data found in CSV content");
+      return [];
+    }
     
     // Parse transactions from rows
     const transactions = parseTransactions(rows);

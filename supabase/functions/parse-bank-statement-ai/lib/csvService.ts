@@ -10,7 +10,12 @@ export const CSVService = {
    * @returns Promise with the extracted text content
    */
   extractTextFromCSV: async (file: File): Promise<string> => {
-    return await file.text();
+    try {
+      return await file.text();
+    } catch (error) {
+      console.error("Error extracting text from CSV:", error);
+      throw new Error("Failed to extract text from CSV file");
+    }
   }
 };
 
@@ -30,7 +35,8 @@ export const isCSVFile = (file: File): boolean => {
   const csvMimeTypes = [
     'text/csv',
     'application/csv',
-    'application/vnd.ms-excel' // Some systems use this for CSV too
+    'application/vnd.ms-excel', // Some systems use this for CSV too
+    'text/plain' // Some browsers/systems may use this for CSV
   ];
   
   return csvMimeTypes.includes(file.type);

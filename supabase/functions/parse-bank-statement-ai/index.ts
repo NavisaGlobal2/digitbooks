@@ -5,6 +5,7 @@ import { parseExcelDirectly } from "./lib/excelParser.ts";
 import { isExcelFile } from "./lib/excelService.ts";
 import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
 import { formatTransactionsWithAI } from "./lib/aiService.ts";
+import { isCSVFile, CSVService } from "./lib/csvService.ts";
 
 serve(async (req) => {
   // Log request information
@@ -27,7 +28,7 @@ serve(async (req) => {
       );
     }
     
-    console.log(`Processing file: ${file.name}, size: ${file.size} bytes`);
+    console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
     
     // Extract file type for potential fallback decisions
     const fileType = file.name.split('.').pop()?.toLowerCase() || '';
@@ -88,14 +89,28 @@ serve(async (req) => {
         }
       }
       // Process CSV files directly 
-      else if (fileType === "csv") {
+      else if (isCSVFile(file)) {
         try {
           console.log("Processing CSV file with direct CSV processor");
           // Extract text from the CSV file
-          const fileText = await file.text();
+          const fileText = await CSVService.extractTextFromCSV(file);
+          
+          if (!fileText || fileText.trim() === '') {
+            console.error("Empty CSV file or text extraction failed");
+            return new Response(
+              JSON.stringify({ 
+                error: "Empty CSV file or text extraction failed. Please check the file." 
+              }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
+            );
+          }
+          
+          console.log(`Extracted ${fileText.length} characters from CSV file`);
+          
           transactions = await fallbackCSVProcessing(fileText);
           
-          if (transactions.length === 0) {
+          if (!transactions || transactions.length === 0) {
+            console.error("No transactions found in CSV file");
             return new Response(
               JSON.stringify({ 
                 error: "Could not parse transactions from CSV file. Please check the file format." 
