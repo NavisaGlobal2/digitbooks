@@ -11,6 +11,15 @@ import InvoiceStatusBadge from "./InvoiceStatusBadge";
 import { PaymentDialog } from "./payment/PaymentDialog";
 import { toast } from "sonner";
 
+interface PaymentRecord {
+  id: string;
+  amount: number;
+  date: string;
+  method: string;
+  reference?: string;
+  notes?: string;
+}
+
 interface InvoiceTableProps {
   invoices: Invoice[];
   onMarkAsPaid: (invoiceId: string, payments: PaymentRecord[]) => Promise<void>;
