@@ -66,7 +66,7 @@ const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
   };
 
   return (
-    <div className="flex flex-wrap gap-3 mb-4 p-4 bg-[#F2FCE2]/30 rounded-lg border border-[#05D166]/20">
+    <>
       <div>
         <label className="block text-sm font-medium text-muted-foreground mb-1">Time period</label>
         <Select value={selectedPeriod} onValueChange={handlePeriodChange}>
@@ -128,7 +128,7 @@ const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
           </Popover>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
