@@ -20,16 +20,17 @@ export async function processWithAnthropic(text: string, context?: string | null
     
     For each transaction, you MUST PRESERVE ALL ORIGINAL FIELDS AND VALUES, while ensuring these core fields are properly structured:
     - date (in YYYY-MM-DD format)
-    - description (NEVER use placeholders like "Row 1" or "Row 2" - extract the actual transaction narrative from the data)
+    - description (NEVER use placeholders like "Row 1", "Row 2", "Row 12", "Row 13", or any row-based identifiers - extract the actual transaction narrative from the data)
     - amount (as a number, negative for debits/expenses, positive for credits/revenue)
     - type ("debit" or "credit")
     
     CRITICAL INSTRUCTIONS FOR DESCRIPTIONS:
-    1. NEVER output generic terms like "Row 1", "Row 2" in place of descriptions
+    1. ABSOLUTELY NEVER output description labels like "Row 1", "Row 2", "Row 12", "Row 13", etc. in place of actual descriptions
     2. Always extract the actual transaction narrative from the "REMARKS", "NARRATION", "PARTICULARS" or similar fields
     3. If no clear description exists, use merchant name, reference number, or any identifying information
     4. Combine relevant fields to create meaningful descriptions when necessary
     5. Remove any unnecessary prefixes, suffixes, or repetitive elements
+    6. When descriptions appear as numbered rows, REPLACE them with actual descriptive content from other fields
     
     IMPORTANT: Analyze the raw data structure thoroughly and PRESERVE ALL ORIGINAL FIELDS in the preservedColumns property.
     
@@ -39,16 +40,17 @@ export async function processWithAnthropic(text: string, context?: string | null
     
     For each transaction, you MUST PRESERVE ALL ORIGINAL FIELDS AND VALUES, while ensuring these core fields are properly structured:
     - date (in YYYY-MM-DD format if possible)
-    - description (NEVER use placeholders like "Row 1" or "Row 2" - extract the actual transaction narrative from the data)
+    - description (NEVER use placeholders like "Row 1", "Row 2", "Row 12", "Row 13", or any row-based identifiers - extract the actual transaction narrative from the data)
     - amount (as a number, negative for debits/expenses, positive for credits/revenue)
     - type ("debit" or "credit")
     
     CRITICAL INSTRUCTIONS FOR DESCRIPTIONS:
-    1. NEVER output generic terms like "Row 1", "Row 2" in place of descriptions
+    1. ABSOLUTELY NEVER output description labels like "Row 1", "Row 2", "Row 12", "Row 13", etc. in place of actual descriptions
     2. Always extract the actual transaction narrative from the "REMARKS", "NARRATION", "PARTICULARS" or similar fields
     3. If no clear description exists, use merchant name, reference number, or any identifying information
     4. Combine relevant fields to create meaningful descriptions when necessary
     5. Remove any unnecessary prefixes, suffixes, or repetitive elements
+    6. When descriptions appear as numbered rows, REPLACE them with actual descriptive content from other fields
     
     IMPORTANT: Analyze the raw data structure thoroughly and PRESERVE ALL ORIGINAL FIELDS in the preservedColumns property.
     
