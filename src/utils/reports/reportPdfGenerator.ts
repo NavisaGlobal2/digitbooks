@@ -59,7 +59,7 @@ export const generateReportPdf = (reportData: ReportData): void => {
       // Generate report based on saved data
       // This is a simplified approach - in a production app, you'd implement
       // custom rendering logic for each report type using the saved data
-      generateGenericReportContent(doc, title);
+      generateGenericReportContent(doc);
       addPageNumbers(doc);
       const fileName = generateReportFilename(title);
       doc.save(fileName);
@@ -84,7 +84,7 @@ export const generateReportPdf = (reportData: ReportData): void => {
       case "budget-analysis":
       case "profit-loss":
       default:
-        generateGenericReportContent(doc, title);
+        generateGenericReportContent(doc);
         break;
     }
     

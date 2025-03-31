@@ -1,4 +1,3 @@
-
 import React from "react";
 import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
 import IncomeStatementReport from "./income-statement";
@@ -40,14 +39,6 @@ export const ReportView: React.FC<ReportViewProps> = ({
       const period = `${format(dateRange.startDate, "MMM dd, yyyy")} — ${format(dateRange.endDate, "MMM dd, yyyy")}`;
       
       toast.info(`Generating ${title} report...`);
-      
-      // Check if jsPDF and autoTable are available
-      const jsPDF = window.jspdf?.jsPDF;
-      if (!jsPDF) {
-        console.error("jsPDF library is not available");
-        toast.error("PDF generation failed: Required libraries not loaded");
-        return;
-      }
       
       generateReportPdf({
         title,
