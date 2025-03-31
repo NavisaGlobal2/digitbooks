@@ -133,7 +133,7 @@
   border: 1px solid #ddd;
 }
 
-/* Styles for PDF cloning to prevent overlapping elements */
+/* Additional styles to prevent duplicate elements in PDF export */
 .clone-for-pdf {
   position: absolute !important;
   left: -9999px !important;
@@ -141,31 +141,14 @@
   transform: none !important;
   z-index: -1 !important;
   visibility: visible !important;
-  width: 800px !important; /* Fixed width for consistent rendering */
-  overflow: visible !important;
 }
 
 .clone-for-pdf * {
   transform: none !important;
-  position: static !important;  /* Prevent absolute positioning inside clone */
-  transition: none !important;  /* Disable transitions */
-  animation: none !important;   /* Disable animations */
 }
 
-/* SVG and chart specific fixes for PDF export */
-.clone-for-pdf svg,
-.clone-for-pdf .recharts-wrapper,
-.clone-for-pdf canvas {
-  overflow: visible !important;
-  max-width: 100% !important;
-  height: auto !important;
-}
-
-/* Remove interactive elements from PDF */
 .clone-for-pdf button,
 .clone-for-pdf a,
-.clone-for-pdf input,
-.clone-for-pdf select,
 .clone-for-pdf .print\:hidden {
   display: none !important;
 }

@@ -1,14 +1,15 @@
 
 import React, { useState, useEffect } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download, BarChart3, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
 import { format } from "date-fns";
+import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
 import { useReportDataLoading } from "../income-statement/hooks/useReportDataLoading";
 import { formatReportDates } from "../income-statement/utils/dateFormatters";
 import CashflowChart from "@/components/dashboard/CashflowChart";
 import { useCashflowData } from "./hooks/useCashflowData";
-import { ReportActions } from "../income-statement/ReportActions";
 
 interface CashFlowReportProps {
   onBack: () => void;
@@ -29,22 +30,53 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({ onBack, period, dateRan
     return () => clearTimeout(timer);
   }, []);
 
+  const handleDownload = async () => {
+    try {
+      toast.loading("Generating report...");
+      
+      // Allow time for rendering before capturing
+      setTimeout(async () => {
+        await generateReportPdf({
+          title: "Cash Flow",
+          period: dateRange 
+            ? `${startDateFormatted} — ${endDateFormatted}` 
+            : period,
+          dateRange: dateRange || undefined,
+          cashflowData
+        });
+        toast.dismiss();
+        toast.success("Cash flow report downloaded successfully!");
+      }, 100);
+    } catch (error) {
+      console.error("Error generating report:", error);
+      toast.dismiss();
+      toast.error("Failed to generate report");
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <ReportActions 
-        onBack={onBack}
-        title="Cash Flow"
-        period={period}
-        dateRange={dateRange}
-      />
+      <div className="flex flex-col xs:flex-row items-center justify-between gap-3">
+        <Button
+          variant="outline"
+          onClick={onBack}
+          className="flex items-center gap-1 w-full xs:w-auto"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Reports
+        </Button>
+        <Button
+          className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2 w-full xs:w-auto"
+          onClick={handleDownload}
+        >
+          <Download className="h-4 w-4" />
+          Download Report
+        </Button>
+      </div>
 
       <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm cash-flow-report-container print-container">
         <div className="text-center mb-6">
-          <div className="h-16 w-16 mx-auto text-green-500 mb-2 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/><path d="m16 15-3-3-3 3"/>
-            </svg>
-          </div>
+          <BarChart3 className="h-16 w-16 mx-auto text-green-500 mb-2" />
           <h2 className="text-2xl font-bold">Cash Flow Report</h2>
           <p className="text-lg font-medium text-muted-foreground">
             {dateRange 
@@ -52,9 +84,7 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({ onBack, period, dateRan
               : period}
           </p>
           <div className="flex items-center justify-center gap-2 text-muted-foreground mt-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-              <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="3" y2="21"/>
-            </svg>
+            <Calendar className="h-4 w-4" />
             <p>{formattedDate}</p>
           </div>
           
