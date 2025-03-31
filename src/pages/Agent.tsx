@@ -82,6 +82,9 @@ const Agent = () => {
         return;
       }
 
+      console.log("Sending query to AI:", input);
+      console.log("With financial data:", financialData ? Object.keys(financialData).length : "none");
+
       // Get AI response using actual financial data
       const response = await getAIInsights({
         query: input,
@@ -89,10 +92,21 @@ const Agent = () => {
         userId: user.id
       });
 
-      // Add AI message
+      console.log("Raw AI response:", response);
+
+      // Add AI message - ensure we have a proper string response
+      let responseContent = "";
+      if (typeof response === 'string') {
+        responseContent = response;
+      } else if (response && typeof response === 'object') {
+        responseContent = JSON.stringify(response);
+      } else {
+        responseContent = "I couldn't analyze your financial data at the moment. Please try again later.";
+      }
+
       const agentMessage: Message = {
         id: Date.now().toString(),
-        content: response || "I couldn't analyze your financial data at the moment. Please try again later.",
+        content: responseContent,
         sender: "agent",
         timestamp: new Date(),
       };

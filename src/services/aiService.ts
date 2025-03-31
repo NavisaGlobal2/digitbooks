@@ -15,6 +15,9 @@ export const getAIInsights = async ({ query, financialData, userId }: AIQueryPar
       financialData,
     });
 
+    console.log("Sending query to AI:", query);
+    console.log("With context size:", context.length);
+
     // Call the Supabase Edge Function using the existing anthropicProcessor
     const { data, error } = await supabase.functions.invoke('analyze-financial-data', {
       body: {
@@ -30,6 +33,7 @@ export const getAIInsights = async ({ query, financialData, userId }: AIQueryPar
       throw new Error('Failed to process your query');
     }
 
+    console.log("AI response received:", data);
     return data.response;
   } catch (err) {
     console.error("AI service error:", err);

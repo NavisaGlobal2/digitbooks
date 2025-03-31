@@ -23,12 +23,17 @@ serve(async (req) => {
       );
     }
 
+    console.log("Processing AI query:", query);
+    console.log("Context length:", context.length);
+
     // Create system prompt for financial analysis
     const systemPrompt = `You are DigitBooks AI Assistant, a financial advisor that specializes in analyzing accounting and financial data for small businesses. Based on the provided financial data, answer the user's question in a clear, concise, and professional manner. 
     
     Provide specific insights based ONLY on the data provided. If there isn't enough information to answer a question completely, acknowledge this and suggest what additional information might be helpful. Always back up your insights with numbers from the provided data.
     
-    DO NOT make up information that isn't in the provided data. If you're uncertain about something, say so rather than guessing.`;
+    DO NOT make up information that isn't in the provided data. If you're uncertain about something, say so rather than guessing.
+    
+    RESPOND WITH PLAIN TEXT in a business professional tone. Be friendly but focus on the numbers and insights.`;
 
     // Combine user query with financial data context
     const fullPrompt = `
@@ -39,22 +44,28 @@ serve(async (req) => {
       Based on this data, provide a helpful analysis and answer to the user's query. Focus on key insights and actionable advice if appropriate.
     `;
 
+    console.log("Sending to Anthropic for processing...");
+    
     // Process with Anthropic using the existing function
     let response;
     try {
       response = await processWithAnthropic(fullPrompt, "financial-analysis");
+      console.log("Response received from Anthropic:", typeof response);
       
-      // If the response is a string (raw text), return it directly
+      // Ensure we have a clean text response
+      let cleanResponse;
+      
       if (typeof response === 'string') {
-        return new Response(
-          JSON.stringify({ response }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        cleanResponse = response;
+      } else if (typeof response === 'object') {
+        // If it's an object, stringify it
+        cleanResponse = JSON.stringify(response);
+      } else {
+        throw new Error("Unexpected response format from AI");
       }
       
-      // If response is an object/array from JSON parsing, stringify it
       return new Response(
-        JSON.stringify({ response: JSON.stringify(response) }),
+        JSON.stringify({ response: cleanResponse }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } catch (error) {
