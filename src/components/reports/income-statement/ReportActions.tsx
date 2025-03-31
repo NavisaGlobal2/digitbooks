@@ -29,6 +29,12 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
 }) => {
   const handleDownload = async () => {
     try {
+      // If there's a direct generation function provided, use that instead
+      if (onDirectGeneration) {
+        onDirectGeneration();
+        return;
+      }
+      
       // Check for valid date range and reference to report content
       if (!dateRange) {
         toast.error("Please select a date range to generate a report");
@@ -42,7 +48,6 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
       }
 
       toast.info(`Generating ${title} PDF...`);
-      console.log("Capturing report content element:", reportRef.current);
       
       // Capture the report content as an image
       const canvas = await html2canvas(reportRef.current, {
@@ -50,7 +55,6 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
-        logging: true, // Enable logging for debugging
       });
 
       // Create new PDF

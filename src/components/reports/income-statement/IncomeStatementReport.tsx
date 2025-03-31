@@ -14,6 +14,9 @@ import { ReportActions } from "./ReportActions";
 import { formatCurrency } from "@/utils/invoice/formatters";
 import { useIncomeStatementData } from "./hooks/useIncomeStatementData";
 import ReportDateFilter from "../filters/ReportDateFilter";
+import { toast } from "sonner";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface IncomeStatementReportProps {
   onBack: () => void;
@@ -41,9 +44,46 @@ const IncomeStatementReport = ({ onBack, period, dateRange, onDirectGeneration }
     setLocalDateRange(newRange);
   };
 
-  const handleGenerateReport = () => {
+  const handleDownload = async () => {
     if (onDirectGeneration) {
       onDirectGeneration();
+      return;
+    }
+    
+    try {
+      if (!reportRef.current) {
+        toast.error("Could not find report content");
+        return;
+      }
+
+      toast.info(`Generating Income Statement PDF...`);
+      
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2, 
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+      });
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const imgWidth = pdf.internal.pageSize.getWidth();
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+
+      const fileName = `income-statement_${format(new Date(), "yyyy-MM-dd")}.pdf`;
+      pdf.save(fileName);
+      
+      toast.success(`Income Statement report downloaded successfully!`);
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error(`Failed to generate PDF. Please try again.`);
     }
   };
 
@@ -77,7 +117,7 @@ const IncomeStatementReport = ({ onBack, period, dateRange, onDirectGeneration }
           <ReportDateFilter 
             dateRange={localDateRange}
             onChange={handleDateRangeChange}
-            onGenerateReport={handleGenerateReport}
+            onGenerateReport={handleDownload}
           />
         </div>
 
@@ -96,11 +136,11 @@ const IncomeStatementReport = ({ onBack, period, dateRange, onDirectGeneration }
               Print
             </Button>
             <Button
-              onClick={handleGenerateReport}
+              onClick={handleDownload}
               className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
             >
               <Download className="h-4 w-4" />
-              Download
+              Download PDF
             </Button>
           </div>
         </div>

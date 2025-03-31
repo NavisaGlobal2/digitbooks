@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { ArrowLeft, BarChart3, Download, FileText, Calendar, Clock, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -7,6 +7,8 @@ import { format } from "date-fns";
 import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
 import { saveReportToDatabase } from "@/services/reportService";
 import ReportDateFilter from "./filters/ReportDateFilter";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface GenericReportViewProps {
   reportType: string;
@@ -23,6 +25,7 @@ const GenericReportView = ({
 }: GenericReportViewProps) => {
   const today = new Date();
   const formattedDate = format(today, "MMMM dd, yyyy");
+  const reportRef = useRef<HTMLDivElement>(null);
   
   // For demonstration, set a report period from props or default
   const [localDateRange, setLocalDateRange] = useState<{ startDate: Date; endDate: Date } | null>(
@@ -52,16 +55,37 @@ const GenericReportView = ({
         toast.error("Please select a date range first");
         return;
       }
+
+      if (!reportRef.current) {
+        toast.error("Could not find report content");
+        return;
+      }
       
       const title = reportType.charAt(0).toUpperCase() + reportType.slice(1).replace("-", " ");
       
       toast.info(`Generating ${title} report...`);
       
-      await generateReportPdf({
-        title,
-        period: `${reportPeriod.start} — ${reportPeriod.end}`,
-        dateRange: localDateRange
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
       });
+      
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+      
+      const imgData = canvas.toDataURL("image/png");
+      const imgWidth = pdf.internal.pageSize.getWidth();
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      
+      const fileName = `${reportType.toLowerCase().replace(/\s+/g, "-")}_report_${format(new Date(), "yyyy-MM-dd")}.pdf`;
+      pdf.save(fileName);
       
       // Save report metadata to database for history
       await saveReportToDatabase(
@@ -121,7 +145,11 @@ const GenericReportView = ({
         </div>
       </div>
 
-      <div id="report-container" className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
+      <div 
+        ref={reportRef} 
+        id="report-container" 
+        className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm"
+      >
         <div className="text-center mb-6 sm:mb-8">
           <BarChart3 className="h-16 sm:h-24 w-16 sm:w-24 mx-auto text-green-500 mb-2" />
           <h2 className="text-xl sm:text-2xl font-bold">
