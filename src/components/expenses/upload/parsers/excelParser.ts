@@ -167,12 +167,15 @@ const parseExcelWithLib = (XLSX: any, file: File, onComplete: (transactions: Par
         try {
           // Parse date - try multiple formats
           let dateValue = row[dateColIndex];
-          let date: Date | null = parseExcelDate(dateValue, XLSX);
+          let dateObj: Date | null = parseExcelDate(dateValue, XLSX);
           
-          if (!date || isNaN(date.getTime())) {
+          if (!dateObj || isNaN(dateObj.getTime())) {
             console.warn('Could not parse date:', dateValue);
             continue;
           }
+          
+          // Convert Date to ISO string for consistency with our ParsedTransaction type
+          const date = dateObj.toISOString();
           
           // Parse description
           const description = String(row[descColIndex] || '').trim();
@@ -560,11 +563,14 @@ const extractTransactionsWithoutHeaders = (rows: any[], columns: {
       
       // Parse date
       let dateValue = row[columns.dateCol];
-      let date = parseExcelDate(dateValue);
+      let dateObj = parseExcelDate(dateValue);
       
-      if (!date || isNaN(date.getTime())) {
+      if (!dateObj || isNaN(dateObj.getTime())) {
         continue;
       }
+      
+      // Convert Date to ISO string
+      const date = dateObj.toISOString();
       
       // Parse description
       const description = String(row[columns.descCol] || '').trim();
