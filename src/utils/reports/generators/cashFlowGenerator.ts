@@ -15,64 +15,52 @@ export async function generateCashFlowContent(doc: jsPDF): Promise<void> {
       return;
     }
     
-    // Clone the report container to avoid modifying the original
-    const clonedReport = reportContainer.cloneNode(true) as HTMLElement;
-    clonedReport.id = "cloned-report-container";
+    // Reset the position to start after the header
+    doc.setPage(1);
     
-    // Apply special styles for PDF generation
-    clonedReport.style.position = "absolute";
-    clonedReport.style.top = "-9999px";
-    clonedReport.style.left = "-9999px";
-    clonedReport.style.width = "800px"; // Fixed width for PDF
-    clonedReport.style.backgroundColor = "white";
-    clonedReport.style.padding = "20px";
-    clonedReport.style.margin = "0";
-    clonedReport.style.zIndex = "-1";
+    // Create a clone of the report to snapshot
+    const clone = reportContainer.cloneNode(true) as HTMLElement;
+    clone.style.position = "fixed";
+    clone.style.top = "-9999px";
+    clone.style.left = "-9999px";
+    clone.style.width = "800px";
+    clone.style.backgroundColor = "white";
+    clone.style.padding = "20px";
+    clone.style.margin = "0";
     
-    // Remove print-specific CSS
-    const printClasses = clonedReport.querySelectorAll(".print\\:hidden");
-    printClasses.forEach(element => {
-      (element as HTMLElement).style.display = "none";
+    // Remove print-hidden elements from the clone
+    clone.querySelectorAll(".print\\:hidden").forEach(element => {
+      element.remove();
     });
     
-    // Append the clone to the body
-    document.body.appendChild(clonedReport);
+    // Add the clone to the document body
+    document.body.appendChild(clone);
     
-    // Wait a bit to ensure charts are rendered properly
+    // Wait for rendering to complete
     setTimeout(async () => {
       try {
-        // Capture the cloned report as an image
-        const canvas = await html2canvas(clonedReport, {
+        // Generate canvas from the clone
+        const canvas = await html2canvas(clone, {
           scale: 2,
           useCORS: true,
-          allowTaint: true,
-          backgroundColor: "#ffffff",
           logging: false,
+          backgroundColor: "#ffffff",
           onclone: (clonedDoc) => {
-            const clonedElement = clonedDoc.getElementById("cloned-report-container");
-            if (clonedElement) {
-              // Additional styles for better rendering
-              clonedElement.querySelectorAll('svg').forEach(svg => {
-                svg.style.maxWidth = "100%";
-                svg.style.height = "auto";
-              });
-              
-              // Ensure charts render correctly
-              clonedElement.querySelectorAll('.recharts-surface').forEach(chart => {
-                chart.setAttribute('width', '100%');
-              });
-            }
+            // Fix any SVG rendering issues
+            clonedDoc.querySelectorAll('svg').forEach(svg => {
+              svg.setAttribute('width', svg.getBoundingClientRect().width.toString());
+              svg.setAttribute('height', svg.getBoundingClientRect().height.toString());
+            });
           }
         });
         
-        // Get image data
+        // Calculate dimensions and add to PDF
         const imgData = canvas.toDataURL("image/png");
-        
-        // Calculate dimensions
-        const imgWidth = 210; // A4 width in mm
+        const imgWidth = 210; // A4 width
+        const pageHeight = 295; // A4 height
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
-        // Add the image to the PDF
+        // Add the image to PDF
         doc.addImage({
           imageData: imgData,
           x: 0,
@@ -81,14 +69,16 @@ export async function generateCashFlowContent(doc: jsPDF): Promise<void> {
           height: imgHeight
         });
         
-        // Remove the cloned element
-        document.body.removeChild(clonedReport);
+        // Remove the clone from the document
+        document.body.removeChild(clone);
         
       } catch (error) {
-        console.error("Error generating Cash Flow report PDF:", error);
-        document.body.removeChild(clonedReport);
+        console.error("Error capturing Cash Flow report:", error);
+        if (document.body.contains(clone)) {
+          document.body.removeChild(clone);
+        }
       }
-    }, 500); // Delay to ensure proper rendering
+    }, 1000); // Added longer delay to ensure proper rendering
     
   } catch (error) {
     console.error("Error in Cash Flow report generation:", error);

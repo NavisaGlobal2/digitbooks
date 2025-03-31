@@ -41,7 +41,14 @@ export const generateReportPdf = (reportData: ReportData): void => {
       break;
     case "cash-flow":
       generateCashFlowContent(doc);
-      break;
+      // Add page numbers after a delay to ensure content is rendered
+      setTimeout(() => {
+        addPageNumbers(doc);
+        // Save the PDF
+        const fileName = generateReportFilename(title);
+        doc.save(fileName);
+      }, 1500);
+      return; // Return early as we're handling saving in the timeout
     case "revenue-summary":
     case "expense-summary":
     case "budget-analysis":
@@ -54,7 +61,9 @@ export const generateReportPdf = (reportData: ReportData): void => {
   // Add page numbers
   addPageNumbers(doc);
   
-  // Save the PDF
-  const fileName = generateReportFilename(title);
-  doc.save(fileName);
+  // Save the PDF - only for non-cashflow reports since cashflow handles saving separately
+  if (title.toLowerCase().replace(/\s+/g, "-") !== "cash-flow") {
+    const fileName = generateReportFilename(title);
+    doc.save(fileName);
+  }
 };
