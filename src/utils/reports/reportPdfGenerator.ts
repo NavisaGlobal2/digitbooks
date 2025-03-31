@@ -40,8 +40,7 @@ export const generateReportPdf = (reportData: ReportData): void => {
     // Generate report based on saved data
     // This is a simplified approach - in a production app, you'd implement
     // custom rendering logic for each report type using the saved data
-    const reportTitle = title.toLowerCase().replace(/\s+/g, "-");
-    generateGenericReportContent(doc, title, savedReportData);
+    generateGenericReportContent(doc, title);
     addPageNumbers(doc);
     const fileName = generateReportFilename(title);
     doc.save(fileName);

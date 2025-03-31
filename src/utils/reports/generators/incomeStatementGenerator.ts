@@ -2,6 +2,10 @@
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
+type JsPDFWithAutoTable = jsPDF & {
+  autoTable: (options: any) => any;
+};
+
 /**
  * Generates income statement content for the PDF
  */
@@ -10,7 +14,7 @@ export function generateIncomeStatementContent(doc: jsPDF): void {
   doc.text("Financial Summary", 20, 70);
   
   doc.setFontSize(11);
-  doc.autoTable({
+  (doc as JsPDFWithAutoTable).autoTable({
     startY: 75,
     head: [["Category", "Amount ($)", "% of Total"]],
     body: [
@@ -41,7 +45,7 @@ export function generateIncomeStatementContent(doc: jsPDF): void {
   const finalY = (doc as any).lastAutoTable.finalY + 15;
   doc.text("Revenue Breakdown", 20, finalY);
   
-  doc.autoTable({
+  (doc as JsPDFWithAutoTable).autoTable({
     startY: finalY + 5,
     head: [["Revenue Source", "Amount ($)", "% of Total"]],
     body: [
@@ -62,7 +66,7 @@ export function generateIncomeStatementContent(doc: jsPDF): void {
   const finalY2 = (doc as any).lastAutoTable.finalY + 15;
   doc.text("Expense Breakdown", 20, finalY2);
   
-  doc.autoTable({
+  (doc as JsPDFWithAutoTable).autoTable({
     startY: finalY2 + 5,
     head: [["Expense Category", "Amount ($)", "% of Total"]],
     body: [

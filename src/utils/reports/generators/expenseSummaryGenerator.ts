@@ -1,8 +1,11 @@
 
 import jsPDF from "jspdf";
-import autoTable from 'jspdf-autotable';
 import { format } from "date-fns";
 import html2canvas from "html2canvas";
+
+type JsPDFWithAutoTable = jsPDF & {
+  autoTable: (options: any) => any;
+};
 
 /**
  * Generate expense summary report content
@@ -84,7 +87,7 @@ export const generateExpenseSummaryContent = async (doc: jsPDF): Promise<void> =
     
     if (tableRows.length > 0) {
       // Add expense categories breakdown table
-      autoTable(doc, {
+      (doc as JsPDFWithAutoTable).autoTable({
         startY: 95,
         head: [["Category", "Amount", "Percentage"]],
         body: tableRows,

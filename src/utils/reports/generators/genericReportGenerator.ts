@@ -2,6 +2,10 @@
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
+type JsPDFWithAutoTable = jsPDF & {
+  autoTable: (options: any) => any;
+};
+
 /**
  * Generates generic report content for the PDF
  */
@@ -11,7 +15,7 @@ export function generateGenericReportContent(doc: jsPDF, title: string): void {
   
   // Create generic sample data based on report type
   doc.setFontSize(11);
-  doc.autoTable({
+  (doc as JsPDFWithAutoTable).autoTable({
     startY: 75,
     head: [["Category", "Amount ($)", "Notes"]],
     body: [

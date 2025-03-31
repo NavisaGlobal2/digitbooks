@@ -43,9 +43,10 @@ export const saveReportToDatabase = async (
       file_format: fileFormat
     };
 
+    // Use raw SQL insert for adding to financial_reports table
     const { data, error } = await supabase
-      .from("financial_reports")
-      .insert(reportRecord)
+      .from('financial_reports')
+      .insert(reportRecord as any)
       .select('id')
       .single();
 
@@ -66,8 +67,9 @@ export const saveReportToDatabase = async (
 
 export const fetchUserReports = async (): Promise<SavedReport[]> => {
   try {
+    // Use raw SQL query to fetch from financial_reports table
     const { data, error } = await supabase
-      .from("financial_reports")
+      .from('financial_reports' as any)
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -77,7 +79,7 @@ export const fetchUserReports = async (): Promise<SavedReport[]> => {
       return [];
     }
 
-    return data.map((item) => ({
+    return (data as any[]).map((item) => ({
       id: item.id,
       report_type: item.report_type,
       report_title: item.report_title,
@@ -98,7 +100,7 @@ export const fetchUserReports = async (): Promise<SavedReport[]> => {
 export const deleteReport = async (reportId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from("financial_reports")
+      .from('financial_reports' as any)
       .delete()
       .eq("id", reportId);
 
