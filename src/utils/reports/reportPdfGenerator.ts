@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { ReportData } from "./types/reportTypes";
 import { generateIncomeStatementContent } from "./generators/incomeStatementGenerator";
 import { generateGenericReportContent } from "./generators/genericReportGenerator";
+import { generateCashFlowReportContent } from "./generators/cashFlowReportGenerator";
 import { 
   configurePdfMetadata, 
   addReportHeader, 
@@ -36,11 +37,13 @@ export const generateReportPdf = (reportData: ReportData): void => {
   // Add report content based on report type
   switch (title.toLowerCase().replace(/\s+/g, "-")) {
     case "income-statement":
-      generateIncomeStatementContent(doc);
+      generateIncomeStatementContent(doc, reportData);
+      break;
+    case "cash-flow":
+      generateCashFlowReportContent(doc, reportData);
       break;
     case "revenue-summary":
     case "expense-summary":
-    case "cash-flow":
     case "budget-analysis":
     case "profit-loss":
     default:

@@ -2,16 +2,38 @@
 export interface ReportData {
   title: string;
   period: string;
-  data?: any;
-  dateRange?: { 
-    startDate: Date; 
-    endDate: Date 
-  } | null;
+  dateRange?: {
+    startDate: Date;
+    endDate: Date;
+  };
+  financialData?: FinancialData;
+  cashflowData?: ChartData[];
 }
 
-// Add types for jsPDF-autotable to jsPDF
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
+export interface FinancialData {
+  totalRevenue: number;
+  totalExpenses: number;
+  grossProfit: number;
+  netProfit: number;
+  profitMargin: number;
+  revenueBreakdown?: RevenueItem[];
+  expenseBreakdown?: ExpenseItem[];
+}
+
+export interface RevenueItem {
+  source: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface ExpenseItem {
+  category: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface ChartData {
+  name: string;
+  inflow: number;
+  outflow: number;
 }
