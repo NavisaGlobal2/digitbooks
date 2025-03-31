@@ -32,6 +32,17 @@ const ProfitLossReport: React.FC<ProfitLossReportProps> = ({
     isLoading
   } = useProfitLossData(dateRange);
 
+  // Prepare report data for storage
+  const reportData = {
+    financials: {
+      totalRevenue,
+      totalExpenses,
+      netProfit,
+      profitMargin
+    },
+    monthlySummary
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -48,6 +59,7 @@ const ProfitLossReport: React.FC<ProfitLossReportProps> = ({
         period={period}
         dateRange={dateRange}
         reportRef={reportRef}
+        reportData={reportData}
       />
 
       <div

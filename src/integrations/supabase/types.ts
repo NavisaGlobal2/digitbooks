@@ -338,6 +338,48 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_reports: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          file_format: string
+          id: string
+          report_data: Json
+          report_period: string
+          report_title: string
+          report_type: string
+          start_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          file_format: string
+          id?: string
+          report_data: Json
+          report_period: string
+          report_title: string
+          report_type: string
+          start_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          file_format?: string
+          id?: string
+          report_data?: Json
+          report_period?: string
+          report_title?: string
+          report_type?: string
+          start_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           additional_info: string | null

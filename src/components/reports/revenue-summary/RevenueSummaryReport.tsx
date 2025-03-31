@@ -66,6 +66,12 @@ const RevenueSummaryReport: React.FC<RevenueSummaryReportProps> = ({
     return `₦${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  // Prepare report data for storage
+  const reportData = {
+    totalRevenue,
+    revenueBreakdown: revenueData
+  };
+
   return (
     <div className="space-y-6" id="report-container">
       <ReportActions
@@ -74,6 +80,7 @@ const RevenueSummaryReport: React.FC<RevenueSummaryReportProps> = ({
         period={period}
         dateRange={dateRange}
         reportRef={reportRef}
+        reportData={reportData}
       />
 
       <div 

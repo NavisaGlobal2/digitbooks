@@ -3,6 +3,7 @@ import React from "react";
 import { ReportView } from "./ReportView";
 import { ReportList } from "./ReportList";
 import ReportDateFilter from "./filters/ReportDateFilter";
+import SavedReportsSection from "./saved/SavedReportsSection";
 
 interface ReportsContentProps {
   selectedReportType: string | null;
@@ -54,7 +55,10 @@ export const ReportsContent: React.FC<ReportsContentProps> = ({
           onBack={onBack}
         />
       ) : (
-        <ReportList onSelectReport={onSelectReport} />
+        <div className="space-y-8">
+          <ReportList onSelectReport={onSelectReport} />
+          <SavedReportsSection />
+        </div>
       )}
     </div>
   );

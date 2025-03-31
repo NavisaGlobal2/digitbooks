@@ -5,6 +5,8 @@ import { Printer, Download, ChevronLeft } from "lucide-react";
 import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { saveReportToDatabase } from "@/services/reportService";
+import { toast } from "sonner";
 
 interface ReportActionsProps {
   onBack: () => void;
@@ -12,6 +14,7 @@ interface ReportActionsProps {
   period: string;
   dateRange: { startDate: Date; endDate: Date } | null;
   reportRef?: React.RefObject<HTMLDivElement>;
+  reportData?: any;
 }
 
 export const ReportActions: React.FC<ReportActionsProps> = ({ 
@@ -19,13 +22,26 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
   title,
   period,
   dateRange,
-  reportRef
+  reportRef,
+  reportData
 }) => {
   const handlePrint = () => {
     window.print();
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    // Save report to database first
+    if (reportData) {
+      await saveReportToDatabase(
+        title.toLowerCase().replace(/\s+/g, "-"),
+        title,
+        period,
+        dateRange,
+        reportData,
+        "pdf"
+      );
+    }
+    
     // For reports that support snapshots, use the reportRef approach
     if (reportRef && reportRef.current && ["cash flow", "expense summary", "revenue summary", "budget analysis", "profit & loss"].includes(title.toLowerCase())) {
       const element = reportRef.current;
