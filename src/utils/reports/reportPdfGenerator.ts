@@ -6,6 +6,7 @@ import { ReportData } from "./types/reportTypes";
 import { generateIncomeStatementContent } from "./generators/incomeStatementGenerator";
 import { generateGenericReportContent } from "./generators/genericReportGenerator";
 import { generateCashFlowContent } from "./generators/cashFlowGenerator";
+import { generateExpenseSummaryContent } from "./generators/expenseSummaryGenerator";
 import { 
   configurePdfMetadata, 
   addReportHeader, 
@@ -49,8 +50,10 @@ export const generateReportPdf = (reportData: ReportData): void => {
         doc.save(fileName);
       }, 1500);
       return; // Return early as we're handling saving in the timeout
-    case "revenue-summary":
     case "expense-summary":
+      generateExpenseSummaryContent(doc);
+      break;
+    case "revenue-summary":
     case "budget-analysis":
     case "profit-loss":
     default:

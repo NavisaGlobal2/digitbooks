@@ -3,6 +3,7 @@ import React from "react";
 import IncomeStatementReport from "./income-statement";
 import GenericReportView from "./GenericReportView";
 import CashFlowReport from "./cash-flow";
+import ExpenseSummaryReport from "./expense-summary";
 
 interface ReportViewProps {
   selectedReportType: string | null;
@@ -38,8 +39,15 @@ export const ReportView: React.FC<ReportViewProps> = ({
           dateRange={dateRange}
         />
       );
-    case "revenue-summary":
     case "expense-summary":
+      return (
+        <ExpenseSummaryReport 
+          onBack={onBack}
+          period={reportPeriod}
+          dateRange={dateRange}
+        />
+      );
+    case "revenue-summary":
     case "budget-analysis":
     case "profit-loss":
     default:
