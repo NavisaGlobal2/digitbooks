@@ -2,7 +2,7 @@
 /**
  * Process extracted text with Anthropic Claude API
  */
-export async function processWithAnthropic(text: string, context?: string): Promise<any> {
+export async function processWithAnthropic(text: string, context?: string | null): Promise<any> {
   const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
   if (!ANTHROPIC_API_KEY) {
     throw new Error("ANTHROPIC_API_KEY is not configured. Please set up your Anthropic API key in Supabase.");

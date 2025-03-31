@@ -17,6 +17,12 @@ export interface Transaction {
   originalDate?: string | Date;
   originalAmount?: number | string;
   
+  // Additional field for AI source suggestions
+  sourceSuggestion?: {
+    source: string;
+    confidence: number;
+  };
+  
   // Any additional properties from original data
   [key: string]: any;
 }

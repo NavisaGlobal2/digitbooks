@@ -2,7 +2,7 @@
 /**
  * Process extracted text with DeepSeek API
  */
-export async function processWithDeepseek(text: string, context?: string): Promise<any> {
+export async function processWithDeepseek(text: string, context?: string | null): Promise<any> {
   const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY");
   if (!DEEPSEEK_API_KEY) {
     throw new Error("DEEPSEEK_API_KEY is not configured. Please set up your DeepSeek API key in Supabase.");

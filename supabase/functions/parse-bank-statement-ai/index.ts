@@ -38,6 +38,15 @@ serve(async (req) => {
       console.log(`Processing context: ${context}`);
     }
 
+    // Get preferred AI provider if specified
+    const preferredProvider = formData.get("preferredProvider")?.toString() || "anthropic";
+    try {
+      console.log(`Setting preferred AI provider to: ${preferredProvider}`);
+      // You could do additional validation here if needed
+    } catch (providerError) {
+      console.log(`Could not set preferred AI provider: ${providerError.message}`);
+    }
+    
     // Use direct formatting option if specified
     const useAIFormatting = formData.get("useAIFormatting")?.toString() === "true";
     console.log(`AI formatting ${useAIFormatting ? 'enabled' : 'disabled'}`);
@@ -123,7 +132,7 @@ serve(async (req) => {
       if (useAIFormatting) {
         console.log("Applying AI formatting to standardize transaction structure");
         try {
-          const formatted = await formatTransactionsWithAI(transactions, context);
+          const formatted = await formatTransactionsWithAI(transactions, context, preferredProvider);
           if (formatted && formatted.length > 0) {
             formattedTransactions = formatted;
             formattingApplied = true;

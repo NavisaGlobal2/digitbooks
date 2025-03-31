@@ -26,6 +26,11 @@ export const parseViaEdgeFunction = async (
     formData.append('fileName', file.name);
     formData.append('context', 'general');
     formData.append('useAIFormatting', useAIFormatting.toString()); // Add the formatting option
+    
+    // Add preferred AI provider if specified
+    if (preferredProvider) {
+      formData.append('preferredProvider', preferredProvider);
+    }
 
     console.log(`Processing ${file.name} (${file.type}, ${file.size} bytes) via edge function with AI formatting ${useAIFormatting ? 'enabled' : 'disabled'}`);
 

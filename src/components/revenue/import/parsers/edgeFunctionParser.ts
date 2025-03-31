@@ -1,100 +1,80 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./types";
-import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
 
 export const parseViaEdgeFunction = async (
   file: File,
   onSuccess: (transactions: ParsedTransaction[]) => void,
   onError: (errorMessage: string) => boolean,
-  context: "revenue" | "expense" = "revenue"
-): Promise<ParsedTransaction[]> => {
+  resetProgress?: () => void,
+  completeProgress?: () => void,
+  useAIFormatting: boolean = true
+): Promise<void> => {
   try {
-    // Create a form to send the file
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("context", context); // Add context for the parser to identify revenue transactions
-    
-    const endpoint = 'parse-bank-statement-ai';
-
-    console.log(`Sending file to edge function for ${context} processing: ${endpoint}`);
-    
-    // Check authentication status before making the request
-    const { data: authData } = await supabase.auth.getSession();
-    if (!authData.session) {
-      const errorMsg = "You need to be signed in to use this feature. Please sign in and try again.";
-      onError(errorMsg);
-      return [];
+    // Check authentication first
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      throw new Error("Authentication required. Please sign in to continue.");
     }
-    
-    // Call the serverless function with error handling
-    try {
-      const { data, error } = await supabase.functions.invoke(endpoint, {
-        body: formData,
-      });
 
-      if (error) {
-        console.error("Edge function error:", error);
-        onError(`Server error: ${error.message}`);
-        return [];
-      }
+    // Create form data with the file
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('fileName', file.name);
+    formData.append('context', 'revenue'); // Specific context for revenue parsing
+    formData.append('useAIFormatting', useAIFormatting.toString());
 
-      if (!data || !data.transactions || !Array.isArray(data.transactions)) {
-        onError("Invalid response from server. No transactions found in the response.");
-        return [];
-      }
+    console.log(`Processing ${file.name} for revenue parsing via edge function`);
 
-      console.log(`Raw transaction data from server:`, data.transactions);
-      console.log(`Transaction count from server: ${data.transactions.length}`);
+    // Call the edge function
+    const { data, error } = await supabase.functions.invoke('parse-bank-statement-ai', {
+      body: formData,
+    });
 
-      // Generate a batch ID as a proper UUID to avoid database errors
-      const batchId = data.batchId || uuidv4();
+    if (error) {
+      console.error("Edge function error:", error);
+      onError(error.message || "Error processing file");
+      return;
+    }
 
-      // Map the server response to our ParsedTransaction type
-      const parsedTransactions: ParsedTransaction[] = data.transactions.map((tx: any) => ({
-        id: `transaction-${Math.random().toString(36).substr(2, 9)}`,
-        date: new Date(tx.date),
-        description: tx.description,
-        amount: Math.abs(parseFloat(tx.amount)), // Store as positive number
-        type: tx.type || (parseFloat(tx.amount) < 0 ? 'debit' : 'credit'),
-        source: tx.source || null,
-        selected: tx.type === 'credit', // Preselect credits (revenue)
-        batchId,
-        sourceSuggestion: tx.sourceSuggestion || null, // Include AI source suggestions
+    if (!data || !data.transactions || !Array.isArray(data.transactions)) {
+      onError("No transactions found in file");
+      return;
+    }
+
+    // Complete progress if provided
+    if (completeProgress) {
+      completeProgress();
+    }
+
+    // Filter to only include credit (positive amount) transactions for revenue
+    const revenueTransactions = data.transactions
+      .filter((tx: any) => tx.type === 'credit' || (typeof tx.amount === 'number' && tx.amount > 0))
+      .map((tx: any) => ({
+        id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
+        date: tx.date || new Date().toISOString(),
+        description: tx.description || "Unknown revenue",
+        amount: typeof tx.amount === 'number' ? Math.abs(tx.amount) : Math.abs(parseFloat(tx.amount || '0')),
+        type: "credit",
+        selected: true,
+        source: tx.sourceSuggestion?.source || "",
+        sourceSuggestion: tx.sourceSuggestion,
+        originalDate: tx.originalDate || tx.date,
+        originalAmount: tx.originalAmount || tx.amount,
+        preservedColumns: tx.preservedColumns || {}
       }));
 
-      console.log(`Parsed ${parsedTransactions.length} transactions with batch ID: ${batchId}`);
-
-      // Only include credit transactions (revenue)
-      const filteredTransactions = parsedTransactions.filter(tx => tx.type === 'credit');
-      
-      if (filteredTransactions.length === 0) {
-        onError("No revenue transactions found in the statement. Only income transactions can be imported.");
-        return [];
-      }
-
-      console.log(`Found ${filteredTransactions.length} revenue transactions to display`);
-
-      // Call success callback with transactions
-      onSuccess(filteredTransactions);
-      
-      // Show success message with the transaction count
-      toast.success(`Successfully parsed ${filteredTransactions.length} revenue entries from your statement`);
-      
-      return filteredTransactions;
-    } catch (supabaseError: any) {
-      console.error("Supabase functions.invoke error:", supabaseError);
-      if (supabaseError.message?.includes("Network")) {
-        onError("Network error when calling the server. Please check your internet connection and try again.");
-      } else {
-        onError(`Error calling server: ${supabaseError.message || "Unknown error"}`);
-      }
-      return [];
+    console.log(`Found ${revenueTransactions.length} revenue transactions out of ${data.transactions.length} total`);
+    
+    // Send the filtered revenue transactions to the caller
+    onSuccess(revenueTransactions);
+  } catch (error: any) {
+    // Reset progress if provided
+    if (resetProgress) {
+      resetProgress();
     }
-  } catch (error) {
-    console.error("Error in parseViaEdgeFunction:", error);
-    onError(`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    return [];
+    
+    console.error("Error in parseViaEdgeFunction for revenue:", error);
+    onError(error.message || "Unexpected error processing file");
   }
 };
