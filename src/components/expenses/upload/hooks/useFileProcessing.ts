@@ -36,6 +36,7 @@ export const useFileProcessing = ({
       
       console.log(`Sending ${file.name} (${file.type}) to edge function for processing...`);
       
+      // Get the auth session token
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -74,7 +75,7 @@ export const useFileProcessing = ({
         return;
       }
       
-      if (!response.data || !Array.isArray(response.data)) {
+      if (!response.data || !Array.isArray(response.data.transactions)) {
         console.error('Invalid response data:', response);
         handleError("The server returned an invalid response. Please try again.");
         resetProgress();
@@ -82,7 +83,7 @@ export const useFileProcessing = ({
       }
       
       // Map the response to ParsedTransaction objects
-      const transactions: ParsedTransaction[] = response.data.map((item: any, index: number) => ({
+      const transactions: ParsedTransaction[] = response.data.transactions.map((item: any, index: number) => ({
         id: `trans-${index}`,
         date: new Date(item.date),
         description: item.description,
@@ -90,6 +91,7 @@ export const useFileProcessing = ({
         type: item.type || (parseFloat(item.amount) < 0 ? 'debit' : 'credit'),
         category: '',
         selected: item.type === 'debit' || parseFloat(item.amount) < 0, // Pre-select debits
+        batchId: response.data.batchId
       }));
       
       if (transactions.length === 0) {

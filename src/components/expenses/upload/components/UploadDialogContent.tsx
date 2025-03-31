@@ -39,7 +39,7 @@ const UploadDialogContent = ({
   const isFileSupported = (file: File | null): boolean => {
     if (!file) return false;
     const ext = file.name.toLowerCase().split('.').pop();
-    return ext === 'csv' || ext === 'xlsx' || ext === 'xls';
+    return ext === 'csv' || ext === 'xlsx' || ext === 'xls' || ext === 'pdf';
   };
 
   return (
@@ -59,7 +59,7 @@ const UploadDialogContent = ({
           errorState={error}
         />
         
-        {!isAuthenticated && (
+        {isAuthenticated === false && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
             You need to be signed in to use this feature. Please sign in and try again.
           </div>
@@ -80,7 +80,7 @@ const UploadDialogContent = ({
           onCancel={onClose}
           onParse={parseFile}
           uploading={uploading}
-          disabled={!file || !isAuthenticated || !isFileSupported(file)}
+          disabled={!file || isAuthenticated === false || !isFileSupported(file)}
           showCancelButton={uploading}
         />
       </div>

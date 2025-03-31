@@ -26,9 +26,12 @@ export const parseViaEdgeFunction = async (
       return [];
     }
     
-    // Call the serverless function
+    // Call the serverless function with proper authentication
     const { data, error } = await supabase.functions.invoke(endpoint, {
       body: formData,
+      headers: {
+        Authorization: `Bearer ${authData.session.access_token}`
+      }
     });
 
     if (error) {
