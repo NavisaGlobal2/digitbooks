@@ -2,7 +2,7 @@
 import React from "react";
 import { ReportView } from "./ReportView";
 import { ReportList } from "./ReportList";
-import ReportDateFilter, { TimelinePeriod } from "./filters/ReportDateFilter";
+import ReportDateFilter from "./filters/ReportDateFilter";
 
 interface ReportsContentProps {
   selectedReportType: string | null;
@@ -11,9 +11,7 @@ interface ReportsContentProps {
   isCustomDateRange: boolean;
   onBack: () => void;
   onSelectReport: (reportType: string) => void;
-  onPeriodChange: (period: TimelinePeriod) => void;
   onDateRangeChange: (range: { startDate: Date; endDate: Date } | null) => void;
-  selectedTimePeriod: TimelinePeriod;
 }
 
 export const ReportsContent: React.FC<ReportsContentProps> = ({
@@ -23,9 +21,7 @@ export const ReportsContent: React.FC<ReportsContentProps> = ({
   isCustomDateRange,
   onBack,
   onSelectReport,
-  onPeriodChange,
   onDateRangeChange,
-  selectedTimePeriod
 }) => {
   return (
     <div className="max-w-5xl mx-auto w-full">
@@ -38,12 +34,12 @@ export const ReportsContent: React.FC<ReportsContentProps> = ({
             ? "View and export your financial report" 
             : "Generate financial reports and export them to analyze your business performance"}
         </p>
-        <ReportDateFilter
-          selectedPeriod={selectedTimePeriod}
-          dateRange={dateRange}
-          onPeriodChange={onPeriodChange}
-          onDateRangeChange={onDateRangeChange}
-        />
+        <div className="mb-4">
+          <ReportDateFilter
+            dateRange={dateRange}
+            onDateRangeChange={onDateRangeChange}
+          />
+        </div>
       </div>
 
       {selectedReportType ? (
