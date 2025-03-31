@@ -1,6 +1,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Invoice, InvoiceItem, InvoiceStatus, PaymentRecord } from '@/types/invoice';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
+import { toast } from 'sonner';
 
 interface InvoiceContextType {
   invoices: Invoice[];
@@ -8,6 +11,7 @@ interface InvoiceContextType {
   getNextInvoiceNumber: () => string;
   updateInvoiceStatus: (invoiceId: string, status: InvoiceStatus) => void;
   markInvoiceAsPaid: (invoiceId: string, payments: PaymentRecord[]) => void;
+  isLoading: boolean;
 }
 
 const InvoiceContext = createContext<InvoiceContextType | undefined>(undefined);
@@ -21,41 +25,57 @@ export const useInvoices = () => {
 };
 
 export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Fetch invoices from Supabase when the component mounts or user changes
   useEffect(() => {
-    const storedInvoices = localStorage.getItem('invoices');
-    if (storedInvoices) {
+    const fetchInvoices = async () => {
+      if (!user?.id) {
+        // If no user is logged in, reset invoices and stop loading
+        setInvoices([]);
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const parsedInvoices = JSON.parse(storedInvoices);
+        setIsLoading(true);
         
-        const processedInvoices = parsedInvoices.map((invoice: any) => ({
+        const { data, error } = await supabase
+          .from('invoices')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Process the data to match our Invoice type
+        const processedInvoices = data.map((invoice: any) => ({
           ...invoice,
-          issuedDate: new Date(invoice.issuedDate),
-          dueDate: new Date(invoice.dueDate),
-          paidDate: invoice.paidDate ? new Date(invoice.paidDate) : null,
-          payments: invoice.payments 
-            ? invoice.payments.map((payment: any) => ({
-                ...payment,
-                date: new Date(payment.date)
-              })) 
-            : undefined
+          issuedDate: new Date(invoice.issued_date),
+          dueDate: new Date(invoice.due_date),
+          paidDate: invoice.paid_date ? new Date(invoice.paid_date) : null,
+          items: invoice.items || [],
+          payments: invoice.payments ? invoice.payments.map((payment: any) => ({
+            ...payment,
+            date: new Date(payment.date)
+          })) : undefined
         }));
         
         setInvoices(processedInvoices);
       } catch (error) {
-        console.error("Failed to parse stored invoices:", error);
+        console.error("Failed to fetch invoices:", error);
+        toast.error("Failed to load invoices");
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, []);
+    };
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('invoices', JSON.stringify(invoices));
-    } catch (error) {
-      console.error("Failed to store invoices:", error);
-    }
-  }, [invoices]);
+    fetchInvoices();
+  }, [user]);
 
   const getNextInvoiceNumber = () => {
     const year = new Date().getFullYear().toString().slice(-2);
@@ -74,44 +94,149 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return `${prefix}${nextNumber.toString().padStart(3, '0')}`;
   };
 
-  const addInvoice = (invoiceData: Omit<Invoice, 'id' | 'invoiceNumber'>) => {
-    const newInvoice: Invoice = {
-      ...invoiceData,
-      id: crypto.randomUUID(),
-      invoiceNumber: getNextInvoiceNumber(),
-    };
-    
-    setInvoices(prev => [newInvoice, ...prev]);
+  const addInvoice = async (invoiceData: Omit<Invoice, 'id' | 'invoiceNumber'>) => {
+    if (!user?.id) {
+      toast.error("You must be logged in to create an invoice");
+      return;
+    }
+
+    try {
+      const invoiceNumber = getNextInvoiceNumber();
+      
+      // Prepare invoice data for database storage
+      const dbInvoiceData = {
+        user_id: user.id,
+        client_name: invoiceData.clientName,
+        client_email: invoiceData.clientEmail || null,
+        client_address: invoiceData.clientAddress || null,
+        invoice_number: invoiceNumber,
+        issued_date: invoiceData.issuedDate,
+        due_date: invoiceData.dueDate,
+        amount: invoiceData.amount,
+        status: invoiceData.status,
+        items: invoiceData.items,
+        logo_url: invoiceData.logoUrl || null,
+        additional_info: invoiceData.additionalInfo || null,
+        bank_details: invoiceData.bankDetails,
+        paid_date: null
+      };
+      
+      const { data, error } = await supabase
+        .from('invoices')
+        .insert(dbInvoiceData)
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Format the returned data to match our Invoice type
+      const newInvoice: Invoice = {
+        id: data.id,
+        clientName: data.client_name,
+        clientEmail: data.client_email,
+        clientAddress: data.client_address,
+        invoiceNumber: data.invoice_number,
+        issuedDate: new Date(data.issued_date),
+        dueDate: new Date(data.due_date),
+        amount: data.amount,
+        status: data.status,
+        items: data.items,
+        logoUrl: data.logo_url,
+        additionalInfo: data.additional_info,
+        bankDetails: data.bank_details,
+        paidDate: data.paid_date ? new Date(data.paid_date) : null
+      };
+      
+      // Update local state
+      setInvoices(prev => [newInvoice, ...prev]);
+      
+      // Success notification
+      toast.success("Invoice created successfully");
+      
+    } catch (error) {
+      console.error("Failed to save invoice:", error);
+      toast.error("Failed to create invoice");
+    }
   };
 
-  const updateInvoiceStatus = (invoiceId: string, status: InvoiceStatus) => {
-    setInvoices(prev => 
-      prev.map(invoice => 
-        invoice.id === invoiceId 
-          ? { ...invoice, status } 
-          : invoice
-      )
-    );
+  const updateInvoiceStatus = async (invoiceId: string, status: InvoiceStatus) => {
+    try {
+      // Update in database
+      const { error } = await supabase
+        .from('invoices')
+        .update({ status })
+        .eq('id', invoiceId)
+        .eq('user_id', user?.id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Update local state
+      setInvoices(prev => 
+        prev.map(invoice => 
+          invoice.id === invoiceId 
+            ? { ...invoice, status } 
+            : invoice
+        )
+      );
+      
+      toast.success("Invoice status updated");
+    } catch (error) {
+      console.error("Failed to update invoice status:", error);
+      toast.error("Failed to update invoice status");
+    }
   };
 
-  const markInvoiceAsPaid = (invoiceId: string, payments: PaymentRecord[]) => {
-    setInvoices(prev => 
-      prev.map(invoice => {
-        if (invoice.id === invoiceId) {
-          const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
-          
-          const status = totalPaid >= invoice.amount ? 'paid' : 'partially-paid';
-          
-          return { 
-            ...invoice, 
-            status,
-            payments: payments,
-            paidDate: status === 'paid' ? new Date() : invoice.paidDate
-          };
-        }
-        return invoice;
-      })
-    );
+  const markInvoiceAsPaid = async (invoiceId: string, payments: PaymentRecord[]) => {
+    try {
+      const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+      const invoice = invoices.find(inv => inv.id === invoiceId);
+      
+      if (!invoice) {
+        throw new Error("Invoice not found");
+      }
+      
+      const status = totalPaid >= invoice.amount ? 'paid' : 'partially-paid';
+      const paidDate = status === 'paid' ? new Date() : null;
+      
+      // Update in database
+      const { error } = await supabase
+        .from('invoices')
+        .update({ 
+          status, 
+          paid_date: paidDate,
+          payments
+        })
+        .eq('id', invoiceId)
+        .eq('user_id', user?.id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Update local state
+      setInvoices(prev => 
+        prev.map(invoice => {
+          if (invoice.id === invoiceId) {
+            return { 
+              ...invoice, 
+              status,
+              payments,
+              paidDate
+            };
+          }
+          return invoice;
+        })
+      );
+      
+      toast.success("Payment recorded successfully");
+    } catch (error) {
+      console.error("Failed to mark invoice as paid:", error);
+      toast.error("Failed to record payment");
+    }
   };
 
   return (
@@ -120,7 +245,8 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       addInvoice, 
       getNextInvoiceNumber,
       updateInvoiceStatus,
-      markInvoiceAsPaid
+      markInvoiceAsPaid,
+      isLoading
     }}>
       {children}
     </InvoiceContext.Provider>

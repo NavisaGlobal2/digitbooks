@@ -7,6 +7,7 @@ import InvoiceSearchBar from "./InvoiceSearchBar";
 import InvoiceTable from "./InvoiceTable";
 import { PaymentRecord } from "@/types/invoice";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface InvoiceContentProps {
   searchQuery: string;
@@ -19,7 +20,7 @@ const InvoiceContent = ({
   setSearchQuery, 
   setIsCreatingInvoice 
 }: InvoiceContentProps) => {
-  const { invoices, markInvoiceAsPaid } = useInvoices();
+  const { invoices, markInvoiceAsPaid, isLoading } = useInvoices();
   const [filteredInvoices, setFilteredInvoices] = useState(invoices);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   
@@ -47,8 +48,7 @@ const InvoiceContent = ({
       // Add a delay to ensure proper state updates and prevent UI glitches
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      markInvoiceAsPaid(invoiceId, payments);
-      toast.success("Payment recorded successfully");
+      await markInvoiceAsPaid(invoiceId, payments);
     } catch (error) {
       console.error("Error marking invoice as paid:", error);
       toast.error("Failed to record payment");
@@ -59,11 +59,30 @@ const InvoiceContent = ({
       }, 500);
     }
   }, [markInvoiceAsPaid, isProcessingPayment]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-4 sm:space-y-6 md:space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} className="h-28 rounded-lg" />
+          ))}
+        </div>
+        <div>
+          <Skeleton className="h-12 w-full mb-4" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </div>
+    );
+  }
   
+  // Empty state
   if (invoices.length === 0) {
     return <InvoiceEmptyState onCreateInvoice={() => setIsCreatingInvoice(true)} />;
   }
   
+  // Normal content
   return (
     <div className="space-y-4 sm:space-y-6 md:space-y-8">
       <InvoiceStatCards invoices={invoices} />
