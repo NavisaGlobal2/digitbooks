@@ -17,7 +17,10 @@ const FinancialReports = () => {
     handleGenerateReport,
     setSelectedReportType,
     isCustomDateRange,
-    handleSelectReport
+    handleSelectReport,
+    selectedTimePeriod,
+    handlePeriodChange,
+    handleDateRangeChange
   } = useFinancialReportState();
 
   return (
@@ -34,6 +37,9 @@ const FinancialReports = () => {
           isCustomDateRange={isCustomDateRange}
           onBack={() => setSelectedReportType(null)}
           onSelectReport={handleSelectReport}
+          selectedTimePeriod={selectedTimePeriod}
+          onPeriodChange={handlePeriodChange}
+          onDateRangeChange={handleDateRangeChange}
         />
       </ReportsLayout>
 

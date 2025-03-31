@@ -2,6 +2,7 @@
 import React from "react";
 import { ReportView } from "./ReportView";
 import { ReportList } from "./ReportList";
+import ReportDateFilter, { TimelinePeriod } from "./filters/ReportDateFilter";
 
 interface ReportsContentProps {
   selectedReportType: string | null;
@@ -10,6 +11,9 @@ interface ReportsContentProps {
   isCustomDateRange: boolean;
   onBack: () => void;
   onSelectReport: (reportType: string) => void;
+  onPeriodChange: (period: TimelinePeriod) => void;
+  onDateRangeChange: (range: { startDate: Date; endDate: Date } | null) => void;
+  selectedTimePeriod: TimelinePeriod;
 }
 
 export const ReportsContent: React.FC<ReportsContentProps> = ({
@@ -18,17 +22,33 @@ export const ReportsContent: React.FC<ReportsContentProps> = ({
   dateRange,
   isCustomDateRange,
   onBack,
-  onSelectReport
+  onSelectReport,
+  onPeriodChange,
+  onDateRangeChange,
+  selectedTimePeriod
 }) => {
-  return selectedReportType ? (
-    <ReportView
-      selectedReportType={selectedReportType}
-      reportPeriod={reportPeriod}
-      dateRange={dateRange}
-      isCustomDateRange={isCustomDateRange}
-      onBack={onBack}
-    />
-  ) : (
-    <ReportList onSelectReport={onSelectReport} />
+  return (
+    <div>
+      {!selectedReportType && (
+        <ReportDateFilter
+          selectedPeriod={selectedTimePeriod}
+          dateRange={dateRange}
+          onPeriodChange={onPeriodChange}
+          onDateRangeChange={onDateRangeChange}
+        />
+      )}
+
+      {selectedReportType ? (
+        <ReportView
+          selectedReportType={selectedReportType}
+          reportPeriod={reportPeriod}
+          dateRange={dateRange}
+          isCustomDateRange={isCustomDateRange}
+          onBack={onBack}
+        />
+      ) : (
+        <ReportList onSelectReport={onSelectReport} />
+      )}
+    </div>
   );
 };
