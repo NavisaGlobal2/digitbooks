@@ -10,6 +10,7 @@ export async function processWithAnthropic(text: string, context?: string | null
 
   console.log("Sending to Anthropic for processing...");
   console.log(`Processing context: ${context || 'general'}`);
+  console.log(`Input data size: ${text.length} characters`);
   
   // Adjust the system prompt based on the context (revenue or expense)
   let systemPrompt = `You are a financial data extraction assistant. Your task is to parse bank statement data from various formats and output a clean JSON array of transactions.`;
@@ -119,7 +120,15 @@ export async function processWithAnthropic(text: string, context?: string | null
 
     // Parse the JSON response - Anthropic should return only JSON
     try {
-      return JSON.parse(content);
+      const parsedData = JSON.parse(content);
+      
+      // Log the first item of the AI response
+      if (Array.isArray(parsedData) && parsedData.length > 0) {
+        console.log("ANTHROPIC AI OUTPUT SAMPLE:", 
+          JSON.stringify(parsedData[0], null, 2));
+      }
+      
+      return parsedData;
     } catch (parseError) {
       console.error("Error parsing Anthropic response:", content);
       throw new Error("Could not parse transactions from Anthropic response");

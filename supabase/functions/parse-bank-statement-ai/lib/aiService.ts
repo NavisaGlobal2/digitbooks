@@ -18,6 +18,12 @@ export async function formatTransactionsWithAI(
       return [];
     }
 
+    // Log the first raw transaction for debugging
+    if (transactions.length > 0) {
+      console.log("SAMPLE RAW TRANSACTION FROM PARSER:", 
+        JSON.stringify(transactions[0], null, 2));
+    }
+
     // Determine which AI provider to use based on preference and available API keys
     const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
     const deepseekApiKey = Deno.env.get("DEEPSEEK_API_KEY");
@@ -59,12 +65,25 @@ export async function formatTransactionsWithAI(
         type: tx.type || ""
       }));
       
+      // Log the simplified data being sent to AI
+      console.log("SIMPLIFIED DATA FOR AI:", 
+        JSON.stringify(transactionData.slice(0, 2), null, 2));
+      console.log(`Total transactions for AI: ${transactionData.length}`);
+      
       // Send to the selected AI service
       let aiProcessedData;
       if (provider === "anthropic") {
         aiProcessedData = await processWithAnthropic(JSON.stringify(transactionData), context);
       } else if (provider === "deepseek") {
         aiProcessedData = await processWithDeepseek(JSON.stringify(transactionData), context);
+      }
+      
+      // Log sample of AI response
+      if (aiProcessedData && Array.isArray(aiProcessedData) && aiProcessedData.length > 0) {
+        console.log("SAMPLE AI PROCESSED TRANSACTION:", 
+          JSON.stringify(aiProcessedData[0], null, 2));
+      } else {
+        console.log("AI processing returned invalid data format:", typeof aiProcessedData);
       }
       
       if (!aiProcessedData || !Array.isArray(aiProcessedData)) {
@@ -80,7 +99,7 @@ export async function formatTransactionsWithAI(
         const id = originalTx.id || `tx-${crypto.randomUUID()}`;
         
         // Preserve original values but prefer AI formatted values if available
-        return {
+        const mergedTransaction = {
           id,
           date: aiTx.date || originalTx.date || new Date().toISOString(),
           description: aiTx.description || originalTx.description || "Unknown Transaction",
@@ -101,6 +120,7 @@ export async function formatTransactionsWithAI(
           
           // Store any source suggestions from AI
           sourceSuggestion: aiTx.sourceSuggestion,
+          categorySuggestion: aiTx.categorySuggestion,
           
           // Store the original values explicitly
           originalDate: originalTx.date,
@@ -109,6 +129,14 @@ export async function formatTransactionsWithAI(
           // Store all original data
           preservedColumns: { ...originalTx }
         };
+        
+        // Log first merged transaction to show the final result
+        if (index === 0) {
+          console.log("SAMPLE MERGED TRANSACTION:", 
+            JSON.stringify(mergedTransaction, null, 2));
+        }
+        
+        return mergedTransaction;
       });
       
       console.log("Successfully applied AI formatting to transactions");
