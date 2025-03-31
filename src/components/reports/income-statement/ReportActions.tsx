@@ -1,10 +1,9 @@
 
 import React, { RefObject } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, FileCog, FileText, Printer } from "lucide-react";
+import { ArrowLeft, Download, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
@@ -15,7 +14,7 @@ interface ReportActionsProps {
   dateRange: { startDate: Date; endDate: Date } | null;
   reportRef: RefObject<HTMLDivElement>;
   reportData?: any;
-  onDirectGeneration?: () => void; // New prop for direct generation
+  onDirectGeneration?: () => void;
 }
 
 export const ReportActions: React.FC<ReportActionsProps> = ({
@@ -47,6 +46,7 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
 
     try {
       toast.info("Generating PDF...");
+      console.log("Capturing report content element:", reportRef.current);
       
       // Capture the report content as an image
       const canvas = await html2canvas(reportRef.current, {
@@ -54,6 +54,7 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
+        logging: true, // Enable logging for debugging
       });
 
       // Create new PDF
