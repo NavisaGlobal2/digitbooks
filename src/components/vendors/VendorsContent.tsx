@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { useVendors } from '@/contexts/vendor/VendorProvider';
-import { Vendor } from '@/contexts/vendor/types';
+import { useVendors } from '@/contexts/vendor/types';
 import VendorEmptyState from './VendorEmptyState';
 import VendorSearchBar from './VendorSearchBar';
 import VendorGrid from './VendorGrid';
 import VendorDialog from './VendorDialog';
+import { Vendor } from '@/contexts/vendor/types';
 import { 
   AlertDialog, 
   AlertDialogAction, 
