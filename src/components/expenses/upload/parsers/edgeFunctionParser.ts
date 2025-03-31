@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./types";
 import { toast } from "sonner";
+import { ExpenseCategory } from "@/types/expense";
 
 // Define the API base URL
 const API_BASE = "https://workspace.john644.repl.co";
@@ -22,7 +23,7 @@ interface TransactionData {
   description: string;
   amount: number | string;
   transaction_type?: string;
-  category?: string;
+  category?: string | ExpenseCategory;
 }
 
 export const parseViaEdgeFunction = async (
@@ -99,7 +100,7 @@ export const parseViaEdgeFunction = async (
       return [];
     }
 
-    const data = await response.json() as ApiResponse;
+    const data: ApiResponse = await response.json();
 
     // Handle the new API response format
     if (data.success === false) {
@@ -131,7 +132,7 @@ export const parseViaEdgeFunction = async (
           description: tx.description,
           amount: Math.abs(amountValue),
           type: (tx.transaction_type?.toLowerCase() === 'debit') ? 'debit' : 'credit',
-          category: tx.category,
+          category: tx.category as ExpenseCategory | undefined,
           selected: tx.transaction_type?.toLowerCase() === 'debit',
           batchId: data.statement_id
         };
@@ -162,7 +163,7 @@ export const parseViaEdgeFunction = async (
       description: tx.description,
       amount: Math.abs(parseFloat(tx.amount.toString())), // Store as positive number
       type: tx.type || (parseFloat(tx.amount.toString()) < 0 ? 'debit' : 'credit'),
-      category: tx.category || undefined,
+      category: tx.category as ExpenseCategory | undefined,
       selected: tx.type === 'debit' || parseFloat(tx.amount.toString()) < 0, // Pre-select debits
       batchId: data.batchId || data.statement_id
     }));
