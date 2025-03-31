@@ -27,8 +27,9 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
   onDirectGeneration
 }) => {
   const handleDownload = async () => {
-    // Use direct generation if available
-    if (onDirectGeneration) {
+    // Use direct generation if available and not an income statement 
+    // (income statement has its own implementation)
+    if (onDirectGeneration && title.toLowerCase() !== "income statement") {
       onDirectGeneration();
       return;
     }
@@ -41,11 +42,12 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
 
     if (!reportRef.current) {
       toast.error("Could not find report content");
+      console.error("Report reference is null or undefined");
       return;
     }
 
     try {
-      toast.info("Generating PDF...");
+      toast.info(`Generating ${title} PDF...`);
       console.log("Capturing report content element:", reportRef.current);
       
       // Capture the report content as an image
@@ -78,8 +80,8 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
       
       toast.success(`${title} report downloaded successfully!`);
     } catch (error) {
-      console.error("PDF generation error:", error);
-      toast.error("Failed to generate PDF. Please try again.");
+      console.error(`${title} PDF generation error:`, error);
+      toast.error(`Failed to generate ${title} PDF. Please try again.`);
     }
   };
 

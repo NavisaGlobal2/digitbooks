@@ -53,51 +53,14 @@ export const generateReportPdf = (reportData: ReportData): void => {
       generateIncomeStatementContent(doc);
       break;
     case "cash-flow":
+      generateCashFlowContent(doc);
+      break;
     case "expense-summary":
+      generateExpenseSummaryContent(doc);
+      break;
     case "revenue-summary":
     case "budget-analysis":
     case "profit-loss":
-      // For these reports, we'll use html2canvas to capture the entire report content
-      setTimeout(() => {
-        const reportId = `${title.toLowerCase().replace(/\s+/g, "-")}-report-content`;
-        const reportContainer = document.getElementById(reportId);
-        
-        if (reportContainer) {
-          import("html2canvas").then((html2canvasModule) => {
-            const html2canvas = html2canvasModule.default;
-            html2canvas(reportContainer, {
-              scale: 2, // Higher quality
-              useCORS: true,
-              allowTaint: true,
-              backgroundColor: "#ffffff",
-            }).then(canvas => {
-              const imgData = canvas.toDataURL('image/png');
-              const imgProps = doc.getImageProperties(imgData);
-              const pdfWidth = doc.internal.pageSize.getWidth();
-              const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-              
-              // Add the captured image to the PDF
-              doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-              
-              // Add page numbers
-              addPageNumbers(doc);
-              
-              // Save the PDF
-              const fileName = generateReportFilename(title);
-              doc.save(fileName);
-            });
-          });
-        } else {
-          // Fallback to generic content if container not found
-          generateGenericReportContent(doc, title);
-          // Add page numbers
-          addPageNumbers(doc);
-          // Save the PDF
-          const fileName = generateReportFilename(title);
-          doc.save(fileName);
-        }
-      }, 1000);
-      return; // Return early as we're handling saving in the timeout
     default:
       generateGenericReportContent(doc, title);
       break;
@@ -106,9 +69,7 @@ export const generateReportPdf = (reportData: ReportData): void => {
   // Add page numbers
   addPageNumbers(doc);
   
-  // Save the PDF - only for reports that don't handle saving separately
-  if (!["cash-flow", "expense-summary", "revenue-summary", "budget-analysis", "profit-loss"].includes(title.toLowerCase().replace(/\s+/g, "-"))) {
-    const fileName = generateReportFilename(title);
-    doc.save(fileName);
-  }
+  // Save the PDF
+  const fileName = generateReportFilename(title);
+  doc.save(fileName);
 };

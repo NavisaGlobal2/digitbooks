@@ -63,7 +63,7 @@ const ExpenseSummaryReport: React.FC<ExpenseSummaryReportProps> = ({
   }, [expenses, dateRange]);
 
   return (
-    <div className="space-y-6" id="report-container">
+    <div className="space-y-6">
       <ReportActions
         onBack={onBack}
         title="Expense Summary"
@@ -75,8 +75,7 @@ const ExpenseSummaryReport: React.FC<ExpenseSummaryReportProps> = ({
 
       <div 
         ref={reportRef} 
-        className="bg-white p-8 rounded-lg shadow-sm border print:shadow-none" 
-        id="expense-report-content"
+        className="bg-white p-8 rounded-lg shadow-sm border print:shadow-none"
       >
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold">Expense Summary</h1>

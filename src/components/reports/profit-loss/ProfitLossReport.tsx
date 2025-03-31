@@ -14,7 +14,7 @@ interface ProfitLossReportProps {
   onBack: () => void;
   period: string;
   dateRange: { startDate: Date; endDate: Date } | null;
-  onDirectGeneration?: () => void; // New prop for direct generation
+  onDirectGeneration?: () => void; 
 }
 
 const ProfitLossReport: React.FC<ProfitLossReportProps> = ({
@@ -54,7 +54,7 @@ const ProfitLossReport: React.FC<ProfitLossReportProps> = ({
   }
 
   return (
-    <div className="space-y-6" id="report-container">
+    <div className="space-y-6">
       <ReportActions
         onBack={onBack}
         title="Profit & Loss"
@@ -68,7 +68,6 @@ const ProfitLossReport: React.FC<ProfitLossReportProps> = ({
       <div
         ref={reportRef}
         className="bg-white p-8 rounded-lg shadow-sm border print:shadow-none"
-        id="profit-loss-report-content"
       >
         <ProfitLossHeader period={period} dateRange={dateRange} />
 
