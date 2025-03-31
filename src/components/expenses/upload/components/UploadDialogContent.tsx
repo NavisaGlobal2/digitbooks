@@ -1,4 +1,3 @@
-
 import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X, AlertTriangle } from "lucide-react";
@@ -42,16 +41,9 @@ const UploadDialogContent = ({
   const [useEdgeFunction, setUseEdgeFunction] = useState(true);
   const [edgeFunctionAvailable, setEdgeFunctionAvailable] = useState(true);
   
-  const toggleEdgeFunction = () => {
-    setUseEdgeFunction(!useEdgeFunction);
-  };
-  
-  // Check if the CSV file has been selected
-  const isCsvFile = file && file.name.toLowerCase().endsWith('.csv');
-  
-  // For non-CSV files, we should force edge function processing
+  // CSV files always use edge function
   useEffect(() => {
-    if (file && !file.name.toLowerCase().endsWith('.csv')) {
+    if (file && file.name.toLowerCase().endsWith('.csv')) {
       setUseEdgeFunction(true);
     }
   }, [file]);
@@ -66,7 +58,7 @@ const UploadDialogContent = ({
           </Button>
         </div>
         <DialogDescription>
-          Upload your bank statement to extract transactions
+          Upload your CSV bank statement to extract transactions
         </DialogDescription>
       </DialogHeader>
 
@@ -93,23 +85,16 @@ const UploadDialogContent = ({
               </div>
             )}
             
+            <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded mb-4">
+              <p className="font-medium">Currently only CSV files are supported</p>
+              <p className="text-sm">Please export your bank statement in CSV format to upload</p>
+            </div>
+            
             <FileUploadArea 
               file={file} 
               onFileChange={handleFileChange} 
               disabled={uploading} 
             />
-            
-            {file && isCsvFile && (
-              <ProcessingModeToggle 
-                useEdgeFunction={useEdgeFunction} 
-                toggleEdgeFunction={toggleEdgeFunction}
-                edgeFunctionAvailable={edgeFunctionAvailable}
-                disabled={uploading}
-                isAuthenticated={isAuthenticated}
-                preferredAIProvider={preferredAIProvider}
-                setPreferredAIProvider={setPreferredAIProvider}
-              />
-            )}
             
             {error && <ErrorDisplay error={error} />}
             
@@ -122,11 +107,9 @@ const UploadDialogContent = ({
                 onClick={parseFile}
                 className="bg-green-500 hover:bg-green-600 text-white"
               >
-                Process Statement
+                Process CSV Statement
               </Button>
             </div>
-            
-            <ConnectionStatistics />
           </>
         )}
       </div>

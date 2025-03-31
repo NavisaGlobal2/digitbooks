@@ -11,6 +11,7 @@
 # Add Node.js version to ensure compatibility
 [build.environment]
   NODE_VERSION = "18"
+  CSV_ONLY_MODE = "true"
 
 # Disable automatic deploys
 [build.lifecycle]

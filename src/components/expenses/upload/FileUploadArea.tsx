@@ -29,13 +29,22 @@ const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadArea
     if (disabled) return;
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      
+      // Only allow CSV files
+      if (fileExt !== 'csv') {
+        alert('Only CSV files are currently supported');
+        return;
+      }
+      
       // Create a synthetic event to pass to onFileChange
       const fileInput = document.createElement('input');
       fileInput.type = 'file';
       
       // Create a new DataTransfer object and add the file
       const dataTransfer = new DataTransfer();
-      dataTransfer.items.add(e.dataTransfer.files[0]);
+      dataTransfer.items.add(file);
       fileInput.files = dataTransfer.files;
       
       const event = { target: fileInput } as unknown as React.ChangeEvent<HTMLInputElement>;
@@ -60,10 +69,10 @@ const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadArea
           <Upload className="h-6 w-6 text-muted-foreground" />
         </div>
         <p className="text-sm font-medium">
-          {file ? file.name : 'Drag and drop your statement file, or click to select'}
+          {file ? file.name : 'Drag and drop your CSV statement file, or click to select'}
         </p>
         <p className="text-xs text-muted-foreground">
-          Supports CSV, Excel, and PDF files
+          Currently supports CSV files only
         </p>
       </div>
       <div className="mt-4">
@@ -72,12 +81,12 @@ const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadArea
             id="file-upload"
             type="file"
             className="hidden"
-            accept=".csv, .xlsx, .xls, .pdf"
+            accept=".csv"
             onChange={onFileChange}
             disabled={disabled}
           />
           <div className="px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md text-sm font-medium">
-            Select File
+            Select CSV File
           </div>
         </label>
       </div>

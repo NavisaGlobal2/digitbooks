@@ -71,15 +71,16 @@ export const useStatementUpload = (
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       console.log("File selected:", selectedFile.name, selectedFile.type, selectedFile.size);
-      setFile(selectedFile);
-      clearError();
       
-      // Check file type
+      // Check file type - only allow CSV
       const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
-      if (!['csv', 'xlsx', 'xls', 'pdf'].includes(fileExt || '')) {
-        setError('Unsupported file format. Please upload CSV, Excel, or PDF files only.');
+      if (fileExt !== 'csv') {
+        setError('Only CSV files are currently supported.');
         return;
       }
+      
+      setFile(selectedFile);
+      clearError();
       
       // Check file size
       const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
