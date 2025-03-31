@@ -16,8 +16,26 @@ export const useStatementUpload = (
   // Check authentication status
   useEffect(() => {
     const checkAuthStatus = async () => {
-      const { data } = await supabase.auth.getSession();
-      setIsAuthenticated(!!data.session);
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Auth error:", error);
+          setIsAuthenticated(false);
+          return;
+        }
+        
+        setIsAuthenticated(!!data.session);
+        
+        if (!data.session) {
+          console.log("No active session found");
+        } else {
+          console.log("User is authenticated");
+        }
+      } catch (error) {
+        console.error("Error checking auth status:", error);
+        setIsAuthenticated(false);
+      }
     };
     
     checkAuthStatus();
@@ -25,6 +43,7 @@ export const useStatementUpload = (
     // Subscribe to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
+      console.log("Auth state changed, user is authenticated:", !!session);
     });
     
     return () => {
@@ -106,8 +125,11 @@ export const useStatementUpload = (
       // Start progress simulation
       startProgress();
       
+      // Double-check authentication before proceeding
+      const { data } = await supabase.auth.getSession();
+      
       // If not authenticated, show error
-      if (!isAuthenticated) {
+      if (!data.session) {
         handleError("Processing requires authentication. Please sign in to use this feature.");
         resetProgress();
         setUploading(false);
@@ -119,7 +141,10 @@ export const useStatementUpload = (
     } catch (error) {
       console.error("Unexpected error in parseFile:", error);
       handleError("An unexpected error occurred. Please try again.");
-      setUploading(false);
+    } finally {
+      if (isCancelled) {
+        setUploading(false);
+      }
     }
   };
 

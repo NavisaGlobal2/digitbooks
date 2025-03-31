@@ -37,12 +37,20 @@ export const useFileProcessing = ({
       console.log(`Processing ${file.name} (${file.type}) to edge function for processing...`);
       
       // Get the auth session token
-      const { data } = await supabase.auth.getSession();
+      const { data, error: authError } = await supabase.auth.getSession();
+      
+      if (authError) {
+        setIsAuthenticated(false);
+        handleError(`Authentication error: ${authError.message}`);
+        resetProgress();
+        return;
+      }
+      
       const session = data.session;
       
       if (!session) {
         setIsAuthenticated(false);
-        handleError("Authentication required to process bank statements");
+        handleError("Authentication required to process bank statements. Please sign in and try again.");
         resetProgress();
         return;
       }
@@ -51,26 +59,41 @@ export const useFileProcessing = ({
       let response;
       const fileExt = file.name.split('.').pop()?.toLowerCase();
       
-      if (fileExt === 'pdf') {
-        response = await supabase.functions.invoke('parse-bank-statement-ai', {
-          body: formData,
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
-        });
-      } else {
-        // For CSV and Excel files
-        response = await supabase.functions.invoke('parse-bank-statement', {
-          body: formData,
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
-        });
+      try {
+        if (fileExt === 'pdf') {
+          response = await supabase.functions.invoke('parse-bank-statement-ai', {
+            body: formData,
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
+          });
+        } else {
+          // For CSV and Excel files
+          response = await supabase.functions.invoke('parse-bank-statement', {
+            body: formData,
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
+          });
+        }
+      } catch (invokeError) {
+        console.error("Error invoking edge function:", invokeError);
+        handleError(`Server error: ${invokeError instanceof Error ? invokeError.message : 'Unknown error'}`);
+        resetProgress();
+        return;
       }
       
       // Handle the response
       if (response.error) {
         console.error('Edge function error:', response.error);
+        
+        if (response.error.message && response.error.message.includes("authentication")) {
+          setIsAuthenticated(false);
+          handleError("Authentication error: Please sign in again to refresh your session.");
+          resetProgress();
+          return;
+        }
+        
         handleError(`Processing error: ${response.error.message || 'Unknown error'}`);
         resetProgress();
         return;

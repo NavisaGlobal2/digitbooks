@@ -7,6 +7,8 @@ import SupportedFormatsInfo from "./SupportedFormatsInfo";
 import UploadDialogFooter from "../UploadDialogFooter";
 import DialogHeader from "../DialogHeader";
 import { downloadCSVTemplate } from "@/utils/csvTemplateGenerator";
+import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface UploadDialogContentProps {
   file: File | null;
@@ -60,8 +62,18 @@ const UploadDialogContent = ({
         />
         
         {isAuthenticated === false && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
-            You need to be signed in to use this feature. Please sign in and try again.
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+            <div className="text-sm text-yellow-800">
+              <p>You need to be signed in to use this feature.</p>
+              <Button 
+                variant="link" 
+                className="p-0 h-auto text-yellow-700 font-semibold"
+                onClick={() => window.location.href = '/auth'}
+              >
+                Sign in now
+              </Button>
+            </div>
           </div>
         )}
         

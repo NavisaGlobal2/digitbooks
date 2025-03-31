@@ -20,7 +20,15 @@ export const parseViaEdgeFunction = async (
     console.log(`Sending file to edge function: ${endpoint}`);
     
     // Check authentication status before making the request
-    const { data: authData } = await supabase.auth.getSession();
+    const { data: authData, error: authError } = await supabase.auth.getSession();
+    
+    if (authError) {
+      console.error('Authentication error:', authError);
+      const errorMsg = "Authentication error: " + authError.message;
+      onError(errorMsg);
+      return [];
+    }
+    
     if (!authData.session) {
       console.error('No authentication session found');
       const errorMsg = "You need to be signed in to use this feature. Please sign in and try again.";
