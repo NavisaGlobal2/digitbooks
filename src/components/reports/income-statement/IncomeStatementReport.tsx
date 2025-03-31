@@ -10,7 +10,6 @@ import { ReportFooter } from "./ReportFooter";
 import { ReportActions } from "./ReportActions";
 import { formatReportDates } from "./utils/dateFormatters";
 import { calculateFinancialMetrics } from "./utils/financialCalculations";
-import { useReportDataLoading } from "./hooks/useReportDataLoading";
 
 interface IncomeStatementReportProps {
   onBack: () => void;
@@ -22,7 +21,7 @@ interface IncomeStatementReportProps {
 const IncomeStatementReport = ({ onBack, period, dateRange, onDirectGeneration }: IncomeStatementReportProps) => {
   const reportRef = useRef<HTMLDivElement>(null);
   const [localDateRange, setLocalDateRange] = useState<{ startDate: Date; endDate: Date } | null>(dateRange);
-  const { isLoading, setIsLoading } = useReportDataLoading();
+  const [isLoading, setIsLoading] = useState(true);
   const [reportData, setReportData] = useState<any>(null);
   const { revenues, getTotalRevenue, getRevenueBySource, getRevenueByPeriod } = useRevenue();
   const { getTotalExpenses, getExpensesByCategory } = useExpenses();
@@ -85,7 +84,7 @@ const IncomeStatementReport = ({ onBack, period, dateRange, onDirectGeneration }
     }, 800);
     
     return () => clearTimeout(timer);
-  }, [revenues, getTotalRevenue, getRevenueBySource, getTotalExpenses, getExpensesByCategory, localDateRange, getRevenueByPeriod, setIsLoading]);
+  }, [revenues, getTotalRevenue, getRevenueBySource, getTotalExpenses, getExpensesByCategory, localDateRange, getRevenueByPeriod]);
   
   useEffect(() => {
     if (dateRange && !localDateRange) {
@@ -95,6 +94,7 @@ const IncomeStatementReport = ({ onBack, period, dateRange, onDirectGeneration }
 
   const handleDateRangeChange = (newRange: { startDate: Date; endDate: Date } | null) => {
     setLocalDateRange(newRange);
+    setIsLoading(true); // Trigger reloading of data when date range changes
   };
 
   if (isLoading) {

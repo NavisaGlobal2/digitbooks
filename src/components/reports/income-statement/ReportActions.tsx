@@ -80,15 +80,16 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
       pdf.save(fileName);
       
       // Save report metadata to database for history
-      const reportType = title.toLowerCase().replace(/\s+/g, "-");
-      await saveReportToDatabase(
-        reportType,
-        title,
-        period,
-        dateRange,
-        reportData || { generatedAt: new Date().toISOString() },
-        "pdf"
-      );
+      if (reportData) {
+        await saveReportToDatabase(
+          title.toLowerCase().replace(/\s+/g, "-"),
+          title,
+          period,
+          dateRange,
+          reportData,
+          "pdf"
+        );
+      }
       
       toast.success(`${title} report downloaded successfully!`);
     } catch (error) {
