@@ -24,7 +24,7 @@ const CategoryItem = ({ category, getProgressColorClass, onUpdateSpent }: Catego
           <div>
             <h3 className="font-medium text-sm sm:text-base">{category.name}</h3>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              ${category.spent.toFixed(2)} / ${category.amount.toFixed(2)}
+              ₦{category.spent.toFixed(2)} / ₦{category.amount.toFixed(2)}
             </p>
           </div>
           <div className="flex gap-2">
