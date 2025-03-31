@@ -8,7 +8,9 @@ import { ReportTimeline } from "./ReportTimeline";
 import { ReportSummary } from "./ReportSummary";
 import { ReportFooter } from "./ReportFooter";
 import { ReportActions } from "./ReportActions";
-import { useIncomeStatementData } from "./hooks/useIncomeStatementData";
+import { formatReportDates } from "./utils/dateFormatters";
+import { calculateFinancialMetrics } from "./utils/financialCalculations";
+import { useReportDataLoading } from "./hooks/useReportDataLoading";
 
 interface IncomeStatementReportProps {
   onBack: () => void;
@@ -20,9 +22,70 @@ interface IncomeStatementReportProps {
 const IncomeStatementReport = ({ onBack, period, dateRange, onDirectGeneration }: IncomeStatementReportProps) => {
   const reportRef = useRef<HTMLDivElement>(null);
   const [localDateRange, setLocalDateRange] = useState<{ startDate: Date; endDate: Date } | null>(dateRange);
+  const { isLoading, setIsLoading } = useReportDataLoading();
+  const [reportData, setReportData] = useState<any>(null);
+  const { revenues, getTotalRevenue, getRevenueBySource, getRevenueByPeriod } = useRevenue();
+  const { getTotalExpenses, getExpensesByCategory } = useExpenses();
   
-  const { isLoading, reportData, formattedDate, startDateFormatted, endDateFormatted, reportDuration } = 
-    useIncomeStatementData(localDateRange || dateRange);
+  // Format the date information using the utility function
+  const {
+    formattedDate,
+    startDateFormatted,
+    endDateFormatted,
+    reportDuration
+  } = formatReportDates(localDateRange);
+
+  // Load report data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Extract revenue data based on date range if available
+      let filteredRevenues = revenues;
+      let totalRevenue = 0;
+      let revenueBySource = {};
+      
+      if (localDateRange) {
+        filteredRevenues = getRevenueByPeriod(localDateRange.startDate, localDateRange.endDate);
+        totalRevenue = filteredRevenues.reduce((total, revenue) => total + revenue.amount, 0);
+        
+        revenueBySource = filteredRevenues.reduce((acc, revenue) => {
+          const source = revenue.source;
+          if (!acc[source]) {
+            acc[source] = 0;
+          }
+          acc[source] += revenue.amount;
+          return acc;
+        }, {} as Record<string, number>);
+      } else {
+        totalRevenue = getTotalRevenue();
+        revenueBySource = getRevenueBySource();
+      }
+      
+      // Get expense data
+      const totalExpenses = getTotalExpenses();
+      const expensesByCategory = getExpensesByCategory();
+      
+      // Calculate financial metrics
+      const { grossProfit, netProfit, profitMargin } = calculateFinancialMetrics(
+        totalRevenue, 
+        totalExpenses
+      );
+      
+      // Set the report data state
+      setReportData({
+        totalRevenue,
+        revenueBySource,
+        totalExpenses,
+        expensesByCategory,
+        grossProfit,
+        netProfit,
+        profitMargin
+      });
+      
+      setIsLoading(false);
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, [revenues, getTotalRevenue, getRevenueBySource, getTotalExpenses, getExpensesByCategory, localDateRange, getRevenueByPeriod, setIsLoading]);
   
   useEffect(() => {
     if (dateRange && !localDateRange) {
