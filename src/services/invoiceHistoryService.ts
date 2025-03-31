@@ -19,7 +19,7 @@ export const saveInvoiceToHistory = async (invoice: InvoiceHistoryItem) => {
   try {
     // First try to save to localStorage
     const historyKey = "invoice_history";
-    let history: Partial<InvoiceHistoryItem>[] = [];
+    let history: any[] = [];
     
     try {
       const savedHistory = localStorage.getItem(historyKey);
@@ -49,9 +49,9 @@ export const saveInvoiceToHistory = async (invoice: InvoiceHistoryItem) => {
     
     // If we have Supabase, also save there for persistence
     try {
-      const user = useAuth().user;
-      if (user?.id && supabase) {
-        // Save to the new invoice_history table
+      const { user } = useAuth();
+      if (user?.id) {
+        // Save to the invoice_history table
         await supabase.from("invoice_history").insert({
           user_id: user.id,
           client_name: invoice.clientName,
@@ -120,11 +120,14 @@ export const deleteInvoiceFromHistory = (fileName: string): boolean => {
     
     // Also attempt to delete from database if available
     try {
-      const user = useAuth().user;
-      if (user?.id && supabase) {
-        supabase.from("invoice_history")
+      const { user } = useAuth();
+      if (user?.id) {
+        // Use .eq to match exact file name
+        supabase
+          .from("invoice_history")
           .delete()
-          .match({ user_id: user.id, file_name: fileName });
+          .eq("user_id", user.id)
+          .eq("file_name", fileName);
       }
     } catch (dbError) {
       console.error("Error deleting from database:", dbError);
@@ -142,8 +145,8 @@ export const deleteInvoiceFromHistory = (fileName: string): boolean => {
  */
 export const getInvoiceHistoryFromDB = async (): Promise<InvoiceHistoryItem[]> => {
   try {
-    const user = useAuth().user;
-    if (!user?.id || !supabase) {
+    const { user } = useAuth();
+    if (!user?.id) {
       return [];
     }
     
@@ -153,19 +156,19 @@ export const getInvoiceHistoryFromDB = async (): Promise<InvoiceHistoryItem[]> =
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
       
-    if (error) {
+    if (error || !data) {
       console.error("Error fetching invoice history from database:", error);
       return [];
     }
     
     // Convert database records to InvoiceHistoryItem format
-    return data.map(item => ({
-      type: item.type as "invoice" | "receipt",
-      clientName: item.client_name,
-      date: new Date(item.invoice_date),
-      fileName: item.file_name,
-      amount: item.amount,
-      invoiceNumber: item.invoice_number
+    return data.map(record => ({
+      type: record.type as "invoice" | "receipt",
+      clientName: record.client_name,
+      date: new Date(record.invoice_date),
+      fileName: record.file_name,
+      amount: record.amount,
+      invoiceNumber: record.invoice_number
     }));
   } catch (error) {
     console.error("Error fetching invoice history from database:", error);

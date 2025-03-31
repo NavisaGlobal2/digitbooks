@@ -19,7 +19,8 @@ import { useAuth } from "@/contexts/auth";
 const InvoiceHistoryTab = () => {
   const [historyItems, setHistoryItems] = useState<InvoiceHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   
   useEffect(() => {
     loadHistory();
