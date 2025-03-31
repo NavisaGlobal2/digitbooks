@@ -75,3 +75,18 @@ export const signInWithGoogle = async (): Promise<void> => {
     throw error;
   }
 };
+
+// Resend verification email
+export const resendVerificationEmail = async (email: string): Promise<void> => {
+  try {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email
+    });
+    
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error resending verification email:", error);
+    throw error;
+  }
+};
