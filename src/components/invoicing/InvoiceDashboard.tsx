@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import InvoiceContent from "./InvoiceContent";
 import InvoiceHistoryTab from "./history/InvoiceHistoryTab";
+import PaymentContent from "./payment/PaymentContent";
 
 interface InvoiceDashboardProps {
   activeTab: string;
@@ -39,12 +40,10 @@ const InvoiceDashboard = ({
         </TabsContent>
 
         <TabsContent value="payments" className="mt-6">
-          <div className="rounded-lg border border-dashed p-8 text-center">
-            <h3 className="text-xl font-semibold mb-2">Payment Tracking</h3>
-            <p className="text-muted-foreground">
-              Track payments received against your invoices.
-            </p>
-          </div>
+          <PaymentContent 
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+          />
         </TabsContent>
         
         <TabsContent value="history" className="mt-6">
