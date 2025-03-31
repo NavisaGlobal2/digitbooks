@@ -10,13 +10,13 @@ import { cn } from "@/lib/utils";
 
 interface ReportDateFilterProps {
   dateRange: { startDate: Date; endDate: Date } | null;
-  onDateRangeChange: (range: { startDate: Date; endDate: Date } | null) => void;
+  onChange: (range: { startDate: Date; endDate: Date } | null) => void;
   onGenerateReport?: () => void;
 }
 
 const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
   dateRange,
-  onDateRangeChange,
+  onChange,
   onGenerateReport
 }) => {
   const [date, setDate] = useState<DateRange | undefined>(
@@ -38,17 +38,17 @@ const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
     setDate(range);
     
     if (range?.from && range?.to) {
-      onDateRangeChange({
+      onChange({
         startDate: range.from,
         endDate: range.to
       });
     } else if (range?.from) {
-      onDateRangeChange({
+      onChange({
         startDate: range.from,
         endDate: range.from
       });
     } else {
-      onDateRangeChange(null);
+      onChange(null);
     }
   };
 

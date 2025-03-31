@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReportsHeader } from "./ReportsHeader";
 import { ReportView } from "./ReportView";
 import { ReportList } from "./ReportList";
-import { ReportDateFilter } from "./filters/ReportDateFilter";
+import ReportDateFilter from "./filters/ReportDateFilter";
 import { Button } from "@/components/ui/button";
 import { Calendar, Download } from "lucide-react";
 import ReportHistoryTab from "./saved/ReportHistoryTab";
@@ -51,8 +51,9 @@ export const ReportsContent: React.FC<ReportsContentProps> = ({
   return (
     <div className="space-y-6">
       <ReportsHeader
-        title="Financial Reports"
-        description="Generate and download financial reports for your business"
+        onGenerateReport={onGenerateReport}
+        onMobileMenuOpen={() => {}}
+        showGenerateButton={true}
       />
 
       <Tabs defaultValue="browse" value={activeTab} onValueChange={handleTabChange}>
