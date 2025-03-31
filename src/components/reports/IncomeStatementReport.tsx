@@ -11,7 +11,7 @@ import {
   TableCell 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Printer, Download, ChevronLeft, Calendar } from "lucide-react";
+import { Printer, Download, ChevronLeft, Calendar, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/utils/invoice/formatters";
 import { format } from "date-fns";
@@ -38,6 +38,12 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
 
   const today = new Date();
   const formattedDate = format(today, "MMMM dd, yyyy");
+  
+  const startDateFormatted = dateRange ? format(dateRange.startDate, "MMM dd, yyyy") : "";
+  const endDateFormatted = dateRange ? format(dateRange.endDate, "MMM dd, yyyy") : "";
+  const reportDuration = dateRange ? 
+    Math.ceil((dateRange.endDate.getTime() - dateRange.startDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+  const reportProgress = 100;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -147,6 +153,29 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
             <Calendar className="h-4 w-4" />
             <p>Generated on {formattedDate}</p>
           </div>
+          
+          {dateRange && (
+            <div className="mt-4 pt-3 border-t">
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4 text-green-500" />
+                <span>Reporting Period ({reportDuration} days):</span>
+                <span className="font-semibold text-gray-700">{startDateFormatted} — {endDateFormatted}</span>
+              </div>
+              
+              <div className="mt-3 w-full max-w-md mx-auto px-4">
+                <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div 
+                    className="absolute left-0 top-0 h-full bg-green-500 rounded-full" 
+                    style={{ width: `${reportProgress}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between mt-1 text-xs">
+                  <span>{startDateFormatted}</span>
+                  <span>{endDateFormatted}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <Table className="mb-8">
@@ -210,7 +239,7 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
         
         <div className="text-sm text-muted-foreground">
           <p>This report is generated based on the revenue and expense data recorded in the system.</p>
-          <p>Generated on {formattedDate}</p>
+          <p>Generated on {formattedDate} | Reporting period: {startDateFormatted} - {endDateFormatted}</p>
         </div>
       </Card>
     </div>

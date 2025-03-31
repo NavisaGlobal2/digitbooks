@@ -1,6 +1,6 @@
 
 import React from "react";
-import { ArrowLeft, BarChart3, Download, FileText, Calendar } from "lucide-react";
+import { ArrowLeft, BarChart3, Download, FileText, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -13,6 +13,15 @@ interface GenericReportViewProps {
 const GenericReportView = ({ reportType, onBack }: GenericReportViewProps) => {
   const today = new Date();
   const formattedDate = format(today, "MMMM dd, yyyy");
+  
+  // For demonstration, set a report period (typically this would come from props)
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - 1);
+  const endDate = new Date();
+  const reportPeriod = {
+    start: format(startDate, "MMM dd, yyyy"),
+    end: format(endDate, "MMM dd, yyyy")
+  };
 
   return (
     <div className="space-y-6">
@@ -46,6 +55,25 @@ const GenericReportView = ({ reportType, onBack }: GenericReportViewProps) => {
           <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm sm:text-base mt-1">
             <Calendar className="h-4 w-4" />
             <p>{formattedDate}</p>
+          </div>
+          
+          {/* Report Timeline */}
+          <div className="mt-4 pt-3 border-t">
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4 text-green-500" />
+              <span>Reporting Period:</span>
+              <span className="font-semibold text-gray-700">{reportPeriod.start} — {reportPeriod.end}</span>
+            </div>
+            
+            <div className="mt-3 w-full max-w-md mx-auto px-4">
+              <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="absolute left-0 top-0 h-full bg-green-500 rounded-full" style={{ width: '100%' }}></div>
+              </div>
+              <div className="flex justify-between mt-1 text-xs">
+                <span>{reportPeriod.start}</span>
+                <span>{reportPeriod.end}</span>
+              </div>
+            </div>
           </div>
         </div>
 
