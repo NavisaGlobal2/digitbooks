@@ -20,6 +20,7 @@ export function basicFormatting(transactions: Transaction[]): Transaction[] {
                      transaction.valueDate || 
                      transaction.postingDate || 
                      transaction.bookingDate || 
+                     findDateInPreservedColumns(transaction) || 
                      new Date().toISOString();
     
     // Handle description: use description or fallbacks to other common description fields
@@ -29,6 +30,7 @@ export function basicFormatting(transactions: Transaction[]): Transaction[] {
                        transaction.memo || 
                        transaction.reference || 
                        transaction.merchantName || 
+                       findDescriptionInPreservedColumns(transaction) || 
                        'Unknown Transaction';
                        
     // Handle amount: convert to number if possible
@@ -47,6 +49,9 @@ export function basicFormatting(transactions: Transaction[]): Transaction[] {
     } else if (transaction.value) {
       // Try value field as a fallback
       amount = parseFloat(String(transaction.value));
+    } else {
+      // Try to find amount in preserved columns
+      amount = findAmountInPreservedColumns(transaction);
     }
     
     // Determine transaction type based on amount or explicit type
@@ -91,4 +96,118 @@ export function basicFormatting(transactions: Transaction[]): Transaction[] {
       preservedColumns
     };
   });
+}
+
+// Helper function to search for date values in preserved columns
+function findDateInPreservedColumns(transaction: Transaction): string | null {
+  // Skip if no preserved columns
+  if (!transaction.preservedColumns) return null;
+  
+  const preservedColumns = transaction.preservedColumns;
+  
+  // Search for date patterns in preserved columns
+  for (const key in preservedColumns) {
+    const value = preservedColumns[key];
+    if (!value) continue;
+    
+    // Check if it's a date string (DD/MM/YYYY or YYYY-MM-DD etc.)
+    const strValue = String(value);
+    if (/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/.test(strValue) || 
+        /\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2}/.test(strValue)) {
+      
+      try {
+        // Try to parse as date
+        const date = new Date(strValue);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString();
+        }
+      } catch (e) {
+        // Failed to parse, continue searching
+      }
+    }
+  }
+  
+  return null;
+}
+
+// Helper function to search for description values in preserved columns
+function findDescriptionInPreservedColumns(transaction: Transaction): string | null {
+  // Skip if no preserved columns
+  if (!transaction.preservedColumns) return null;
+  
+  const preservedColumns = transaction.preservedColumns;
+  
+  // Keywords that might indicate a description field
+  const descKeywords = ['narration', 'description', 'details', 'particulars', 'memo', 'narrative', 'reference'];
+  
+  // First try to find columns with description keywords
+  for (const key in preservedColumns) {
+    const lowerKey = key.toLowerCase();
+    if (descKeywords.some(keyword => lowerKey.includes(keyword))) {
+      const value = preservedColumns[key];
+      if (value && typeof value === 'string' && value.length > 3) {
+        return value;
+      }
+    }
+  }
+  
+  // If no match found, look for the longest string value
+  let longestString = "";
+  for (const key in preservedColumns) {
+    const value = preservedColumns[key];
+    if (value && typeof value === 'string' && value.length > longestString.length && value.length > 3) {
+      // Skip values that look like dates or amounts
+      if (!/^\d+(\.\d+)?$/.test(value) && 
+          !/^\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}$/.test(value)) {
+        longestString = value;
+      }
+    }
+  }
+  
+  return longestString || null;
+}
+
+// Helper function to search for amount values in preserved columns
+function findAmountInPreservedColumns(transaction: Transaction): number {
+  // Skip if no preserved columns
+  if (!transaction.preservedColumns) return 0;
+  
+  const preservedColumns = transaction.preservedColumns;
+  
+  // Keywords that might indicate an amount field
+  const amountKeywords = ['amount', 'sum', 'value', 'debit', 'credit', 'money'];
+  
+  // First try to find columns with amount keywords
+  for (const key in preservedColumns) {
+    const lowerKey = key.toLowerCase();
+    if (amountKeywords.some(keyword => lowerKey.includes(keyword))) {
+      const value = preservedColumns[key];
+      if (value !== undefined && value !== null) {
+        // Try to extract number from string
+        const numStr = String(value).replace(/[^0-9.-]+/g, '');
+        if (numStr) {
+          const num = parseFloat(numStr);
+          if (!isNaN(num)) return num;
+        }
+      }
+    }
+  }
+  
+  // If no match found, look for any value that seems like an amount
+  for (const key in preservedColumns) {
+    const value = preservedColumns[key];
+    if (value !== undefined && value !== null) {
+      const valueStr = String(value);
+      // Look for currency symbols or numeric patterns
+      if (/[$€£₦₹¥]/.test(valueStr) || /\d+(\.\d+)?/.test(valueStr)) {
+        const numStr = valueStr.replace(/[^0-9.-]+/g, '');
+        if (numStr) {
+          const num = parseFloat(numStr);
+          if (!isNaN(num) && num !== 0) return num;
+        }
+      }
+    }
+  }
+  
+  return 0;
 }

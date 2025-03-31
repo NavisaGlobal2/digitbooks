@@ -86,11 +86,32 @@ export const parseViaEdgeFunction = async (
       completeProgress();
     }
 
+    // Filter out "Unknown Transaction" with zero amount
+    const validTransactions = data.transactions.filter(tx => {
+      const isUnknownZeroValue = 
+        (tx.amount === 0 || tx.amount === undefined || tx.amount === null) && 
+        (tx.description === "Unknown Transaction" || !tx.description);
+      
+      return !isUnknownZeroValue;
+    });
+
+    if (validTransactions.length === 0) {
+      console.warn("All transactions were filtered out as invalid");
+      onError("No valid transactions found. Please check the file format.");
+      return;
+    }
+    
+    // Log the filtering results
+    const removedCount = data.transactions.length - validTransactions.length;
+    if (removedCount > 0) {
+      console.log(`Client side: Filtered out ${removedCount} invalid transactions`);
+    }
+
     // Ensure transaction objects have all required fields
-    const transactions = data.transactions.map((tx: any, index: number) => ({
+    const transactions = validTransactions.map((tx: any, index: number) => ({
       id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
       date: tx.date || new Date().toISOString(),
-      description: tx.description || `Unknown transaction ${index + 1}`,
+      description: tx.description || `Transaction ${index + 1}`,
       amount: typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount || '0'),
       type: tx.type || (parseFloat(tx.amount || '0') < 0 ? "debit" : "credit"),
       selected: tx.selected !== undefined ? tx.selected : (tx.type === "debit" || parseFloat(tx.amount || '0') < 0),
@@ -108,12 +129,13 @@ export const parseViaEdgeFunction = async (
     
     // Extract metadata to return
     const responseMetadata = {
-      count: data.count || transactions.length,
+      count: transactions.length,
       batchId: data.batchId,
       formattingApplied: data.formattingApplied,
       originalFormat: data.originalFormat,
       fileDetails: data.fileDetails,
-      message: data.message
+      message: data.message,
+      filtered: removedCount > 0
     };
     
     // Send the transactions to the caller along with metadata

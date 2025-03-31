@@ -5,7 +5,7 @@ import { processWithAnthropic } from './anthropicProcessor.ts';
 import { processWithDeepseek } from './deepseekProcessor.ts';
 import { basicFormatting } from './utils/basicFormatter.ts';
 import { selectAIProvider } from './utils/aiProviderSelector.ts';
-import { mergeTransactionData, logSampleTransactions } from './utils/dataProcessor.ts';
+import { mergeTransactionData, logSampleTransactions, filterInvalidTransactions } from './utils/dataProcessor.ts';
 
 // Function to format transactions using AI while preserving original data
 export async function formatTransactionsWithAI(
@@ -29,7 +29,9 @@ export async function formatTransactionsWithAI(
     
     // If no AI provider is available, use basic formatting
     if (provider === "none") {
-      return basicFormatting(transactions);
+      const basicFormatted = basicFormatting(transactions);
+      // Filter out any invalid transactions
+      return filterInvalidTransactions(basicFormatted);
     }
     
     try {
@@ -51,22 +53,27 @@ export async function formatTransactionsWithAI(
       
       if (!aiProcessedData || !Array.isArray(aiProcessedData)) {
         console.log("AI processing failed or returned invalid data. Falling back to basic formatting.");
-        return basicFormatting(transactions);
+        const basicFormatted = basicFormatting(transactions);
+        // Filter out any invalid transactions
+        return filterInvalidTransactions(basicFormatted);
       }
       
       // Merge AI processed data with original transaction data to preserve all fields
       const formattedTransactions = mergeTransactionData(transactions, aiProcessedData);
       
       console.log("Successfully applied AI formatting to transactions");
-      return formattedTransactions;
+      // Filter out any invalid transactions
+      return filterInvalidTransactions(formattedTransactions);
     } catch (aiError) {
       console.error("Error in AI processing:", aiError);
       // Fall back to basic formatting if AI processing fails
-      return basicFormatting(transactions);
+      const basicFormatted = basicFormatting(transactions);
+      // Filter out any invalid transactions
+      return filterInvalidTransactions(basicFormatted);
     }
   } catch (error) {
     console.error("Error formatting transactions with AI:", error);
-    // Return original transactions if formatting fails
-    return transactions;
+    // Return filtered original transactions if formatting fails completely
+    return filterInvalidTransactions(transactions);
   }
 }

@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for transaction data processing
  */
@@ -55,6 +54,31 @@ export function mergeTransactionData(
     
     return mergedTransaction;
   });
+}
+
+// Filter out invalid transactions (unknown transactions with zero amount)
+export function filterInvalidTransactions(transactions: Transaction[]): Transaction[] {
+  // Count before filtering for logging
+  const beforeCount = transactions.length;
+  
+  // Filter out transactions with zero amount and "Unknown Transaction" description
+  const filteredTx = transactions.filter(tx => {
+    // Check if this is a zero-value "Unknown Transaction"
+    const isUnknownZeroValue = 
+      (tx.amount === 0 || tx.amount === undefined || tx.amount === null) && 
+      (tx.description === "Unknown Transaction" || !tx.description);
+      
+    // Keep transactions that are not unknown zero-value
+    return !isUnknownZeroValue;
+  });
+  
+  // Log the filtering results
+  const removedCount = beforeCount - filteredTx.length;
+  if (removedCount > 0) {
+    console.log(`Filtered out ${removedCount} invalid transactions (zero-value "Unknown Transaction")`);
+  }
+  
+  return filteredTx;
 }
 
 // Log sample transactions for debugging
