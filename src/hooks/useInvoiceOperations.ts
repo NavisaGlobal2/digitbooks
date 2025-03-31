@@ -42,10 +42,11 @@ export const useInvoiceOperations = (invoices: Invoice[], setInvoices: React.Dis
         due_date: invoiceData.dueDate.toISOString(),
         amount: invoiceData.amount,
         status: invoiceData.status,
-        items: invoiceData.items || [], // Convert to JSON for database
+        // Convert objects to JSON strings for database storage
+        items: JSON.stringify(invoiceData.items || []), 
         logo_url: invoiceData.logoUrl || null,
         additional_info: invoiceData.additionalInfo || null,
-        bank_details: invoiceData.bankDetails || {} // Convert to JSON for database
+        bank_details: JSON.stringify(invoiceData.bankDetails || {})
       };
       
       const { data, error } = await supabase
@@ -59,12 +60,21 @@ export const useInvoiceOperations = (invoices: Invoice[], setInvoices: React.Dis
       }
       
       // Format the returned data to match our Invoice type
-      const parsedItems = Array.isArray(data.items) ? data.items : [];
-      const parsedBankDetails = typeof data.bank_details === 'object' ? data.bank_details : {
-        accountName: '',
-        accountNumber: '',
-        bankName: ''
-      };
+      const parsedItems = Array.isArray(data.items) 
+        ? data.items 
+        : typeof data.items === 'string' 
+          ? JSON.parse(data.items) 
+          : [];
+
+      const parsedBankDetails = typeof data.bank_details === 'object' 
+        ? data.bank_details 
+        : typeof data.bank_details === 'string'
+          ? JSON.parse(data.bank_details)
+          : {
+              accountName: '',
+              accountNumber: '',
+              bankName: ''
+            };
 
       const newInvoice: Invoice = {
         id: data.id,
@@ -76,11 +86,11 @@ export const useInvoiceOperations = (invoices: Invoice[], setInvoices: React.Dis
         dueDate: new Date(data.due_date),
         amount: data.amount,
         status: data.status as InvoiceStatus,
-        items: parsedItems as any, // Type assertion to match expected Invoice.items type
+        items: parsedItems,
         logoUrl: data.logo_url || undefined,
         additionalInfo: data.additional_info || undefined,
-        bankDetails: parsedBankDetails as any, // Type assertion for bankDetails
-        paidDate: undefined // The DB doesn't have this field
+        bankDetails: parsedBankDetails,
+        paidDate: data.paid_date ? new Date(data.paid_date) : undefined
       };
       
       // Update local state
