@@ -7,6 +7,7 @@ interface UseReportGenerationReturn {
   selectedReportType: string | null;
   reportPeriod: string;
   dateRange: { startDate: Date; endDate: Date } | null;
+  selectedDatabase: string;
   handleGenerateReport: (
     reportType: string,
     reportPeriod: string,
@@ -14,12 +15,14 @@ interface UseReportGenerationReturn {
     customDateRange?: { startDate: Date; endDate: Date }
   ) => void;
   setSelectedReportType: (type: string | null) => void;
+  setSelectedDatabase: (database: string) => void;
 }
 
 export const useReportGeneration = (): UseReportGenerationReturn => {
   const [selectedReportType, setSelectedReportType] = useState<string | null>(null);
   const [reportPeriod, setReportPeriod] = useState("Current Month");
   const [dateRange, setDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
+  const [selectedDatabase, setSelectedDatabase] = useState("primary");
 
   const handleGenerateReport = (
     reportType: string,
@@ -37,7 +40,7 @@ export const useReportGeneration = (): UseReportGenerationReturn => {
     }
     
     toast.success(
-      `Generating ${reportType.replace("-", " ")} report for ${displayPeriod} in ${fileFormat.toUpperCase()} format`
+      `Generating ${reportType.replace("-", " ")} report for ${displayPeriod} in ${fileFormat.toUpperCase()} format using ${selectedDatabase} database`
     );
     
     setReportPeriod(displayPeriod);
@@ -56,7 +59,9 @@ export const useReportGeneration = (): UseReportGenerationReturn => {
     selectedReportType,
     reportPeriod,
     dateRange,
+    selectedDatabase,
     handleGenerateReport,
-    setSelectedReportType
+    setSelectedReportType,
+    setSelectedDatabase
   };
 };

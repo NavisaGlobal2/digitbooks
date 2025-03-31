@@ -16,8 +16,10 @@ const FinancialReports = () => {
     selectedReportType,
     reportPeriod,
     dateRange,
+    selectedDatabase,
     handleGenerateReport,
-    setSelectedReportType
+    setSelectedReportType,
+    setSelectedDatabase
   } = useReportGeneration();
 
   const handleSelectReport = (reportType: string) => {
@@ -39,6 +41,8 @@ const FinancialReports = () => {
         <ReportsHeader 
           onGenerateReport={() => setShowGenerateDialog(true)}
           onMobileMenuOpen={() => setIsMobileSidebarOpen(true)}
+          selectedDatabase={selectedDatabase}
+          onDatabaseChange={setSelectedDatabase}
         />
 
         <main className="flex-1 overflow-auto p-3 sm:p-6">
