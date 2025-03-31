@@ -29,7 +29,7 @@ const FinancialReports = () => {
     setSelectedReportType(null);
   };
 
-  // Hide the generate button in the header when a specific report is selected
+  // Only show the generate button in the header when no specific report is selected
   const showGenerateButton = !selectedReportType;
 
   return (
