@@ -4,6 +4,7 @@ import { corsHeaders, handleCorsRequest } from "./lib/cors.ts";
 import { parseExcelDirectly } from "./lib/excelParser.ts";
 import { isExcelFile } from "./lib/excelService.ts";
 import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
+import { formatTransactionsWithAI } from "./lib/aiService.ts";
 
 serve(async (req) => {
   // Log request information
@@ -36,32 +37,28 @@ serve(async (req) => {
     if (context) {
       console.log(`Processing context: ${context}`);
     }
+
+    // Use direct formatting option if specified
+    const useAIFormatting = formData.get("useAIFormatting")?.toString() === "true";
+    console.log(`AI formatting ${useAIFormatting ? 'enabled' : 'disabled'}`);
     
     // Generate batch ID for tracking
     const batchId = crypto.randomUUID();
     
     try {
-      // ALWAYS USE DIRECT EXCEL PARSING: for Excel files
+      let transactions = [];
+      let preservedOriginalFormat = false;
+
+      // Process Excel files directly
       if (isExcelFile(file)) {
         try {
           console.log('Using direct Excel parsing to preserve exact original data structure');
           const excelData = await parseExcelDirectly(file);
           
           if (excelData && Array.isArray(excelData) && excelData.length > 0) {
-            console.log(`Successfully parsed ${excelData.length} transactions directly from Excel, preserving original format`);
-            
-            // Return the transactions exactly as parsed from Excel without any AI processing
-            return new Response(
-              JSON.stringify({
-                success: true,
-                transactions: excelData,
-                message: `Successfully processed ${excelData.length} transactions directly from Excel`,
-                batchId,
-                preservedOriginalFormat: true,
-                originalExcelData: true // Flag to indicate this is direct Excel data
-              }),
-              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
+            console.log(`Successfully parsed ${excelData.length} transactions directly from Excel`);
+            transactions = excelData;
+            preservedOriginalFormat = true;
           } else {
             console.log("Direct Excel parsing returned no transactions");
             return new Response(
@@ -81,14 +78,13 @@ serve(async (req) => {
           );
         }
       }
-      
-      // For CSV files, use the fallback CSV processor directly (no AI)
-      if (fileType === "csv") {
+      // Process CSV files directly 
+      else if (fileType === "csv") {
         try {
           console.log("Processing CSV file with direct CSV processor");
           // Extract text from the CSV file
           const fileText = await file.text();
-          const transactions = await fallbackCSVProcessing(fileText);
+          transactions = await fallbackCSVProcessing(fileText);
           
           if (transactions.length === 0) {
             return new Response(
@@ -100,16 +96,7 @@ serve(async (req) => {
           }
           
           console.log(`Parsed ${transactions.length} transactions from CSV file`);
-          
-          return new Response(
-            JSON.stringify({ 
-              success: true, 
-              transactions,
-              message: `Successfully processed ${transactions.length} transactions from CSV file`,
-              batchId
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+          preservedOriginalFormat = true;
         } catch (csvError) {
           console.error("CSV processing error:", csvError);
           return new Response(
@@ -119,15 +106,53 @@ serve(async (req) => {
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
           );
         }
+      } else {
+        // For unsupported file types
+        return new Response(
+          JSON.stringify({ 
+            error: `Unsupported file type: ${fileType}. Please upload an Excel (.xlsx, .xls) or CSV (.csv) file.` 
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 415 }
+        );
+      }
+
+      // Apply AI formatting to standardize the transaction structure if requested
+      let formattedTransactions = transactions;
+      let formattingApplied = false;
+      
+      if (useAIFormatting) {
+        console.log("Applying AI formatting to standardize transaction structure");
+        try {
+          const formatted = await formatTransactionsWithAI(transactions, context);
+          if (formatted && formatted.length > 0) {
+            formattedTransactions = formatted;
+            formattingApplied = true;
+            console.log("Successfully applied AI formatting to transactions");
+          } else {
+            console.log("AI formatting returned no results, using original transactions");
+          }
+        } catch (formatError) {
+          console.error("Error applying AI formatting:", formatError);
+          console.log("Using original transactions due to formatting error");
+        }
+      } else {
+        console.log("Skipping AI formatting, returning original transaction structure");
       }
       
-      // For unsupported file types, return an error
+      // Return the transactions with metadata
       return new Response(
-        JSON.stringify({ 
-          error: `Unsupported file type: ${fileType}. Please upload an Excel (.xlsx, .xls) or CSV (.csv) file.` 
+        JSON.stringify({
+          success: true,
+          transactions: formattedTransactions,
+          message: `Successfully processed ${formattedTransactions.length} transactions`,
+          batchId,
+          preservedOriginalFormat,
+          formattingApplied,
+          originalFormat: preservedOriginalFormat && !formattingApplied
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 415 }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+      
     } catch (processingError) {
       console.error("Processing error:", processingError);
       

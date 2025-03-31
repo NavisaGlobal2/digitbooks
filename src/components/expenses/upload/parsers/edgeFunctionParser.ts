@@ -10,7 +10,8 @@ export const parseViaEdgeFunction = async (
   completeProgress?: () => void,
   isCancelled?: boolean,
   setIsWaitingForServer?: (isWaiting: boolean) => void,
-  preferredProvider?: string
+  preferredProvider?: string,
+  useAIFormatting: boolean = true // New parameter to control AI formatting
 ): Promise<void> => {
   try {
     // Check authentication first
@@ -24,8 +25,9 @@ export const parseViaEdgeFunction = async (
     formData.append('file', file);
     formData.append('fileName', file.name);
     formData.append('context', 'general');
+    formData.append('useAIFormatting', useAIFormatting.toString()); // Add the formatting option
 
-    console.log(`Processing ${file.name} (${file.type}, ${file.size} bytes) via edge function`);
+    console.log(`Processing ${file.name} (${file.type}, ${file.size} bytes) via edge function with AI formatting ${useAIFormatting ? 'enabled' : 'disabled'}`);
 
     // Set waiting flag if provided
     if (setIsWaitingForServer) {
@@ -65,13 +67,14 @@ export const parseViaEdgeFunction = async (
     }
 
     // Map API response to transactions with consistent format
+    // Note: AI formatting should have already prepared this structure properly
     const transactions = data.transactions.map((tx: any, index: number) => ({
       id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
       date: tx.date || new Date().toISOString(),
       description: tx.description || `Unknown transaction ${index + 1}`,
       amount: typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount || '0'),
-      type: tx.type || "unknown",
-      selected: tx.type === "debit" || parseFloat(tx.amount || '0') < 0,
+      type: tx.type || (parseFloat(tx.amount || '0') < 0 ? "debit" : "credit"),
+      selected: tx.selected !== undefined ? tx.selected : (tx.type === "debit" || parseFloat(tx.amount || '0') < 0),
       category: tx.category || "",
       source: tx.source || "",
       
@@ -81,7 +84,7 @@ export const parseViaEdgeFunction = async (
       preservedColumns: tx.preservedColumns || {}
     }));
 
-    console.log(`Successfully parsed ${transactions.length} transactions`);
+    console.log(`Successfully parsed ${transactions.length} transactions with AI formatting: ${data.formattingApplied ? 'applied' : 'not applied'}`);
     
     // Send the transactions to the caller
     onSuccess(transactions);
