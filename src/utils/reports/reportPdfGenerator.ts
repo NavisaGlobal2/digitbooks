@@ -17,7 +17,7 @@ import {
 /**
  * Main function to generate a PDF report
  */
-export const generateReportPdf = (reportData: ReportData): void => {
+export const generateReportPdf = async (reportData: ReportData): Promise<void> => {
   const { title, period, dateRange } = reportData;
   
   // Create a new PDF document
@@ -37,10 +37,10 @@ export const generateReportPdf = (reportData: ReportData): void => {
   // Add report content based on report type
   switch (title.toLowerCase().replace(/\s+/g, "-")) {
     case "income-statement":
-      generateIncomeStatementContent(doc);
+      await generateIncomeStatementContent(doc);
       break;
     case "cash-flow":
-      generateCashFlowReportContent(doc, reportData);
+      await generateCashFlowReportContent(doc, reportData);
       break;
     case "revenue-summary":
     case "expense-summary":

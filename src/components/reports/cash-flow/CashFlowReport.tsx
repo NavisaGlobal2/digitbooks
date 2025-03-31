@@ -63,7 +63,7 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({ onBack, period, dateRan
         </Button>
       </div>
 
-      <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
+      <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm cash-flow-report-container">
         <div className="text-center mb-6">
           <BarChart3 className="h-16 w-16 mx-auto text-green-500 mb-2" />
           <h2 className="text-2xl font-bold">Cash Flow Report</h2>

@@ -1,11 +1,50 @@
 
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import html2canvas from "html2canvas";
 
 /**
  * Generates income statement content for the PDF
  */
-export function generateIncomeStatementContent(doc: jsPDF): void {
+export async function generateIncomeStatementContent(doc: jsPDF): Promise<void> {
+  try {
+    // Find the Income Statement Report element in the DOM
+    const reportElement = document.querySelector('.income-statement-report-container');
+    
+    if (!reportElement) {
+      console.error("Income Statement report element not found in the DOM");
+      return generateSampleIncomeStatement(doc);
+    }
+
+    // Use html2canvas to capture the report as it appears in the UI
+    const canvas = await html2canvas(reportElement as HTMLElement, {
+      scale: 2, // Higher scale for better quality
+      useCORS: true, // Enable CORS for images
+      logging: false // Disable logging
+    });
+
+    // Calculate dimensions to fit the PDF page
+    const imgData = canvas.toDataURL('image/png');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Calculate proportional height to maintain aspect ratio
+    const canvasAspectRatio = canvas.height / canvas.width;
+    const imgWidth = pageWidth - 20; // 10pt margin on each side
+    const imgHeight = imgWidth * canvasAspectRatio;
+    
+    // Add the captured image
+    doc.addImage(imgData, 'PNG', 10, 40, imgWidth, imgHeight);
+    
+  } catch (error) {
+    console.error("Error generating Income Statement report:", error);
+    return generateSampleIncomeStatement(doc);
+  }
+}
+
+/**
+ * Generates a sample income statement if capturing fails
+ */
+function generateSampleIncomeStatement(doc: jsPDF): void {
   const startY = 60;
   
   // Add summary section title
@@ -43,7 +82,7 @@ export function generateIncomeStatementContent(doc: jsPDF): void {
   
   // Revenue breakdown
   doc.setFontSize(14);
-  const finalY = (doc.lastAutoTable.finalY) + 15;
+  const finalY = (doc as any).lastAutoTable.finalY + 15;
   doc.text("Revenue Breakdown", 20, finalY);
   
   doc.autoTable({
@@ -64,7 +103,7 @@ export function generateIncomeStatementContent(doc: jsPDF): void {
   
   // Expense breakdown
   doc.setFontSize(14);
-  const finalY2 = (doc.lastAutoTable.finalY) + 15;
+  const finalY2 = (doc as any).lastAutoTable.finalY + 15;
   doc.text("Expense Breakdown", 20, finalY2);
   
   doc.autoTable({

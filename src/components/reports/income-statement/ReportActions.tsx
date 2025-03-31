@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Printer, Download, ChevronLeft } from "lucide-react";
 import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
+import { toast } from "sonner";
 
 interface ReportActionsProps {
   onBack: () => void;
@@ -21,12 +22,21 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
     window.print();
   };
 
-  const handleDownload = () => {
-    generateReportPdf({
-      title,
-      period,
-      dateRange,
-    });
+  const handleDownload = async () => {
+    try {
+      toast.loading("Generating report...");
+      await generateReportPdf({
+        title,
+        period,
+        dateRange,
+      });
+      toast.dismiss();
+      toast.success("Report downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating report:", error);
+      toast.dismiss();
+      toast.error("Failed to generate report");
+    }
   };
 
   return (

@@ -3,156 +3,65 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { format } from "date-fns";
 import { ChartData, ReportData } from "../types/reportTypes";
+import html2canvas from "html2canvas";
 
 /**
  * Generates the content for a Cash Flow report
  */
-export const generateCashFlowReportContent = (doc: jsPDF, reportData?: ReportData): void => {
+export const generateCashFlowReportContent = async (doc: jsPDF, reportData?: ReportData): Promise<void> => {
   if (!reportData || !reportData.cashflowData) {
+    // If no data is provided, use sample data
     return generateSampleCashFlowReport(doc);
   }
 
-  const startY = 60;
-  const cashflowData = reportData.cashflowData;
-  
-  // Calculate total inflow, outflow and net cash flow
-  const totalInflow = cashflowData.reduce((sum, item) => sum + item.inflow, 0);
-  const totalOutflow = cashflowData.reduce((sum, item) => sum + item.outflow, 0);
-  const netCashflow = totalInflow - totalOutflow;
-  
-  // Add summary section title
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(33, 33, 33);
-  doc.text("Cash Flow Summary", 105, startY, { align: "center" });
-  
-  // Add summary cards in a grid layout - similar to UI display
-  const cardWidth = 55;
-  const cardHeight = 30;
-  const padding = 5;
-  const marginTop = 10;
-  const startCardY = startY + marginTop;
-  
-  // Inflow Card
-  doc.setFillColor(240, 253, 244); // light green background
-  doc.setDrawColor(167, 243, 208); // green border
-  doc.roundedRect(20, startCardY, cardWidth, cardHeight, 3, 3, 'FD');
-  doc.setTextColor(6, 95, 70); // dark green text
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
-  doc.text("Total Inflow", 20 + padding, startCardY + padding + 5);
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text(`₦${totalInflow.toLocaleString()}`, 20 + padding, startCardY + padding + 15);
-  
-  // Outflow Card
-  doc.setFillColor(243, 242, 255); // light purple background
-  doc.setDrawColor(216, 180, 254); // purple border
-  doc.roundedRect(82.5, startCardY, cardWidth, cardHeight, 3, 3, 'FD');
-  doc.setTextColor(76, 29, 149); // dark purple text
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
-  doc.text("Total Outflow", 82.5 + padding, startCardY + padding + 5);
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text(`₦${totalOutflow.toLocaleString()}`, 82.5 + padding, startCardY + padding + 15);
-  
-  // Net Cash Flow Card
-  doc.setFillColor(239, 246, 255); // light blue background
-  doc.setDrawColor(147, 197, 253); // blue border
-  doc.roundedRect(145, startCardY, cardWidth, cardHeight, 3, 3, 'FD');
-  doc.setTextColor(30, 64, 175); // dark blue text
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
-  doc.text("Net Cash Flow", 145 + padding, startCardY + padding + 5);
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text(`₦${netCashflow.toLocaleString()}`, 145 + padding, startCardY + padding + 15);
-  
-  // Add chart placeholder - similar to the chart in the UI
-  const chartY = startCardY + cardHeight + 15;
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(33, 33, 33);
-  doc.text("Cash Flow Chart", 20, chartY);
-  
-  // Draw chart placeholder
-  const chartHeight = 80;
-  doc.setDrawColor(220, 220, 220);
-  doc.setFillColor(248, 250, 252);
-  doc.roundedRect(20, chartY + 5, 170, chartHeight, 3, 3, 'FD');
-  
-  // Simulate chart area with bars
-  const barStartX = 30;
-  const barSpacing = 25;
-  const barWidth = 15;
-  const maxBarHeight = 60;
-  const baselineY = chartY + 5 + chartHeight - 15;
-  
-  cashflowData.forEach((item, index) => {
-    const x = barStartX + (barSpacing * index);
+  try {
+    // Find the Cash Flow Report element in the DOM to capture it
+    const reportElement = document.querySelector('.cash-flow-report-container');
     
-    // Calculate bar heights proportionally
-    const maxValue = Math.max(...cashflowData.map(d => Math.max(d.inflow, d.outflow)));
-    const inflowHeight = (item.inflow / maxValue) * maxBarHeight;
-    const outflowHeight = (item.outflow / maxValue) * maxBarHeight;
+    if (!reportElement) {
+      console.error("Cash Flow report element not found in the DOM");
+      return generateSampleCashFlowReport(doc);
+    }
+
+    // Use html2canvas to capture the report as it appears in the UI
+    const canvas = await html2canvas(reportElement as HTMLElement, {
+      scale: 2, // Higher scale for better quality
+      useCORS: true, // Enable CORS for images
+      logging: false // Disable logging
+    });
+
+    // Calculate dimensions to fit the PDF page
+    const imgData = canvas.toDataURL('image/png');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     
-    // Draw inflow bar (green)
-    doc.setFillColor(16, 185, 129); // green for inflow
-    doc.rect(x, baselineY - inflowHeight, barWidth / 2, inflowHeight, 'F');
+    // Calculate proportional height to maintain aspect ratio
+    const canvasAspectRatio = canvas.height / canvas.width;
+    const imgWidth = pageWidth - 20; // 10pt margin on each side
+    const imgHeight = imgWidth * canvasAspectRatio;
     
-    // Draw outflow bar (purple)
-    doc.setFillColor(155, 135, 245); // purple for outflow
-    doc.rect(x + barWidth / 2, baselineY - outflowHeight, barWidth / 2, outflowHeight, 'F');
+    // Add title
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Cash Flow Report", 105, 20, { align: "center" });
     
-    // Add month label
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text(item.name, x + barWidth / 2, baselineY + 10, { align: "center" });
-  });
-  
-  // Add legend
-  doc.setFillColor(16, 185, 129);
-  doc.rect(70, chartY + 5 + chartHeight + 5, 8, 8, 'F');
-  doc.setTextColor(33, 33, 33);
-  doc.setFontSize(10);
-  doc.text("Inflow", 82, chartY + 5 + chartHeight + 10);
-  
-  doc.setFillColor(155, 135, 245);
-  doc.rect(120, chartY + 5 + chartHeight + 5, 8, 8, 'F');
-  doc.text("Outflow", 132, chartY + 5 + chartHeight + 10);
-  
-  // Add monthly breakdown section
-  const tableStartY = chartY + chartHeight + 25;
-  doc.setTextColor(33, 33, 33);
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text("Monthly Cash Flow Breakdown", 105, tableStartY, { align: "center" });
-  
-  // Create monthly breakdown table
-  doc.autoTable({
-    startY: tableStartY + 5,
-    head: [["Month", "Cash Inflow", "Cash Outflow", "Net Cash Flow"]],
-    body: cashflowData.map(item => [
-      item.name,
-      `₦${item.inflow.toLocaleString()}`,
-      `₦${item.outflow.toLocaleString()}`,
-      `₦${(item.inflow - item.outflow).toLocaleString()}`
-    ]),
-    headStyles: { 
-      fillColor: [16, 185, 129], 
-      textColor: 255,
-      fontStyle: "bold" 
-    },
-    columnStyles: {
-      0: { cellWidth: 40 },
-      1: { cellWidth: 40, halign: "right" },
-      2: { cellWidth: 40, halign: "right" },
-      3: { cellWidth: 40, halign: "right", fontStyle: "bold" }
-    },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
-    margin: { top: 10, left: 20, right: 20 }
-  });
+    // Add period
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Period: ${reportData.period || "Current Period"}`, 105, 30, { align: "center" });
+    
+    // Add the captured image
+    doc.addImage(imgData, 'PNG', 10, 40, imgWidth, imgHeight);
+    
+    // Add generation date at bottom
+    const currentDate = format(new Date(), "MMMM dd, yyyy");
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${currentDate}`, 105, pageHeight - 10, { align: "center" });
+    
+  } catch (error) {
+    console.error("Error generating Cash Flow report:", error);
+    return generateSampleCashFlowReport(doc);
+  }
 };
 
 /**
