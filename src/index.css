@@ -132,3 +132,23 @@
   padding: 8px;
   border: 1px solid #ddd;
 }
+
+/* Additional styles to prevent duplicate elements in PDF export */
+.clone-for-pdf {
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  transform: none !important;
+  z-index: -1 !important;
+  visibility: visible !important;
+}
+
+.clone-for-pdf * {
+  transform: none !important;
+}
+
+.clone-for-pdf button,
+.clone-for-pdf a,
+.clone-for-pdf .print\:hidden {
+  display: none !important;
+}
