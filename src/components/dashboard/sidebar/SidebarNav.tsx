@@ -8,6 +8,7 @@ import {
   Wallet,
   Calculator,
   BookOpen,
+  History,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 
@@ -38,7 +39,7 @@ const SidebarNav = ({ isCollapsed }: SidebarNavProps) => {
           to={item.to}
           icon={item.icon}
           label={item.label}
-          isActive={path === item.to || (path === '/budgeting' && item.to === '/budget')}
+          isActive={path === item.to || (path === '/budgeting' && item.to === '/budget') || (path === '/payment-history' && item.to === '/invoicing')}
           isCollapsed={isCollapsed}
         />
       ))}
