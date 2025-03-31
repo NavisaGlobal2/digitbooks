@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { ParsedTransaction } from "../parsers/types";
 
-// Define the new API base URL
+// Define the API base URL
 const API_BASE = "https://workspace.john644.repl.co";
 
 interface UseFileProcessingProps {
@@ -28,7 +28,7 @@ export const useFileProcessing = ({
 }: UseFileProcessingProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState(true);
 
-  // Process using external API
+  // Process using API
   const processServerSide = async (file: File): Promise<void> => {
     try {
       setIsWaitingForServer(true);
@@ -59,12 +59,16 @@ export const useFileProcessing = ({
       }
 
       // Call the appropriate API endpoint based on file type
-      let response;
       const fileExt = file.name.split('.').pop()?.toLowerCase();
-      const endpoint = fileExt === 'pdf' ? 'parse-bank-statement-ai' : 'parse-bank-statement';
+      let endpoint;
+      if (fileExt === 'pdf') {
+        endpoint = 'api/upload'; // Use the new API for PDFs
+      } else {
+        endpoint = fileExt === 'pdf' ? 'parse-bank-statement-ai' : 'parse-bank-statement';
+      }
       
       try {
-        response = await fetch(`${API_BASE}/${endpoint}`, {
+        const response = await fetch(`${API_BASE}/${endpoint}`, {
           method: 'POST',
           body: formData,
           headers: {
@@ -79,7 +83,55 @@ export const useFileProcessing = ({
         
         const responseData = await response.json();
         
-        // Handle the response
+        // Handle the new API response format
+        if (responseData.success === false) {
+          handleError(`API Error: ${responseData.message || "Unknown error processing statement"}`);
+          resetProgress();
+          return;
+        }
+        
+        // Check if we're getting the new API format with statement_id
+        if (responseData.success && responseData.statement_id && !responseData.transactions) {
+          // We need to fetch the transactions from Supabase directly
+          const { data: transactionsData, error: transactionError } = await supabase
+            .from('transactions')
+            .select('*')
+            .eq('statement_id', responseData.statement_id)
+            .order('date', { ascending: false });
+          
+          if (transactionError || !transactionsData || transactionsData.length === 0) {
+            handleError("Transactions were processed but couldn't be retrieved from the database.");
+            resetProgress();
+            return;
+          }
+          
+          // Map the database transactions to our ParsedTransaction format
+          const transactions: ParsedTransaction[] = transactionsData.map((tx: any) => ({
+            id: tx.id,
+            date: new Date(tx.date),
+            description: tx.description,
+            amount: Math.abs(parseFloat(tx.amount.toString())),
+            type: tx.transaction_type?.toLowerCase() === 'debit' ? 'debit' : 'credit',
+            category: tx.category || '',
+            selected: tx.transaction_type?.toLowerCase() === 'debit', // Pre-select debits
+            batchId: responseData.statement_id
+          }));
+          
+          if (transactions.length === 0) {
+            handleError("No transactions found in the file. Please check the format and try again.");
+            resetProgress();
+            return;
+          }
+          
+          console.log(`Successfully parsed ${transactions.length} transactions`);
+          
+          // Complete progress and return transactions
+          completeProgress();
+          onTransactionsParsed(transactions);
+          return;
+        }
+        
+        // Handle the legacy response format
         if (!responseData || !Array.isArray(responseData.transactions)) {
           console.error('Invalid response data:', responseData);
           handleError("The server returned an invalid response. Please try again.");

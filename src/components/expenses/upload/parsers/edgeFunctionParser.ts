@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./types";
 import { toast } from "sonner";
 
-// Define the new API base URL
+// Define the API base URL
 const API_BASE = "https://workspace.john644.repl.co";
 
 export const parseViaEdgeFunction = async (
@@ -18,7 +18,12 @@ export const parseViaEdgeFunction = async (
 
     const fileExt = file.name.split('.').pop()?.toLowerCase();
     // Choose the appropriate endpoint based on file type
-    const endpoint = fileExt === 'pdf' ? 'parse-bank-statement-ai' : 'parse-bank-statement';
+    let endpoint;
+    if (fileExt === 'pdf') {
+      endpoint = 'api/upload'; // Use the new API endpoint for PDFs
+    } else {
+      endpoint = fileExt === 'pdf' ? 'parse-bank-statement-ai' : 'parse-bank-statement';
+    }
     
     console.log(`Sending file to API endpoint: ${API_BASE}/${endpoint}`);
     
@@ -39,7 +44,7 @@ export const parseViaEdgeFunction = async (
       return [];
     }
 
-    // Call the external API endpoint instead of Supabase edge function
+    // Call the API endpoint
     const response = await fetch(`${API_BASE}/${endpoint}`, {
       method: 'POST',
       body: formData,
@@ -52,12 +57,12 @@ export const parseViaEdgeFunction = async (
       const errorText = await response.text();
       console.error("API error:", response.status, errorText);
       
-      // Check for Anthropic API key error
+      // Check for specific API errors
       if (errorText.includes("ANTHROPIC_API_KEY") || 
           errorText.includes("Anthropic API") ||
           errorText.includes("exceeded") ||
           errorText.includes("rate limit")) {
-        const errorMsg = "Anthropic API key error: Either the key is not configured, invalid, or you've exceeded your rate limit. Please contact your administrator.";
+        const errorMsg = "API key error: Either the key is not configured, invalid, or you've exceeded your rate limit. Please contact your administrator.";
         onError(errorMsg);
         return [];
       }
@@ -77,21 +82,71 @@ export const parseViaEdgeFunction = async (
 
     const data = await response.json();
 
-    if (!data || !data.transactions || !Array.isArray(data.transactions)) {
+    // Handle the new API response format
+    if (data.success === false) {
+      onError(`API Error: ${data.message || "Unknown error processing statement"}`);
+      return [];
+    }
+
+    if (!data.transactions && !data.statement_id) {
+      // Check if we're getting the new API format
+      if (data.success && data.statement_id) {
+        // We need to fetch the transactions from Supabase directly
+        const { data: transactionsData, error: transactionError } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('statement_id', data.statement_id)
+          .order('date', { ascending: false });
+        
+        if (transactionError || !transactionsData) {
+          onError("Transactions were processed but couldn't be retrieved from the database.");
+          return [];
+        }
+        
+        // Map the database transactions to our ParsedTransaction format
+        const parsedTransactions: ParsedTransaction[] = transactionsData.map((tx: any) => ({
+          id: tx.id,
+          date: new Date(tx.date),
+          description: tx.description,
+          amount: Math.abs(parseFloat(tx.amount.toString())),
+          type: tx.transaction_type?.toLowerCase() === 'debit' ? 'debit' : 'credit',
+          category: tx.category || undefined,
+          selected: tx.transaction_type?.toLowerCase() === 'debit',
+          batchId: data.statement_id
+        }));
+        
+        // Call success callback with transactions
+        if (parsedTransactions.length > 0) {
+          onSuccess(parsedTransactions);
+          
+          if (parsedTransactions.length > 5) {
+            toast.success(`Parsed ${parsedTransactions.length} transactions from your statement`);
+          }
+          
+          return parsedTransactions;
+        } else {
+          onError("No transactions found in the processed statement.");
+          return [];
+        }
+      }
+      
       onError("Invalid response from server. No transactions found in the response.");
       return [];
     }
 
+    // Handle the legacy response format with transactions array directly in the response
+    const transactions = data.transactions || [];
+    
     // Map the server response to our ParsedTransaction type
-    const parsedTransactions: ParsedTransaction[] = data.transactions.map((tx: any) => ({
+    const parsedTransactions: ParsedTransaction[] = transactions.map((tx: any) => ({
       id: crypto.randomUUID(),
       date: new Date(tx.date),
       description: tx.description,
-      amount: Math.abs(parseFloat(tx.amount)), // Store as positive number
-      type: tx.type || (parseFloat(tx.amount) < 0 ? 'debit' : 'credit'),
+      amount: Math.abs(parseFloat(tx.amount.toString())), // Store as positive number
+      type: tx.type || (parseFloat(tx.amount.toString()) < 0 ? 'debit' : 'credit'),
       category: tx.category || undefined,
-      selected: tx.type === 'debit' || parseFloat(tx.amount) < 0, // Pre-select debits
-      batchId: data.batchId
+      selected: tx.type === 'debit' || parseFloat(tx.amount.toString()) < 0, // Pre-select debits
+      batchId: data.batchId || data.statement_id
     }));
 
     // Filter transactions if needed (e.g., only include expenses)
