@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 
@@ -18,7 +19,7 @@ export const saveInvoiceToHistory = async (invoice: InvoiceHistoryItem) => {
   try {
     // First try to save to localStorage
     const historyKey = "invoice_history";
-    let history: InvoiceHistoryItem[] = [];
+    let history: Partial<InvoiceHistoryItem>[] = [];
     
     try {
       const savedHistory = localStorage.getItem(historyKey);
@@ -50,10 +51,7 @@ export const saveInvoiceToHistory = async (invoice: InvoiceHistoryItem) => {
     try {
       const user = useAuth().user;
       if (user?.id && supabase) {
-        // Convert blob to base64 string for storage if needed
-        // Note: In a real app, you'd use Supabase storage for the actual PDFs
-        // and just store metadata in the database
-        
+        // Save to the new invoice_history table
         await supabase.from("invoice_history").insert({
           user_id: user.id,
           client_name: invoice.clientName,
@@ -87,10 +85,10 @@ export const getInvoiceHistory = (): InvoiceHistoryItem[] => {
       return [];
     }
     
-    const history = JSON.parse(savedHistory);
+    const parsedHistory = JSON.parse(savedHistory);
     
     // Convert ISO date strings back to Date objects
-    return history.map((item: any) => ({
+    return parsedHistory.map((item: any) => ({
       ...item,
       date: new Date(item.date)
     }));
@@ -136,5 +134,41 @@ export const deleteInvoiceFromHistory = (fileName: string): boolean => {
   } catch (error) {
     console.error("Error deleting invoice history:", error);
     return false;
+  }
+};
+
+/**
+ * Get invoice history from database
+ */
+export const getInvoiceHistoryFromDB = async (): Promise<InvoiceHistoryItem[]> => {
+  try {
+    const user = useAuth().user;
+    if (!user?.id || !supabase) {
+      return [];
+    }
+    
+    const { data, error } = await supabase
+      .from("invoice_history")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+      
+    if (error) {
+      console.error("Error fetching invoice history from database:", error);
+      return [];
+    }
+    
+    // Convert database records to InvoiceHistoryItem format
+    return data.map(item => ({
+      type: item.type as "invoice" | "receipt",
+      clientName: item.client_name,
+      date: new Date(item.invoice_date),
+      fileName: item.file_name,
+      amount: item.amount,
+      invoiceNumber: item.invoice_number
+    }));
+  } catch (error) {
+    console.error("Error fetching invoice history from database:", error);
+    return [];
   }
 };

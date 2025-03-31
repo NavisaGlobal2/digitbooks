@@ -380,6 +380,42 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_history: {
+        Row: {
+          amount: number
+          client_name: string
+          created_at: string
+          file_name: string
+          id: string
+          invoice_date: string
+          invoice_number: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          client_name: string
+          created_at?: string
+          file_name: string
+          id?: string
+          invoice_date: string
+          invoice_number: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          client_name?: string
+          created_at?: string
+          file_name?: string
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           additional_info: string | null

@@ -9,23 +9,37 @@ import {
 import { Button } from "@/components/ui/button";
 import { 
   getInvoiceHistory, 
-  deleteInvoiceFromHistory, 
+  deleteInvoiceFromHistory,
+  getInvoiceHistoryFromDB, 
   InvoiceHistoryItem
 } from "@/services/invoiceHistoryService";
 import { formatNaira } from "@/utils/invoice/formatters";
+import { useAuth } from "@/contexts/auth";
 
 const InvoiceHistoryTab = () => {
   const [historyItems, setHistoryItems] = useState<InvoiceHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
   
   useEffect(() => {
     loadHistory();
   }, []);
   
-  const loadHistory = () => {
+  const loadHistory = async () => {
     setIsLoading(true);
     try {
-      const history = getInvoiceHistory();
+      // Try to get history from database first if user is authenticated
+      let history: InvoiceHistoryItem[] = [];
+      
+      if (isAuthenticated) {
+        history = await getInvoiceHistoryFromDB();
+      }
+      
+      // Fall back to localStorage if needed
+      if (history.length === 0) {
+        history = getInvoiceHistory();
+      }
+      
       setHistoryItems(history);
     } catch (error) {
       console.error("Error loading invoice history:", error);
