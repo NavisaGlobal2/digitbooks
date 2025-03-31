@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Json } from "@/integrations/supabase/types";
 
 export interface BudgetCategory {
   id: string;
@@ -47,15 +48,21 @@ export const BudgetProvider = ({ children }: { children: ReactNode }) => {
 
         if (data) {
           // Transform the data from database format to our Budget type
-          const transformedBudgets: Budget[] = data.map(item => ({
-            id: item.id,
-            name: item.name,
-            startDate: new Date(item.start_date),
-            endDate: new Date(item.end_date),
-            totalBudget: item.total_budget,
-            // Ensure categories are parsed as BudgetCategory[] or default to empty array if null/invalid
-            categories: Array.isArray(item.items) ? item.items : []
-          }));
+          const transformedBudgets: Budget[] = data.map(item => {
+            // Parse items as BudgetCategory[] with explicit type casting
+            const categories: BudgetCategory[] = Array.isArray(item.items) 
+              ? (item.items as unknown as BudgetCategory[])  
+              : [];
+              
+            return {
+              id: item.id,
+              name: item.name,
+              startDate: new Date(item.start_date),
+              endDate: new Date(item.end_date),
+              totalBudget: item.total_budget,
+              categories
+            };
+          });
 
           setBudgets(transformedBudgets);
         }
@@ -81,15 +88,16 @@ export const BudgetProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Convert the Budget object to the database format
+      // Use type assertion to tell TypeScript that categories is valid JSON
       const dbBudget = {
         name: budget.name,
         start_date: budget.startDate.toISOString(),
         end_date: budget.endDate.toISOString(),
         total_budget: budget.totalBudget,
-        items: budget.categories,
+        items: budget.categories as unknown as Json,
         status: "active",
         total_spent: 0,
-        user_id: userId // Add the required user_id field
+        user_id: userId
       };
 
       const { data, error } = await supabase
@@ -101,14 +109,18 @@ export const BudgetProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
 
       if (data) {
+        // Parse items as BudgetCategory[] with explicit type casting
+        const categories: BudgetCategory[] = Array.isArray(data.items) 
+          ? (data.items as unknown as BudgetCategory[]) 
+          : [];
+          
         const newBudget: Budget = {
           id: data.id,
           name: data.name,
           startDate: new Date(data.start_date),
           endDate: new Date(data.end_date),
           totalBudget: data.total_budget,
-          // Ensure categories are parsed as BudgetCategory[] or default to empty array
-          categories: Array.isArray(data.items) ? data.items : []
+          categories
         };
 
         setBudgets((prev) => [...prev, newBudget]);
@@ -129,7 +141,7 @@ export const BudgetProvider = ({ children }: { children: ReactNode }) => {
       if (updates.startDate) dbUpdates.start_date = updates.startDate.toISOString();
       if (updates.endDate) dbUpdates.end_date = updates.endDate.toISOString();
       if (updates.totalBudget) dbUpdates.total_budget = updates.totalBudget;
-      if (updates.categories) dbUpdates.items = updates.categories;
+      if (updates.categories) dbUpdates.items = updates.categories as unknown as Json;
 
       // Calculate total spent from categories if available
       if (updates.categories) {
