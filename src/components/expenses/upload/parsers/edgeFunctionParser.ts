@@ -86,11 +86,41 @@ export const parseViaEdgeFunction = async (
       completeProgress();
     }
 
+    // Filter out invalid transactions (those with null/empty required fields or current dates)
+    const currentYear = new Date().getFullYear();
+    const filteredTransactions = data.transactions.filter((tx: any) => {
+      // Check if it has a valid date (not null/undefined and not current date)
+      const txDate = tx.date ? new Date(tx.date) : null;
+      const isCurrentYearDate = txDate && txDate.getFullYear() === currentYear;
+      const isValidDate = txDate && !isNaN(txDate.getTime());
+      
+      // Check if amount is valid (not zero, null or undefined)
+      const hasAmount = tx.amount !== 0 && tx.amount !== null && tx.amount !== undefined;
+      
+      // Check if description is valid (not "Unknown Transaction" or empty)
+      const hasDescription = tx.description && 
+                            tx.description !== "Unknown Transaction" && 
+                            tx.description !== "Unknown transaction";
+      
+      // Only include transaction if it has valid date, amount, and description
+      return isValidDate && hasAmount && hasDescription;
+    });
+    
+    if (filteredTransactions.length === 0) {
+      console.error("All transactions were filtered out as invalid");
+      onError("Could not find valid transactions in the file. Please check the file format or try again.");
+      return;
+    }
+
+    // Log filtering results
+    console.log(`Filtered ${data.transactions.length - filteredTransactions.length} invalid transactions`);
+    console.log(`Processing ${filteredTransactions.length} valid transactions`);
+
     // Ensure transaction objects have all required fields
-    const transactions = data.transactions.map((tx: any, index: number) => ({
+    const transactions = filteredTransactions.map((tx: any, index: number) => ({
       id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
-      date: tx.date || new Date().toISOString(),
-      description: tx.description || `Unknown transaction ${index + 1}`,
+      date: tx.date || new Date().toISOString().split('T')[0],
+      description: tx.description || `Transaction ${index + 1}`,
       amount: typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount || '0'),
       type: tx.type || (parseFloat(tx.amount || '0') < 0 ? "debit" : "credit"),
       selected: tx.selected !== undefined ? tx.selected : (tx.type === "debit" || parseFloat(tx.amount || '0') < 0),
@@ -108,12 +138,14 @@ export const parseViaEdgeFunction = async (
     
     // Extract metadata to return
     const responseMetadata = {
-      count: data.count || transactions.length,
+      count: transactions.length,
       batchId: data.batchId,
       formattingApplied: data.formattingApplied,
       originalFormat: data.originalFormat,
       fileDetails: data.fileDetails,
-      message: data.message
+      message: data.message,
+      originalCount: data.transactions.length,
+      filteredCount: data.transactions.length - filteredTransactions.length
     };
     
     // Send the transactions to the caller along with metadata
