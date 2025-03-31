@@ -11,12 +11,14 @@ interface ExpenseSummaryReportProps {
   onBack: () => void;
   period: string;
   dateRange: { startDate: Date; endDate: Date } | null;
+  onDirectGeneration?: () => void;
 }
 
 const ExpenseSummaryReport: React.FC<ExpenseSummaryReportProps> = ({
   onBack,
   period,
   dateRange,
+  onDirectGeneration
 }) => {
   const { expenses } = useExpenses();
   const [expenseData, setExpenseData] = useState<ExpenseBreakdown[]>([]);
@@ -68,6 +70,7 @@ const ExpenseSummaryReport: React.FC<ExpenseSummaryReportProps> = ({
         period={period}
         dateRange={dateRange}
         reportRef={reportRef}
+        onDirectGeneration={onDirectGeneration}
       />
 
       <div 

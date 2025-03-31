@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRevenue } from "@/contexts/RevenueContext";
 import { useExpenses } from "@/contexts/ExpenseContext";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,13 @@ interface IncomeStatementReportProps {
   onBack: () => void;
   period: string;
   dateRange: { startDate: Date; endDate: Date } | null;
+  onDirectGeneration?: () => void;
 }
 
-const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementReportProps) => {
+const IncomeStatementReport = ({ onBack, period, dateRange, onDirectGeneration }: IncomeStatementReportProps) => {
   const { revenues, getTotalRevenue, getRevenueBySource, getRevenueByPeriod } = useRevenue();
   const { getTotalExpenses, getExpensesByCategory } = useExpenses();
+  const reportRef = useRef<HTMLDivElement>(null);
   
   const { isLoading, reportData, formattedDate, startDateFormatted, endDateFormatted, reportDuration } = 
     useIncomeStatementData(revenues, getTotalRevenue, getRevenueBySource, getRevenueByPeriod, getTotalExpenses, getExpensesByCategory, dateRange);
@@ -52,9 +54,12 @@ const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementRep
         title="Income Statement"
         period={period}
         dateRange={dateRange}
+        reportRef={reportRef}
+        onDirectGeneration={onDirectGeneration}
+        reportData={reportData}
       />
 
-      <ReportCard>
+      <ReportCard ref={reportRef}>
         <ReportHeader 
           title="Income Statement" 
           period={period}

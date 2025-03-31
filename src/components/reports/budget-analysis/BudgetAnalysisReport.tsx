@@ -13,12 +13,14 @@ interface BudgetAnalysisReportProps {
   onBack: () => void;
   period: string;
   dateRange: { startDate: Date; endDate: Date } | null;
+  onDirectGeneration?: () => void;
 }
 
 const BudgetAnalysisReport: React.FC<BudgetAnalysisReportProps> = ({
   onBack,
   period,
   dateRange,
+  onDirectGeneration
 }) => {
   const { budgets } = useBudget();
   const { expenses } = useExpenses();
@@ -108,6 +110,7 @@ const BudgetAnalysisReport: React.FC<BudgetAnalysisReportProps> = ({
         period={period}
         dateRange={dateRange}
         reportRef={reportRef}
+        onDirectGeneration={onDirectGeneration}
       />
 
       <div

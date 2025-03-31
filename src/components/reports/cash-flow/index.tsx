@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useRef } from "react";
 import { ReportActions } from "../income-statement/ReportActions";
 import CashflowChart from "@/components/dashboard/CashflowChart";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,13 +8,17 @@ interface CashFlowReportProps {
   onBack: () => void;
   period: string;
   dateRange: { startDate: Date; endDate: Date } | null;
+  onDirectGeneration?: () => void;
 }
 
 const CashFlowReport: React.FC<CashFlowReportProps> = ({ 
   onBack, 
   period, 
-  dateRange 
+  dateRange,
+  onDirectGeneration 
 }) => {
+  const reportRef = useRef<HTMLDivElement>(null);
+  
   return (
     <div className="space-y-4 print:p-6">
       <ReportActions 
@@ -22,9 +26,11 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
         title="Cash Flow"
         period={period}
         dateRange={dateRange}
+        reportRef={reportRef}
+        onDirectGeneration={onDirectGeneration}
       />
 
-      <div id="report-container" className="space-y-6 print:space-y-8">
+      <div id="report-container" className="space-y-6 print:space-y-8" ref={reportRef}>
         <h2 className="text-2xl font-bold text-center print:text-3xl">
           Cash Flow Report
         </h2>
