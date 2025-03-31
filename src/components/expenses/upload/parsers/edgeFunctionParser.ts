@@ -15,6 +15,16 @@ interface ApiResponse {
   batchId?: string;
 }
 
+// Define interface for the transaction data from Supabase
+interface TransactionData {
+  id: string;
+  date: string;
+  description: string;
+  amount: number | string;
+  transaction_type?: string;
+  category?: string;
+}
+
 export const parseViaEdgeFunction = async (
   file: File,
   onSuccess: (transactions: ParsedTransaction[]) => void,
@@ -110,17 +120,22 @@ export const parseViaEdgeFunction = async (
         return [];
       }
       
-      // Map the database transactions to our ParsedTransaction format
-      const parsedTransactions: ParsedTransaction[] = transactionsData.map((tx: any) => ({
-        id: tx.id,
-        date: new Date(tx.date),
-        description: tx.description,
-        amount: Math.abs(parseFloat(tx.amount.toString())),
-        type: tx.transaction_type?.toLowerCase() === 'debit' ? 'debit' : 'credit',
-        category: tx.category || undefined,
-        selected: tx.transaction_type?.toLowerCase() === 'debit',
-        batchId: data.statement_id
-      }));
+      // Map the database transactions to our ParsedTransaction format with explicit typing
+      const parsedTransactions: ParsedTransaction[] = (transactionsData as TransactionData[]).map((tx) => {
+        // Handle amount conversion safely
+        const amountValue = typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount;
+        
+        return {
+          id: tx.id,
+          date: new Date(tx.date),
+          description: tx.description,
+          amount: Math.abs(amountValue),
+          type: (tx.transaction_type?.toLowerCase() === 'debit') ? 'debit' : 'credit',
+          category: tx.category,
+          selected: tx.transaction_type?.toLowerCase() === 'debit',
+          batchId: data.statement_id
+        };
+      });
       
       // Call success callback with transactions
       if (parsedTransactions.length > 0) {
