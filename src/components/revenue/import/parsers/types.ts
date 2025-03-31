@@ -18,6 +18,9 @@ export interface ParsedTransaction {
   selected?: boolean;
   sourceSuggestion?: SourceSuggestion;
   batchId?: string;
+  originalDate?: string | Date;
+  originalAmount?: number | string;
+  preservedColumns?: Record<string, any>;
 }
 
 export interface CSVParseResult {

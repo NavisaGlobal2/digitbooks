@@ -51,73 +51,87 @@ export const parseViaEdgeFunction = async (
       completeProgress();
     }
 
-    // Filter to only include credit (positive amount) transactions for revenue
-    // Also ensure proper data mapping and transformation with correct types
+    // Process the transactions for revenue
     const revenueTransactions = data.transactions
       .filter((tx: any) => {
-        // Check if the transaction has actual data (not just header or summary rows)
-        const hasValidData = tx.preservedColumns && 
-          (tx.amount > 0 || 
-           (tx.preservedColumns['__EMPTY'] && tx.preservedColumns['__EMPTY'].includes('₦')));
+        // Skip header/summary rows or rows without transaction data
+        if (!tx || tx.description === "Row 1" || tx.description === "Row 2") {
+          return false;
+        }
         
-        // For revenue, we want credit transactions or positive amounts
-        return hasValidData && (tx.type === 'credit' || tx.amount > 0);
+        // Look for actual transaction data in preserved columns
+        if (tx.preservedColumns) {
+          const txnDate = tx.preservedColumns["STATEMENT OF ACCOUNT"];
+          const remarks = tx.preservedColumns["__EMPTY"];
+          const credit = tx.preservedColumns["__EMPTY_3"];
+          
+          // Check if this looks like a real transaction row
+          const hasTransactionData = 
+            (txnDate && /\d{2}-\w{3}-\d{4}/.test(txnDate)) && // Date format like "12-Aug-2024"
+            (remarks && remarks.length > 5) && // Some meaningful description
+            (credit && /[\d,.]+/.test(credit)); // Some numeric amount
+            
+          return hasTransactionData && credit && parseFloat(credit.replace(/[^\d.-]/g, '')) > 0;
+        }
+        
+        return false;
       })
       .map((tx: any) => {
-        // Extract the actual date and amount from preserved columns
-        let extractedDate = '';
-        let extractedAmount = 0;
-        let extractedDescription = '';
+        // Extract transaction details from preserved columns
+        const txnDate = tx.preservedColumns["STATEMENT OF ACCOUNT"]; // e.g., "12-Aug-2024"
+        const description = tx.preservedColumns["__EMPTY"] || "Unknown transaction"; // Transaction remarks
+        const creditAmount = tx.preservedColumns["__EMPTY_3"] || "0"; // Credit column
         
-        // Check if this is from the Excel format we're seeing
-        if (tx.preservedColumns) {
-          // Extract date from first column if it exists and matches date pattern
-          const datePattern = /\d{2}\/\d{2}\/\d{2}/;
-          const dateColumn = tx.preservedColumns["JOHN OLUSEYE ONIFADE\n13 ILUPEJU ESTATE AS- SALLAM SECONDARY SCHOOL, IBADAN, OYO"];
-          
-          if (dateColumn && datePattern.test(dateColumn)) {
-            extractedDate = dateColumn;
+        // Parse the date
+        let date = new Date();
+        try {
+          if (txnDate && /\d{2}-\w{3}-\d{4}/.test(txnDate)) {
+            // Convert date format from "12-Aug-2024" to ISO format
+            const [day, month, year] = txnDate.split('-');
+            const monthMap: {[key: string]: number} = {
+              'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5, 
+              'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+            };
+            date = new Date(parseInt(year), monthMap[month], parseInt(day));
           }
-          
-          // Extract amount - look for the ₦ symbol in columns
-          if (tx.preservedColumns["__EMPTY"]) {
-            const amountText = tx.preservedColumns["__EMPTY"];
-            if (typeof amountText === 'string' && amountText.includes('₦')) {
-              extractedAmount = parseFloat(amountText.replace('₦', '').replace(/,/g, '').trim());
-            }
-          }
-          
-          // Extract description from transfer details if available
-          const descriptionSources = [
-            tx.preservedColumns["__EMPTY_7"], 
-            tx.preservedColumns["__EMPTY_4"]
-          ];
-          
-          extractedDescription = descriptionSources
-            .filter(Boolean)
-            .join(" - ")
-            .trim() || "Unknown transaction";
+        } catch (e) {
+          console.error("Error parsing date:", txnDate, e);
         }
-
-        // Make sure source is properly typed as RevenueSource
-        const source = tx.sourceSuggestion?.source as RevenueSource | undefined;
+        
+        // Parse the amount - clean up non-numeric characters
+        const amount = creditAmount ? parseFloat(creditAmount.replace(/[^\d.-]/g, '')) : 0;
+        
+        // Suggest a revenue source based on the description
+        let sourceSuggestion: { source: RevenueSource, confidence: number } | undefined = undefined;
+        
+        // Simple rule-based source suggestion
+        if (description) {
+          const desc = description.toLowerCase();
+          if (desc.includes('loan') || desc.includes('repayment')) {
+            sourceSuggestion = { source: 'other' as RevenueSource, confidence: 0.7 };
+          } else if (desc.includes('transfer') || desc.includes('payment')) {
+            sourceSuggestion = { source: 'sales' as RevenueSource, confidence: 0.6 };
+          } else if (desc.includes('interest')) {
+            sourceSuggestion = { source: 'investments' as RevenueSource, confidence: 0.8 };
+          } else if (desc.includes('consult')) {
+            sourceSuggestion = { source: 'consulting' as RevenueSource, confidence: 0.9 };
+          } else if (desc.includes('rental') || desc.includes('lease')) {
+            sourceSuggestion = { source: 'rental' as RevenueSource, confidence: 0.9 };
+          }
+        }
         
         // Format the transaction for revenue
         return {
           id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
-          date: extractedDate ? new Date(extractedDate) : new Date(),
-          description: extractedDescription || tx.description || "Unknown transaction",
-          amount: extractedAmount || Math.abs(tx.amount || 0),
+          date: date,
+          description: description.trim(),
+          amount: amount,
           type: "credit" as const,
           selected: true,
-          source: source,
-          sourceSuggestion: tx.sourceSuggestion ? {
-            source: tx.sourceSuggestion.source as RevenueSource,
-            confidence: tx.sourceSuggestion.confidence
-          } : undefined,
+          sourceSuggestion,
           // Preserve original data
-          originalDate: tx.originalDate || extractedDate || tx.date,
-          originalAmount: tx.originalAmount || extractedAmount || tx.amount,
+          originalDate: txnDate,
+          originalAmount: creditAmount,
           preservedColumns: tx.preservedColumns || {}
         };
       });
