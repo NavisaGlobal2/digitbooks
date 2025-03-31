@@ -2,12 +2,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { PaymentRecord } from "@/types/invoice";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
 
 interface UsePaymentDialogProps {
   invoiceId: string;
   invoiceAmount: number;
   existingPayments: PaymentRecord[];
-  onMarkAsPaid: (invoiceId: string, payments: PaymentRecord[]) => void;
+  onMarkAsPaid: (invoiceId: string, payments: PaymentRecord[]) => Promise<void>;
   onOpenChange: (open: boolean) => void;
 }
 
@@ -21,41 +23,87 @@ export const usePaymentDialog = ({
   const [payments, setPayments] = useState<(PaymentRecord & { id: string })[]>([]);
   const [totalPaid, setTotalPaid] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
-  // Initialize with existing payments or a default payment
+  // Load existing payment records from database on mount
   useEffect(() => {
-    if (existingPayments && existingPayments.length > 0) {
-      // Convert existing payments to internal format with id
-      const paymentsWithIds = existingPayments.map(payment => ({
-        ...payment,
-        id: crypto.randomUUID(),
-        date: new Date(payment.date)
-      }));
-      setPayments(paymentsWithIds);
+    const fetchPaymentRecords = async () => {
+      if (!user || !invoiceId) return;
       
-      // Calculate total from existing payments
-      const existingTotal = paymentsWithIds.reduce((sum, payment) => sum + payment.amount, 0);
-      setTotalPaid(existingTotal);
-    } else {
-      // Initialize with a single default payment with zero amount
-      // This ensures we don't show as paid until user sets amount
-      setPayments([
-        { 
-          id: crypto.randomUUID(), 
-          amount: 0, // Initialize with zero instead of full invoice amount
-          date: new Date(), 
-          method: "bank transfer", 
-          receiptUrl: null 
+      setIsLoading(true);
+      
+      try {
+        const { data, error } = await supabase
+          .from('invoice_payments')
+          .select('*')
+          .eq('invoice_id', invoiceId)
+          .eq('user_id', user.id);
+          
+        if (error) throw error;
+        
+        // If we have DB payments, use them instead of the local ones
+        if (data && data.length > 0) {
+          const dbPayments = data.map(payment => ({
+            id: payment.id,
+            amount: payment.amount,
+            date: new Date(payment.payment_date),
+            method: payment.payment_method,
+            reference: payment.reference || undefined,
+            receiptUrl: payment.receipt_url || null
+          }));
+          
+          setPayments(dbPayments);
+          
+          // Calculate total from DB payments
+          const dbTotal = dbPayments.reduce((sum, payment) => sum + payment.amount, 0);
+          setTotalPaid(dbTotal);
+          return;
         }
-      ]);
-      setTotalPaid(0); // Set total paid to zero initially
-    }
-  }, [existingPayments, invoiceAmount]);
+      } catch (error) {
+        console.error("Error fetching payment records:", error);
+      } finally {
+        setIsLoading(false);
+      }
+      
+      // If no DB records found or error occurred, initialize with existing local payments or default
+      if (existingPayments && existingPayments.length > 0) {
+        // Convert existing payments to internal format with id
+        const paymentsWithIds = existingPayments.map(payment => ({
+          ...payment,
+          id: crypto.randomUUID(),
+          date: new Date(payment.date)
+        }));
+        setPayments(paymentsWithIds);
+        
+        // Calculate total from existing payments
+        const existingTotal = paymentsWithIds.reduce((sum, payment) => sum + payment.amount, 0);
+        setTotalPaid(existingTotal);
+      } else {
+        // Initialize with a single default payment with zero amount
+        setPayments([
+          { 
+            id: crypto.randomUUID(), 
+            amount: 0,
+            date: new Date(), 
+            method: "bank transfer", 
+            receiptUrl: null 
+          }
+        ]);
+        setTotalPaid(0);
+      }
+      
+      setIsLoading(false);
+    };
+    
+    fetchPaymentRecords();
+  }, [invoiceId, invoiceAmount, existingPayments, user]);
 
   const resetState = useCallback(() => {
     setPayments([]);
     setTotalPaid(0);
     setIsSubmitting(false);
+    setIsLoading(false);
   }, []);
 
   const handleAddPayment = useCallback(() => {
@@ -102,20 +150,29 @@ export const usePaymentDialog = ({
   }, []);
 
   const handleFileUpload = useCallback(async (id: string, file: File) => {
+    if (!user) {
+      toast.error("You must be logged in to upload files");
+      return;
+    }
+    
     try {
-      // In a real application, we would upload the file to storage
-      // For now, we'll just create a local URL
+      // In a real app with Supabase Storage, we'd upload to storage:
+      // const { data, error } = await supabase.storage
+      //   .from('receipts')
+      //   .upload(`receipts/${user.id}/${file.name}`, file);
+      
+      // For now, create a local URL
       const receiptUrl = URL.createObjectURL(file);
       
       handlePaymentChange(id, 'receiptUrl', receiptUrl);
-      toast.success(`Receipt uploaded for payment`);
+      toast.success(`Receipt uploaded successfully`);
     } catch (error) {
       console.error("Failed to upload receipt:", error);
       toast.error("Failed to upload receipt");
     }
-  }, [handlePaymentChange]);
+  }, [handlePaymentChange, user]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (totalPaid === 0) {
       toast.error("Total payment amount cannot be zero");
       return;
@@ -137,19 +194,18 @@ export const usePaymentDialog = ({
       // Remove the internal id property before sending to parent
       const paymentRecords: PaymentRecord[] = payments.map(({ id, ...rest }) => rest);
       
-      // Call the parent handler with a small delay to allow state to settle
-      setTimeout(() => {
-        onMarkAsPaid(invoiceId, paymentRecords);
-        onOpenChange(false);
-        
-        // Wait a bit before clearing state to avoid UI glitches
-        setTimeout(() => {
-          setIsSubmitting(false);
-        }, 200);
-      }, 200);
+      // Call the parent handler
+      await onMarkAsPaid(invoiceId, paymentRecords);
+      
+      // Close the dialog
+      onOpenChange(false);
+      
+      // Success notification
+      toast.success("Payment records saved successfully");
     } catch (error) {
       console.error("Error marking invoice as paid:", error);
-      toast.error("Failed to mark invoice as paid");
+      toast.error("Failed to save payment records");
+    } finally {
       setIsSubmitting(false);
     }
   }, [invoiceId, invoiceAmount, payments, totalPaid, onMarkAsPaid, onOpenChange]);
@@ -158,6 +214,7 @@ export const usePaymentDialog = ({
     payments,
     totalPaid,
     isSubmitting,
+    isLoading,
     handleAddPayment,
     handleRemovePayment,
     handlePaymentChange,

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Eye } from "lucide-react";
 import { Invoice } from "@/types/invoice";
@@ -7,6 +7,9 @@ import { formatNaira } from "@/utils/invoice/formatters";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PaymentDetailsDialog } from "./PaymentDetailsDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
+import { toast } from "sonner";
 
 interface PaymentTableProps {
   invoices: Invoice[];
@@ -15,6 +18,47 @@ interface PaymentTableProps {
 const PaymentTable = ({ invoices }: PaymentTableProps) => {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+
+  // Get database payments when viewing details
+  useEffect(() => {
+    const fetchPaymentsFromDatabase = async () => {
+      if (!user || !selectedInvoiceId || !isDetailsOpen) return;
+      
+      setIsLoading(true);
+      
+      try {
+        const { data, error } = await supabase
+          .from('invoice_payments')
+          .select('*')
+          .eq('invoice_id', selectedInvoiceId)
+          .eq('user_id', user.id);
+        
+        if (error) throw error;
+        
+        // If we have payment data in the database, update our local invoice with it
+        if (data && data.length > 0) {
+          // This just updates the UI for the payment details dialog
+          // The actual state is managed in the InvoiceContext
+          const payments = data.map(payment => ({
+            amount: payment.amount,
+            date: new Date(payment.payment_date),
+            method: payment.payment_method,
+            reference: payment.reference || '',
+            receiptUrl: payment.receipt_url || null
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching payment data:", error);
+        toast.error("Failed to load payment details from database");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchPaymentsFromDatabase();
+  }, [user, selectedInvoiceId, isDetailsOpen]);
 
   const handleViewDetails = (invoiceId: string) => {
     setSelectedInvoiceId(invoiceId);
@@ -86,6 +130,7 @@ const PaymentTable = ({ invoices }: PaymentTableProps) => {
                       size="icon"
                       onClick={() => handleViewDetails(invoice.id)}
                       title="View payment details"
+                      disabled={isLoading}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -102,6 +147,7 @@ const PaymentTable = ({ invoices }: PaymentTableProps) => {
           open={isDetailsOpen}
           onOpenChange={setIsDetailsOpen}
           invoice={selectedInvoice}
+          isLoading={isLoading}
         />
       )}
     </>

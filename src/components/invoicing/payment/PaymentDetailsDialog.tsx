@@ -6,17 +6,20 @@ import { formatNaira } from "@/utils/invoice/formatters";
 import { Invoice, PaymentRecord } from "@/types/invoice";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PaymentDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   invoice: Invoice;
+  isLoading?: boolean;
 }
 
 export const PaymentDetailsDialog = ({ 
   open, 
   onOpenChange, 
-  invoice 
+  invoice,
+  isLoading = false
 }: PaymentDetailsDialogProps) => {
   const payments = invoice.payments || [];
   const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
@@ -52,7 +55,14 @@ export const PaymentDetailsDialog = ({
           </div>
           
           <h3 className="text-sm font-medium mb-2">Payment History</h3>
-          {payments.length > 0 ? (
+          
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : payments.length > 0 ? (
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
