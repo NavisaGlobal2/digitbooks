@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ParsedTransaction } from "../../parsers/types";
-import { mapApiResponseToTransactions } from "./transactionMapper";
+import { ParsedTransaction } from "../types";
 
 export const parseWithEdgeFunction = async (
   file: File,
@@ -21,6 +20,7 @@ export const parseWithEdgeFunction = async (
     formData.append('file', file);
     formData.append('preferredProvider', preferredProvider);
     formData.append('fileName', file.name);
+    formData.append('context', 'general');
 
     console.log(`Processing ${file.name} (${file.type}, ${file.size} bytes) via edge function`);
 
@@ -40,13 +40,17 @@ export const parseWithEdgeFunction = async (
       return;
     }
 
-    // Map API response to transactions
-    const transactions = mapApiResponseToTransactions(data);
-    
-    if (transactions.length === 0) {
-      onError("Failed to parse transactions from response");
-      return;
-    }
+    // Map API response to transactions with consistent format
+    const transactions = data.transactions.map((tx: any) => ({
+      id: `tx-${Math.random().toString(36).substr(2, 9)}`,
+      date: tx.date,
+      description: tx.description,
+      amount: typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount),
+      type: tx.type || (parseFloat(tx.amount) < 0 ? "debit" : "credit"),
+      selected: tx.type === "debit" || parseFloat(tx.amount) < 0,
+      category: tx.category || "",
+      source: tx.source || ""
+    }));
 
     console.log(`Successfully parsed ${transactions.length} transactions`);
     

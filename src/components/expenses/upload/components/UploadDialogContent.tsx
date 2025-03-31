@@ -1,13 +1,11 @@
+
 import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, AlertTriangle } from "lucide-react";
+import { X, AlertTriangle, Server } from "lucide-react";
 import FileUploadArea from "../FileUploadArea";
 import ErrorDisplay from "../ErrorDisplay";
 import ProgressIndicator from "./ProgressIndicator";
-import ProcessingModeToggle from "./ProcessingModeToggle";
 import SupportedFormatsInfo from "./SupportedFormatsInfo";
-import ConnectionStatistics from "./ConnectionStatistics";
-import { useState, useEffect } from "react";
 
 interface UploadDialogContentProps {
   file: File | null;
@@ -34,20 +32,8 @@ const UploadDialogContent = ({
   progress,
   step,
   isAuthenticated,
-  preferredAIProvider,
-  setPreferredAIProvider,
   isWaitingForServer = false
 }: UploadDialogContentProps) => {
-  const [useEdgeFunction, setUseEdgeFunction] = useState(true);
-  const [edgeFunctionAvailable, setEdgeFunctionAvailable] = useState(true);
-  
-  // CSV files always use edge function
-  useEffect(() => {
-    if (file && file.name.toLowerCase().endsWith('.csv')) {
-      setUseEdgeFunction(true);
-    }
-  }, [file]);
-
   return (
     <>
       <DialogHeader>
@@ -86,8 +72,13 @@ const UploadDialogContent = ({
             )}
             
             <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded mb-4">
-              <p className="font-medium">Currently only CSV files are supported</p>
-              <p className="text-sm">Please export your bank statement in CSV format to upload</p>
+              <div className="flex items-start">
+                <Server className="h-5 w-5 flex-shrink-0 mt-0.5 mr-2" />
+                <div>
+                  <p className="font-medium">Server-side Processing</p>
+                  <p className="text-sm">All CSV processing is done securely on our servers</p>
+                </div>
+              </div>
             </div>
             
             <FileUploadArea 

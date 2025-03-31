@@ -81,37 +81,8 @@ export const useFileProcessing = ({
             setIsWaitingForServer(false);
           }
           
-          const isAuthError = errorMessage.toLowerCase().includes('auth') || 
-                            errorMessage.toLowerCase().includes('sign in') ||
-                            errorMessage.toLowerCase().includes('token');
-                            
-          const isAnthropicError = errorMessage.toLowerCase().includes('anthropic') ||
-                           errorMessage.toLowerCase().includes('api key') || 
-                           errorMessage.toLowerCase().includes('overloaded');
-
-          const isDeepSeekError = errorMessage.toLowerCase().includes('deepseek');
-          
           // Show the error message to the user
           handleError(errorMessage);
-          
-          // For service overload errors with CSV files, continue with warning
-          if ((isAnthropicError || isDeepSeekError) && file.name.toLowerCase().endsWith('.csv')) {
-            showFallbackMessage("AI service is currently unavailable. Using basic CSV parser as fallback.");
-            // Don't reset progress to allow fallback to continue
-            return false;
-          }
-          
-          // For auth or critical API errors, don't try to fallback
-          if (isAuthError || (isAnthropicError && isDeepSeekError)) {
-            resetProgress();
-            
-            if ((isAnthropicError || isDeepSeekError) && !file.name.toLowerCase().endsWith('.csv')) {
-              toast.error("Both AI processing services are currently unavailable. Try using a CSV file format instead.");
-            }
-            
-            return true;
-          }
-          
           resetProgress();
           return true;
         },
@@ -129,11 +100,6 @@ export const useFileProcessing = ({
       console.error("Edge function error:", error);
       handleError(error.message || "Error processing file on server.");
       resetProgress();
-      
-      // For CSV files, suggest using client-side parsing as fallback
-      if (file.name.toLowerCase().endsWith('.csv')) {
-        toast.info("Server processing failed. You can try uploading the file again.");
-      }
     }
   };
 

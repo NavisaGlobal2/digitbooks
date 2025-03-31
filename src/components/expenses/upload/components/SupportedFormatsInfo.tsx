@@ -9,9 +9,9 @@ const SupportedFormatsInfo = () => {
         <div className="flex items-center space-x-2">
           <FileSpreadsheet className="h-5 w-5 text-green-600" />
           <div>
-            <p className="text-sm font-medium">CSV Files</p>
+            <p className="text-sm font-medium">CSV Files Only</p>
             <p className="text-xs text-muted-foreground">
-              Comma-separated values exported from your bank
+              All processing is done server-side for better security and accuracy
             </p>
           </div>
         </div>

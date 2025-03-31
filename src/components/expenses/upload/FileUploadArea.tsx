@@ -69,10 +69,10 @@ const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadArea
           <Upload className="h-6 w-6 text-muted-foreground" />
         </div>
         <p className="text-sm font-medium">
-          {file ? file.name : 'Drag and drop your CSV statement file, or click to select'}
+          {file ? file.name : 'Drag and drop your CSV file, or click to select'}
         </p>
         <p className="text-xs text-muted-foreground">
-          Currently supports CSV files only
+          Server-side processing - CSV files only
         </p>
       </div>
       <div className="mt-4">

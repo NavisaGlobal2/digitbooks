@@ -30,20 +30,13 @@ export const useFileProcessing = () => {
     return new Promise((resolve, reject) => {
       const validateFileType = () => {
         const fileExt = file.name.split('.').pop()?.toLowerCase();
-        const validExts = ['csv', 'xlsx', 'xls', 'pdf'];
         
-        const isValidMimeType = [
-          'text/csv', 
-          'application/vnd.ms-excel', 
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'application/pdf'
-        ].includes(file.type);
-        
-        return isValidMimeType || validExts.includes(fileExt || '');
+        // Only accept CSV files
+        return fileExt === 'csv';
       };
       
       if (!validateFileType()) {
-        toast.error("Unsupported file format. Please upload CSV, Excel, or PDF files");
+        toast.error("Unsupported file format. Please upload CSV files only.");
         reject("Unsupported file format");
         return;
       }
@@ -81,10 +74,7 @@ export const useFileProcessing = () => {
     try {
       setProcessing(true);
       
-      const fileType = file.name.split('.').pop()?.toLowerCase();
-      setProcessingStatus(fileType === 'pdf' 
-        ? "Extracting data from PDF statement..." 
-        : "Processing statement data...");
+      setProcessingStatus("Processing CSV statement data...");
       
       if (setIsWaitingForServer) {
         setIsWaitingForServer(true);
