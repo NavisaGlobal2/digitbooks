@@ -86,7 +86,7 @@ export const AddCategoryDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount (${unallocatedAmount.toFixed(2)} available)</Label>
+            <Label htmlFor="amount">Amount (₦{unallocatedAmount.toFixed(2)} available)</Label>
             <Input
               id="amount"
               type="number"
