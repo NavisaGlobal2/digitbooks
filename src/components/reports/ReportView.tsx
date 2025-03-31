@@ -26,7 +26,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
   isCustomDateRange,
   onBack,
 }) => {
-  // Direct report generation function for PDF download
+  // Direct report download function for PDF download
   const handleDirectDownload = () => {
     if (!selectedReportType || !dateRange) {
       toast.error("Cannot generate report: Missing report type or date range");
@@ -50,7 +50,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
       toast.success(`${title} report generated and downloaded successfully`);
     } catch (error) {
       console.error("PDF generation error:", error);
-      toast.error(`Failed to generate PDF report: ${error.message || "Unknown error"}`);
+      toast.error(`Failed to generate PDF report: ${(error as Error).message || "Unknown error"}`);
     }
   };
 

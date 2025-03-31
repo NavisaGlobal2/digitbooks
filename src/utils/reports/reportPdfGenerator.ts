@@ -15,6 +15,13 @@ import {
   generateReportFilename 
 } from "./pdfUtils";
 
+// Create type augmentation for jsPDF to include autoTable
+declare module "jspdf" {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
+
 /**
  * Main function to generate a PDF report
  */
@@ -29,7 +36,7 @@ export const generateReportPdf = (reportData: ReportData): void => {
     const doc = new jsPDF();
     
     // Verify that autoTable is available
-    if (typeof (doc as any).autoTable !== 'function') {
+    if (typeof doc.autoTable !== 'function') {
       console.error("jsPDF autoTable plugin is not properly loaded");
       throw new Error("PDF generation failed: AutoTable plugin not available");
     }

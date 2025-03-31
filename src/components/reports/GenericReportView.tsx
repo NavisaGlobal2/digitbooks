@@ -58,7 +58,7 @@ const GenericReportView = ({
       toast.success("Report downloaded successfully!");
     } catch (error) {
       console.error("Error generating report:", error);
-      toast.error(`Failed to generate report: ${error.message || "Unknown error"}`);
+      toast.error(`Failed to generate report: ${(error as Error).message || "Unknown error"}`);
     }
   };
 
