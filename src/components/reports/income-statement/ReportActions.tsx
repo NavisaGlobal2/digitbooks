@@ -1,11 +1,12 @@
 
 import React, { RefObject } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, Printer } from "lucide-react";
+import { ArrowLeft, Download, Printer, History } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { saveReportToDatabase } from "@/services/reportService";
 
 interface ReportActionsProps {
   onBack: () => void;
@@ -70,6 +71,17 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
       // Save the PDF
       const fileName = `${title.toLowerCase().replace(/\s+/g, "-")}_report_${format(new Date(), "yyyy-MM-dd")}.pdf`;
       pdf.save(fileName);
+      
+      // Save report metadata to database for history
+      const reportType = title.toLowerCase().replace(/\s+/g, "-");
+      await saveReportToDatabase(
+        reportType,
+        title,
+        period,
+        dateRange,
+        reportData || { generatedAt: new Date().toISOString() },
+        "pdf"
+      );
       
       toast.success(`${title} report downloaded successfully!`);
     } catch (error) {

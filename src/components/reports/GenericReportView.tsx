@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
+import { saveReportToDatabase } from "@/services/reportService";
 
 interface GenericReportViewProps {
   reportType: string;
@@ -54,6 +55,16 @@ const GenericReportView = ({
           endDate
         }
       });
+      
+      // Save report metadata to database for history
+      await saveReportToDatabase(
+        reportType,
+        title,
+        `${reportPeriod.start} — ${reportPeriod.end}`,
+        { startDate, endDate },
+        { generatedAt: new Date().toISOString() },
+        "pdf"
+      );
       
       toast.success("Report downloaded successfully!");
     } catch (error) {
