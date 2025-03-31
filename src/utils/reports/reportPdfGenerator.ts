@@ -15,6 +15,7 @@ import {
   addPageNumbers, 
   generateReportFilename 
 } from "./pdfUtils";
+import html2canvas from "html2canvas";
 
 // Create type augmentation for jsPDF to include autoTable
 declare module "jspdf" {
@@ -26,14 +27,62 @@ declare module "jspdf" {
 /**
  * Main function to generate a PDF report
  */
-export const generateReportPdf = (reportData: ReportData): void => {
+export const generateReportPdf = async (reportData: ReportData): Promise<void> => {
   const { title, period, dateRange, reportData: savedReportData } = reportData;
   
   console.log("Generating PDF for report:", title);
   console.log("With date range:", dateRange);
   
   try {
-    // Create a new PDF document
+    // First try to capture the report from DOM if possible
+    const reportElement = document.getElementById("report-container");
+    if (reportElement) {
+      console.log("Found report container, attempting to capture snapshot");
+      try {
+        // Create a new PDF document with appropriate dimensions
+        const doc = new jsPDF();
+        
+        // Verify that autoTable is available
+        if (typeof doc.autoTable !== 'function') {
+          console.error("jsPDF autoTable plugin is not properly loaded");
+          throw new Error("PDF generation failed: AutoTable plugin not available");
+        }
+
+        // Add metadata
+        configurePdfMetadata(doc, title, period);
+        
+        // Capture the report content as an image
+        const canvas = await html2canvas(reportElement, {
+          scale: 2, // Higher quality
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff",
+          logging: false,
+        });
+        
+        // Get dimensions
+        const imgData = canvas.toDataURL('image/png');
+        const imgProps = doc.getImageProperties(imgData);
+        const pdfWidth = doc.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        
+        // Add the image to the PDF
+        doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        
+        // Save the PDF
+        const fileName = generateReportFilename(title);
+        console.log("Saving snapshot PDF with filename:", fileName);
+        doc.save(fileName);
+        return;
+      } catch (error) {
+        console.error("Error capturing report snapshot, falling back to generation:", error);
+        // Will fall back to traditional generation below
+      }
+    } else {
+      console.log("No report-container element found, using standard generation");
+    }
+    
+    // Create a new PDF document (fallback method)
     const doc = new jsPDF();
     
     // Verify that autoTable is available

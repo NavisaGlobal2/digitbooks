@@ -1,3 +1,4 @@
+
 import React from "react";
 import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
 import IncomeStatementReport from "./income-statement";
@@ -26,7 +27,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
   onBack,
 }) => {
   // Direct report download function for PDF download
-  const handleDirectDownload = () => {
+  const handleDirectDownload = async () => {
     if (!selectedReportType || !dateRange) {
       toast.error("Cannot generate report: Missing report type or date range");
       return;
@@ -40,7 +41,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
       
       toast.info(`Generating ${title} report...`);
       
-      generateReportPdf({
+      await generateReportPdf({
         title,
         period,
         dateRange

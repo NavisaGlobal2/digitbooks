@@ -74,7 +74,8 @@ const ExpenseSummaryReport: React.FC<ExpenseSummaryReportProps> = ({
       />
 
       <div 
-        ref={reportRef} 
+        ref={reportRef}
+        id="report-container"
         className="bg-white p-8 rounded-lg shadow-sm border print:shadow-none"
       >
         <div className="text-center mb-8">

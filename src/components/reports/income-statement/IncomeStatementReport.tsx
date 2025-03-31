@@ -59,7 +59,7 @@ const IncomeStatementReport = ({ onBack, period, dateRange, onDirectGeneration }
         reportData={reportData}
       />
 
-      <ReportCard ref={reportRef}>
+      <ReportCard ref={reportRef} id="report-container">
         <ReportHeader 
           title="Income Statement" 
           period={period}

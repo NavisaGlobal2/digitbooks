@@ -11,7 +11,7 @@ interface RevenueSummaryReportProps {
   onBack: () => void;
   period: string;
   dateRange: { startDate: Date; endDate: Date } | null;
-  onDirectGeneration?: () => void; // New prop for direct generation
+  onDirectGeneration?: () => void;
 }
 
 const RevenueSummaryReport: React.FC<RevenueSummaryReportProps> = ({
@@ -87,9 +87,9 @@ const RevenueSummaryReport: React.FC<RevenueSummaryReportProps> = ({
       />
 
       <div 
-        ref={reportRef} 
-        className="bg-white p-8 rounded-lg shadow-sm border print:shadow-none" 
+        ref={reportRef}
         id="revenue-summary-report-content"
+        className="bg-white p-8 rounded-lg shadow-sm border print:shadow-none"
       >
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold">Revenue Summary</h1>

@@ -103,7 +103,7 @@ const BudgetAnalysisReport: React.FC<BudgetAnalysisReportProps> = ({
   };
 
   return (
-    <div className="space-y-6" id="report-container">
+    <div className="space-y-6">
       <ReportActions
         onBack={onBack}
         title="Budget Analysis"
@@ -115,8 +115,8 @@ const BudgetAnalysisReport: React.FC<BudgetAnalysisReportProps> = ({
 
       <div
         ref={reportRef}
+        id="report-container"
         className="bg-white p-8 rounded-lg shadow-sm border print:shadow-none"
-        id="budget-analysis-report-content"
       >
         <BudgetAnalysisHeader 
           period={period}

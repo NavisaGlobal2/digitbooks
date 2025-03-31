@@ -67,6 +67,7 @@ const ProfitLossReport: React.FC<ProfitLossReportProps> = ({
 
       <div
         ref={reportRef}
+        id="report-container"
         className="bg-white p-8 rounded-lg shadow-sm border print:shadow-none"
       >
         <ProfitLossHeader period={period} dateRange={dateRange} />

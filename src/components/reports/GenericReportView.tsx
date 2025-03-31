@@ -30,7 +30,7 @@ const GenericReportView = ({
     end: format(endDate, "MMM dd, yyyy")
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     try {
       if (onDirectGeneration) {
         onDirectGeneration();
@@ -46,7 +46,7 @@ const GenericReportView = ({
       
       toast.info(`Generating ${title} report...`);
       
-      generateReportPdf({
+      await generateReportPdf({
         title,
         period: `${reportPeriod.start} — ${reportPeriod.end}`,
         dateRange: {
@@ -82,7 +82,7 @@ const GenericReportView = ({
         </Button>
       </div>
 
-      <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
+      <div id="report-container" className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
         <div className="text-center mb-6 sm:mb-8">
           <BarChart3 className="h-16 sm:h-24 w-16 sm:w-24 mx-auto text-green-500 mb-2" />
           <h2 className="text-xl sm:text-2xl font-bold">
