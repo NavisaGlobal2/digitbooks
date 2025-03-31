@@ -13,8 +13,9 @@ export const parseViaEdgeFunction = async (
     const formData = new FormData();
     formData.append("file", file);
 
-    // We now use only the AI-powered parser for all file types
-    const endpoint = 'parse-bank-statement-ai';
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
+    // Choose the appropriate endpoint based on file type
+    const endpoint = fileExt === 'pdf' ? 'parse-bank-statement-ai' : 'parse-bank-statement';
 
     console.log(`Sending file to edge function: ${endpoint}`);
     
@@ -77,12 +78,14 @@ export const parseViaEdgeFunction = async (
       amount: Math.abs(parseFloat(tx.amount)), // Store as positive number
       type: tx.type || (parseFloat(tx.amount) < 0 ? 'debit' : 'credit'),
       category: tx.category || undefined,
-      selected: false, // Don't preselect transactions
+      selected: tx.type === 'debit' || parseFloat(tx.amount) < 0, // Pre-select debits
       batchId: data.batchId
     }));
 
-    // Only include debit transactions (expenses)
-    const filteredTransactions = parsedTransactions.filter(tx => tx.type === 'debit');
+    // Filter transactions if needed (e.g., only include expenses)
+    const filteredTransactions = parsedTransactions.filter(tx => 
+      tx.type === 'debit' || parseFloat(tx.amount.toString()) < 0
+    );
     
     if (filteredTransactions.length === 0) {
       onError("No expense transactions found in the statement. Only expense transactions can be imported.");

@@ -46,7 +46,7 @@ const UploadDialogContent = ({
     <>
       <DialogHeader title="Upload Bank Statement" />
       <DialogDescription className="text-center text-sm text-muted-foreground">
-        Upload your bank statement CSV to automatically create expenses
+        Upload your bank statement CSV, Excel or PDF to automatically create expenses
       </DialogDescription>
       
       <div className="space-y-4 p-4 pt-2">

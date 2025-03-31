@@ -43,7 +43,7 @@ const FileUploadArea = ({ file, onFileChange, disabled = false, errorState }: Fi
               )}
               {!isAcceptedFileType(file.name) && (
                 <p className="text-xs text-red-500 mt-1">
-                  Unsupported file format. Please upload CSV or Excel files only
+                  Unsupported file format. Please upload CSV, Excel or PDF files only
                 </p>
               )}
             </div>
@@ -54,7 +54,7 @@ const FileUploadArea = ({ file, onFileChange, disabled = false, errorState }: Fi
                 Drop your bank statement here or click to browse
               </span>
               <span className="text-xs text-gray-400">
-                Supports CSV and Excel formats
+                Supports CSV, Excel and PDF formats
               </span>
             </div>
           )}
@@ -65,7 +65,7 @@ const FileUploadArea = ({ file, onFileChange, disabled = false, errorState }: Fi
           id="bank-statement"
           type="file"
           className="hidden"
-          accept=".csv,.xls,.xlsx"
+          accept=".csv,.xls,.xlsx,.pdf"
           onChange={onFileChange}
           disabled={disabled}
         />
@@ -77,7 +77,7 @@ const FileUploadArea = ({ file, onFileChange, disabled = false, errorState }: Fi
 // Helper function to check if file type is accepted
 const isAcceptedFileType = (filename: string): boolean => {
   const ext = filename.toLowerCase().split('.').pop();
-  return ext === 'csv' || ext === 'xls' || ext === 'xlsx';
+  return ext === 'csv' || ext === 'xls' || ext === 'xlsx' || ext === 'pdf';
 };
 
 export default FileUploadArea;

@@ -37,7 +37,8 @@ export const useFileProcessing = ({
       console.log(`Processing ${file.name} (${file.type}) to edge function for processing...`);
       
       // Get the auth session token
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data } = await supabase.auth.getSession();
+      const session = data.session;
       
       if (!session) {
         setIsAuthenticated(false);
