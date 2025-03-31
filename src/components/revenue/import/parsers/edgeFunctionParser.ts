@@ -1,8 +1,12 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./types";
 import { RevenueSource } from "@/types/revenue";
-import { extractDate, extractDescription, extractAmount, determineTransactionType } from "./utils/transactionFormatters";
+import { 
+  extractDate, 
+  extractDescription, 
+  extractAmount, 
+  determineTransactionType 
+} from "./utils/formatters";
 import { suggestRevenueSource, suggestExpenseCategory } from "./utils/sourcePredictor";
 
 export const parseViaEdgeFunction = async (
