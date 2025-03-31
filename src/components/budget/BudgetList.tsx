@@ -81,7 +81,7 @@ const BudgetList = ({ onSelectBudget, onCreateBudget }: BudgetListProps) => {
                     <CardTitle className="text-lg font-semibold truncate">
                       {budget.name}
                     </CardTitle>
-                    <Badge variant={getBadgeVariant()}>
+                    <Badge variant={getBadgeVariant()} className="bg-green-500 text-white">
                       {percentUsed}% used
                     </Badge>
                   </div>
