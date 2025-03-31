@@ -31,7 +31,8 @@ export const parseStatementFile = (
       onError,
       undefined, // reset progress callback
       undefined, // complete progress callback
-      true // Use AI formatting by default
+      true, // Use AI formatting by default
+      'revenue' // Explicitly specify context as 'revenue'
     );
   } catch (error) {
     console.error("Error in parseStatementFile:", error);

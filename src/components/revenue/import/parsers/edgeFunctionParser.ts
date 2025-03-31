@@ -39,7 +39,7 @@ export const parseViaEdgeFunction = async (
       undefined, // setIsWaitingForServer
       'anthropic', // Default AI provider
       useAIFormatting // Use AI formatting
-      // Removed the context parameter as it's causing the error - we'll handle it differently
+      // Note: The context parameter is handled differently - we'll pass it in the request body
     );
   } catch (error: any) {
     // Reset progress if provided
