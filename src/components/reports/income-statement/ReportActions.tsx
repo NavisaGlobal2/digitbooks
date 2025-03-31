@@ -25,13 +25,17 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
   const handleDownload = async () => {
     try {
       toast.loading("Generating report...");
-      await generateReportPdf({
-        title,
-        period,
-        dateRange,
-      });
-      toast.dismiss();
-      toast.success("Report downloaded successfully!");
+      
+      // Allow time for rendering before capturing
+      setTimeout(async () => {
+        await generateReportPdf({
+          title,
+          period,
+          dateRange,
+        });
+        toast.dismiss();
+        toast.success("Report downloaded successfully!");
+      }, 100);
     } catch (error) {
       console.error("Error generating report:", error);
       toast.dismiss();

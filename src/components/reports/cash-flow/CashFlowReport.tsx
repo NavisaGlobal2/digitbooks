@@ -30,17 +30,28 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({ onBack, period, dateRan
     return () => clearTimeout(timer);
   }, []);
 
-  const handleDownload = () => {
-    generateReportPdf({
-      title: "Cash Flow",
-      period: dateRange 
-        ? `${startDateFormatted} — ${endDateFormatted}` 
-        : period,
-      dateRange: dateRange || undefined,
-      cashflowData
-    });
-    
-    toast.success("Cash flow report downloaded successfully!");
+  const handleDownload = async () => {
+    try {
+      toast.loading("Generating report...");
+      
+      // Allow time for rendering before capturing
+      setTimeout(async () => {
+        await generateReportPdf({
+          title: "Cash Flow",
+          period: dateRange 
+            ? `${startDateFormatted} — ${endDateFormatted}` 
+            : period,
+          dateRange: dateRange || undefined,
+          cashflowData
+        });
+        toast.dismiss();
+        toast.success("Cash flow report downloaded successfully!");
+      }, 100);
+    } catch (error) {
+      console.error("Error generating report:", error);
+      toast.dismiss();
+      toast.error("Failed to generate report");
+    }
   };
 
   return (
@@ -63,7 +74,7 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({ onBack, period, dateRan
         </Button>
       </div>
 
-      <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm cash-flow-report-container">
+      <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm cash-flow-report-container print-container">
         <div className="text-center mb-6">
           <BarChart3 className="h-16 w-16 mx-auto text-green-500 mb-2" />
           <h2 className="text-2xl font-bold">Cash Flow Report</h2>
