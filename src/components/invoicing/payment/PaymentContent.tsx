@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { useInvoices } from "@/contexts/invoice";
+import { useInvoices } from "@/contexts/InvoiceContext";
 import { Invoice } from "@/types/invoice";
 import { formatNaira } from "@/utils/invoice/formatters";
 import PaymentStatsCards from "./PaymentStatsCards";

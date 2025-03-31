@@ -1,5 +1,6 @@
+
 import { useState, useEffect, useCallback } from "react";
-import { useInvoices } from "@/contexts/invoice";
+import { useInvoices } from "@/contexts/InvoiceContext";
 import InvoiceEmptyState from "./InvoiceEmptyState";
 import InvoiceStatCards from "./InvoiceStatCards";
 import InvoiceSearchBar from "./InvoiceSearchBar";
@@ -37,7 +38,7 @@ const InvoiceContent = ({
     setFilteredInvoices(filtered);
   }, [invoices, searchQuery]);
   
-  const handleMarkAsPaid = useCallback(async (invoiceId: string, payments: PaymentRecord[]): Promise<void> => {
+  const handleMarkAsPaid = useCallback(async (invoiceId: string, payments: PaymentRecord[]) => {
     if (isProcessingPayment) return Promise.reject("Already processing payment");
     
     setIsProcessingPayment(true);
@@ -51,6 +52,7 @@ const InvoiceContent = ({
       toast.error("Failed to record payment");
       return Promise.reject(error);
     } finally {
+      // Add a delay before resetting the processing state
       setTimeout(() => {
         setIsProcessingPayment(false);
       }, 500);

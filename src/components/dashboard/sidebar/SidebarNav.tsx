@@ -8,7 +8,6 @@ import {
   Wallet,
   Calculator,
   BookOpen,
-  Building2
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 
@@ -24,7 +23,6 @@ const SidebarNav = ({ isCollapsed }: SidebarNavProps) => {
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/invoicing", icon: FileText, label: "Invoicing" },
     { to: "/expenses", icon: Receipt, label: "Expenses" },
-    { to: "/vendors", icon: Building2, label: "Vendors" },
     { to: "/revenue", icon: Wallet, label: "Revenue" },
     { to: "/reports", icon: LayoutDashboard, label: "Reports" },
     { to: "/budget", icon: Calculator, label: "Budgeting" },
