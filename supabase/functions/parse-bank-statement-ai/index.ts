@@ -5,6 +5,7 @@ import { extractTextFromFile } from "./lib/textExtractor.ts";
 import { processWithAI } from "./lib/aiService.ts";
 import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
 import { parseExcelDirectly } from "./lib/excelParser.ts";
+import { isExcelFile } from "./lib/excelService.ts";
 
 serve(async (req) => {
   // Log request information
@@ -58,14 +59,14 @@ serve(async (req) => {
     const batchId = crypto.randomUUID();
     
     try {
-      // Special handling for Excel files - parse directly without AI
-      if (fileType === 'xlsx' || fileType === 'xls') {
+      // PRIORITIZE DIRECT EXCEL PARSING: Always use direct parsing for Excel files
+      if (isExcelFile(file)) {
         try {
-          console.log('Attempting direct Excel parsing to preserve original data');
+          console.log('Using direct Excel parsing to preserve exact original data structure');
           const transactions = await parseExcelDirectly(file);
           
           if (transactions && transactions.length > 0) {
-            console.log(`Successfully parsed ${transactions.length} transactions directly from Excel`);
+            console.log(`Successfully parsed ${transactions.length} transactions directly from Excel, preserving original format`);
             return new Response(
               JSON.stringify({
                 success: true,
@@ -76,13 +77,17 @@ serve(async (req) => {
               }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
+          } else {
+            console.log("Direct Excel parsing returned no transactions, falling back to AI processing");
           }
         } catch (excelError) {
-          console.error("Direct Excel parsing failed:", excelError);
-          // Continue with regular processing as fallback
+          console.error("Direct Excel parsing error:", excelError);
+          console.log("Falling back to AI processing for Excel file");
+          // Continue with AI processing as fallback
         }
       }
       
+      // For non-Excel files or if direct parsing failed, proceed with regular flow
       // 1. Extract text from the file
       const fileText = await extractTextFromFile(file);
       let transactions = [];
@@ -113,22 +118,7 @@ serve(async (req) => {
             );
           }
         } else {
-          // Check if the error is from Anthropic and DeepSeek is not configured
-          const isAnthropicError = aiError.message?.includes("Anthropic") || 
-                                   aiError.message?.includes("overloaded");
-          const isDeepSeekError = aiError.message?.includes("DeepSeek");
-          
-          // If both AI services failed, provide a detailed error
-          if (isAnthropicError && isDeepSeekError) {
-            return new Response(
-              JSON.stringify({ 
-                error: `Both AI services failed. Please try again later or use a CSV file which can be processed with the fallback parser. Original error: ${aiError.message}` 
-              }),
-              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 }
-            );
-          }
-          
-          // For non-CSV files with a single AI service failure
+          // For non-CSV files with AI service failures, provide a detailed error
           return new Response(
             JSON.stringify({ 
               error: `AI processing failed: ${aiError.message}. Please try again later or use a CSV file.` 

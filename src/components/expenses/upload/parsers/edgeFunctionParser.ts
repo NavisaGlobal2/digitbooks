@@ -52,31 +52,68 @@ export const parseViaEdgeFunction = async (
     
     // Map the transactions to the expected format, preserving original data
     const transactions = data.transactions.map((tx: any) => {
-      // Get transaction amount and type, handling different formats
-      let amount = typeof tx.amount === 'number' ? tx.amount : parseFloat(String(tx.amount).replace(/[^\d.-]/g, '') || '0');
-      let type = tx.type || (amount < 0 ? "debit" : "credit");
-      
-      // Construct a parsed transaction with original data preserved
+      // Initialize a parsed transaction with defaults
       const parsedTransaction: ParsedTransaction = {
         id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
         date: tx.date || new Date().toISOString(),
         description: tx.description || "",
-        amount: amount,
-        type: type,
-        selected: type === "debit" || amount < 0, // Pre-select debits by default
-        category: tx.category || "",
+        amount: 0,
+        type: "unknown",
+        selected: false,
+        category: "",
         source: tx.source || "",
         // Preserve the original date format if available
         originalDate: tx.originalDate || tx.date
       };
       
+      // Handle amount based on what's available
+      if (tx.originalAmount !== undefined) {
+        // If we have an original amount string, preserve it for display
+        parsedTransaction.originalAmount = tx.originalAmount;
+        
+        // Also try to parse a numeric amount for calculations
+        if (tx.amount !== undefined && typeof tx.amount === 'number') {
+          parsedTransaction.amount = tx.amount;
+        } else {
+          // Try to convert original amount to number if needed
+          let numAmount = 0;
+          if (typeof tx.originalAmount === 'number') {
+            numAmount = tx.originalAmount;
+          } else if (typeof tx.originalAmount === 'string') {
+            numAmount = parseFloat(tx.originalAmount.replace(/[^\d.-]/g, '') || '0');
+          }
+          parsedTransaction.amount = numAmount;
+        }
+      } else if (tx.amount !== undefined) {
+        // If we only have the processed amount
+        parsedTransaction.amount = typeof tx.amount === 'number' ? 
+          tx.amount : parseFloat(String(tx.amount).replace(/[^\d.-]/g, '') || '0');
+      }
+      
+      // Set transaction type based on what's available
+      if (tx.type) {
+        parsedTransaction.type = tx.type;
+      } else {
+        // Infer from amount if no explicit type
+        parsedTransaction.type = parsedTransaction.amount < 0 ? "debit" : "credit";
+      }
+      
+      // Pre-select debits by default
+      parsedTransaction.selected = parsedTransaction.type === "debit" || 
+                                   parsedTransaction.amount < 0;
+      
       // For Excel files processed directly, preserve all original fields
       if (data.preservedOriginalFormat) {
         // Copy all original_* fields to keep the raw data
         for (const key in tx) {
-          if (key.startsWith('original_')) {
+          if (key.startsWith('original_') || key === 'preservedColumns') {
             parsedTransaction[key] = tx[key];
           }
+        }
+        
+        // If we have preserved columns, keep those as well
+        if (tx.preservedColumns) {
+          parsedTransaction.preservedColumns = tx.preservedColumns;
         }
       }
       

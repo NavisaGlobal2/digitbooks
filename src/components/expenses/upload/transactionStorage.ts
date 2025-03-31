@@ -25,17 +25,51 @@ export const prepareExpensesFromTransactions = (
   return selectedAndTagged.map((transaction) => {
     // Use originalDate if available, otherwise use the processed date
     const transactionDate = transaction.originalDate || transaction.date;
-    // Convert to Date object - but handle string or Date inputs
-    const dateObj = typeof transactionDate === 'string' 
-      ? new Date(transactionDate) 
-      : transactionDate instanceof Date 
-        ? transactionDate 
-        : new Date(transaction.date);
     
+    // Convert to Date object - but handle string or Date inputs
+    // Important: Try to preserve the exact date format from the original Excel
+    let dateObj: Date;
+    
+    if (transactionDate instanceof Date) {
+      // If it's already a Date object, use it directly
+      dateObj = transactionDate;
+    } else if (typeof transactionDate === 'string') {
+      // Handle different date formats from Excel
+      // Try to parse the date in a way that respects the original format
+      if (transactionDate.match(/^\d{1,2}\/\d{1,2}\/\d{2,4}$/)) {
+        // Format like MM/DD/YYYY or DD/MM/YYYY
+        const parts = transactionDate.split('/');
+        // If the last part is a 2-digit year, convert it to 4 digits
+        if (parts[2].length === 2) {
+          parts[2] = '20' + parts[2];
+        }
+        // Try both MM/DD/YYYY and DD/MM/YYYY interpretations
+        // (browser default usually interprets as MM/DD/YYYY)
+        dateObj = new Date(transactionDate);
+      } else if (transactionDate.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+        // Format like YYYY-MM-DD (ISO format)
+        dateObj = new Date(transactionDate);
+      } else {
+        // For any other format, use the built-in parser
+        // but be careful with ambiguous formats
+        try {
+          dateObj = new Date(transactionDate);
+        } catch (e) {
+          // If parsing fails, use current date as fallback
+          console.warn(`Failed to parse date '${transactionDate}', using current date instead`);
+          dateObj = new Date();
+        }
+      }
+    } else {
+      // Fallback if we have neither Date nor string
+      dateObj = new Date();
+    }
+    
+    // Create the expense object using the original data where possible
     return {
       id: uuidv4(), // Generate a new ID for each expense
       amount: Math.abs(transaction.amount), // Ensure amount is positive
-      date: dateObj, // Use the original date format when possible
+      date: dateObj, // Use the properly parsed date
       description: transaction.description,
       category: transaction.category as ExpenseCategory, // Type cast to ExpenseCategory
       vendor: inferVendorFromDescription(transaction.description),
