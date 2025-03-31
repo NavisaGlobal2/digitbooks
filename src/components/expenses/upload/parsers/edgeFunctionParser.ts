@@ -1,3 +1,4 @@
+
 import { ParsedTransaction } from "./types";
 
 /**
@@ -58,7 +59,7 @@ export const parseViaEdgeFunction = async (
         date: tx.date || new Date().toISOString(),
         description: tx.description || "",
         amount: 0,
-        type: "unknown",
+        type: tx.type || "credit", // Default to "credit" if no type specified (will be updated below)
         selected: false,
         category: "",
         source: tx.source || "",
@@ -92,7 +93,8 @@ export const parseViaEdgeFunction = async (
       
       // Set transaction type based on what's available
       if (tx.type) {
-        parsedTransaction.type = tx.type;
+        parsedTransaction.type = tx.type === "debit" || tx.type === "credit" ? 
+          tx.type : (parsedTransaction.amount < 0 ? "debit" : "credit");
       } else {
         // Infer from amount if no explicit type
         parsedTransaction.type = parsedTransaction.amount < 0 ? "debit" : "credit";
