@@ -44,102 +44,52 @@ export const parseViaEdgeFunction = async (
     }
 
     // Log the raw transactions data to debug
-    console.log("Raw transactions data from edge function:", data.transactions.slice(0, 2));
+    console.log("Raw transactions from edge function:", data.transactions.slice(0, 2));
 
     // Complete progress if provided
     if (completeProgress) {
       completeProgress();
     }
 
-    // Process the transactions for revenue
+    // Transform the raw transactions into the expected format for revenue import
     const revenueTransactions = data.transactions
       .filter((tx: any) => {
-        // Skip header/summary rows or rows without transaction data
-        if (!tx || tx.description === "Row 1" || tx.description === "Row 2") {
+        // Skip rows that don't have proper data
+        if (!tx || !tx.preservedColumns) {
           return false;
         }
         
-        // Look for actual transaction data in preserved columns
-        if (tx.preservedColumns) {
-          const txnDate = tx.preservedColumns["STATEMENT OF ACCOUNT"];
-          const remarks = tx.preservedColumns["__EMPTY"];
-          const credit = tx.preservedColumns["__EMPTY_3"];
-          
-          // Check if this looks like a real transaction row
-          const hasTransactionData = 
-            (txnDate && /\d{2}-\w{3}-\d{4}/.test(txnDate)) && // Date format like "12-Aug-2024"
-            (remarks && remarks.length > 5) && // Some meaningful description
-            (credit && /[\d,.]+/.test(credit)); // Some numeric amount
-            
-          return hasTransactionData && credit && parseFloat(credit.replace(/[^\d.-]/g, '')) > 0;
-        }
-        
-        return false;
+        // Extract and check for credit transactions
+        const creditAmount = extractCreditAmount(tx);
+        return creditAmount > 0;
       })
       .map((tx: any) => {
-        // Extract transaction details from preserved columns
-        const txnDate = tx.preservedColumns["STATEMENT OF ACCOUNT"]; // e.g., "12-Aug-2024"
-        const description = tx.preservedColumns["__EMPTY"] || "Unknown transaction"; // Transaction remarks
-        const creditAmount = tx.preservedColumns["__EMPTY_3"] || "0"; // Credit column
+        // Extract transaction details
+        const txDate = extractDate(tx);
+        const description = extractDescription(tx);
+        const amount = extractAmount(tx);
         
-        // Parse the date
-        let date = new Date();
-        try {
-          if (txnDate && /\d{2}-\w{3}-\d{4}/.test(txnDate)) {
-            // Convert date format from "12-Aug-2024" to ISO format
-            const [day, month, year] = txnDate.split('-');
-            const monthMap: {[key: string]: number} = {
-              'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5, 
-              'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
-            };
-            date = new Date(parseInt(year), monthMap[month], parseInt(day));
-          }
-        } catch (e) {
-          console.error("Error parsing date:", txnDate, e);
-        }
+        // Create a source suggestion based on the description
+        const sourceSuggestion = suggestRevenueSource(description);
         
-        // Parse the amount - clean up non-numeric characters
-        const amount = creditAmount ? parseFloat(creditAmount.replace(/[^\d.-]/g, '')) : 0;
-        
-        // Suggest a revenue source based on the description
-        let sourceSuggestion: { source: RevenueSource, confidence: number } | undefined = undefined;
-        
-        // Simple rule-based source suggestion
-        if (description) {
-          const desc = description.toLowerCase();
-          if (desc.includes('loan') || desc.includes('repayment')) {
-            sourceSuggestion = { source: 'other' as RevenueSource, confidence: 0.7 };
-          } else if (desc.includes('transfer') || desc.includes('payment')) {
-            sourceSuggestion = { source: 'sales' as RevenueSource, confidence: 0.6 };
-          } else if (desc.includes('interest')) {
-            sourceSuggestion = { source: 'investments' as RevenueSource, confidence: 0.8 };
-          } else if (desc.includes('consult')) {
-            sourceSuggestion = { source: 'consulting' as RevenueSource, confidence: 0.9 };
-          } else if (desc.includes('rental') || desc.includes('lease')) {
-            sourceSuggestion = { source: 'rental' as RevenueSource, confidence: 0.9 };
-          }
-        }
-        
-        // Format the transaction for revenue
         return {
           id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
-          date: date,
-          description: description.trim(),
+          date: txDate,
+          description: description,
           amount: amount,
           type: "credit" as const,
           selected: true,
           sourceSuggestion,
           // Preserve original data
-          originalDate: txnDate,
-          originalAmount: creditAmount,
+          originalDate: tx.originalDate || tx.date,
+          originalAmount: tx.originalAmount || tx.amount,
           preservedColumns: tx.preservedColumns || {}
         };
       });
 
-    console.log(`Found ${revenueTransactions.length} revenue transactions out of ${data.transactions.length} total`);
+    console.log(`Found ${revenueTransactions.length} revenue transactions`);
     console.log("Sample formatted transactions:", revenueTransactions.slice(0, 2));
     
-    // Send the filtered revenue transactions to the caller
     onSuccess(revenueTransactions);
   } catch (error: any) {
     // Reset progress if provided
@@ -151,3 +101,158 @@ export const parseViaEdgeFunction = async (
     onError(error.message || "Unexpected error processing file");
   }
 };
+
+// Helper function to extract date from transaction
+function extractDate(tx: any): Date {
+  try {
+    // Try different date fields based on common formats in bank statements
+    if (tx.date) {
+      return new Date(tx.date);
+    }
+    
+    if (tx.preservedColumns) {
+      // Try to find date fields in preserved columns
+      const possibleDateFields = [
+        "STATEMENT OF ACCOUNT",
+        "Date",
+        "Transaction Date",
+        "VALUE DATE",
+        "POSTING DATE"
+      ];
+      
+      for (const field of possibleDateFields) {
+        if (tx.preservedColumns[field]) {
+          const dateStr = tx.preservedColumns[field];
+          
+          // Handle date formats like "12-Aug-2024"
+          if (dateStr && /\d{1,2}-[A-Za-z]{3}-\d{4}/.test(dateStr)) {
+            const [day, month, year] = dateStr.split('-');
+            const monthMap: {[key: string]: number} = {
+              'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5, 
+              'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+            };
+            return new Date(parseInt(year), monthMap[month], parseInt(day));
+          }
+          
+          // Try standard date parsing
+          const parsedDate = new Date(dateStr);
+          if (!isNaN(parsedDate.getTime())) {
+            return parsedDate;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Error parsing date:", e);
+  }
+  
+  // Default to current date if no valid date found
+  return new Date();
+}
+
+// Helper function to extract description from transaction
+function extractDescription(tx: any): string {
+  if (tx.description) {
+    return tx.description;
+  }
+  
+  if (tx.preservedColumns) {
+    // Try common description fields
+    const possibleDescFields = [
+      "NARRATION", 
+      "Description", 
+      "PARTICULARS", 
+      "__EMPTY", 
+      "Remarks", 
+      "Transaction Description"
+    ];
+    
+    for (const field of possibleDescFields) {
+      if (tx.preservedColumns[field] && typeof tx.preservedColumns[field] === 'string') {
+        return tx.preservedColumns[field].trim();
+      }
+    }
+  }
+  
+  return "Unknown transaction";
+}
+
+// Helper function to extract credit amount from transaction
+function extractCreditAmount(tx: any): number {
+  // First check if we already have a processed amount
+  if (tx.amount && tx.type === 'credit') {
+    return parseFloat(tx.amount);
+  }
+  
+  if (tx.preservedColumns) {
+    // Try common credit amount fields
+    const possibleCreditFields = [
+      "CREDIT", 
+      "__EMPTY_3", 
+      "Credit Amount",
+      "CREDIT AMOUNT", 
+      "INFLOW"
+    ];
+    
+    for (const field of possibleCreditFields) {
+      if (tx.preservedColumns[field]) {
+        const amountStr = tx.preservedColumns[field].toString();
+        if (amountStr) {
+          // Clean the string and parse as float
+          const cleanAmount = amountStr.replace(/[^\d.-]/g, '');
+          if (cleanAmount) {
+            return parseFloat(cleanAmount);
+          }
+        }
+      }
+    }
+  }
+  
+  return 0;
+}
+
+// Helper function to extract amount (handles both credit and debit)
+function extractAmount(tx: any): number {
+  const creditAmount = extractCreditAmount(tx);
+  if (creditAmount > 0) {
+    return creditAmount;
+  }
+  
+  // Already have a processed amount
+  if (typeof tx.amount === 'number') {
+    return Math.abs(tx.amount); // Convert negative to positive for revenue
+  }
+  
+  return 0;
+}
+
+// Helper function to suggest revenue source based on description
+function suggestRevenueSource(description: string): { source: RevenueSource, confidence: number } | undefined {
+  if (!description) {
+    return undefined;
+  }
+  
+  const desc = description.toLowerCase();
+  
+  // Simple rule-based source suggestions
+  if (desc.includes('loan') || desc.includes('credit') || desc.includes('advance')) {
+    return { source: 'other', confidence: 0.7 };
+  } else if (desc.includes('sale') || desc.includes('payment') || desc.includes('invoice')) {
+    return { source: 'sales', confidence: 0.8 };
+  } else if (desc.includes('interest') || desc.includes('dividend')) {
+    return { source: 'investments', confidence: 0.9 };
+  } else if (desc.includes('consult') || desc.includes('service')) {
+    return { source: 'consulting', confidence: 0.8 };
+  } else if (desc.includes('rent') || desc.includes('lease') || desc.includes('property')) {
+    return { source: 'rental', confidence: 0.9 };
+  } else if (desc.includes('donation') || desc.includes('gift')) {
+    return { source: 'donations', confidence: 0.9 };
+  } else if (desc.includes('grant')) {
+    return { source: 'grants', confidence: 0.9 };
+  } else if (desc.includes('royalty') || desc.includes('license')) {
+    return { source: 'royalties', confidence: 0.8 };
+  }
+  
+  // Default suggestion with lower confidence
+  return { source: 'sales', confidence: 0.6 };
+}

@@ -40,16 +40,12 @@ const RevenueTaggingDialog = ({
     .length;
   
   useEffect(() => {
-    // Log for debugging
-    console.log("Initial transactions:", transactions.length, "total,", 
-      transactions.filter(t => t.type === 'debit').length, "debits,", 
+    // Log the incoming transactions for debugging
+    console.log("TransactionTable rendering:", transactions.length, "transactions,", 
       transactions.filter(t => t.selected).length, "selected");
     
     // Initialize local transactions with the passed transactions
-    setLocalTransactions(transactions.map(t => ({
-      ...t,
-      selected: t.type === 'credit' // Pre-select only credit transactions
-    })));
+    setLocalTransactions(transactions);
   }, [transactions]);
   
   // Toggle selection for a single transaction
@@ -65,7 +61,7 @@ const RevenueTaggingDialog = ({
     setSelectAll(newSelectAll);
     
     setLocalTransactions(prev => 
-      prev.map(t => t.type === 'credit' ? { ...t, selected: newSelectAll } : { ...t, selected: false })
+      prev.map(t => ({ ...t, selected: newSelectAll }))
     );
   };
   
