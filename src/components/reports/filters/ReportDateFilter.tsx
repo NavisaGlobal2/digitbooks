@@ -85,7 +85,7 @@ const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
             selected={date}
             onSelect={handleSelect}
             numberOfMonths={2}
-            className={cn("p-3 pointer-events-auto")}
+            className="p-3 pointer-events-auto"
           />
         </PopoverContent>
       </Popover>

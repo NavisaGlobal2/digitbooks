@@ -14,14 +14,14 @@ interface GenerateReportDialogProps {
   ) => void;
 }
 
-export const GenerateReportDialog = ({ 
-  open, 
-  onOpenChange, 
-  onGenerate 
-}: GenerateReportDialogProps) => {
+export const GenerateReportDialog: React.FC<GenerateReportDialogProps> = ({
+  open,
+  onOpenChange,
+  onGenerate
+}) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Generate Financial Report</DialogTitle>
         </DialogHeader>
