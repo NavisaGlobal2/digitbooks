@@ -15,8 +15,7 @@ import UploadDialogContent from "./upload/components/UploadDialogContent";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, AlertTriangle, CheckCircle, FileWarning } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { AlertCircle } from "lucide-react";
 
 interface BankStatementUploadDialogProps {
   open: boolean;
@@ -39,9 +38,6 @@ const BankStatementUploadDialog = ({
     credits: number;
     debits: number;
     message: string;
-    filtered?: number;
-    originalCount?: number;
-    aiFormatting?: boolean;
   } | null>(null);
   
   const handleTransactionsParsed = (transactions: ParsedTransaction[], metadata?: any) => {
@@ -66,10 +62,7 @@ const BankStatementUploadDialog = ({
       total: transactions.length,
       credits,
       debits,
-      message: metadata?.message || `Processed ${transactions.length} transactions`,
-      filtered: metadata?.filteredCount || 0,
-      originalCount: metadata?.originalCount || transactions.length,
-      aiFormatting: metadata?.formattingApplied || false
+      message: metadata?.message || `Processed ${transactions.length} transactions`
     });
     
     setParsedTransactions(preSelectedTransactions);
@@ -185,39 +178,16 @@ const BankStatementUploadDialog = ({
           />
           
           {processingStats && !showTaggingDialog && (
-            <Alert className={`mt-4 ${processingStats.filtered > 0 ? 'border-amber-200 bg-amber-50' : ''}`}>
-              {processingStats.filtered > 0 ? (
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-              ) : (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              )}
-              <AlertTitle className="flex items-center gap-2">
-                Processing Summary 
-                {processingStats.aiFormatting && (
-                  <Badge variant="outline" className="text-xs bg-blue-50">AI Enhanced</Badge>
-                )}
-              </AlertTitle>
-              <AlertDescription className="space-y-2">
+            <Alert className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Processing Summary</AlertTitle>
+              <AlertDescription>
                 <p>{processingStats.message}</p>
-                
-                <div className="text-sm mt-1">
-                  <p>
-                    Found {processingStats.total} valid transactions: 
-                    <span className="text-green-600 font-medium ml-1">{processingStats.credits} credits</span>,
-                    <span className="text-red-600 font-medium ml-1">{processingStats.debits} debits</span>
-                  </p>
-                  
-                  {processingStats.filtered > 0 && (
-                    <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md flex items-center gap-2">
-                      <FileWarning className="h-4 w-4 text-amber-600 flex-shrink-0" />
-                      <p className="text-amber-800">
-                        {processingStats.filtered} invalid transactions were filtered out.
-                        <br />
-                        <span className="text-xs">Try enabling AI formatting or check your file format.</span>
-                      </p>
-                    </div>
-                  )}
-                </div>
+                <p className="text-sm mt-1">
+                  Found {processingStats.total} transactions: 
+                  <span className="text-green-600 font-medium ml-1">{processingStats.credits} credits</span>,
+                  <span className="text-red-600 font-medium ml-1">{processingStats.debits} debits</span>
+                </p>
               </AlertDescription>
             </Alert>
           )}

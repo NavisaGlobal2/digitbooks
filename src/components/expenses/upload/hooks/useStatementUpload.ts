@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const useStatementUpload = (
-  onTransactionsParsed: (transactions: ParsedTransaction[], responseMetadata?: any) => void
+  onTransactionsParsed: (transactions: ParsedTransaction[]) => void
 ) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -16,8 +16,6 @@ export const useStatementUpload = (
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
   const [useAIFormatting, setUseAIFormatting] = useState<boolean>(true);
   const [responseMetadata, setResponseMetadata] = useState<any>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const MAX_RETRIES = 2;
 
   // Check authentication status
   useEffect(() => {
@@ -98,9 +96,6 @@ export const useStatementUpload = (
         setError('Processing requires authentication. Please sign in to use this feature.');
         return;
       }
-      
-      // Reset the retry count when a new file is selected
-      setRetryCount(0);
     } else {
       console.log("No file selected in the event");
     }
@@ -129,8 +124,7 @@ export const useStatementUpload = (
       }
       
       console.log("Starting file processing with edge function");
-      console.log(`AI formatting is: ${useAIFormatting ? "enabled" : "disabled"}`);
-      console.log(`Retry count: ${retryCount}`);
+      console.log("AI formatting is:", useAIFormatting ? "enabled" : "disabled");
       
       const { parseViaEdgeFunction } = await import("../parsers/edgeFunctionParser");
       
@@ -146,49 +140,23 @@ export const useStatementUpload = (
           }
           
           if (!transactions || transactions.length === 0) {
-            // If we got no transactions and haven't exceeded retry attempts,
-            // try again with AI formatting enabled
-            if (retryCount < MAX_RETRIES) {
-              const newRetryCount = retryCount + 1;
-              setRetryCount(newRetryCount);
-              console.log(`No valid transactions found. Retrying (${newRetryCount}/${MAX_RETRIES}) with AI formatting enabled`);
-              resetProgress();
-              
-              // Force AI formatting on retry
-              setUseAIFormatting(true);
-              
-              // Immediate retry
-              setTimeout(() => {
-                parseFile();
-              }, 500);
-              return;
-            }
-            
             handleError("No transactions found in the statement file. Please check the file format or try another file.");
             resetProgress();
             return;
           }
           
-          onTransactionsParsed(transactions, responseData);
+          onTransactionsParsed(transactions);
         },
         (errorMessage) => {
-          // Only set uploading to false if we're not going to retry
-          if (retryCount >= MAX_RETRIES) {
-            setUploading(false);
-          }
+          setUploading(false);
           
           const isAuthError = errorMessage.toLowerCase().includes('auth') || 
                             errorMessage.toLowerCase().includes('sign in') ||
                             errorMessage.toLowerCase().includes('token');
-          
-          // Only show the error if we're not going to retry
-          if (retryCount >= MAX_RETRIES) {
-            // Show the error message to the user
-            handleError(errorMessage);
-            resetProgress();
-          } else {
-            console.log(`Error occurred, will retry: ${errorMessage}`);
-          }
+                            
+          // Show the error message to the user
+          handleError(errorMessage);
+          resetProgress();
           return true;
         },
         resetProgress,
@@ -196,8 +164,7 @@ export const useStatementUpload = (
         isCancelled,
         setIsWaitingForServer,
         preferredAIProvider,
-        // Force AI formatting on if we're retrying
-        retryCount > 0 ? true : useAIFormatting
+        useAIFormatting
       );
     } catch (error) {
       console.error("Unexpected error in parseFile:", error);
@@ -213,7 +180,6 @@ export const useStatementUpload = (
     setUploading(false);
     resetProgress();
     setResponseMetadata(null);
-    setRetryCount(0);
   };
 
   return {
@@ -236,8 +202,6 @@ export const useStatementUpload = (
     useAIFormatting,
     setUseAIFormatting,
     // Response metadata
-    responseMetadata,
-    // Retry information
-    retryCount
+    responseMetadata
   };
 };
