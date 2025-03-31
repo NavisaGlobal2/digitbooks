@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Plus, Upload, ArrowLeft, Bell } from "lucide-react";
@@ -37,7 +37,7 @@ const VendorsPage = () => {
   };
   
   // Check current URL when component mounts
-  React.useEffect(() => {
+  useEffect(() => {
     checkForSelectedVendor(window.location.pathname);
     
     // Listen for route changes
