@@ -16,19 +16,11 @@ export async function generateIncomeStatementContent(doc: jsPDF): Promise<void> 
       return generateSampleIncomeStatement(doc);
     }
 
-    // Use html2canvas with improved settings
+    // Use html2canvas to capture the report as it appears in the UI
     const canvas = await html2canvas(reportElement as HTMLElement, {
       scale: 2, // Higher scale for better quality
       useCORS: true, // Enable CORS for images
-      logging: false, // Disable logging
-      allowTaint: true, // Allow tainted canvas if images are from other domains
-      backgroundColor: "#ffffff", // Set white background
-      removeContainer: false, // Don't remove the container to avoid layout shifts
-      // Only capture what's visible
-      ignoreElements: (element) => {
-        const style = window.getComputedStyle(element);
-        return style.display === "none" || style.visibility === "hidden" || style.opacity === "0";
-      }
+      logging: false // Disable logging
     });
 
     // Calculate dimensions to fit the PDF page
