@@ -3,6 +3,8 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Printer, Download, ChevronLeft } from "lucide-react";
 import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface ReportActionsProps {
   onBack: () => void;
@@ -22,6 +24,8 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
   };
 
   const handleDownload = () => {
+    // For Cash Flow reports, we'll use the generateReportPdf function that now includes
+    // the direct snapshot approach
     generateReportPdf({
       title,
       period,
