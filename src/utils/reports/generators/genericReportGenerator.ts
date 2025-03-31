@@ -2,6 +2,7 @@
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
+// Type declaration for jsPDF with autoTable functionality
 type JsPDFWithAutoTable = jsPDF & {
   autoTable: (options: any) => any;
 };
@@ -9,7 +10,7 @@ type JsPDFWithAutoTable = jsPDF & {
 /**
  * Generates generic report content for the PDF
  */
-export function generateGenericReportContent(doc: jsPDF, title: string): void {
+export function generateGenericReportContent(doc: jsPDF): void {
   doc.setFontSize(14);
   doc.text("Financial Summary", 20, 70);
   

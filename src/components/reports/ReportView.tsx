@@ -41,6 +41,14 @@ export const ReportView: React.FC<ReportViewProps> = ({
       
       toast.info(`Generating ${title} report...`);
       
+      // Check if jsPDF and autoTable are available
+      const jsPDF = window.jspdf?.jsPDF;
+      if (!jsPDF) {
+        console.error("jsPDF library is not available");
+        toast.error("PDF generation failed: Required libraries not loaded");
+        return;
+      }
+      
       generateReportPdf({
         title,
         period,

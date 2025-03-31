@@ -1,6 +1,7 @@
 
 import jsPDF from "jspdf";
-import "jspdf-autotable"; // This adds the autoTable method to jsPDF prototype
+// Import the autoTable plugin properly
+import "jspdf-autotable";
 import { format } from "date-fns";
 import { ReportData } from "./types/reportTypes";
 import { generateIncomeStatementContent } from "./generators/incomeStatementGenerator";
