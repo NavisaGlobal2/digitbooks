@@ -18,17 +18,29 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
   // Add template class for CSS styling
   tempDiv.classList.add(`template-${invoiceDetails.selectedTemplate || 'default'}`);
   
+  // Sanitize the logo URL for better compatibility
+  let safeLogoUrl = null;
+  if (invoiceDetails.logoPreview) {
+    // Only use the logo if it's a data URL (already processed) or URL that seems valid
+    // This helps avoid CORS issues
+    if (invoiceDetails.logoPreview.startsWith('data:') || 
+        invoiceDetails.logoPreview.includes('blob:') ||
+        invoiceDetails.logoPreview.includes('http')) {
+      safeLogoUrl = invoiceDetails.logoPreview;
+    }
+  }
+  
   // Process the logo for the temporary element with improved error handling
   let logoHtml = '';
-  if (invoiceDetails.logoPreview) {
+  if (safeLogoUrl) {
     logoHtml = `
       <div style="display: flex; align-items: center; justify-content: center; height: 60px; min-width: 120px; margin-bottom: 10px;">
         <img 
-          src="${invoiceDetails.logoPreview}" 
+          src="${safeLogoUrl}" 
           style="max-height: 60px; max-width: 120px; object-fit: contain;" 
           crossorigin="anonymous" 
           alt="Company Logo"
-          onerror="this.style.display='none'; this.parentNode.innerHTML = '<div style=\\'background-color: #05d166; color: white; height: 60px; width: 120px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px;\\'>DigitBooks</div>';"
+          onerror="console.error('Logo failed to load in temp element'); this.style.display='none'; this.parentNode.innerHTML = '<div style=\\'background-color: #05d166; color: white; height: 60px; width: 120px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px;\\'>DigitBooks</div>';"
         />
       </div>
     `;
@@ -47,10 +59,10 @@ export const createTemporaryInvoiceElement = (invoiceDetails: InvoiceDetails): H
   const headerStyle = invoiceDetails.selectedTemplate === 'professional' ? 
     'background-color: #05d166; color: white; padding: 15px; margin-bottom: 20px;' : '';
 
-  // Create the HTML structure
+  // Create the HTML structure with proper styles and dimensions
   tempDiv.innerHTML = `
-    <div style="font-family: Arial, sans-serif; ${headerStyle}">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+    <div style="font-family: Arial, sans-serif; max-width: 800px; ${headerStyle}">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <div>
           <h2 style="font-size: 24px; margin-bottom: 5px; ${invoiceDetails.selectedTemplate === 'professional' ? 'color: white;' : ''}">INVOICE</h2>
           <p style="font-size: 14px; ${invoiceDetails.selectedTemplate === 'professional' ? 'color: white;' : 'color: #666;'}">
