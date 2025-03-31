@@ -33,7 +33,7 @@ export function generateGenericReportContent(doc: jsPDF, title: string): void {
   });
   
   // Add placeholder text
-  const finalY = (doc as any).lastAutoTable.finalY + 15;
+  const finalY = (doc.lastAutoTable.finalY) + 15;
   doc.setFontSize(11);
   doc.text(
     "This is a preliminary report. The data shown represents sample values for demonstration purposes. " +

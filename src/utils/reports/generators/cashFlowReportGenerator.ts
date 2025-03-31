@@ -38,7 +38,7 @@ export const generateCashFlowReportContent = (doc: jsPDF, reportData?: ReportDat
   });
   
   // Add monthly breakdown section
-  const currentY = (doc as any).lastAutoTable.finalY + 15;
+  const currentY = (doc.lastAutoTable.finalY) + 15;
   doc.setFont("helvetica", "bold");
   doc.text("Monthly Cash Flow Breakdown", 20, currentY);
   
@@ -58,7 +58,7 @@ export const generateCashFlowReportContent = (doc: jsPDF, reportData?: ReportDat
   });
   
   // Add chart placeholder text
-  const chartY = (doc as any).lastAutoTable.finalY + 15;
+  const chartY = (doc.lastAutoTable.finalY) + 15;
   doc.setFont("helvetica", "italic");
   doc.setFontSize(10);
   doc.text("Note: Interactive cash flow chart available in the digital version of this report.", 20, chartY);

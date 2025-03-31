@@ -37,7 +37,7 @@ export const generateReportPdf = (reportData: ReportData): void => {
   // Add report content based on report type
   switch (title.toLowerCase().replace(/\s+/g, "-")) {
     case "income-statement":
-      generateIncomeStatementContent(doc, reportData);
+      generateIncomeStatementContent(doc);
       break;
     case "cash-flow":
       generateCashFlowReportContent(doc, reportData);

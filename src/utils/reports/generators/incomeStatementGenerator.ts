@@ -38,7 +38,7 @@ export function generateIncomeStatementContent(doc: jsPDF): void {
   
   // Revenue breakdown
   doc.setFontSize(14);
-  const finalY = (doc as any).lastAutoTable.finalY + 15;
+  const finalY = (doc.lastAutoTable.finalY) + 15;
   doc.text("Revenue Breakdown", 20, finalY);
   
   doc.autoTable({
@@ -59,7 +59,7 @@ export function generateIncomeStatementContent(doc: jsPDF): void {
   
   // Expense breakdown
   doc.setFontSize(14);
-  const finalY2 = (doc as any).lastAutoTable.finalY + 15;
+  const finalY2 = (doc.lastAutoTable.finalY) + 15;
   doc.text("Expense Breakdown", 20, finalY2);
   
   doc.autoTable({
