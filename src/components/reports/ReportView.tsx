@@ -26,8 +26,8 @@ export const ReportView: React.FC<ReportViewProps> = ({
   isCustomDateRange,
   onBack,
 }) => {
-  // Direct report generation function
-  const handleDirectGeneration = () => {
+  // Direct report generation function for PDF download
+  const handleDirectDownload = () => {
     if (!selectedReportType || !dateRange) return;
     
     const title = selectedReportType.charAt(0).toUpperCase() + 
@@ -53,7 +53,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
-          onDirectGeneration={handleDirectGeneration}
+          onDirectGeneration={handleDirectDownload}
         />
       );
     case "cash-flow":
@@ -62,7 +62,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
-          onDirectGeneration={handleDirectGeneration}
+          onDirectGeneration={handleDirectDownload}
         />
       );
     case "expense-summary":
@@ -71,7 +71,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
-          onDirectGeneration={handleDirectGeneration}
+          onDirectGeneration={handleDirectDownload}
         />
       );
     case "revenue-summary":
@@ -80,7 +80,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
-          onDirectGeneration={handleDirectGeneration}
+          onDirectGeneration={handleDirectDownload}
         />
       );
     case "budget-analysis":
@@ -89,7 +89,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
-          onDirectGeneration={handleDirectGeneration}
+          onDirectGeneration={handleDirectDownload}
         />
       );
     case "profit-loss":
@@ -98,7 +98,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
-          onDirectGeneration={handleDirectGeneration}
+          onDirectGeneration={handleDirectDownload}
         />
       );
     default:
@@ -107,7 +107,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           reportType={selectedReportType} 
           onBack={onBack} 
           dateRange={dateRange}
-          onDirectGeneration={handleDirectGeneration}
+          onDirectGeneration={handleDirectDownload}
         />
       );
   }

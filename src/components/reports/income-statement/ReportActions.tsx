@@ -27,9 +27,8 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
   onDirectGeneration
 }) => {
   const handleDownload = async () => {
-    // Use direct generation if available and not an income statement 
-    // (income statement has its own implementation)
-    if (onDirectGeneration && title.toLowerCase() !== "income statement") {
+    // Use direct generation if available (this specifically triggers PDF download)
+    if (onDirectGeneration) {
       onDirectGeneration();
       return;
     }

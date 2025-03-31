@@ -33,6 +33,7 @@ export const useFinancialReportState = () => {
   };
 
   // Function to generate a report with the current date range
+  // This function no longer triggers downloads automatically
   const handleGenerateWithCurrentDateRange = () => {
     if (!dateRange) {
       toast.error("Please select a date range first");

@@ -21,6 +21,9 @@ import {
 export const generateReportPdf = (reportData: ReportData): void => {
   const { title, period, dateRange, reportData: savedReportData } = reportData;
   
+  console.log("Generating PDF for report:", title);
+  console.log("With date range:", dateRange);
+  
   // Create a new PDF document
   const doc = new jsPDF();
   
@@ -37,6 +40,7 @@ export const generateReportPdf = (reportData: ReportData): void => {
   
   // If we have saved report data, use it directly instead of regenerating the report
   if (savedReportData) {
+    console.log("Using saved report data for:", title);
     // Generate report based on saved data
     // This is a simplified approach - in a production app, you'd implement
     // custom rendering logic for each report type using the saved data
@@ -46,6 +50,8 @@ export const generateReportPdf = (reportData: ReportData): void => {
     doc.save(fileName);
     return;
   }
+  
+  console.log("Generating report content for:", title.toLowerCase().replace(/\s+/g, "-"));
   
   // Add report content based on report type
   switch (title.toLowerCase().replace(/\s+/g, "-")) {
@@ -71,5 +77,6 @@ export const generateReportPdf = (reportData: ReportData): void => {
   
   // Save the PDF
   const fileName = generateReportFilename(title);
+  console.log("Saving PDF with filename:", fileName);
   doc.save(fileName);
 };
