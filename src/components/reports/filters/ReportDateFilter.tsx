@@ -52,6 +52,10 @@ const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
     }
   };
 
+  const displayDateRange = dateRange ? 
+    `${format(dateRange.startDate, "MMM dd, yyyy")} - ${format(dateRange.endDate, "MMM dd, yyyy")}` : 
+    "Select date range";
+
   return (
     <div className="flex flex-wrap items-center gap-3">
       <Popover>
@@ -64,17 +68,7 @@ const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "LLL dd, yyyy")} - {format(date.to, "LLL dd, yyyy")}
-                </>
-              ) : (
-                format(date.from, "LLL dd, yyyy")
-              )
-            ) : (
-              <span>Select date range</span>
-            )}
+            {displayDateRange}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">

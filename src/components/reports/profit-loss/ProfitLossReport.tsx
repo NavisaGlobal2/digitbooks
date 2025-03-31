@@ -1,8 +1,6 @@
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { ReportActions } from "../income-statement/ReportActions";
-import { useRevenue } from "@/contexts/RevenueContext";
-import { useExpenses } from "@/contexts/ExpenseContext";
 import ProfitLossHeader from "./ProfitLossHeader";
 import ProfitLossSummaryCards from "./ProfitLossSummaryCards";
 import ProfitLossTrendsChart from "./ProfitLossTrendsChart";
@@ -24,6 +22,8 @@ const ProfitLossReport: React.FC<ProfitLossReportProps> = ({
   onDirectGeneration,
 }) => {
   const reportRef = useRef<HTMLDivElement>(null);
+  const [localDateRange, setLocalDateRange] = useState<{ startDate: Date; endDate: Date } | null>(dateRange);
+  
   const { 
     totalRevenue, 
     totalExpenses, 
@@ -32,7 +32,11 @@ const ProfitLossReport: React.FC<ProfitLossReportProps> = ({
     monthlySummary,
     formatCurrency,
     isLoading
-  } = useProfitLossData(dateRange);
+  } = useProfitLossData(localDateRange || dateRange);
+
+  const handleDateRangeChange = (newRange: { startDate: Date; endDate: Date } | null) => {
+    setLocalDateRange(newRange);
+  };
 
   // Prepare report data for storage
   const reportData = {
@@ -59,10 +63,11 @@ const ProfitLossReport: React.FC<ProfitLossReportProps> = ({
         onBack={onBack}
         title="Profit & Loss"
         period={period}
-        dateRange={dateRange}
+        dateRange={localDateRange || dateRange}
         reportRef={reportRef}
         reportData={reportData}
         onDirectGeneration={onDirectGeneration}
+        onDateRangeChange={handleDateRangeChange}
       />
 
       <div
@@ -70,7 +75,7 @@ const ProfitLossReport: React.FC<ProfitLossReportProps> = ({
         id="report-container"
         className="bg-white p-8 rounded-lg shadow-sm border print:shadow-none"
       >
-        <ProfitLossHeader period={period} dateRange={dateRange} />
+        <ProfitLossHeader period={period} dateRange={localDateRange || dateRange} />
 
         <div className="space-y-6">
           <ProfitLossSummaryCards 
