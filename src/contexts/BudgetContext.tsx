@@ -53,8 +53,8 @@ export const BudgetProvider = ({ children }: { children: ReactNode }) => {
             startDate: new Date(item.start_date),
             endDate: new Date(item.end_date),
             totalBudget: item.total_budget,
-            // Parse the JSON stored in the items field as our categories array
-            categories: item.items || []
+            // Ensure categories are parsed as BudgetCategory[] or default to empty array if null/invalid
+            categories: Array.isArray(item.items) ? item.items : []
           }));
 
           setBudgets(transformedBudgets);
@@ -72,6 +72,14 @@ export const BudgetProvider = ({ children }: { children: ReactNode }) => {
 
   const addBudget = async (budget: Omit<Budget, "id">) => {
     try {
+      // Get the user ID from the authenticated session
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      
+      if (!userId) {
+        throw new Error("No authenticated user found");
+      }
+
       // Convert the Budget object to the database format
       const dbBudget = {
         name: budget.name,
@@ -80,7 +88,8 @@ export const BudgetProvider = ({ children }: { children: ReactNode }) => {
         total_budget: budget.totalBudget,
         items: budget.categories,
         status: "active",
-        total_spent: 0
+        total_spent: 0,
+        user_id: userId // Add the required user_id field
       };
 
       const { data, error } = await supabase
@@ -98,7 +107,8 @@ export const BudgetProvider = ({ children }: { children: ReactNode }) => {
           startDate: new Date(data.start_date),
           endDate: new Date(data.end_date),
           totalBudget: data.total_budget,
-          categories: data.items || []
+          // Ensure categories are parsed as BudgetCategory[] or default to empty array
+          categories: Array.isArray(data.items) ? data.items : []
         };
 
         setBudgets((prev) => [...prev, newBudget]);
