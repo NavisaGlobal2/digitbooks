@@ -30,17 +30,19 @@ const FinancialReports = () => {
         isMobileSidebarOpen={isMobileSidebarOpen}
         setIsMobileSidebarOpen={setIsMobileSidebarOpen}
       >
-        <ReportsContent
-          selectedReportType={selectedReportType}
-          reportPeriod={reportPeriod}
-          dateRange={dateRange}
-          isCustomDateRange={isCustomDateRange}
-          onBack={() => setSelectedReportType(null)}
-          onSelectReport={handleSelectReport}
-          selectedTimePeriod={selectedTimePeriod}
-          onPeriodChange={handlePeriodChange}
-          onDateRangeChange={handleDateRangeChange}
-        />
+        <div className="p-6">
+          <ReportsContent
+            selectedReportType={selectedReportType}
+            reportPeriod={reportPeriod}
+            dateRange={dateRange}
+            isCustomDateRange={isCustomDateRange}
+            onBack={() => setSelectedReportType(null)}
+            onSelectReport={handleSelectReport}
+            selectedTimePeriod={selectedTimePeriod}
+            onPeriodChange={handlePeriodChange}
+            onDateRangeChange={handleDateRangeChange}
+          />
+        </div>
       </ReportsLayout>
 
       <GenerateReportDialog

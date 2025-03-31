@@ -66,58 +66,64 @@ const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
   };
 
   return (
-    <div className="flex flex-wrap gap-3 mb-4">
-      <Select value={selectedPeriod} onValueChange={handlePeriodChange}>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Select timeframe" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="current-month">Current Month</SelectItem>
-          <SelectItem value="last-month">Last Month</SelectItem>
-          <SelectItem value="current-quarter">Current Quarter</SelectItem>
-          <SelectItem value="year-to-date">Year to Date</SelectItem>
-          <SelectItem value="last-year">Last Year</SelectItem>
-          <SelectItem value="custom-range">Custom Range</SelectItem>
-        </SelectContent>
-      </Select>
+    <div className="flex flex-wrap gap-3 mb-4 p-4 bg-[#F2FCE2]/30 rounded-lg border border-[#05D166]/20">
+      <div>
+        <label className="block text-sm font-medium text-muted-foreground mb-1">Time period</label>
+        <Select value={selectedPeriod} onValueChange={handlePeriodChange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select timeframe" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="current-month">Current Month</SelectItem>
+            <SelectItem value="last-month">Last Month</SelectItem>
+            <SelectItem value="current-quarter">Current Quarter</SelectItem>
+            <SelectItem value="year-to-date">Year to Date</SelectItem>
+            <SelectItem value="last-year">Last Year</SelectItem>
+            <SelectItem value="custom-range">Custom Range</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {selectedPeriod === "custom-range" && (
-        <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="pl-3 pr-2 text-left font-normal flex justify-between">
-              <span className="truncate">{formatDateRange()}</span>
-              <CalendarRange className="ml-2 h-4 w-4 opacity-70" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={tempEndDate || tempStartDate}
-              onSelect={handleDateSelect}
-              initialFocus
-              className="pointer-events-auto"
-              disabled={(date) => {
-                // Cannot select dates in the future
-                return date > new Date();
-              }}
-            />
-            <div className="p-3 border-t border-border text-xs">
-              {tempStartDate ? (
-                <p>
-                  Selected: <strong>{format(tempStartDate, "MMM dd, yyyy")}</strong>
-                  {tempEndDate && (
-                    <>
-                      {" "}
-                      to <strong>{format(tempEndDate, "MMM dd, yyyy")}</strong>
-                    </>
-                  )}
-                </p>
-              ) : (
-                <p>Click to select a start date</p>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
+        <div>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Date range</label>
+          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="pl-3 pr-2 text-left font-normal flex justify-between">
+                <span className="truncate">{formatDateRange()}</span>
+                <CalendarRange className="ml-2 h-4 w-4 opacity-70" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={tempEndDate || tempStartDate}
+                onSelect={handleDateSelect}
+                initialFocus
+                className="pointer-events-auto"
+                disabled={(date) => {
+                  // Cannot select dates in the future
+                  return date > new Date();
+                }}
+              />
+              <div className="p-3 border-t border-border text-xs">
+                {tempStartDate ? (
+                  <p>
+                    Selected: <strong>{format(tempStartDate, "MMM dd, yyyy")}</strong>
+                    {tempEndDate && (
+                      <>
+                        {" "}
+                        to <strong>{format(tempEndDate, "MMM dd, yyyy")}</strong>
+                      </>
+                    )}
+                  </p>
+                ) : (
+                  <p>Click to select a start date</p>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
       )}
     </div>
   );
