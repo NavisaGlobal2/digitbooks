@@ -5,7 +5,6 @@ import { format } from "date-fns";
 import { ReportData } from "./types/reportTypes";
 import { generateIncomeStatementContent } from "./generators/incomeStatementGenerator";
 import { generateGenericReportContent } from "./generators/genericReportGenerator";
-import { generateCashFlowReportContent } from "./generators/cashFlowReportGenerator";
 import { 
   configurePdfMetadata, 
   addReportHeader, 
@@ -17,7 +16,7 @@ import {
 /**
  * Main function to generate a PDF report
  */
-export const generateReportPdf = async (reportData: ReportData): Promise<void> => {
+export const generateReportPdf = (reportData: ReportData): void => {
   const { title, period, dateRange } = reportData;
   
   // Create a new PDF document
@@ -37,13 +36,11 @@ export const generateReportPdf = async (reportData: ReportData): Promise<void> =
   // Add report content based on report type
   switch (title.toLowerCase().replace(/\s+/g, "-")) {
     case "income-statement":
-      await generateIncomeStatementContent(doc);
-      break;
-    case "cash-flow":
-      await generateCashFlowReportContent(doc, reportData);
+      generateIncomeStatementContent(doc);
       break;
     case "revenue-summary":
     case "expense-summary":
+    case "cash-flow":
     case "budget-analysis":
     case "profit-loss":
     default:

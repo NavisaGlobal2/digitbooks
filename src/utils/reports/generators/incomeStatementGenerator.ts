@@ -1,62 +1,18 @@
 
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import html2canvas from "html2canvas";
 
 /**
  * Generates income statement content for the PDF
  */
-export async function generateIncomeStatementContent(doc: jsPDF): Promise<void> {
-  try {
-    // Find the Income Statement Report element in the DOM
-    const reportElement = document.querySelector('.income-statement-report-container');
-    
-    if (!reportElement) {
-      console.error("Income Statement report element not found in the DOM");
-      return generateSampleIncomeStatement(doc);
-    }
-
-    // Use html2canvas to capture the report as it appears in the UI
-    const canvas = await html2canvas(reportElement as HTMLElement, {
-      scale: 2, // Higher scale for better quality
-      useCORS: true, // Enable CORS for images
-      logging: false // Disable logging
-    });
-
-    // Calculate dimensions to fit the PDF page
-    const imgData = canvas.toDataURL('image/png');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    
-    // Calculate proportional height to maintain aspect ratio
-    const canvasAspectRatio = canvas.height / canvas.width;
-    const imgWidth = pageWidth - 20; // 10pt margin on each side
-    const imgHeight = imgWidth * canvasAspectRatio;
-    
-    // Add the captured image
-    doc.addImage(imgData, 'PNG', 10, 40, imgWidth, imgHeight);
-    
-  } catch (error) {
-    console.error("Error generating Income Statement report:", error);
-    return generateSampleIncomeStatement(doc);
-  }
-}
-
-/**
- * Generates a sample income statement if capturing fails
- */
-function generateSampleIncomeStatement(doc: jsPDF): void {
-  const startY = 60;
-  
-  // Add summary section title
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(33, 33, 33);
-  doc.text("Income Statement Summary", 105, startY, { align: "center" });
+export function generateIncomeStatementContent(doc: jsPDF): void {
+  doc.setFontSize(14);
+  doc.text("Financial Summary", 20, 70);
   
   doc.setFontSize(11);
   doc.autoTable({
-    startY: startY + 10,
-    head: [["Category", "Amount (₦)", "% of Total"]],
+    startY: 75,
+    head: [["Category", "Amount ($)", "% of Total"]],
     body: [
       ["Revenue", "50,000.00", "100%"],
       ["Cost of Goods Sold", "20,000.00", "40%"],
@@ -87,7 +43,7 @@ function generateSampleIncomeStatement(doc: jsPDF): void {
   
   doc.autoTable({
     startY: finalY + 5,
-    head: [["Revenue Source", "Amount (₦)", "% of Total"]],
+    head: [["Revenue Source", "Amount ($)", "% of Total"]],
     body: [
       ["Sales", "35,000.00", "70%"],
       ["Services", "12,500.00", "25%"],
@@ -108,7 +64,7 @@ function generateSampleIncomeStatement(doc: jsPDF): void {
   
   doc.autoTable({
     startY: finalY2 + 5,
-    head: [["Expense Category", "Amount (₦)", "% of Total"]],
+    head: [["Expense Category", "Amount ($)", "% of Total"]],
     body: [
       ["Salaries", "8,000.00", "53.3%"],
       ["Rent", "2,500.00", "16.7%"],
