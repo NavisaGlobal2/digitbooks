@@ -6,13 +6,18 @@ import "jspdf-autotable";
  * Generates income statement content for the PDF
  */
 export function generateIncomeStatementContent(doc: jsPDF): void {
-  doc.setFontSize(14);
-  doc.text("Financial Summary", 20, 70);
+  const startY = 60;
+  
+  // Add summary section title
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(33, 33, 33);
+  doc.text("Income Statement Summary", 105, startY, { align: "center" });
   
   doc.setFontSize(11);
   doc.autoTable({
-    startY: 75,
-    head: [["Category", "Amount ($)", "% of Total"]],
+    startY: startY + 10,
+    head: [["Category", "Amount (₦)", "% of Total"]],
     body: [
       ["Revenue", "50,000.00", "100%"],
       ["Cost of Goods Sold", "20,000.00", "40%"],
@@ -43,7 +48,7 @@ export function generateIncomeStatementContent(doc: jsPDF): void {
   
   doc.autoTable({
     startY: finalY + 5,
-    head: [["Revenue Source", "Amount ($)", "% of Total"]],
+    head: [["Revenue Source", "Amount (₦)", "% of Total"]],
     body: [
       ["Sales", "35,000.00", "70%"],
       ["Services", "12,500.00", "25%"],
@@ -64,7 +69,7 @@ export function generateIncomeStatementContent(doc: jsPDF): void {
   
   doc.autoTable({
     startY: finalY2 + 5,
-    head: [["Expense Category", "Amount ($)", "% of Total"]],
+    head: [["Expense Category", "Amount (₦)", "% of Total"]],
     body: [
       ["Salaries", "8,000.00", "53.3%"],
       ["Rent", "2,500.00", "16.7%"],
