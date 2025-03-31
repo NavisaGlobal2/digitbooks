@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ParsedTransaction } from '../parsers/types';
 import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
 
 export const saveTransactionsToDatabase = async (
   transactions: ParsedTransaction[], 
@@ -14,6 +15,11 @@ export const saveTransactionsToDatabase = async (
       return false;
     }
     
+    // Generate a proper UUID for the batch
+    const properBatchId = batchId.startsWith('batch-') ? uuidv4() : batchId;
+    
+    console.log(`Using batch ID: ${properBatchId} for database operations`);
+    
     let failedCount = 0;
     
     // Save each transaction to the uploaded_bank_lines table
@@ -24,7 +30,7 @@ export const saveTransactionsToDatabase = async (
         .from('uploaded_bank_lines')
         .insert({
           user_id: userData.user.id,
-          upload_batch_id: batchId,
+          upload_batch_id: properBatchId,
           date: transaction.date.toISOString(),
           description: transaction.description,
           amount: transaction.amount,
@@ -39,13 +45,13 @@ export const saveTransactionsToDatabase = async (
       }
     }
     
-    // Only show toast if there were failures, and only once
+    // Only show toast for failures
     if (failedCount > 0) {
       toast.error(`Failed to save ${failedCount} transaction(s)`);
     }
     
     // Once all transactions are saved, use the database function to convert them to expenses
-    const { error: savingError } = await supabase.rpc('save_tagged_expenses', { p_batch_id: batchId });
+    const { error: savingError } = await supabase.rpc('save_tagged_expenses', { p_batch_id: properBatchId });
     
     if (savingError) {
       console.error("Error saving expenses:", savingError);
