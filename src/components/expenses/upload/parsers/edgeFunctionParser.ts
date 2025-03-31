@@ -3,6 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./types";
 import { toast } from "sonner";
 
+// Define the new API base URL
+const API_BASE = "https://workspace.john644.repl.co";
+
 export const parseViaEdgeFunction = async (
   file: File,
   onSuccess: (transactions: ParsedTransaction[]) => void,
@@ -16,8 +19,8 @@ export const parseViaEdgeFunction = async (
     const fileExt = file.name.split('.').pop()?.toLowerCase();
     // Choose the appropriate endpoint based on file type
     const endpoint = fileExt === 'pdf' ? 'parse-bank-statement-ai' : 'parse-bank-statement';
-
-    console.log(`Sending file to edge function: ${endpoint}`);
+    
+    console.log(`Sending file to API endpoint: ${API_BASE}/${endpoint}`);
     
     // Check authentication status before making the request
     const { data: authData, error: authError } = await supabase.auth.getSession();
@@ -35,44 +38,44 @@ export const parseViaEdgeFunction = async (
       onError(errorMsg);
       return [];
     }
-    
-    // Call the serverless function with proper authentication
-    const { data, error } = await supabase.functions.invoke(endpoint, {
+
+    // Call the external API endpoint instead of Supabase edge function
+    const response = await fetch(`${API_BASE}/${endpoint}`, {
+      method: 'POST',
       body: formData,
       headers: {
-        Authorization: `Bearer ${authData.session.access_token}`
+        'Authorization': `Bearer ${authData.session.access_token}`
       }
     });
 
-    if (error) {
-      console.error("Edge function error:", error);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("API error:", response.status, errorText);
       
       // Check for Anthropic API key error
-      if (error.message && (
-        error.message.includes("ANTHROPIC_API_KEY") ||
-        error.message.includes("Anthropic API") ||
-        error.message.includes("exceeded") ||
-        error.message.includes("rate limit")
-      )) {
+      if (errorText.includes("ANTHROPIC_API_KEY") || 
+          errorText.includes("Anthropic API") ||
+          errorText.includes("exceeded") ||
+          errorText.includes("rate limit")) {
         const errorMsg = "Anthropic API key error: Either the key is not configured, invalid, or you've exceeded your rate limit. Please contact your administrator.";
         onError(errorMsg);
         return [];
       }
       
       // Check for authentication errors
-      if (error.message && (
-        error.message.includes("Auth session") ||
-        error.message.includes("authentication") ||
-        error.message.includes("unauthorized")
-      )) {
+      if (errorText.includes("Auth session") ||
+          errorText.includes("authentication") ||
+          errorText.includes("unauthorized")) {
         const errorMsg = "Authentication error: Please try signing out and signing back in to refresh your session.";
         onError(errorMsg);
         return [];
       }
       
-      onError(`Server error: ${error.message}`);
+      onError(`Server error: ${errorText || response.statusText}`);
       return [];
     }
+
+    const data = await response.json();
 
     if (!data || !data.transactions || !Array.isArray(data.transactions)) {
       onError("Invalid response from server. No transactions found in the response.");
