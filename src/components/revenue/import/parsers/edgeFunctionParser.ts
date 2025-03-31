@@ -8,6 +8,7 @@ import {
   extractAmount, 
   determineTransactionType 
 } from "./utils/formatters";
+import { withRetry } from "../../expenses/upload/parsers/edge-function/retryHandler";
 
 export const parseViaEdgeFunction = async (
   file: File,
@@ -35,16 +36,21 @@ export const parseViaEdgeFunction = async (
 
     console.log(`Processing ${file.name} for ${context} parsing via edge function with AI formatting ${useAIFormatting ? 'enabled' : 'disabled'}`);
 
-    // Call the edge function
-    const { data, error } = await supabase.functions.invoke('parse-bank-statement-ai', {
-      body: formData,
-    });
+    // Call the edge function with retry logic
+    const invokeEdgeFunction = async () => {
+      const { data, error } = await supabase.functions.invoke('parse-bank-statement-ai', {
+        body: formData,
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data;
+    };
 
-    if (error) {
-      console.error("Edge function error:", error);
-      onError(error.message || "Error processing file");
-      return;
-    }
+    // Use retry logic for the edge function call
+    const data = await withRetry(invokeEdgeFunction, 3, 1500);
 
     if (!data || !data.transactions || !Array.isArray(data.transactions)) {
       onError("No transactions found in file");
@@ -60,10 +66,25 @@ export const parseViaEdgeFunction = async (
       completeProgress();
     }
 
+    // Filter out "Unknown Transaction" with zero amount
+    const validTransactions = data.transactions.filter(tx => {
+      const isUnknownZeroValue = 
+        (tx.amount === 0 || tx.amount === undefined || tx.amount === null) && 
+        (tx.description === "Unknown Transaction" || !tx.description);
+      
+      return !isUnknownZeroValue;
+    });
+
+    if (validTransactions.length === 0) {
+      console.warn("All transactions were filtered out as invalid");
+      onError("No valid transactions found. Please check the file format.");
+      return;
+    }
+
     // Transform the raw transactions into the expected format for import
     const transformedTransactions = context === 'revenue' ? 
-      transformRevenueTransactions(data.transactions) : 
-      transformExpenseTransactions(data.transactions);
+      transformRevenueTransactions(validTransactions) : 
+      transformExpenseTransactions(validTransactions);
     
     console.log(`Found ${transformedTransactions.length} ${context} transactions`);
     console.log("Sample formatted transactions:", transformedTransactions.slice(0, 2));

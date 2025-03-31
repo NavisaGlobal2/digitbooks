@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./types";
+import { withRetry } from "./edge-function/retryHandler";
 
 export const parseViaEdgeFunction = async (
   file: File,
@@ -39,10 +40,21 @@ export const parseViaEdgeFunction = async (
       setIsWaitingForServer(true);
     }
 
-    // Call the edge function
-    const { data, error } = await supabase.functions.invoke('parse-bank-statement-ai', {
-      body: formData,
-    });
+    // Call the edge function with retry logic
+    const invokeEdgeFunction = async () => {
+      const { data, error } = await supabase.functions.invoke('parse-bank-statement-ai', {
+        body: formData,
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data;
+    };
+
+    // Use retry logic for the edge function call
+    const data = await withRetry(invokeEdgeFunction, 3, 1500);
 
     // Clear waiting flag if provided
     if (setIsWaitingForServer) {
@@ -52,12 +64,6 @@ export const parseViaEdgeFunction = async (
     // Check for cancellation
     if (isCancelled) {
       console.log("Processing cancelled by user");
-      return;
-    }
-
-    if (error) {
-      console.error("Edge function error:", error);
-      onError(error.message || "Error processing file");
       return;
     }
 

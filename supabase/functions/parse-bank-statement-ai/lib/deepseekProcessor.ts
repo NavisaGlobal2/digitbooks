@@ -100,6 +100,8 @@ export async function processWithDeepseek(text: string, context?: string | null)
     }
 
     const data = await response.json();
+    console.log("DEEPSEEK AI OUTPUT SAMPLE:", data.choices?.[0]?.message?.content?.substring(0, 200));
+    
     const content = data.choices?.[0]?.message?.content;
     
     if (!content) {

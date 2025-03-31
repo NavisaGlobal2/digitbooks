@@ -24,15 +24,23 @@ export async function formatTransactionsWithAI(
     // Log the first raw transaction for debugging
     logSampleTransactions(transactions, "SAMPLE RAW TRANSACTION FROM PARSER");
 
-    // Determine which AI provider to use
-    const { provider, reason } = selectAIProvider(preferredProvider);
+    // Get available providers
+    const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    const deepseekApiKey = Deno.env.get("DEEPSEEK_API_KEY");
+    
+    // Check if we have any AI providers configured
+    const hasAnthropicProvider = !!anthropicApiKey;
+    const hasDeepseekProvider = !!deepseekApiKey;
     
     // If no AI provider is available, use basic formatting
-    if (provider === "none") {
+    if (!hasAnthropicProvider && !hasDeepseekProvider) {
+      console.log("No AI providers available. Using basic formatting.");
       const basicFormatted = basicFormatting(transactions);
-      // Filter out any invalid transactions
       return filterInvalidTransactions(basicFormatted);
     }
+    
+    // Determine which AI provider to try first
+    const { provider: firstProvider } = selectAIProvider(preferredProvider);
     
     try {
       // Send the ENTIRE raw transaction data to the AI model, preserving ALL original structure
@@ -40,22 +48,46 @@ export async function formatTransactionsWithAI(
       console.log(`Total transactions for AI: ${transactions.length}`);
       logSampleTransactions(transactions, "SAMPLE RAW DATA FOR AI");
       
-      // Send to the selected AI service
+      // Try with the first selected AI service
       let aiProcessedData;
-      if (provider === "anthropic") {
-        aiProcessedData = await processWithAnthropic(JSON.stringify(transactions), context);
-      } else if (provider === "deepseek") {
-        aiProcessedData = await processWithDeepseek(JSON.stringify(transactions), context);
+      if (firstProvider === "anthropic" && hasAnthropicProvider) {
+        console.log("Trying Anthropic for AI processing...");
+        try {
+          aiProcessedData = await processWithAnthropic(JSON.stringify(transactions), context);
+        } catch (anthropicError) {
+          // If Anthropic fails and we have DeepSeek available, try that
+          if (hasDeepseekProvider) {
+            console.log("Anthropic processing failed. Trying DeepSeek as fallback...");
+            aiProcessedData = await processWithDeepseek(JSON.stringify(transactions), context);
+          } else {
+            // No secondary AI service available
+            throw anthropicError;
+          }
+        }
+      } else if (firstProvider === "deepseek" && hasDeepseekProvider) {
+        console.log("Trying DeepSeek for AI processing...");
+        try {
+          aiProcessedData = await processWithDeepseek(JSON.stringify(transactions), context);
+        } catch (deepseekError) {
+          // If DeepSeek fails and we have Anthropic available, try that
+          if (hasAnthropicProvider) {
+            console.log("DeepSeek processing failed. Trying Anthropic as fallback...");
+            aiProcessedData = await processWithAnthropic(JSON.stringify(transactions), context);
+          } else {
+            // No secondary AI service available
+            throw deepseekError;
+          }
+        }
       }
       
       // Log sample of AI response
       logSampleTransactions(aiProcessedData, "SAMPLE AI PROCESSED TRANSACTION");
       
       if (!aiProcessedData || !Array.isArray(aiProcessedData)) {
-        console.log("AI processing failed or returned invalid data. Falling back to basic formatting.");
-        const basicFormatted = basicFormatting(transactions);
-        // Filter out any invalid transactions
-        return filterInvalidTransactions(basicFormatted);
+        console.log("AI processing failed or returned invalid data. Retrying with retry limits...");
+        // Instead of falling back to basic formatting, we'll throw an error that will be caught
+        // and retried at a higher level
+        throw new Error("AI processing failed or returned invalid data");
       }
       
       // Merge AI processed data with original transaction data to preserve all fields
@@ -66,7 +98,9 @@ export async function formatTransactionsWithAI(
       return filterInvalidTransactions(formattedTransactions);
     } catch (aiError) {
       console.error("Error in AI processing:", aiError);
-      // Fall back to basic formatting if AI processing fails
+      // If this was a retry or we couldn't process with either AI service,
+      // fall back to basic formatting
+      console.log("All AI processing attempts failed. Using basic formatting as last resort.");
       const basicFormatted = basicFormatting(transactions);
       // Filter out any invalid transactions
       return filterInvalidTransactions(basicFormatted);
