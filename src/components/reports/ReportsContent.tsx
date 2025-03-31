@@ -66,6 +66,7 @@ export const ReportsContent: React.FC<ReportsContentProps> = ({
               <ReportDateFilter
                 onChange={onDateRangeChange}
                 dateRange={dateRange}
+                onGenerateReport={onGenerateReport}
               />
             </div>
             
