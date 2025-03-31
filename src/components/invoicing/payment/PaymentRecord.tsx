@@ -65,6 +65,7 @@ export const PaymentRecordComponent = ({
             <option value="cash">Cash</option>
             <option value="card">Card</option>
             <option value="check">Check</option>
+            <option value="mobile money">Mobile Money</option>
             <option value="other">Other</option>
           </select>
         </div>

@@ -8,17 +8,21 @@ import InvoiceTable from "./InvoiceTable";
 import { PaymentRecord } from "@/types/invoice";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { History } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface InvoiceContentProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   setIsCreatingInvoice: (value: boolean) => void;
+  onViewPaymentHistory: () => void;
 }
 
 const InvoiceContent = ({ 
   searchQuery, 
   setSearchQuery, 
-  setIsCreatingInvoice 
+  setIsCreatingInvoice,
+  onViewPaymentHistory
 }: InvoiceContentProps) => {
   const { invoices, markInvoiceAsPaid, isLoading } = useInvoices();
   const [filteredInvoices, setFilteredInvoices] = useState(invoices);
@@ -85,6 +89,18 @@ const InvoiceContent = ({
   // Normal content
   return (
     <div className="space-y-4 sm:space-y-6 md:space-y-8">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold tracking-tight">Invoices</h2>
+        <Button
+          variant="outline"
+          onClick={onViewPaymentHistory}
+          className="flex items-center gap-2"
+        >
+          <History className="h-4 w-4" />
+          Payment History
+        </Button>
+      </div>
+
       <InvoiceStatCards invoices={invoices} />
       
       <div>

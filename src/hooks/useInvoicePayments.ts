@@ -31,6 +31,7 @@ export function useInvoicePayments() {
         payment_date: new Date()
       };
       
+      // Insert the payment record
       const { data, error } = await supabase
         .from('invoice_payments')
         .insert(paymentData)
@@ -44,7 +45,7 @@ export function useInvoicePayments() {
       // Get the current invoice
       const { data: invoiceData, error: invoiceError } = await supabase
         .from('invoices')
-        .select('amount, payments')
+        .select('amount')
         .eq('id', invoiceId)
         .single();
         
@@ -61,9 +62,24 @@ export function useInvoicePayments() {
         receiptUrl: data.receipt_url || undefined
       };
       
-      // Update the invoice with the new payment
-      const existingPayments = invoiceData.payments || [];
-      const allPayments = [...existingPayments, newPayment];
+      // Fetch all payments for this invoice
+      const { data: paymentsData, error: paymentsError } = await supabase
+        .from('invoice_payments')
+        .select('amount, payment_date, payment_method, reference, receipt_url')
+        .eq('invoice_id', invoiceId);
+      
+      if (paymentsError) {
+        throw paymentsError;
+      }
+      
+      // Convert all payments to PaymentRecord type
+      const allPayments: PaymentRecord[] = paymentsData.map(p => ({
+        amount: p.amount,
+        date: new Date(p.payment_date),
+        method: p.payment_method,
+        reference: p.reference || undefined,
+        receiptUrl: p.receipt_url || undefined
+      }));
       
       // Calculate total paid amount
       const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
@@ -77,7 +93,6 @@ export function useInvoicePayments() {
         .from('invoices')
         .update({ 
           status,
-          payments: allPayments,
           paid_date: paidDate
         })
         .eq('id', invoiceId);
@@ -89,7 +104,8 @@ export function useInvoicePayments() {
       return {
         payment: newPayment,
         status,
-        paidDate
+        paidDate,
+        allPayments
       };
       
     } catch (error) {
