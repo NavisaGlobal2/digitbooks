@@ -86,60 +86,34 @@ export const parseViaEdgeFunction = async (
       completeProgress();
     }
 
-    // Ensure transaction objects have all required fields and filter out invalid entries
-    const transactions = data.transactions
-      .map((tx: any, index: number) => ({
-        id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
-        date: tx.date || new Date().toISOString(),
-        description: tx.description || `Unknown transaction ${index + 1}`,
-        amount: typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount || '0'),
-        type: tx.type || (parseFloat(tx.amount || '0') < 0 ? "debit" : "credit"),
-        selected: tx.selected !== undefined ? tx.selected : (tx.type === "debit" || parseFloat(tx.amount || '0') < 0),
-        category: tx.category || "",
-        source: tx.source || "",
-        
-        // Preserve original values if present
-        originalDate: tx.originalDate || tx.date,
-        originalAmount: tx.originalAmount || tx.amount,
-        preservedColumns: tx.preservedColumns || {}
-      }))
-      // Filter out invalid transactions (those with "Unknown" description and zero amount)
-      .filter(tx => {
-        // Skip header rows and summary rows (typically have "Unknown" descriptions and zero amounts)
-        const isInvalidEntry = 
-          (tx.description.includes("Unknown transaction") && tx.amount === 0) || 
-          (!tx.description && tx.amount === 0) ||
-          (tx.description === "Unknown Transaction" && tx.amount === 0);
-        
-        // Also filter out rows that appear to be headers or summaries based on their preserved columns
-        const isSummaryOrHeader = tx.preservedColumns && 
-          Object.values(tx.preservedColumns).some(value => 
-            typeof value === 'string' && 
-            (value.includes("Summary") || 
-             value.includes("Date/Time") || 
-             value.includes("Balance") ||
-             value.includes("Money in") && value.includes("Money out")));
-        
-        return !isInvalidEntry && !isSummaryOrHeader;
-      });
+    // Ensure transaction objects have all required fields
+    const transactions = data.transactions.map((tx: any, index: number) => ({
+      id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
+      date: tx.date || new Date().toISOString(),
+      description: tx.description || `Unknown transaction ${index + 1}`,
+      amount: typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount || '0'),
+      type: tx.type || (parseFloat(tx.amount || '0') < 0 ? "debit" : "credit"),
+      selected: tx.selected !== undefined ? tx.selected : (tx.type === "debit" || parseFloat(tx.amount || '0') < 0),
+      category: tx.category || "",
+      source: tx.source || "",
+      
+      // Preserve original values if present
+      originalDate: tx.originalDate || tx.date,
+      originalAmount: tx.originalAmount || tx.amount,
+      preservedColumns: tx.preservedColumns || {}
+    }));
 
-    if (transactions.length === 0) {
-      console.warn("All transactions were filtered out as invalid");
-      onError("No valid transactions found in the statement. Please try a different file or format.");
-      return;
-    }
-
-    console.log(`Successfully parsed ${transactions.length} valid transactions with AI formatting: ${data.formattingApplied ? 'applied' : 'not applied'}`);
+    console.log(`Successfully parsed ${transactions.length} transactions with AI formatting: ${data.formattingApplied ? 'applied' : 'not applied'}`);
     console.log("Sample transaction:", transactions[0]);
     
     // Extract metadata to return
     const responseMetadata = {
-      count: transactions.length, // Update count to reflect filtered transactions
+      count: data.count || transactions.length,
       batchId: data.batchId,
       formattingApplied: data.formattingApplied,
       originalFormat: data.originalFormat,
       fileDetails: data.fileDetails,
-      message: `Successfully processed ${transactions.length} valid transactions`
+      message: data.message
     };
     
     // Send the transactions to the caller along with metadata
