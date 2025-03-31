@@ -100,19 +100,21 @@ export const usePaymentHistory = () => {
         
         // Sort by payment date (most recent first)
         const sortedInvoices = results
-          .filter(Boolean) as Invoice[]
-          .sort((a, b) => {
-            // Get the most recent payment date for each invoice
-            const latestPaymentA = a.payments && a.payments.length > 0 
-              ? Math.max(...a.payments.map(p => p.date.getTime())) 
-              : a.issuedDate.getTime();
-              
-            const latestPaymentB = b.payments && b.payments.length > 0 
-              ? Math.max(...b.payments.map(p => p.date.getTime())) 
-              : b.issuedDate.getTime();
-              
-            return latestPaymentB - latestPaymentA;
-          });
+          .filter(Boolean) as Invoice[];
+          
+        // Sort invoices by most recent payment date
+        sortedInvoices.sort((a, b) => {
+          // Get the most recent payment date for each invoice
+          const latestPaymentA = a.payments && a.payments.length > 0 
+            ? Math.max(...a.payments.map(p => p.date.getTime())) 
+            : a.issuedDate.getTime();
+            
+          const latestPaymentB = b.payments && b.payments.length > 0 
+            ? Math.max(...b.payments.map(p => p.date.getTime())) 
+            : b.issuedDate.getTime();
+            
+          return latestPaymentB - latestPaymentA;
+        });
           
         setInvoicesWithPayments(sortedInvoices);
       } catch (error) {
