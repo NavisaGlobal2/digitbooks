@@ -1,12 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
+import { format, addDays, startOfMonth, endOfMonth, startOfYear, endOfYear, subMonths, subYears } from "date-fns";
 import * as z from "zod";
 import { CalendarIcon, FileText, Info } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
@@ -57,22 +57,62 @@ export const GenerateReportDialog = ({
 
   const selectedReportPeriod = form.watch("reportPeriod");
   const showCustomDateRange = selectedReportPeriod === "custom-range";
+  
+  // Auto-set date range based on selected period
+  useEffect(() => {
+    if (selectedReportPeriod && selectedReportPeriod !== "custom-range") {
+      const today = new Date();
+      let start: Date;
+      let end: Date;
+      
+      switch (selectedReportPeriod) {
+        case "current-month":
+          start = startOfMonth(today);
+          end = endOfMonth(today);
+          break;
+        case "last-month":
+          const lastMonth = subMonths(today, 1);
+          start = startOfMonth(lastMonth);
+          end = endOfMonth(lastMonth);
+          break;
+        case "current-quarter":
+          const quarterMonth = Math.floor(today.getMonth() / 3) * 3;
+          start = new Date(today.getFullYear(), quarterMonth, 1);
+          end = new Date(today.getFullYear(), quarterMonth + 3, 0);
+          break;
+        case "year-to-date":
+          start = startOfYear(today);
+          end = today;
+          break;
+        case "last-year":
+          const lastYear = subYears(today, 1);
+          start = startOfYear(lastYear);
+          end = endOfYear(lastYear);
+          break;
+        default:
+          start = startOfMonth(today);
+          end = endOfMonth(today);
+      }
+      
+      form.setValue("startDate", start);
+      form.setValue("endDate", end);
+    }
+  }, [selectedReportPeriod, form]);
 
   const handleGenerate = (values: z.infer<typeof formSchema>) => {
     setIsGenerating(true);
     
     if (onGenerate) {
-      // If custom date range is selected, pass the date range to the onGenerate function
-      if (values.reportPeriod === "custom-range" && values.startDate && values.endDate) {
-        onGenerate(
-          values.reportType, 
-          values.reportPeriod, 
-          values.fileFormat, 
-          { startDate: values.startDate, endDate: values.endDate }
-        );
-      } else {
-        onGenerate(values.reportType, values.reportPeriod, values.fileFormat);
-      }
+      const dateRange = values.startDate && values.endDate 
+        ? { startDate: values.startDate, endDate: values.endDate }
+        : undefined;
+      
+      onGenerate(
+        values.reportType, 
+        values.reportPeriod, 
+        values.fileFormat, 
+        dateRange
+      );
     }
     
     setTimeout(() => {
@@ -158,28 +198,30 @@ export const GenerateReportDialog = ({
               )}
             />
             
-            {showCustomDateRange && (
-              <>
+            <div className="space-y-4 border rounded-md p-4 bg-slate-50">
+              <div className="text-sm font-medium">Report Date Range</div>
+              <div className="grid grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
                   name="startDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Start Date</FormLabel>
+                      <FormLabel className="text-xs mb-1">Start Date</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
                               variant="outline"
+                              size="sm"
                               className={cn(
-                                "w-full pl-3 text-left font-normal",
+                                "w-full pl-3 text-left font-normal text-xs",
                                 !field.value && "text-muted-foreground"
                               )}
                             >
                               {field.value ? (
                                 format(field.value, "MMM dd, yyyy")
                               ) : (
-                                <span>Select start date</span>
+                                <span>Select date</span>
                               )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
@@ -204,21 +246,22 @@ export const GenerateReportDialog = ({
                   name="endDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>End Date</FormLabel>
+                      <FormLabel className="text-xs mb-1">End Date</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
                               variant="outline"
+                              size="sm"
                               className={cn(
-                                "w-full pl-3 text-left font-normal",
+                                "w-full pl-3 text-left font-normal text-xs",
                                 !field.value && "text-muted-foreground"
                               )}
                             >
                               {field.value ? (
                                 format(field.value, "MMM dd, yyyy")
                               ) : (
-                                <span>Select end date</span>
+                                <span>Select date</span>
                               )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
@@ -241,8 +284,12 @@ export const GenerateReportDialog = ({
                     </FormItem>
                   )}
                 />
-              </>
-            )}
+              </div>
+              
+              <div className="text-xs text-muted-foreground italic">
+                {!showCustomDateRange && "Date range automatically set based on selected period"}
+              </div>
+            </div>
             
             <FormField
               control={form.control}
@@ -272,7 +319,7 @@ export const GenerateReportDialog = ({
             <Button 
               type="submit" 
               className="w-full bg-green-500 hover:bg-green-600" 
-              disabled={isGenerating || (showCustomDateRange && (!form.watch("startDate") || !form.watch("endDate")))}
+              disabled={isGenerating || !form.watch("startDate") || !form.watch("endDate")}
             >
               {isGenerating ? (
                 <>

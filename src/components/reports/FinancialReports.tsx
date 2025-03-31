@@ -17,7 +17,8 @@ const FinancialReports = () => {
     reportPeriod,
     dateRange,
     handleGenerateReport,
-    setSelectedReportType
+    setSelectedReportType,
+    isCustomDateRange
   } = useReportGeneration();
 
   const handleSelectReport = (reportType: string) => {
@@ -47,6 +48,7 @@ const FinancialReports = () => {
               selectedReportType={selectedReportType}
               reportPeriod={reportPeriod}
               dateRange={dateRange}
+              isCustomDateRange={isCustomDateRange}
               onBack={() => setSelectedReportType(null)}
             />
           ) : (

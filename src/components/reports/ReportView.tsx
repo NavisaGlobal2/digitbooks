@@ -7,6 +7,7 @@ interface ReportViewProps {
   selectedReportType: string | null;
   reportPeriod: string;
   dateRange: { startDate: Date; endDate: Date } | null;
+  isCustomDateRange: boolean;
   onBack: () => void;
 }
 
@@ -14,6 +15,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
   selectedReportType,
   reportPeriod,
   dateRange,
+  isCustomDateRange,
   onBack,
 }) => {
   if (!selectedReportType) return null;
@@ -25,6 +27,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
+          isCustomDateRange={isCustomDateRange}
         />
       );
     case "revenue-summary":

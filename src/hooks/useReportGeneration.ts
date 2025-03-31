@@ -14,12 +14,14 @@ interface UseReportGenerationReturn {
     customDateRange?: { startDate: Date; endDate: Date }
   ) => void;
   setSelectedReportType: (type: string | null) => void;
+  isCustomDateRange: boolean;
 }
 
 export const useReportGeneration = (): UseReportGenerationReturn => {
   const [selectedReportType, setSelectedReportType] = useState<string | null>(null);
   const [reportPeriod, setReportPeriod] = useState("Current Month");
   const [dateRange, setDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
+  const [isCustomDateRange, setIsCustomDateRange] = useState(false);
 
   const handleGenerateReport = (
     reportType: string,
@@ -32,8 +34,10 @@ export const useReportGeneration = (): UseReportGenerationReturn => {
     if (customDateRange) {
       displayPeriod = `${format(customDateRange.startDate, "MMM dd, yyyy")} - ${format(customDateRange.endDate, "MMM dd, yyyy")}`;
       setDateRange(customDateRange);
+      setIsCustomDateRange(true);
     } else {
       setDateRange(null);
+      setIsCustomDateRange(false);
     }
     
     toast.success(
@@ -57,6 +61,7 @@ export const useReportGeneration = (): UseReportGenerationReturn => {
     reportPeriod,
     dateRange,
     handleGenerateReport,
-    setSelectedReportType
+    setSelectedReportType,
+    isCustomDateRange
   };
 };
