@@ -1,5 +1,5 @@
 
-import FinancialReports from "../components/reports/FinancialReports";
+import FinancialReports from "@/components/reports/FinancialReports";
 
 const FinancialReportsPage = () => {
   return <FinancialReports />;
