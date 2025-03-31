@@ -3,6 +3,7 @@ import { ParsedTransaction } from "./parsers/types";
 import { Expense } from "@/types/expense";
 import { v4 as uuidv4 } from "uuid";
 import { saveTransactionsToDatabase } from "./storage/databaseOperations";
+import { ExpenseCategory } from "@/types/expense";
 
 export { saveTransactionsToDatabase } from "./storage/databaseOperations";
 
@@ -24,9 +25,9 @@ export const prepareExpensesFromTransactions = (
   return selectedAndTagged.map((transaction) => ({
     id: uuidv4(), // Generate a new ID for each expense
     amount: Math.abs(transaction.amount), // Ensure amount is positive
-    date: new Date(transaction.date),
+    date: new Date(transaction.date), // Convert string date to Date object
     description: transaction.description,
-    category: transaction.category!,
+    category: transaction.category as ExpenseCategory, // Type cast to ExpenseCategory
     vendor: inferVendorFromDescription(transaction.description),
     status: "pending", // Changed from "completed" to "pending" to match ExpenseStatus type
     paymentMethod: "bank transfer",

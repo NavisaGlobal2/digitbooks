@@ -92,6 +92,32 @@ export const ExcelService = {
       console.error('Error extracting text from Excel file:', error);
       throw new Error(`Failed to extract text from Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  },
+
+  /**
+   * Export data to an Excel file
+   * @param data The data to export (array of arrays, first row is headers)
+   * @param fileName The name to give the downloaded file
+   */
+  exportToExcel: (data: any[][], fileName: string = 'exported-data.xlsx') => {
+    try {
+      // Create a new workbook
+      const workbook = XLSX.utils.book_new();
+      
+      // Convert the data to a worksheet
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      
+      // Add the worksheet to the workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+      
+      // Generate the Excel file and trigger download
+      XLSX.writeFile(workbook, fileName);
+      
+      toast.success(`Successfully exported to ${fileName}`);
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      toast.error('Failed to export data to Excel');
+    }
   }
 };
 

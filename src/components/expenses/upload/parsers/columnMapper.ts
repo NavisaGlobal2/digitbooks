@@ -54,11 +54,14 @@ export const parseRowsWithMapping = (
     // Parse date, fallback to current date if missing
     const dateValue = mapping.date >= 0 && row[mapping.date] 
       ? parseDate(row[mapping.date]) 
-      : new Date();
+      : new Date().toISOString();
+    
+    // Ensure date is a string
+    const dateString = typeof dateValue === 'string' ? dateValue : dateValue.toISOString();
     
     return {
       id: `transaction-${index}-${Date.now()}`,
-      date: dateValue,
+      date: dateString,
       description: description.trim(),
       amount,
       type: transactionType,

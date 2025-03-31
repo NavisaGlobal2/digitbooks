@@ -8,6 +8,8 @@ export interface ParsedTransaction {
   selected: boolean;
   category?: string;
   source?: string;
+  categorySuggestion?: CategorySuggestion;
+  batchId?: string;
 }
 
 export interface CategorySuggestion {
