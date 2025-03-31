@@ -26,42 +26,45 @@ import { Toaster as SonnerToaster } from 'sonner';
 import { AuthProvider } from './contexts/auth';
 import { VendorProvider } from './contexts/vendor';
 import { InvoiceProvider } from './contexts/invoice';
+import { ExpenseProvider } from './contexts/expense';
 
 function App() {
   return (
     <AuthProvider>
       <VendorProvider>
         <InvoiceProvider>
-          <Router>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/features" element={<Features />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/careers" element={<Careers />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/help" element={<Help />} />
-              
-              {/* Protected routes */}
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/ledger" element={<Ledger />} />
-              <Route path="/budget" element={<Budget />} />
-              <Route path="/expenses" element={<Expenses />} />
-              <Route path="/vendors" element={<Vendors />} />
-              <Route path="/invoicing" element={<Invoicing />} />
-              <Route path="/revenue" element={<Revenue />} />
-              <Route path="/reports" element={<FinancialReports />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/applications-admin" element={<ApplicationsAdmin />} />
-              
-              {/* 404 route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-            <SonnerToaster position="top-right" />
-          </Router>
+          <ExpenseProvider>
+            <Router>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/features" element={<Features />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/careers" element={<Careers />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/help" element={<Help />} />
+                
+                {/* Protected routes */}
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/ledger" element={<Ledger />} />
+                <Route path="/budget" element={<Budget />} />
+                <Route path="/expenses" element={<Expenses />} />
+                <Route path="/vendors" element={<Vendors />} />
+                <Route path="/invoicing" element={<Invoicing />} />
+                <Route path="/revenue" element={<Revenue />} />
+                <Route path="/reports" element={<FinancialReports />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/applications-admin" element={<ApplicationsAdmin />} />
+                
+                {/* 404 route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Toaster />
+              <SonnerToaster position="top-right" />
+            </Router>
+          </ExpenseProvider>
         </InvoiceProvider>
       </VendorProvider>
     </AuthProvider>
