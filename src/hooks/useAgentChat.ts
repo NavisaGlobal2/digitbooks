@@ -21,37 +21,73 @@ export const useAgentChat = () => {
   const { financialData, isLoading: isLoadingFinancialData } = useFinancialInsights();
 
   const formatAIResponse = (response: any): string => {
-    // Check if response is a JSON array or object that needs parsing
+    // If it's already a string that doesn't look like JSON, return as is
+    if (typeof response === 'string' && !response.trim().startsWith('{') && !response.trim().startsWith('[')) {
+      return response;
+    }
+    
+    // Handle JSON string responses
     if (typeof response === 'string') {
       try {
-        // Check if it's a JSON string (common pattern from the AI service)
         const parsed = JSON.parse(response);
         
-        // If it's an array of transactions, format it nicely
+        // If it's an array of transactions, format it into a human-readable message
         if (Array.isArray(parsed)) {
-          return `I found the following transactions in your records:\n\n${parsed.map(item => 
-            `- ${new Date(item.date).toLocaleDateString()}: ${item.description} - ${(Math.abs(item.amount)/100).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} (${item.type})`
-          ).join('\n')}`;
+          if (parsed.length === 0) {
+            return "I couldn't find any transactions matching your criteria.";
+          }
+          
+          return `I found ${parsed.length} transactions that might interest you:\n\n${parsed.slice(0, 5).map(item => 
+            `• ${new Date(item.date).toLocaleDateString()}: ${item.description} - ${(Math.abs(item.amount)/100).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} (${item.type === 'debit' ? 'expense' : 'income'})`
+          ).join('\n')}${parsed.length > 5 ? `\n\n...and ${parsed.length - 5} more transactions.` : ''}`;
         }
         
-        // If it's an object with specific fields, return a formatted message
+        // If it's an object with summary data, convert to human-readable insights
         if (parsed && typeof parsed === 'object') {
-          return JSON.stringify(parsed, null, 2);
+          // If it's likely a response object with embedded message
+          if (parsed.response && typeof parsed.response === 'string') {
+            return parsed.response;
+          }
+          
+          // For financial summaries
+          if (parsed.total || parsed.average || parsed.summary) {
+            let message = "Here's what I found in your financial data:\n\n";
+            
+            if (parsed.total) message += `Total: ${typeof parsed.total === 'number' ? parsed.total.toLocaleString('en-US', {style: 'currency', currency: 'USD'}) : parsed.total}\n`;
+            if (parsed.average) message += `Average: ${typeof parsed.average === 'number' ? parsed.average.toLocaleString('en-US', {style: 'currency', currency: 'USD'}) : parsed.average}\n`;
+            if (parsed.summary) message += `${parsed.summary}\n`;
+            
+            return message;
+          }
+          
+          // Default object display as conversation
+          return "Based on my analysis: " + Object.entries(parsed)
+            .filter(([key]) => !key.startsWith('_'))
+            .map(([key, value]) => `${key}: ${value}`)
+            .join(', ');
         }
         
-        // Otherwise return the parsed content as string
+        // Otherwise return the response as is
         return response;
       } catch (e) {
         // Not JSON, return as is
         return response;
       }
     } else if (response && typeof response === 'object') {
-      // If it's already an object, stringify it nicely
-      return JSON.stringify(response, null, 2);
+      // If it's an object with a response field, use that directly
+      if (response.response && typeof response.response === 'string') {
+        return response.response;
+      }
+      
+      // Otherwise create a conversational summary
+      return "Here's what I found: " + JSON.stringify(response, null, 0)
+        .replace(/[{}"]/g, '')
+        .replace(/,/g, ', ')
+        .replace(/:/g, ': ');
     }
     
     // Fallback for unexpected formats
-    return response ? response.toString() : "I couldn't analyze your financial data at the moment.";
+    return response ? response.toString() : "I'm sorry, but I couldn't analyze your financial data at the moment. Could you try asking me in a different way?";
   };
 
   const handleSendMessage = async (input: string) => {

@@ -25,7 +25,6 @@ export const getAIInsights = async ({ query, financialData, userId }: AIQueryPar
         context,
         userId,
         preferredProvider: 'anthropic',
-        formatAsHuman: true // Add hint to format response as human text
       },
     });
 
@@ -35,6 +34,8 @@ export const getAIInsights = async ({ query, financialData, userId }: AIQueryPar
     }
 
     console.log("AI response received:", data);
+    
+    // The response should already be in conversational format from the edge function
     return data.response;
   } catch (err) {
     console.error("AI service error:", err);

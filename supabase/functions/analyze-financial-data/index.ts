@@ -26,14 +26,23 @@ serve(async (req) => {
     console.log("Processing AI query:", query);
     console.log("Context length:", context.length);
 
-    // Create system prompt for financial analysis
-    const systemPrompt = `You are DigitBooks AI Assistant, a financial advisor that specializes in analyzing accounting and financial data for small businesses. Based on the provided financial data, answer the user's question in a clear, concise, and professional manner. 
+    // Create system prompt for conversational financial analysis
+    const systemPrompt = `You are DigitBooks AI Assistant, a friendly, conversational financial advisor for small businesses. 
     
-    Provide specific insights based ONLY on the data provided. If there isn't enough information to answer a question completely, acknowledge this and suggest what additional information might be helpful. Always back up your insights with numbers from the provided data.
+    YOU MUST ALWAYS:
+    - Use a warm, helpful tone and first-person perspective ("I")
+    - Keep responses brief and clear, avoiding technical jargon when possible
+    - Respond directly to the user's question first, then provide supporting details
+    - Format your responses in plain, readable text with line breaks for readability
+    - Use bullet points for lists of multiple items
     
-    DO NOT make up information that isn't in the provided data. If you're uncertain about something, say so rather than guessing.
+    DO NOT:
+    - Return raw JSON or technical data formatting
+    - Use formal or robotic language
+    - Exceed 5 sentences unless absolutely necessary
+    - Make up information not provided in the financial data
     
-    RESPOND WITH PLAIN TEXT in a business professional tone. Be friendly but focus on the numbers and insights.`;
+    Based on the financial data provided, answer the user's question in a friendly, conversational manner as if you're having a natural chat with them.`;
 
     // Combine user query with financial data context
     const fullPrompt = `
@@ -41,7 +50,7 @@ serve(async (req) => {
       
       FINANCIAL DATA: ${context}
       
-      Based on this data, provide a helpful analysis and answer to the user's query. Focus on key insights and actionable advice if appropriate.
+      Please respond conversationally and naturally to the question above using only the provided financial data. Be helpful, concise, and explain things in simple terms.
     `;
 
     console.log("Sending to Anthropic for processing...");
@@ -52,27 +61,20 @@ serve(async (req) => {
       response = await processWithAnthropic(fullPrompt, "financial-analysis");
       console.log("Response received from Anthropic:", typeof response);
       
-      // Ensure we have a clean text response
-      let cleanResponse;
-      
-      if (typeof response === 'string') {
-        cleanResponse = response;
-      } else if (typeof response === 'object') {
-        // If it's an object, stringify it
-        cleanResponse = JSON.stringify(response);
-      } else {
-        throw new Error("Unexpected response format from AI");
-      }
-      
+      // We don't need additional parsing here as we want the direct conversational response
       return new Response(
-        JSON.stringify({ response: cleanResponse }),
+        JSON.stringify({ response }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } catch (error) {
       console.error("Error processing with Anthropic:", error);
       
       return new Response(
-        JSON.stringify({ error: "Failed to process with AI", details: error.message }),
+        JSON.stringify({ 
+          error: "Failed to process with AI", 
+          details: error.message,
+          response: "I'm sorry, I encountered a problem while analyzing your financial data. Could you try asking me again in a different way?"
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -80,7 +82,10 @@ serve(async (req) => {
     console.error("Server error:", error);
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        response: "I apologize, but I'm having trouble understanding your request right now. Could you try again in a moment?"
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
