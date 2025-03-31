@@ -1,54 +1,61 @@
 
-import React from "react";
-import { GenerateReportDialog } from "@/components/reports/GenerateReportDialog";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useReportGeneration } from "@/hooks/useReportGeneration";
 import { ReportsLayout } from "./layout/ReportsLayout";
 import { ReportsContent } from "./ReportsContent";
-import { useFinancialReportState } from "./hooks/useFinancialReportState";
+import { GenerateReportDialog } from "./GenerateReportDialog";
 
 const FinancialReports = () => {
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+  
   const {
-    showGenerateDialog,
-    setShowGenerateDialog,
-    isMobileSidebarOpen,
-    setIsMobileSidebarOpen,
     selectedReportType,
     reportPeriod,
     dateRange,
     handleGenerateReport,
     setSelectedReportType,
     isCustomDateRange,
-    handleSelectReport,
-    handleDateRangeChange,
-    handleGenerateWithCurrentDateRange
-  } = useFinancialReportState();
+    setDateRange
+  } = useReportGeneration();
+
+  const onGenerateReport = () => {
+    setShowGenerateDialog(true);
+  };
+
+  const onBack = () => {
+    setSelectedReportType(null);
+  };
+
+  // Hide the generate button in the header when a specific report is selected
+  const showGenerateButton = !selectedReportType;
 
   return (
-    <>
-      <ReportsLayout
-        onGenerateReport={() => setShowGenerateDialog(true)}
-        isMobileSidebarOpen={isMobileSidebarOpen}
-        setIsMobileSidebarOpen={setIsMobileSidebarOpen}
-      >
-        <div className="p-6">
-          <ReportsContent
-            selectedReportType={selectedReportType}
-            reportPeriod={reportPeriod}
-            dateRange={dateRange}
-            isCustomDateRange={isCustomDateRange}
-            onBack={() => setSelectedReportType(null)}
-            onSelectReport={handleSelectReport}
-            onDateRangeChange={handleDateRangeChange}
-            onGenerateReport={handleGenerateWithCurrentDateRange}
-          />
-        </div>
-      </ReportsLayout>
+    <ReportsLayout
+      onGenerateReport={onGenerateReport}
+      isMobileSidebarOpen={isMobileSidebarOpen}
+      setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+      showGenerateButton={showGenerateButton}
+    >
+      <ReportsContent
+        selectedReportType={selectedReportType}
+        reportPeriod={reportPeriod}
+        dateRange={dateRange}
+        isCustomDateRange={isCustomDateRange}
+        onBack={onBack}
+        onSelectReport={setSelectedReportType}
+        onDateRangeChange={setDateRange}
+        onGenerateReport={onGenerateReport}
+      />
 
       <GenerateReportDialog
         open={showGenerateDialog}
         onOpenChange={setShowGenerateDialog}
         onGenerate={handleGenerateReport}
       />
-    </>
+    </ReportsLayout>
   );
 };
 

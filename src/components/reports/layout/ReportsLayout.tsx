@@ -9,13 +9,15 @@ interface ReportsLayoutProps {
   onGenerateReport: () => void;
   isMobileSidebarOpen: boolean;
   setIsMobileSidebarOpen: (isOpen: boolean) => void;
+  showGenerateButton?: boolean;
 }
 
 export const ReportsLayout: React.FC<ReportsLayoutProps> = ({
   children,
   onGenerateReport,
   isMobileSidebarOpen,
-  setIsMobileSidebarOpen
+  setIsMobileSidebarOpen,
+  showGenerateButton = true
 }) => {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -32,6 +34,7 @@ export const ReportsLayout: React.FC<ReportsLayoutProps> = ({
         <ReportsHeader 
           onGenerateReport={onGenerateReport}
           onMobileMenuOpen={() => setIsMobileSidebarOpen(true)}
+          showGenerateButton={showGenerateButton}
         />
 
         <main className="flex-1 overflow-auto p-3 sm:p-6">
