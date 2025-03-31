@@ -89,8 +89,10 @@ export const parseViaEdgeFunction = async (
     // Call success callback with transactions
     onSuccess(filteredTransactions);
     
-    // Show success message with the transaction count
-    toast.success(`Successfully parsed ${filteredTransactions.length} expenses from your statement`);
+    // Only show toast for significant number of transactions
+    if (filteredTransactions.length > 5) {
+      toast.success(`Parsed ${filteredTransactions.length} expenses from your statement`);
+    }
     
     return filteredTransactions;
   } catch (error) {

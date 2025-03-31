@@ -14,7 +14,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from "sonner";
 
 interface Notification {
   id: number;
@@ -50,7 +49,7 @@ const NotificationsDropdown = ({
     // Update unread count
     setUnreadCount(prev => Math.max(0, prev - 1));
     
-    toast.success("Notification marked as read");
+    // No toast needed here - UI feedback is sufficient
   };
   
   return (

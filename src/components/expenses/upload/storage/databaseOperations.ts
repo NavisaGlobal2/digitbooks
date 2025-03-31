@@ -14,6 +14,8 @@ export const saveTransactionsToDatabase = async (
       return false;
     }
     
+    let failedCount = 0;
+    
     // Save each transaction to the uploaded_bank_lines table
     for (const transaction of transactions) {
       if (!transaction.selected) continue;
@@ -33,8 +35,13 @@ export const saveTransactionsToDatabase = async (
         
       if (error) {
         console.error("Error saving bank transaction:", error);
-        toast.error("Failed to save some transaction data");
+        failedCount++;
       }
+    }
+    
+    // Only show toast if there were failures, and only once
+    if (failedCount > 0) {
+      toast.error(`Failed to save ${failedCount} transaction(s)`);
     }
     
     // Once all transactions are saved, use the database function to convert them to expenses
@@ -42,7 +49,7 @@ export const saveTransactionsToDatabase = async (
     
     if (savingError) {
       console.error("Error saving expenses:", savingError);
-      toast.error("There was an issue converting transactions to expenses");
+      toast.error("Issue converting transactions to expenses");
       return false;
     }
     

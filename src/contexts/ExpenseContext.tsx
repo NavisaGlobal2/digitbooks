@@ -91,7 +91,9 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setExpenses(prev => [newExpense, ...prev]);
     
     const result = await dbAddExpense(newExpense);
-    toast[result.success ? 'success' : 'warning'](result.message);
+    if (!result.success) {
+      toast.error(result.message);
+    }
   };
 
   // Add multiple expenses
@@ -104,7 +106,11 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setExpenses(prev => [...newExpenses, ...prev]);
     
     const result = await addExpensesBatch(newExpenses);
-    toast[result.success ? 'success' : 'warning'](result.message);
+    if (!result.success) {
+      toast.error(result.message);
+    } else if (newExpenses.length > 5) {
+      toast.success(`${newExpenses.length} expenses imported`);
+    }
   };
 
   // Update expense status
@@ -121,7 +127,9 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     
     if (expense) {
       const result = await dbUpdateExpenseStatus(expense, status);
-      toast[result.success ? 'success' : 'warning'](result.message);
+      if (!result.success) {
+        toast.error(result.message);
+      }
     }
   };
 
@@ -136,7 +144,9 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
     
     const result = await dbUpdateExpense(updatedExpense);
-    toast[result.success ? 'success' : 'warning'](result.message);
+    if (!result.success) {
+      toast.error(result.message);
+    }
   };
 
   // Delete expense
@@ -144,8 +154,8 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setExpenses(prev => prev.filter(expense => expense.id !== expenseId));
     
     const result = await dbDeleteExpense(expenseId);
-    if (result.success) {
-      toast.success(result.message);
+    if (!result.success) {
+      toast.error(result.message);
     }
   };
 

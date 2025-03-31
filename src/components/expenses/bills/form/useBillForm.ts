@@ -59,7 +59,7 @@ export const useBillForm = ({ onBillAdded, onOpenChange }: UseBillFormProps) => 
         throw error;
       }
 
-      toast.success("Bill created successfully");
+      toast.success("Bill created");
       form.reset();
       onBillAdded();
       onOpenChange(false);
