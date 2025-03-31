@@ -47,7 +47,6 @@ const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
 
           // Map the payments to our format
           const formattedPayments = payments.map(payment => ({
-            id: payment.id,
             amount: payment.amount,
             date: new Date(payment.payment_date),
             method: payment.payment_method,
@@ -55,28 +54,33 @@ const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
             receiptUrl: payment.receipt_url || undefined
           }));
 
+          // Parse the JSON fields from the database
+          const parsedItems = Array.isArray(invoice.items) ? invoice.items : [];
+          const parsedBankDetails = typeof invoice.bank_details === 'object' ? invoice.bank_details : {
+            accountName: '',
+            accountNumber: '',
+            bankName: ''
+          };
+
           // Convert DB invoice to our Invoice format
           return {
             id: invoice.id,
             clientName: invoice.client_name,
-            clientEmail: invoice.client_email || undefined,
-            clientAddress: invoice.client_address || undefined,
+            // These fields might not exist in the database
+            clientEmail: undefined,
+            clientAddress: undefined,
             invoiceNumber: invoice.invoice_number,
             issuedDate: new Date(invoice.issued_date),
             dueDate: new Date(invoice.due_date),
             amount: invoice.amount,
             status: invoice.status,
-            items: invoice.items || [],
+            items: parsedItems,
             logoUrl: invoice.logo_url || undefined,
             additionalInfo: invoice.additional_info || undefined,
-            bankDetails: invoice.bank_details || {
-              accountName: '',
-              accountNumber: '',
-              bankName: ''
-            },
-            paidDate: invoice.paid_date ? new Date(invoice.paid_date) : undefined,
+            bankDetails: parsedBankDetails,
+            paidDate: undefined, // This field doesn't exist in the database
             payments: formattedPayments
-          };
+          } as Invoice;
         });
 
         const results = await Promise.all(invoicesWithPaymentsPromises);

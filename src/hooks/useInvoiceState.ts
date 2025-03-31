@@ -54,26 +54,31 @@ export const useInvoiceState = () => {
             receiptUrl: payment.receipt_url || undefined
           })) : undefined;
           
+          // Parse JSON fields from the database
+          const parsedItems = Array.isArray(invoice.items) ? invoice.items : [];
+          const parsedBankDetails = typeof invoice.bank_details === 'object' ? invoice.bank_details : {
+            accountName: '',
+            accountNumber: '',
+            bankName: ''
+          };
+
           return {
             id: invoice.id,
             clientName: invoice.client_name,
-            clientEmail: invoice.client_email || undefined,
-            clientAddress: invoice.client_address || undefined,
+            clientEmail: undefined, // These fields don't exist in the database
+            clientAddress: undefined, // These fields don't exist in the database
             invoiceNumber: invoice.invoice_number,
             issuedDate: new Date(invoice.issued_date),
             dueDate: new Date(invoice.due_date),
             amount: invoice.amount,
             status: invoice.status as InvoiceStatus,
-            items: Array.isArray(invoice.items) ? invoice.items : [],
+            items: parsedItems,
             logoUrl: invoice.logo_url || undefined,
             additionalInfo: invoice.additional_info || undefined,
-            bankDetails: invoice.bank_details || {
-              accountName: '',
-              accountNumber: '',
-              bankName: ''
-            },
+            bankDetails: parsedBankDetails,
             payments,
-            paidDate: invoice.paid_date ? new Date(invoice.paid_date) : undefined
+            // This doesn't exist in the database, but we need it for our UI
+            paidDate: invoice.status === 'paid' ? new Date() : undefined
           };
         }));
         

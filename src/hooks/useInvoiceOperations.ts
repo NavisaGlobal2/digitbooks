@@ -33,21 +33,19 @@ export const useInvoiceOperations = (invoices: Invoice[], setInvoices: React.Dis
     try {
       const invoiceNumber = getNextInvoiceNumber();
       
-      // Prepare invoice data for database storage
+      // Prepare invoice data for database storage - convert types to match database schema
       const dbInvoiceData = {
         user_id: user.id,
         client_name: invoiceData.clientName,
-        client_email: invoiceData.clientEmail || null,
-        client_address: invoiceData.clientAddress || null,
         invoice_number: invoiceNumber,
         issued_date: invoiceData.issuedDate.toISOString(),
         due_date: invoiceData.dueDate.toISOString(),
         amount: invoiceData.amount,
         status: invoiceData.status,
-        items: invoiceData.items || [],
+        items: invoiceData.items || [], // This needs to be JSON compatible
         logo_url: invoiceData.logoUrl || null,
         additional_info: invoiceData.additionalInfo || null,
-        bank_details: invoiceData.bankDetails || {}
+        bank_details: invoiceData.bankDetails || {} // This needs to be JSON compatible
       };
       
       const { data, error } = await supabase
@@ -61,25 +59,28 @@ export const useInvoiceOperations = (invoices: Invoice[], setInvoices: React.Dis
       }
       
       // Format the returned data to match our Invoice type
+      const parsedItems = Array.isArray(data.items) ? data.items : [];
+      const parsedBankDetails = typeof data.bank_details === 'object' ? data.bank_details : {
+        accountName: '',
+        accountNumber: '',
+        bankName: ''
+      };
+
       const newInvoice: Invoice = {
         id: data.id,
         clientName: data.client_name,
-        clientEmail: data.client_email || undefined,
-        clientAddress: data.client_address || undefined,
+        clientEmail: invoiceData.clientEmail, // Keep from original data since DB doesn't have it
+        clientAddress: invoiceData.clientAddress, // Keep from original data since DB doesn't have it
         invoiceNumber: data.invoice_number,
         issuedDate: new Date(data.issued_date),
         dueDate: new Date(data.due_date),
         amount: data.amount,
         status: data.status as InvoiceStatus,
-        items: data.items || [],
+        items: parsedItems,
         logoUrl: data.logo_url || undefined,
         additionalInfo: data.additional_info || undefined,
-        bankDetails: data.bank_details || {
-          accountName: '',
-          accountNumber: '',
-          bankName: ''
-        },
-        paidDate: data.paid_date ? new Date(data.paid_date) : undefined
+        bankDetails: parsedBankDetails,
+        paidDate: undefined // The DB doesn't have this field
       };
       
       // Update local state
@@ -133,15 +134,11 @@ export const useInvoiceOperations = (invoices: Invoice[], setInvoices: React.Dis
       }
       
       const status = totalPaid >= invoice.amount ? 'paid' : 'partially-paid';
-      const paidDate = status === 'paid' ? new Date() : null;
       
-      // Update in database
+      // Update in database - don't try to update paid_date as it doesn't exist
       const { error } = await supabase
         .from('invoices')
-        .update({ 
-          status, 
-          paid_date: paidDate ? paidDate.toISOString() : null
-        })
+        .update({ status })
         .eq('id', invoiceId)
         .eq('user_id', user?.id);
       
@@ -157,7 +154,7 @@ export const useInvoiceOperations = (invoices: Invoice[], setInvoices: React.Dis
               ...invoice, 
               status,
               payments,
-              paidDate
+              paidDate: status === 'paid' ? new Date() : undefined
             };
           }
           return invoice;
