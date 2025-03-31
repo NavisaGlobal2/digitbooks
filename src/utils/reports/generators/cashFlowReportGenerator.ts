@@ -34,6 +34,7 @@ export const generateCashFlowReportContent = async (doc: jsPDF, reportData?: Rep
     clone.style.height = 'auto';
     clone.style.backgroundColor = 'white';
     clone.style.overflow = 'visible';
+    clone.classList.add('clone-for-pdf');
     
     // Remove any buttons, navigation, or interactive elements from the clone
     clone.querySelectorAll('button, a, .print\\:hidden').forEach(el => {
@@ -43,53 +44,47 @@ export const generateCashFlowReportContent = async (doc: jsPDF, reportData?: Rep
     // Append clone to body temporarily
     document.body.appendChild(clone);
     
-    // Use html2canvas with improved settings
-    const canvas = await html2canvas(clone, {
-      scale: 2, // Higher scale for better quality
-      useCORS: true, // Enable CORS for images
-      logging: false, // Disable logging
-      backgroundColor: "#ffffff", // Set white background
-      ignoreElements: (element) => {
-        // Skip elements that shouldn't be in PDF
-        const style = window.getComputedStyle(element);
-        return style.display === "none" || 
-               style.visibility === "hidden" || 
-               style.opacity === "0" ||
-               element.classList.contains('print:hidden');
-      }
-    });
-
-    // Remove the clone from the DOM
-    document.body.removeChild(clone);
-
-    // Calculate dimensions to fit the PDF page
-    const imgData = canvas.toDataURL('image/png');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    
-    // Calculate proportional height to maintain aspect ratio
-    const canvasAspectRatio = canvas.height / canvas.width;
-    const imgWidth = pageWidth - 20; // 10pt margin on each side
-    const imgHeight = imgWidth * canvasAspectRatio;
-    
-    // Add title
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("Cash Flow Report", 105, 20, { align: "center" });
-    
-    // Add period
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Period: ${reportData.period || "Current Period"}`, 105, 30, { align: "center" });
-    
-    // Add the captured image
-    doc.addImage(imgData, 'PNG', 10, 40, imgWidth, imgHeight);
-    
-    // Add generation date at bottom
-    const currentDate = format(new Date(), "MMMM dd, yyyy");
-    doc.setFontSize(10);
-    doc.text(`Generated on: ${currentDate}`, 105, pageHeight - 10, { align: "center" });
-    
+    try {
+      // Use a longer delay to ensure rendering is complete (especially for charts)
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Capture the element
+      const canvas = await html2canvas(clone, {
+        scale: 2, // Higher scale for better quality
+        useCORS: true, // Enable CORS for images
+        logging: false, // Disable logging
+        backgroundColor: "#ffffff", // Set white background
+        ignoreElements: (element) => {
+          // Skip elements that shouldn't be in PDF
+          const style = window.getComputedStyle(element);
+          return style.display === "none" || 
+                 style.visibility === "hidden" || 
+                 style.opacity === "0" ||
+                 element.classList.contains('print:hidden');
+        }
+      });
+      
+      // Calculate dimensions to fit the PDF page
+      const imgData = canvas.toDataURL('image/png');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      
+      // Calculate proportional height to maintain aspect ratio
+      const canvasAspectRatio = canvas.height / canvas.width;
+      const imgWidth = pageWidth - 20; // 10pt margin on each side
+      const imgHeight = imgWidth * canvasAspectRatio;
+      
+      // Add the captured image to PDF
+      doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      
+      // Add generation date at bottom
+      const currentDate = format(new Date(), "MMMM dd, yyyy");
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${currentDate}`, pageWidth / 2, imgHeight + 20, { align: "center" });
+      
+    } finally {
+      // Always clean up the temporary element
+      document.body.removeChild(clone);
+    }
   } catch (error) {
     console.error("Error generating Cash Flow report:", error);
     return generateSampleCashFlowReport(doc);
