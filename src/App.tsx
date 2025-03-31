@@ -1,149 +1,64 @@
 
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { InvoiceProvider } from "@/contexts/InvoiceContext";
-import { ClientProvider } from "@/contexts/ClientContext";
-import { ExpenseProvider } from "@/contexts/ExpenseContext";
-import { RevenueProvider } from "@/contexts/RevenueContext";
-import { BudgetProvider } from "@/contexts/BudgetContext";
-import { LedgerProvider } from "@/contexts/LedgerContext";
-import { AuthProvider } from "@/contexts/auth";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Index from './pages/Index';
+import NotFound from './pages/NotFound';
+import About from './pages/About';
+import Features from './pages/Features';
+import Pricing from './pages/Pricing';
+import Careers from './pages/Careers';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+import Ledger from './pages/Ledger';
+import Budget from './pages/Budget';
+import Expenses from './pages/Expenses';
+import Vendors from './pages/Vendors';
+import Invoicing from './pages/Invoicing';
+import Revenue from './pages/Revenue';
+import Settings from './pages/Settings';
+import FinancialReports from './pages/FinancialReports';
+import ApplicationsAdmin from './pages/ApplicationsAdmin';
+import Help from './pages/Help';
+import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from 'sonner';
 
-// Import all the page components
-import Index from "./pages/Index";
-import Features from "./pages/Features";
-import Pricing from "./pages/Pricing";
-import About from "./pages/About";
-import Help from "./pages/Help";
-import Careers from "./pages/Careers";
-import Dashboard from "./pages/Dashboard";
-import Invoicing from "./pages/Invoicing";
-import Expenses from "./pages/Expenses";
-import Revenue from "./pages/Revenue";
-import Clients from "./pages/Clients";
-import Budget from "./pages/Budget";
-import Ledger from "./pages/Ledger";
-import FinancialReports from "./pages/FinancialReports";
-import Settings from "./pages/Settings";
-import ApplicationsAdmin from "./pages/ApplicationsAdmin";
-import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth";
-import Onboarding from "./Onboarding";
-import Agent from "./pages/Agent";
-import { RequireAuth } from "./components/auth/RequireAuth";
-import AcceptInvitation from "./pages/AcceptInvitation";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import Verify from "./pages/Verify";
-import ExcelDemo from "./pages/ExcelDemo";
-
-const queryClient = new QueryClient();
+import { VendorProvider } from './contexts/vendor';
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <ClientProvider>
-            <InvoiceProvider>
-              <ExpenseProvider>
-                <RevenueProvider>
-                  <BudgetProvider>
-                    <LedgerProvider>
-                      <BrowserRouter>
-                        <Routes>
-                          {/* Public routes */}
-                          <Route path="/" element={<Index />} />
-                          <Route path="/features" element={<Features />} />
-                          <Route path="/pricing" element={<Pricing />} />
-                          <Route path="/about" element={<About />} />
-                          <Route path="/help" element={<Help />} />
-                          <Route path="/careers" element={<Careers />} />
-                          
-                          {/* Auth routes */}
-                          <Route path="/auth" element={<Auth />} />
-                          <Route path="/accept-invitation" element={<AcceptInvitation />} />
-                          <Route path="/onboarding" element={
-                            <RequireAuth>
-                              <Onboarding />
-                            </RequireAuth>
-                          } />
-                          
-                          {/* Protected routes that require authentication */}
-                          <Route path="/dashboard" element={
-                            <RequireAuth>
-                              <Dashboard />
-                            </RequireAuth>
-                          } />
-                          <Route path="/invoicing" element={
-                            <RequireAuth>
-                              <Invoicing />
-                            </RequireAuth>
-                          } />
-                          <Route path="/expenses" element={
-                            <RequireAuth>
-                              <Expenses />
-                            </RequireAuth>
-                          } />
-                          <Route path="/revenue" element={
-                            <RequireAuth>
-                              <Revenue />
-                            </RequireAuth>
-                          } />
-                          <Route path="/clients" element={
-                            <RequireAuth>
-                              <Clients />
-                            </RequireAuth>
-                          } />
-                          <Route path="/budget" element={
-                            <RequireAuth>
-                              <Budget />
-                            </RequireAuth>
-                          } />
-                          <Route path="/ledger" element={
-                            <RequireAuth>
-                              <Ledger />
-                            </RequireAuth>
-                          } />
-                          <Route path="/reports" element={
-                            <RequireAuth>
-                              <FinancialReports />
-                            </RequireAuth>
-                          } />
-                          <Route path="/agent" element={
-                            <RequireAuth>
-                              <Agent />
-                            </RequireAuth>
-                          } />
-                          <Route path="/settings" element={
-                            <RequireAuth>
-                              <Settings />
-                            </RequireAuth>
-                          } />
-                          <Route path="/admin/applications" element={
-                            <RequireAuth>
-                              <ApplicationsAdmin />
-                            </RequireAuth>
-                          } />
-                          
-                          {/* Fallback route */}
-                          <Route path="/login" element={<Login />} />
-                          <Route path="/signup" element={<Signup />} />
-                          <Route path="/verify" element={<Verify />} />
-                          <Route path="/excel-demo" element={<ExcelDemo />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </BrowserRouter>
-                    </LedgerProvider>
-                  </BudgetProvider>
-                </RevenueProvider>
-              </ExpenseProvider>
-            </InvoiceProvider>
-          </ClientProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <VendorProvider>
+      <Router>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Index />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/help" element={<Help />} />
+          
+          {/* Protected routes */}
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/ledger" element={<Ledger />} />
+          <Route path="/budget" element={<Budget />} />
+          <Route path="/expenses" element={<Expenses />} />
+          <Route path="/vendors" element={<Vendors />} />
+          <Route path="/invoicing" element={<Invoicing />} />
+          <Route path="/revenue" element={<Revenue />} />
+          <Route path="/reports" element={<FinancialReports />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/applications-admin" element={<ApplicationsAdmin />} />
+          
+          {/* 404 route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster />
+        <SonnerToaster position="top-right" />
+      </Router>
+    </VendorProvider>
   );
 }
 
