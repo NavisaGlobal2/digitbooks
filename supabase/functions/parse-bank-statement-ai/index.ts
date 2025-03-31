@@ -89,7 +89,7 @@ serve(async (req) => {
           );
         }
       }
-      // Process CSV files directly - using new direct parser instead of fallback 
+      // Process CSV files directly - using direct parser only, no fallback
       else if (isCSVFile(file)) {
         try {
           console.log("Processing CSV file with direct CSV parser");
@@ -111,46 +111,12 @@ serve(async (req) => {
           }
         } catch (csvError) {
           console.error("CSV direct processing error:", csvError);
-          
-          // Try fallback only if direct parsing fails
-          console.log("Attempting fallback CSV processing as a last resort");
-          try {
-            const fileText = await CSVService.extractTextFromCSV(file);
-            
-            if (!fileText || fileText.trim() === '') {
-              console.error("Empty CSV file or text extraction failed");
-              return new Response(
-                JSON.stringify({ 
-                  error: "Empty CSV file or text extraction failed. Please check the file." 
-                }),
-                { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
-              );
-            }
-            
-            const fallbackTransactions = await fallbackCSVProcessing(fileText);
-            
-            if (fallbackTransactions && fallbackTransactions.length > 0) {
-              console.log(`Fallback processing extracted ${fallbackTransactions.length} transactions`);
-              transactions = fallbackTransactions;
-              preservedOriginalFormat = false;
-            } else {
-              console.error("No transactions found in CSV file");
-              return new Response(
-                JSON.stringify({ 
-                  error: "Could not parse transactions from CSV file. Please check the file format." 
-                }),
-                { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
-              );
-            }
-          } catch (fallbackError) {
-            console.error("Fallback CSV processing error:", fallbackError);
-            return new Response(
-              JSON.stringify({ 
-                error: `Failed to process CSV file: ${csvError.message}. Please check the file format.` 
-              }),
-              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
-            );
-          }
+          return new Response(
+            JSON.stringify({ 
+              error: `Failed to process CSV file: ${csvError.message}. Please check the file format.` 
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
+          );
         }
       } else {
         // For unsupported file types
