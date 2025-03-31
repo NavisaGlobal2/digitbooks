@@ -6,7 +6,7 @@ import { getDateRange, generateMonthlySummary } from "./dateUtils";
 import { fetchExpenses, fetchInvoiceRevenue, fetchRevenue } from "./dataFetching";
 import { calculateFinancialMetrics, processExpenseBreakdown, processRevenueBreakdown } from "./dataProcessing";
 
-export { DateRange, ReportFilters, RevenueBreakdown, ExpenseBreakdown, FinancialSummary } from "./types";
+export type { DateRange, ReportFilters, RevenueBreakdown, ExpenseBreakdown, FinancialSummary } from "./types";
 
 export const useFinancialReports = () => {
   const [isLoading, setIsLoading] = useState(false);
