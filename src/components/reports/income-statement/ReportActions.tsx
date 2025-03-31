@@ -5,6 +5,8 @@ import { ArrowLeft, Download, FileCog, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface ReportActionsProps {
   onBack: () => void;
@@ -25,27 +27,59 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
   reportData,
   onDirectGeneration
 }) => {
-  const handleDownload = () => {
+  const handleDownload = async () => {
     // Use direct generation if available
     if (onDirectGeneration) {
       onDirectGeneration();
       return;
     }
 
-    // Fall back to manual PDF generation
+    // Check for valid date range and reference to report content
     if (!dateRange) {
       toast.error("Please select a date range to generate a report");
       return;
     }
-    
-    generateReportPdf({
-      title,
-      period,
-      dateRange,
-      reportData
-    });
-    
-    toast.success(`${title} report downloaded successfully!`);
+
+    if (!reportRef.current) {
+      toast.error("Could not find report content");
+      return;
+    }
+
+    try {
+      toast.info("Generating PDF...");
+      
+      // Capture the report content as an image
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2, // Higher quality
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+      });
+
+      // Create new PDF
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      // Convert canvas to image
+      const imgData = canvas.toDataURL("image/png");
+      const imgWidth = pdf.internal.pageSize.getWidth();
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      // Add image to PDF
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+
+      // Save the PDF
+      const fileName = `${title.toLowerCase().replace(/\s+/g, "-")}_report_${format(new Date(), "yyyy-MM-dd")}.pdf`;
+      pdf.save(fileName);
+      
+      toast.success(`${title} report downloaded successfully!`);
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error("Failed to generate PDF. Please try again.");
+    }
   };
 
   const handlePrint = () => {

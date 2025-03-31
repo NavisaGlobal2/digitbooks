@@ -30,7 +30,7 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
         onDirectGeneration={onDirectGeneration}
       />
 
-      <div id="report-container" className="space-y-6 print:space-y-8" ref={reportRef}>
+      <div id="cash-flow-report-content" className="space-y-6 print:space-y-8" ref={reportRef}>
         <h2 className="text-2xl font-bold text-center print:text-3xl">
           Cash Flow Report
         </h2>
