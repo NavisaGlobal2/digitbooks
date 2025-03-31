@@ -1,116 +1,27 @@
+
 import { useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { ArrowLeft, BarChart3, Download, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import { GenerateReportDialog } from "@/components/reports/GenerateReportDialog";
-import { ReportCard } from "@/components/reports/ReportCard";
-import { toast } from "sonner";
 import MobileSidebar from "../dashboard/layout/MobileSidebar";
-import IncomeStatementReport from "./IncomeStatementReport";
-import { format } from "date-fns";
+import { useReportGeneration } from "@/hooks/useReportGeneration";
+import { ReportsHeader } from "./ReportsHeader";
+import { ReportList } from "./ReportList";
+import { ReportView } from "./ReportView";
 
 const FinancialReports = () => {
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
-  const [selectedReportType, setSelectedReportType] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [reportPeriod, setReportPeriod] = useState("Current Month");
-  const [dateRange, setDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
+  
+  const {
+    selectedReportType,
+    reportPeriod,
+    dateRange,
+    handleGenerateReport,
+    setSelectedReportType
+  } = useReportGeneration();
 
-  const handleGenerateReport = (
-    reportType: string,
-    reportPeriod: string,
-    fileFormat: string,
-    customDateRange?: { startDate: Date; endDate: Date }
-  ) => {
-    let displayPeriod = reportPeriod.replace("-", " ");
-    
-    if (customDateRange) {
-      displayPeriod = `${format(customDateRange.startDate, "MMM dd, yyyy")} - ${format(customDateRange.endDate, "MMM dd, yyyy")}`;
-      setDateRange(customDateRange);
-    } else {
-      setDateRange(null);
-    }
-    
-    toast.success(
-      `Generating ${reportType.replace("-", " ")} report for ${displayPeriod} in ${fileFormat.toUpperCase()} format`
-    );
-    
-    setReportPeriod(displayPeriod);
-    
-    if (reportType === "income-statement") {
-      setSelectedReportType("income-statement");
-    } else {
-      setSelectedReportType(reportType);
-      setTimeout(() => {
-        toast.success("Report generated successfully!");
-      }, 2000);
-    }
-  };
-
-  const renderSelectedReport = () => {
-    switch (selectedReportType) {
-      case "income-statement":
-        return (
-          <IncomeStatementReport 
-            onBack={() => setSelectedReportType(null)}
-            period={reportPeriod}
-            dateRange={dateRange}
-          />
-        );
-      case "revenue-summary":
-      case "expense-summary":
-      case "cash-flow":
-      case "budget-analysis":
-      case "profit-loss":
-      default:
-        return (
-          <div className="space-y-6">
-            <div className="flex flex-col xs:flex-row items-center justify-between gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedReportType(null)}
-                className="flex items-center gap-1 w-full xs:w-auto"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Reports
-              </Button>
-              <Button
-                className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2 w-full xs:w-auto"
-                onClick={() => {
-                  toast.success("Report downloaded successfully!");
-                }}
-              >
-                <Download className="h-4 w-4" />
-                Download Report
-              </Button>
-            </div>
-
-            <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
-              <div className="text-center mb-6 sm:mb-8">
-                <BarChart3 className="h-16 sm:h-24 w-16 sm:w-24 mx-auto text-green-500 mb-2" />
-                <h2 className="text-xl sm:text-2xl font-bold">
-                  {selectedReportType?.charAt(0).toUpperCase() +
-                    selectedReportType?.slice(1).replace("-", " ")}{" "}
-                  Report
-                </h2>
-                <p className="text-muted-foreground text-sm sm:text-base">
-                  Generated on {new Date().toLocaleDateString()}
-                </p>
-              </div>
-
-              <div className="bg-gray-100 rounded-lg p-4 sm:p-12 flex items-center justify-center">
-                <div className="text-center">
-                  <FileText className="h-12 sm:h-16 w-12 sm:w-16 mx-auto text-gray-400 mb-4" />
-                  <p className="text-muted-foreground text-sm">
-                    Preview of the report would be displayed here
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-    }
+  const handleSelectReport = (reportType: string) => {
+    handleGenerateReport(reportType, "Current Month", "pdf");
   };
 
   return (
@@ -125,97 +36,21 @@ const FinancialReports = () => {
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              className="md:hidden text-muted-foreground p-1"
-              onClick={() => setIsMobileSidebarOpen(true)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            </button>
-            <Link
-              to="/dashboard"
-              className="text-muted-foreground hover:text-primary transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <h1 className="text-lg sm:text-xl font-semibold">Financial Reports</h1>
-          </div>
-
-          <Button
-            className="bg-green-500 hover:bg-green-600 text-white text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2"
-            onClick={() => setShowGenerateDialog(true)}
-          >
-            <span className="hidden xs:inline">Generate Report</span>
-            <span className="xs:hidden">Generate</span>
-          </Button>
-        </header>
+        <ReportsHeader 
+          onGenerateReport={() => setShowGenerateDialog(true)}
+          onMobileMenuOpen={() => setIsMobileSidebarOpen(true)}
+        />
 
         <main className="flex-1 overflow-auto p-3 sm:p-6">
           {selectedReportType ? (
-            renderSelectedReport()
+            <ReportView
+              selectedReportType={selectedReportType}
+              reportPeriod={reportPeriod}
+              dateRange={dateRange}
+              onBack={() => setSelectedReportType(null)}
+            />
           ) : (
-            <div className="space-y-4 sm:space-y-6">
-              <div>
-                <h2 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2">Available Reports</h2>
-                <p className="text-muted-foreground text-sm">
-                  Select a report type to generate or view
-                </p>
-              </div>
-
-              <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3">
-                <ReportCard
-                  title="Income Statement"
-                  description="Summary of revenues, costs, and expenses over a period"
-                  variant="green"
-                  onClick={() => handleGenerateReport("income-statement", "Current Month", "pdf")}
-                />
-                <ReportCard
-                  title="Cash Flow Statement"
-                  description="Track cash inflows and outflows for your business"
-                  variant="blue"
-                  onClick={() => setSelectedReportType("cash-flow")}
-                />
-                <ReportCard
-                  title="Expense Summary"
-                  description="Breakdown of all expenses by category"
-                  variant="yellow"
-                  onClick={() => setSelectedReportType("expense-summary")}
-                />
-                <ReportCard
-                  title="Revenue Summary"
-                  description="Summary of all revenue sources and trends"
-                  variant="green"
-                  onClick={() => setSelectedReportType("revenue-summary")}
-                />
-                <ReportCard
-                  title="Budget Analysis"
-                  description="Compare actual spending against budget allocations"
-                  variant="blue"
-                  onClick={() => setSelectedReportType("budget-analysis")}
-                />
-                <ReportCard
-                  title="Profit & Loss"
-                  description="Detail of business performance and profitability"
-                  variant="yellow"
-                  onClick={() => setSelectedReportType("profit-loss")}
-                />
-              </div>
-            </div>
+            <ReportList onSelectReport={handleSelectReport} />
           )}
         </main>
       </div>
