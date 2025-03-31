@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -24,6 +24,15 @@ const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
       ? { from: dateRange.startDate, to: dateRange.endDate }
       : undefined
   );
+
+  // Update local state when the dateRange prop changes
+  useEffect(() => {
+    if (dateRange) {
+      setDate({ from: dateRange.startDate, to: dateRange.endDate });
+    } else {
+      setDate(undefined);
+    }
+  }, [dateRange]);
 
   const handleSelect = (range: DateRange | undefined) => {
     setDate(range);

@@ -14,12 +14,13 @@ export const useFinancialReportState = () => {
     dateRange,
     handleGenerateReport,
     setSelectedReportType,
-    isCustomDateRange
+    isCustomDateRange,
+    setDateRange
   } = useReportGeneration();
 
   const handleDateRangeChange = (newDateRange: { startDate: Date; endDate: Date } | null) => {
-    // For now, we'll just store the date range, but we won't regenerate the report yet
-    // The actual report generation will happen when a report type is selected
+    // Update the date range in the report generation state
+    setDateRange(newDateRange);
   };
 
   const handleSelectReport = (reportType: string) => {
@@ -31,15 +32,21 @@ export const useFinancialReportState = () => {
     handleGenerateReport(reportType, displayPeriod, "pdf", dateRange || undefined);
   };
 
-  // New function to generate a report with the current date range
+  // Function to generate a report with the current date range
   const handleGenerateWithCurrentDateRange = () => {
     if (!dateRange) {
       toast.error("Please select a date range first");
       return;
     }
     
-    // Show report type selection prompt
-    setShowGenerateDialog(true);
+    if (selectedReportType) {
+      // If a report is already selected, regenerate it with the new date range
+      const displayPeriod = `${format(dateRange.startDate, "MMM dd, yyyy")} - ${format(dateRange.endDate, "MMM dd, yyyy")}`;
+      handleGenerateReport(selectedReportType, displayPeriod, "pdf", dateRange);
+    } else {
+      // If no report is selected, show dialog to select one
+      setShowGenerateDialog(true);
+    }
   };
 
   return {

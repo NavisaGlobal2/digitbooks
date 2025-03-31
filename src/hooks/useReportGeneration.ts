@@ -15,6 +15,7 @@ interface UseReportGenerationReturn {
   ) => void;
   setSelectedReportType: (type: string | null) => void;
   isCustomDateRange: boolean;
+  setDateRange: (range: { startDate: Date; endDate: Date } | null) => void;
 }
 
 export const useReportGeneration = (): UseReportGenerationReturn => {
@@ -36,7 +37,10 @@ export const useReportGeneration = (): UseReportGenerationReturn => {
       setDateRange(customDateRange);
       setIsCustomDateRange(true);
     } else {
-      setDateRange(null);
+      // Don't reset date range if it's already set - only when explicitly passed as null
+      if (customDateRange === null) {
+        setDateRange(null);
+      }
       setIsCustomDateRange(false);
     }
     
@@ -62,6 +66,7 @@ export const useReportGeneration = (): UseReportGenerationReturn => {
     dateRange,
     handleGenerateReport,
     setSelectedReportType,
-    isCustomDateRange
+    isCustomDateRange,
+    setDateRange
   };
 };
