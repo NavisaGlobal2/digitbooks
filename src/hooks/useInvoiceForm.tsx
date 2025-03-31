@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useInvoices } from "@/contexts/InvoiceContext";
+import { useInvoices } from "@/contexts/invoice";
 import { InvoiceItem, InvoiceStatus } from "@/types/invoice";
 import { calculateTotal } from "@/utils/invoice";
 import { supabase } from "@/integrations/supabase/client";
