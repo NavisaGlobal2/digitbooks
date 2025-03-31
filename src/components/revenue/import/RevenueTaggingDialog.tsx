@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import TransactionTable from "./TransactionTable";
 import { formatCurrency } from "@/utils/invoice/formatters";
 import { toast } from "sonner";
+import { RevenueSource } from "@/types/revenue";
 
 interface RevenueTaggingDialogProps {
   open: boolean;
@@ -69,7 +70,7 @@ const RevenueTaggingDialog = ({
   };
   
   // Set source for a transaction
-  const handleSetSource = (id: string, source: string) => {
+  const handleSetSource = (id: string, source: RevenueSource) => {
     setLocalTransactions(prev => 
       prev.map(t => t.id === id ? { ...t, source } : t)
     );

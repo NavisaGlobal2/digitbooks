@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./types";
+import { RevenueSource } from "@/types/revenue";
 
 export const parseViaEdgeFunction = async (
   file: File,
@@ -51,7 +52,7 @@ export const parseViaEdgeFunction = async (
     }
 
     // Filter to only include credit (positive amount) transactions for revenue
-    // Also ensure proper data mapping and transformation
+    // Also ensure proper data mapping and transformation with correct types
     const revenueTransactions = data.transactions
       .filter((tx: any) => {
         // Check if the transaction has actual data (not just header or summary rows)
@@ -97,17 +98,23 @@ export const parseViaEdgeFunction = async (
             .join(" - ")
             .trim() || "Unknown transaction";
         }
+
+        // Make sure source is properly typed as RevenueSource
+        const source = tx.sourceSuggestion?.source as RevenueSource | undefined;
         
         // Format the transaction for revenue
         return {
           id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
           date: extractedDate ? new Date(extractedDate) : new Date(),
-          description: extractedDescription,
+          description: extractedDescription || tx.description || "Unknown transaction",
           amount: extractedAmount || Math.abs(tx.amount || 0),
-          type: "credit",
+          type: "credit" as const,
           selected: true,
-          source: tx.sourceSuggestion?.source || "",
-          sourceSuggestion: tx.sourceSuggestion,
+          source: source,
+          sourceSuggestion: tx.sourceSuggestion ? {
+            source: tx.sourceSuggestion.source as RevenueSource,
+            confidence: tx.sourceSuggestion.confidence
+          } : undefined,
           // Preserve original data
           originalDate: tx.originalDate || extractedDate || tx.date,
           originalAmount: tx.originalAmount || extractedAmount || tx.amount,
