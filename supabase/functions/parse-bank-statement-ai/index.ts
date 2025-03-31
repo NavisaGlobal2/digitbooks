@@ -6,6 +6,7 @@ import { isExcelFile } from "./lib/excelService.ts";
 import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
 import { formatTransactionsWithAI } from "./lib/aiService.ts";
 import { isCSVFile, CSVService } from "./lib/csvService.ts";
+import { parseCSVDirectly } from "./lib/csvParser.ts";
 
 serve(async (req) => {
   // Log request information
@@ -88,47 +89,68 @@ serve(async (req) => {
           );
         }
       }
-      // Process CSV files directly 
+      // Process CSV files directly - using new direct parser instead of fallback 
       else if (isCSVFile(file)) {
         try {
-          console.log("Processing CSV file with direct CSV processor");
-          // Extract text from the CSV file
-          const fileText = await CSVService.extractTextFromCSV(file);
+          console.log("Processing CSV file with direct CSV parser");
+          // Use direct parsing similar to Excel
+          const csvData = await parseCSVDirectly(file);
           
-          if (!fileText || fileText.trim() === '') {
-            console.error("Empty CSV file or text extraction failed");
+          if (csvData && Array.isArray(csvData) && csvData.length > 0) {
+            console.log(`Successfully parsed ${csvData.length} transactions directly from CSV`);
+            transactions = csvData;
+            preservedOriginalFormat = true;
+          } else {
+            console.log("Direct CSV parsing returned no transactions");
             return new Response(
               JSON.stringify({ 
-                error: "Empty CSV file or text extraction failed. Please check the file." 
+                error: "Could not extract transaction data from CSV file. Please check the format." 
               }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
             );
           }
-          
-          console.log(`Extracted ${fileText.length} characters from CSV file`);
-          
-          transactions = await fallbackCSVProcessing(fileText);
-          
-          if (!transactions || transactions.length === 0) {
-            console.error("No transactions found in CSV file");
-            return new Response(
-              JSON.stringify({ 
-                error: "Could not parse transactions from CSV file. Please check the file format." 
-              }),
-              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
-            );
-          }
-          
-          console.log(`Parsed ${transactions.length} transactions from CSV file`);
-          preservedOriginalFormat = true;
         } catch (csvError) {
-          console.error("CSV processing error:", csvError);
-          return new Response(
-            JSON.stringify({ 
-              error: `Failed to process CSV file: ${csvError.message}. Please check the file format.` 
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
-          );
+          console.error("CSV direct processing error:", csvError);
+          
+          // Try fallback only if direct parsing fails
+          console.log("Attempting fallback CSV processing as a last resort");
+          try {
+            const fileText = await CSVService.extractTextFromCSV(file);
+            
+            if (!fileText || fileText.trim() === '') {
+              console.error("Empty CSV file or text extraction failed");
+              return new Response(
+                JSON.stringify({ 
+                  error: "Empty CSV file or text extraction failed. Please check the file." 
+                }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
+              );
+            }
+            
+            const fallbackTransactions = await fallbackCSVProcessing(fileText);
+            
+            if (fallbackTransactions && fallbackTransactions.length > 0) {
+              console.log(`Fallback processing extracted ${fallbackTransactions.length} transactions`);
+              transactions = fallbackTransactions;
+              preservedOriginalFormat = false;
+            } else {
+              console.error("No transactions found in CSV file");
+              return new Response(
+                JSON.stringify({ 
+                  error: "Could not parse transactions from CSV file. Please check the file format." 
+                }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
+              );
+            }
+          } catch (fallbackError) {
+            console.error("Fallback CSV processing error:", fallbackError);
+            return new Response(
+              JSON.stringify({ 
+                error: `Failed to process CSV file: ${csvError.message}. Please check the file format.` 
+              }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
+            );
+          }
         }
       } else {
         // For unsupported file types
