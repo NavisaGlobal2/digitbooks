@@ -27,7 +27,7 @@ import { AuthProvider } from './contexts/auth';
 import { VendorProvider } from './contexts/vendor';
 import { InvoiceProvider } from './contexts/invoice';
 import { ExpenseProvider } from './contexts/expense';
-import { BudgetProvider } from './contexts/BudgetContext';
+import { BudgetProvider } from './contexts/budget';
 
 function App() {
   return (
