@@ -116,7 +116,7 @@ serve(async (req) => {
         );
       }
 
-      // Apply AI formatting to standardize the transaction structure if requested
+      // Apply formatting to standardize the transaction structure if requested
       let formattedTransactions = transactions;
       let formattingApplied = false;
       
