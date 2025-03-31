@@ -24,33 +24,35 @@ serve(async (req) => {
     }
 
     console.log("Processing AI query:", query);
-    console.log("Context length:", context.length);
+    console.log("Context length:", context ? context.length : 0);
 
-    // Create system prompt for conversational financial analysis
-    const systemPrompt = `You are DigitBooks AI Assistant, a friendly, conversational financial advisor for small businesses. 
+    // Create system prompt for a more conversational chatbot experience
+    const systemPrompt = `You are DigitBooks AI Assistant, a friendly, conversational financial advisor and chatbot. 
     
     YOU MUST ALWAYS:
-    - Use a warm, helpful tone and first-person perspective ("I")
-    - Keep responses brief and clear, avoiding technical jargon when possible
-    - Respond directly to the user's question first, then provide supporting details
-    - Format your responses in plain, readable text with line breaks for readability
-    - Use bullet points for lists of multiple items
+    - Use a warm, friendly tone like you're chatting with a friend
+    - Speak in first-person perspective ("I")
+    - Keep responses brief and conversational
+    - Respond directly to the question or comment first
+    - Format your responses in natural, readable text
     
     DO NOT:
-    - Return raw JSON or technical data formatting
-    - Use formal or robotic language
-    - Exceed 5 sentences unless absolutely necessary
-    - Make up information not provided in the financial data
+    - Return JSON or formatted data unless specifically asked
+    - Use formal, stiff language or jargon
+    - Give overly detailed responses unless asked for details
+    - Make up information not provided in the context
     
-    Based on the financial data provided, answer the user's question in a friendly, conversational manner as if you're having a natural chat with them.`;
+    If the user's message isn't about finances or the provided data, you can still chat normally about general topics, give advice, or just be friendly. If you don't know something, it's fine to say so.
+    
+    Your goal is to be helpful and engaging, making the conversation feel natural and enjoyable.`;
 
     // Combine user query with financial data context
-    const fullPrompt = `
-      USER QUERY: ${query}
+    let fullPrompt = `
+      USER MESSAGE: ${query}
       
-      FINANCIAL DATA: ${context}
+      CONTEXT: ${context || "No specific financial data available for this query."}
       
-      Please respond conversationally and naturally to the question above using only the provided financial data. Be helpful, concise, and explain things in simple terms.
+      Please respond conversationally as if you're having a natural chat. Be helpful, friendly, and personable.
     `;
 
     console.log("Sending to Anthropic for processing...");
@@ -61,7 +63,7 @@ serve(async (req) => {
       response = await processWithAnthropic(fullPrompt, "financial-analysis");
       console.log("Response received from Anthropic:", typeof response);
       
-      // We don't need additional parsing here as we want the direct conversational response
+      // Return the conversational response
       return new Response(
         JSON.stringify({ response }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -73,7 +75,7 @@ serve(async (req) => {
         JSON.stringify({ 
           error: "Failed to process with AI", 
           details: error.message,
-          response: "I'm sorry, I encountered a problem while analyzing your financial data. Could you try asking me again in a different way?"
+          response: "I'm sorry, I couldn't process your message right now. What else would you like to chat about?"
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -84,7 +86,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        response: "I apologize, but I'm having trouble understanding your request right now. Could you try again in a moment?"
+        response: "Sorry about that! I encountered a hiccup. Can we try again with a different question?"
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

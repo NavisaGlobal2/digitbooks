@@ -22,7 +22,7 @@ const AgentHeader = ({ onReset }: AgentHeaderProps) => {
         <ArrowLeft className="h-5 w-5" />
       </Button>
       <h1 className="text-2xl font-semibold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-        DigitBooks AI Agent
+        DigitBooks Chat Assistant
       </h1>
       <Button 
         variant="outline" 
@@ -31,7 +31,7 @@ const AgentHeader = ({ onReset }: AgentHeaderProps) => {
         className="ml-auto flex items-center gap-2"
       >
         <RotateCcw className="h-4 w-4" />
-        Reset
+        New Chat
       </Button>
     </div>
   );

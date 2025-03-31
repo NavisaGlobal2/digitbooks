@@ -9,11 +9,11 @@ interface AIQueryParams {
 
 export const getAIInsights = async ({ query, financialData, userId }: AIQueryParams) => {
   try {
-    // Create a context with the user's financial data
-    const context = JSON.stringify({
+    // Create a context with the user's financial data or leave it minimal for general chat
+    const context = financialData ? JSON.stringify({
       query,
       financialData,
-    });
+    }) : "";
 
     console.log("Sending query to AI:", query);
     console.log("With context size:", context.length);
@@ -30,12 +30,12 @@ export const getAIInsights = async ({ query, financialData, userId }: AIQueryPar
 
     if (error) {
       console.error("Error calling AI service:", error);
-      throw new Error('Failed to process your query');
+      throw new Error('I had trouble processing your message. Can you try asking me in a different way?');
     }
 
     console.log("AI response received:", data);
     
-    // The response should already be in conversational format from the edge function
+    // Return the conversational response
     return data.response;
   } catch (err) {
     console.error("AI service error:", err);
