@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./types";
 import { toast } from "sonner";
@@ -101,8 +100,8 @@ export const parseViaEdgeFunction = async (
     }
 
     // Parse the response as JSON with explicit typing
-    const data = await response.json();
-    const typedData: ApiResponse = data;
+    const apiResponse = await response.json();
+    const typedData = apiResponse as ApiResponse;
 
     // Handle the new API response format
     if (typedData.success === false) {
@@ -123,8 +122,8 @@ export const parseViaEdgeFunction = async (
         return [];
       }
       
-      // Map the database transactions to our ParsedTransaction format with explicit typing
-      const parsedTransactions: ParsedTransaction[] = transactionsData.map((tx: TransactionData) => {
+      // Map the database transactions to our ParsedTransaction format
+      const parsedTransactions = transactionsData.map((tx: any) => {
         // Handle amount conversion safely
         const amountValue = typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount;
         
@@ -166,10 +165,10 @@ export const parseViaEdgeFunction = async (
         id: crypto.randomUUID(),
         date: new Date(tx.date),
         description: tx.description,
-        amount: Math.abs(parseFloat(tx.amount.toString())), // Store as positive number
+        amount: Math.abs(parseFloat(tx.amount.toString())),
         type: tx.type || (parseFloat(tx.amount.toString()) < 0 ? 'debit' : 'credit'),
-        category: (tx.category as ExpenseCategory) || undefined,
-        selected: tx.type === 'debit' || parseFloat(tx.amount.toString()) < 0, // Pre-select debits
+        category: tx.category as ExpenseCategory | undefined,
+        selected: tx.type === 'debit' || parseFloat(tx.amount.toString()) < 0,
         batchId: typedData.batchId || typedData.statement_id
       };
       

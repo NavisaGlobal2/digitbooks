@@ -9,4 +9,5 @@ export type ParsedTransaction = {
   type: 'credit' | 'debit';
   category?: ExpenseCategory;
   selected: boolean;
+  batchId?: string;
 };
