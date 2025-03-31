@@ -31,12 +31,12 @@ export const useFileProcessing = () => {
       const validateFileType = () => {
         const fileExt = file.name.split('.').pop()?.toLowerCase();
         
-        // Only accept CSV files
-        return fileExt === 'csv';
+        // Accept both CSV and Excel files
+        return ['csv', 'xlsx', 'xls'].includes(fileExt || '');
       };
       
       if (!validateFileType()) {
-        toast.error("Unsupported file format. Please upload CSV files only.");
+        toast.error("Unsupported file format. Please upload CSV or Excel files only.");
         reject("Unsupported file format");
         return;
       }

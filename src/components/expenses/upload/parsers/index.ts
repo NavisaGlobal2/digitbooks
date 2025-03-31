@@ -27,8 +27,8 @@ export const parseStatementFile = (
   try {
     const fileExt = file.name.split('.').pop()?.toLowerCase();
     
-    if (fileExt === 'csv') {
-      // Use server-side processing only
+    if (fileExt === 'csv' || fileExt === 'xlsx' || fileExt === 'xls') {
+      // Use server-side processing for all supported formats
       parseViaEdgeFunction(
         file,
         (transactions: ParsedTransaction[]) => {
@@ -40,7 +40,7 @@ export const parseStatementFile = (
         }
       );
     } else {
-      onError(`Unsupported file format: ${fileExt || 'unknown'}. Currently only CSV files are supported.`);
+      onError(`Unsupported file format: ${fileExt || 'unknown'}. Currently only CSV and Excel files are supported.`);
     }
   } catch (error) {
     console.error("Error in parseStatementFile:", error);

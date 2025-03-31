@@ -72,10 +72,10 @@ export const useStatementUpload = (
       const selectedFile = e.target.files[0];
       console.log("File selected:", selectedFile.name, selectedFile.type, selectedFile.size);
       
-      // Check file type - only allow CSV
+      // Check file type - allow CSV and Excel
       const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
-      if (fileExt !== 'csv') {
-        setError('Only CSV files are currently supported.');
+      if (!['csv', 'xlsx', 'xls'].includes(fileExt || '')) {
+        setError('Only CSV and Excel files are currently supported.');
         return;
       }
       

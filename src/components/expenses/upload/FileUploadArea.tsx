@@ -32,9 +32,9 @@ const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadArea
       const file = e.dataTransfer.files[0];
       const fileExt = file.name.split('.').pop()?.toLowerCase();
       
-      // Only allow CSV files
-      if (fileExt !== 'csv') {
-        alert('Only CSV files are currently supported');
+      // Allow CSV and Excel files
+      if (!['csv', 'xlsx', 'xls'].includes(fileExt || '')) {
+        alert('Only CSV and Excel files are currently supported');
         return;
       }
       
@@ -69,10 +69,10 @@ const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadArea
           <Upload className="h-6 w-6 text-muted-foreground" />
         </div>
         <p className="text-sm font-medium">
-          {file ? file.name : 'Drag and drop your CSV file, or click to select'}
+          {file ? file.name : 'Drag and drop your file, or click to select'}
         </p>
         <p className="text-xs text-muted-foreground">
-          Server-side processing - CSV files only
+          Server-side processing - CSV and Excel files
         </p>
       </div>
       <div className="mt-4">
@@ -81,12 +81,12 @@ const FileUploadArea = ({ file, onFileChange, disabled = false }: FileUploadArea
             id="file-upload"
             type="file"
             className="hidden"
-            accept=".csv"
+            accept=".csv,.xlsx,.xls"
             onChange={onFileChange}
             disabled={disabled}
           />
           <div className="px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md text-sm font-medium">
-            Select CSV File
+            Select File
           </div>
         </label>
       </div>
