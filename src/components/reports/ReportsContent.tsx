@@ -4,6 +4,8 @@ import { ReportView } from "./ReportView";
 import { ReportList } from "./ReportList";
 import ReportDateFilter from "./filters/ReportDateFilter";
 import SavedReportsSection from "./saved/SavedReportsSection";
+import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
 
 interface ReportsContentProps {
   selectedReportType: string | null;
@@ -37,12 +39,28 @@ export const ReportsContent: React.FC<ReportsContentProps> = ({
             ? "View and export your financial report" 
             : "Generate financial reports and export them to analyze your business performance"}
         </p>
-        <div className="mb-4">
+        <div className="mb-4 flex items-center justify-between flex-wrap gap-3">
           <ReportDateFilter
             dateRange={dateRange}
             onDateRangeChange={onDateRangeChange}
-            onGenerateReport={onGenerateReport}
           />
+          {selectedReportType && dateRange?.startDate && dateRange?.endDate ? (
+            <Button 
+              onClick={onGenerateReport}
+              className="bg-green-500 hover:bg-green-600 text-white"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Generate Report
+            </Button>
+          ) : !selectedReportType && onGenerateReport ? (
+            <Button
+              onClick={onGenerateReport}
+              className="bg-green-500 hover:bg-green-600 text-white"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Generate Report
+            </Button>
+          ) : null}
         </div>
       </div>
 

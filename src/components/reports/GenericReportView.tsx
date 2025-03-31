@@ -9,22 +9,33 @@ import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
 interface GenericReportViewProps {
   reportType: string;
   onBack: () => void;
+  dateRange?: { startDate: Date; endDate: Date } | null;
+  onDirectGeneration?: () => void;
 }
 
-const GenericReportView = ({ reportType, onBack }: GenericReportViewProps) => {
+const GenericReportView = ({ 
+  reportType, 
+  onBack, 
+  dateRange,
+  onDirectGeneration 
+}: GenericReportViewProps) => {
   const today = new Date();
   const formattedDate = format(today, "MMMM dd, yyyy");
   
-  // For demonstration, set a report period (typically this would come from props)
-  const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - 1);
-  const endDate = new Date();
+  // For demonstration, set a report period from props or default
+  const startDate = dateRange?.startDate || new Date(new Date().setMonth(new Date().getMonth() - 1));
+  const endDate = dateRange?.endDate || new Date();
   const reportPeriod = {
     start: format(startDate, "MMM dd, yyyy"),
     end: format(endDate, "MMM dd, yyyy")
   };
 
   const handleDownload = () => {
+    if (onDirectGeneration) {
+      onDirectGeneration();
+      return;
+    }
+    
     const title = reportType.charAt(0).toUpperCase() + reportType.slice(1).replace("-", " ");
     
     generateReportPdf({

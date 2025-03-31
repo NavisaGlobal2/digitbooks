@@ -14,12 +14,14 @@ interface ProfitLossReportProps {
   onBack: () => void;
   period: string;
   dateRange: { startDate: Date; endDate: Date } | null;
+  onDirectGeneration?: () => void; // New prop for direct generation
 }
 
 const ProfitLossReport: React.FC<ProfitLossReportProps> = ({
   onBack,
   period,
   dateRange,
+  onDirectGeneration,
 }) => {
   const reportRef = useRef<HTMLDivElement>(null);
   const { 
@@ -60,6 +62,7 @@ const ProfitLossReport: React.FC<ProfitLossReportProps> = ({
         dateRange={dateRange}
         reportRef={reportRef}
         reportData={reportData}
+        onDirectGeneration={onDirectGeneration}
       />
 
       <div

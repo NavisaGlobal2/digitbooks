@@ -11,12 +11,14 @@ interface RevenueSummaryReportProps {
   onBack: () => void;
   period: string;
   dateRange: { startDate: Date; endDate: Date } | null;
+  onDirectGeneration?: () => void; // New prop for direct generation
 }
 
 const RevenueSummaryReport: React.FC<RevenueSummaryReportProps> = ({
   onBack,
   period,
   dateRange,
+  onDirectGeneration,
 }) => {
   const { revenues } = useRevenue();
   const [revenueData, setRevenueData] = useState<RevenueBreakdown[]>([]);
@@ -81,6 +83,7 @@ const RevenueSummaryReport: React.FC<RevenueSummaryReportProps> = ({
         dateRange={dateRange}
         reportRef={reportRef}
         reportData={reportData}
+        onDirectGeneration={onDirectGeneration}
       />
 
       <div 

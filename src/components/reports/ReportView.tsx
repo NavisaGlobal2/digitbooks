@@ -1,5 +1,6 @@
 
 import React from "react";
+import { generateReportPdf } from "@/utils/reports/reportPdfGenerator";
 import IncomeStatementReport from "./income-statement";
 import GenericReportView from "./GenericReportView";
 import CashFlowReport from "./cash-flow";
@@ -7,6 +8,8 @@ import ExpenseSummaryReport from "./expense-summary";
 import RevenueSummaryReport from "./revenue-summary";
 import BudgetAnalysisReport from "./budget-analysis";
 import ProfitLossReport from "./profit-loss";
+import { toast } from "sonner";
+import { format } from "date-fns";
 
 interface ReportViewProps {
   selectedReportType: string | null;
@@ -23,6 +26,24 @@ export const ReportView: React.FC<ReportViewProps> = ({
   isCustomDateRange,
   onBack,
 }) => {
+  // Direct report generation function
+  const handleDirectGeneration = () => {
+    if (!selectedReportType || !dateRange) return;
+    
+    const title = selectedReportType.charAt(0).toUpperCase() + 
+                  selectedReportType.slice(1).replace(/-/g, " ");
+    
+    const period = `${format(dateRange.startDate, "MMM dd, yyyy")} — ${format(dateRange.endDate, "MMM dd, yyyy")}`;
+    
+    generateReportPdf({
+      title,
+      period,
+      dateRange
+    });
+    
+    toast.success(`${title} report generated and downloaded successfully`);
+  };
+
   if (!selectedReportType) return null;
 
   switch (selectedReportType) {
@@ -32,6 +53,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
+          onDirectGeneration={handleDirectGeneration}
         />
       );
     case "cash-flow":
@@ -40,6 +62,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
+          onDirectGeneration={handleDirectGeneration}
         />
       );
     case "expense-summary":
@@ -48,6 +71,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
+          onDirectGeneration={handleDirectGeneration}
         />
       );
     case "revenue-summary":
@@ -56,6 +80,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
+          onDirectGeneration={handleDirectGeneration}
         />
       );
     case "budget-analysis":
@@ -64,6 +89,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
+          onDirectGeneration={handleDirectGeneration}
         />
       );
     case "profit-loss":
@@ -72,6 +98,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
+          onDirectGeneration={handleDirectGeneration}
         />
       );
     default:
@@ -79,6 +106,8 @@ export const ReportView: React.FC<ReportViewProps> = ({
         <GenericReportView 
           reportType={selectedReportType} 
           onBack={onBack} 
+          dateRange={dateRange}
+          onDirectGeneration={handleDirectGeneration}
         />
       );
   }
