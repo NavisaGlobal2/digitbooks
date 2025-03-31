@@ -1,7 +1,8 @@
+
 import { format } from "date-fns";
 import { CheckCircle, Download, ExternalLink, MoreVertical, Receipt } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Invoice } from "@/types/invoice";
+import { Invoice, PaymentRecord } from "@/types/invoice";
 import { formatNaira } from "@/utils/invoice/formatters";
 import { downloadInvoice, downloadReceipt, shareInvoice } from "@/utils/invoice/documentActions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,15 +11,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import InvoiceStatusBadge from "./InvoiceStatusBadge";
 import { PaymentDialog } from "./payment/PaymentDialog";
 import { toast } from "sonner";
-
-interface PaymentRecord {
-  id: string;
-  amount: number;
-  date: string;
-  method: string;
-  reference?: string;
-  notes?: string;
-}
 
 interface InvoiceTableProps {
   invoices: Invoice[];

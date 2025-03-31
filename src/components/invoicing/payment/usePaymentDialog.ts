@@ -22,6 +22,11 @@ interface DatabasePaymentRecord {
   receipt_url: string | null;
 }
 
+// Add an internal type that ensures we always have an ID for UI operations
+interface InternalPaymentRecord extends PaymentRecord {
+  id: string;
+}
+
 export const usePaymentDialog = ({
   invoiceId,
   invoiceAmount,
@@ -29,7 +34,7 @@ export const usePaymentDialog = ({
   onMarkAsPaid,
   onOpenChange
 }: UsePaymentDialogProps) => {
-  const [payments, setPayments] = useState<(PaymentRecord & { id: string })[]>([]);
+  const [payments, setPayments] = useState<InternalPaymentRecord[]>([]);
   const [totalPaid, setTotalPaid] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -81,10 +86,10 @@ export const usePaymentDialog = ({
         // Convert existing payments to internal format with id
         const paymentsWithIds = existingPayments.map(payment => ({
           ...payment,
-          id: crypto.randomUUID(),
-          date: new Date(payment.date)
+          id: payment.id || crypto.randomUUID(),
+          date: payment.date instanceof Date ? payment.date : new Date(payment.date)
         }));
-        setPayments(paymentsWithIds);
+        setPayments(paymentsWithIds as InternalPaymentRecord[]);
         
         // Calculate total from existing payments
         const existingTotal = paymentsWithIds.reduce((sum, payment) => sum + payment.amount, 0);
@@ -201,8 +206,11 @@ export const usePaymentDialog = ({
     setIsSubmitting(true);
     
     try {
-      // Remove the internal id property before sending to parent
-      const paymentRecords: PaymentRecord[] = payments.map(({ id, ...rest }) => rest);
+      // Prepare payment records for the API by removing internal UI-specific fields if necessary
+      const paymentRecords: PaymentRecord[] = payments.map(({ id, ...rest }) => ({
+        id, // Keep id but it will be optional in the PaymentRecord type
+        ...rest
+      }));
       
       // Call the parent handler
       await onMarkAsPaid(invoiceId, paymentRecords);
