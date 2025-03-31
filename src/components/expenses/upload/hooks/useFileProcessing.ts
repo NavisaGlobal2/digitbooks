@@ -34,7 +34,7 @@ export const useFileProcessing = ({
       const formData = new FormData();
       formData.append('file', file);
       
-      console.log(`Sending ${file.name} (${file.type}) to edge function for processing...`);
+      console.log(`Processing ${file.name} (${file.type}) to edge function for processing...`);
       
       // Get the auth session token
       const { data: { session } } = await supabase.auth.getSession();
