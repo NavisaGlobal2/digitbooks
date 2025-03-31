@@ -111,7 +111,7 @@ const BudgetAnalysisReport: React.FC<BudgetAnalysisReportProps> = ({
       <div
         ref={reportRef}
         className="bg-white p-8 rounded-lg shadow-sm border print:shadow-none"
-        id="budget-report-content"
+        id="budget-analysis-report-content"
       >
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold">Budget Analysis</h1>

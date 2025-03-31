@@ -27,7 +27,7 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
 
   const handleDownload = () => {
     // For reports that support snapshots, use the reportRef approach
-    if (reportRef && reportRef.current && (title.toLowerCase() === "cash flow" || title.toLowerCase() === "expense summary")) {
+    if (reportRef && reportRef.current && ["cash flow", "expense summary", "revenue summary", "budget analysis", "profit & loss"].includes(title.toLowerCase())) {
       const element = reportRef.current;
       
       html2canvas(element, {

@@ -41,18 +41,7 @@ export const generateReportPdf = (reportData: ReportData): void => {
       generateIncomeStatementContent(doc);
       break;
     case "cash-flow":
-      generateCashFlowContent(doc);
-      // Add page numbers after a delay to ensure content is rendered
-      setTimeout(() => {
-        addPageNumbers(doc);
-        // Save the PDF
-        const fileName = generateReportFilename(title);
-        doc.save(fileName);
-      }, 1500);
-      return; // Return early as we're handling saving in the timeout
     case "expense-summary":
-      generateExpenseSummaryContent(doc);
-      break;
     case "revenue-summary":
     case "budget-analysis":
     case "profit-loss":
@@ -106,7 +95,7 @@ export const generateReportPdf = (reportData: ReportData): void => {
   addPageNumbers(doc);
   
   // Save the PDF - only for reports that don't handle saving separately
-  if (!["cash-flow", "revenue-summary", "budget-analysis", "profit-loss"].includes(title.toLowerCase().replace(/\s+/g, "-"))) {
+  if (!["cash-flow", "expense-summary", "revenue-summary", "budget-analysis", "profit-loss"].includes(title.toLowerCase().replace(/\s+/g, "-"))) {
     const fileName = generateReportFilename(title);
     doc.save(fileName);
   }

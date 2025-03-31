@@ -79,7 +79,7 @@ const RevenueSummaryReport: React.FC<RevenueSummaryReportProps> = ({
       <div 
         ref={reportRef} 
         className="bg-white p-8 rounded-lg shadow-sm border print:shadow-none" 
-        id="revenue-report-content"
+        id="revenue-summary-report-content"
       >
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold">Revenue Summary</h1>
