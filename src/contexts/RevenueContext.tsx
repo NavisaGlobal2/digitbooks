@@ -10,6 +10,7 @@ interface RevenueContextType {
   getTotalRevenue: () => number;
   getRevenueBySource: () => Record<string, number>;
   getRevenueByStatus: () => Record<PaymentStatus, number>;
+  importRevenues: (revenues: Omit<Revenue, "id">[]) => void; // Add this line
 }
 
 const RevenueContext = createContext<RevenueContextType | undefined>(undefined);
@@ -44,6 +45,16 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       id: crypto.randomUUID(),
     };
     setRevenues([...revenues, newRevenue]);
+  };
+
+  // Add this function to import multiple revenues at once
+  const importRevenues = (revenueItems: Omit<Revenue, "id">[]) => {
+    const newRevenues = revenueItems.map(revenue => ({
+      ...revenue,
+      id: crypto.randomUUID(),
+    }));
+    
+    setRevenues(prevRevenues => [...prevRevenues, ...newRevenues]);
   };
 
   const updateRevenue = (id: string, revenueUpdates: Partial<Revenue>) => {
@@ -98,6 +109,7 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
         getTotalRevenue,
         getRevenueBySource,
         getRevenueByStatus,
+        importRevenues, // Add this line
       }}
     >
       {children}

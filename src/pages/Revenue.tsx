@@ -13,7 +13,7 @@ import { Revenue } from "@/types/revenue";
 import DashboardContainer from "@/components/dashboard/layout/DashboardContainer";
 
 const RevenuePage = () => {
-  const { addRevenue, deleteRevenue } = useRevenue();
+  const { addRevenue, deleteRevenue, importRevenues } = useRevenue();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [editRevenueId, setEditRevenueId] = useState<string | null>(null);
@@ -43,9 +43,7 @@ const RevenuePage = () => {
   };
   
   const handleRevenuesImported = (revenues: Omit<Revenue, "id">[]) => {
-    revenues.forEach(revenue => {
-      addRevenue(revenue);
-    });
+    importRevenues(revenues);
     toast.success(`${revenues.length} revenues imported successfully`);
     setShowImportDialog(false);
   };
