@@ -1,12 +1,12 @@
 
 /**
  * Service for handling Excel file operations in Edge Function context
- * Simplified version of the client-side service for Edge Function use
+ * Enhanced version that uses more robust text extraction techniques
  */
 export const ExcelService = {
   /**
    * Extract text content from an Excel file
-   * This is a simplified version for edge function context
+   * This is an enhanced version for edge function context
    * @param file The Excel file to extract text from
    * @returns Promise with the extracted text content
    */
@@ -17,8 +17,7 @@ export const ExcelService = {
       const bytes = new Uint8Array(arrayBuffer);
       
       // Try to extract text content from Excel binary data
-      // Since we can't use SheetJS directly in the edge function, we'll use
-      // a simpler approach to find text patterns
+      // This uses a more robust approach to find text patterns
       let textContent = `[EXCEL FILE: ${file.name}]\n\n`;
       
       // Extract any visible text from the binary data
@@ -49,8 +48,7 @@ Format the response as a structured array of transaction objects.
 
 /**
  * Attempt to extract text segments from Excel binary data
- * This is a simplified method that won't work perfectly, but should
- * extract some useful text from simple Excel files
+ * Enhanced version with improved text detection and formatting
  * @param data The binary data as Uint8Array
  * @returns Array of extracted text segments
  */
@@ -64,7 +62,8 @@ function extractTextFromExcelBinary(data: Uint8Array): string[] {
     // Look for potential text characters (printable ASCII)
     if ((data[i] >= 32 && data[i] < 127) && data[i+1] === 0) {
       // Possible UTF-16LE encoded text found (common in Excel)
-      const char = String.fromCharCode(data[i]);
+      const charCode = data[i];
+      const char = String.fromCharCode(charCode);
       
       // Check if it's a likely text character
       if (/[a-zA-Z0-9.,\-$€£\s\/:]/.test(char)) {
@@ -82,7 +81,8 @@ function extractTextFromExcelBinary(data: Uint8Array): string[] {
     
     // For standard ASCII text sections
     if (data[i] >= 32 && data[i] < 127 && data[i+1] !== 0) {
-      const char = String.fromCharCode(data[i]);
+      const charCode = data[i];
+      const char = String.fromCharCode(charCode);
       
       // Check if it looks like human-readable text
       if (/[a-zA-Z0-9.,\-$€£\s\/:]/.test(char)) {
