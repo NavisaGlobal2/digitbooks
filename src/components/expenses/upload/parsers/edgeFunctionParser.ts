@@ -100,20 +100,22 @@ export const parseViaEdgeFunction = async (
       return [];
     }
 
-    const data: ApiResponse = await response.json();
+    // Parse the response as JSON with explicit typing
+    const data = await response.json();
+    const typedData: ApiResponse = data;
 
     // Handle the new API response format
-    if (data.success === false) {
-      onError(`API Error: ${data.message || "Unknown error processing statement"}`);
+    if (typedData.success === false) {
+      onError(`API Error: ${typedData.message || "Unknown error processing statement"}`);
       return [];
     }
 
-    if (!data.transactions && data.statement_id) {
+    if (!typedData.transactions && typedData.statement_id) {
       // We need to fetch the transactions from Supabase directly
       const { data: transactionsData, error: transactionError } = await supabase
         .from('transactions')
         .select('*')
-        .eq('statement_id', data.statement_id)
+        .eq('statement_id', typedData.statement_id)
         .order('date', { ascending: false });
       
       if (transactionError || !transactionsData) {
@@ -122,11 +124,11 @@ export const parseViaEdgeFunction = async (
       }
       
       // Map the database transactions to our ParsedTransaction format with explicit typing
-      const parsedTransactions: ParsedTransaction[] = (transactionsData as TransactionData[]).map((tx) => {
+      const parsedTransactions: ParsedTransaction[] = transactionsData.map((tx: TransactionData) => {
         // Handle amount conversion safely
         const amountValue = typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount;
         
-        return {
+        const parsedTx: ParsedTransaction = {
           id: tx.id,
           date: new Date(tx.date),
           description: tx.description,
@@ -134,8 +136,10 @@ export const parseViaEdgeFunction = async (
           type: (tx.transaction_type?.toLowerCase() === 'debit') ? 'debit' : 'credit',
           category: tx.category as ExpenseCategory | undefined,
           selected: tx.transaction_type?.toLowerCase() === 'debit',
-          batchId: data.statement_id
+          batchId: typedData.statement_id
         };
+        
+        return parsedTx;
       });
       
       // Call success callback with transactions
@@ -154,19 +158,23 @@ export const parseViaEdgeFunction = async (
     }
 
     // Handle the legacy response format with transactions array directly in the response
-    const transactions = data.transactions || [];
+    const transactions = typedData.transactions || [];
     
-    // Map the server response to our ParsedTransaction type
-    const parsedTransactions: ParsedTransaction[] = transactions.map((tx: any) => ({
-      id: crypto.randomUUID(),
-      date: new Date(tx.date),
-      description: tx.description,
-      amount: Math.abs(parseFloat(tx.amount.toString())), // Store as positive number
-      type: tx.type || (parseFloat(tx.amount.toString()) < 0 ? 'debit' : 'credit'),
-      category: tx.category as ExpenseCategory | undefined,
-      selected: tx.type === 'debit' || parseFloat(tx.amount.toString()) < 0, // Pre-select debits
-      batchId: data.batchId || data.statement_id
-    }));
+    // Map the server response to our ParsedTransaction type with explicit typing
+    const parsedTransactions: ParsedTransaction[] = transactions.map((tx: any) => {
+      const parsedTx: ParsedTransaction = {
+        id: crypto.randomUUID(),
+        date: new Date(tx.date),
+        description: tx.description,
+        amount: Math.abs(parseFloat(tx.amount.toString())), // Store as positive number
+        type: tx.type || (parseFloat(tx.amount.toString()) < 0 ? 'debit' : 'credit'),
+        category: (tx.category as ExpenseCategory) || undefined,
+        selected: tx.type === 'debit' || parseFloat(tx.amount.toString()) < 0, // Pre-select debits
+        batchId: typedData.batchId || typedData.statement_id
+      };
+      
+      return parsedTx;
+    });
 
     // Filter transactions if needed (e.g., only include expenses)
     const filteredTransactions = parsedTransactions.filter(tx => 
