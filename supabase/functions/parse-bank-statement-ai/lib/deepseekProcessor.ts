@@ -24,12 +24,13 @@ export async function processWithDeepseek(text: string, context?: string | null)
     - type ("debit" or "credit")
     
     CRITICAL INSTRUCTIONS FOR DESCRIPTIONS:
-    1. UNDER NO CIRCUMSTANCES output generic terms like "Row 1", "Row 2", "Row 12", "Row 13" in place of descriptions
+    1. UNDER NO CIRCUMSTANCES output generic terms like "Row 1", "Row 2", "Row 12", "Row 13", "Row X" in place of descriptions
     2. Always extract the actual transaction narrative from the "REMARKS", "NARRATION", "PARTICULARS" or similar fields
     3. If no clear description exists, use merchant name, reference number, or any identifying information
     4. Combine relevant fields to create meaningful descriptions when necessary
     5. Remove any unnecessary prefixes, suffixes, or repetitive elements
     6. When descriptions appear as numbered rows, REPLACE them with actual descriptive content from other fields
+    7. If no meaningful description can be found, use null or "" instead of any "Row X" placeholder
     
     IMPORTANT: Preserve all original fields in the preservedColumns property.
     
@@ -44,12 +45,13 @@ export async function processWithDeepseek(text: string, context?: string | null)
     - type ("debit" or "credit")
     
     CRITICAL INSTRUCTIONS FOR DESCRIPTIONS:
-    1. UNDER NO CIRCUMSTANCES output generic terms like "Row 1", "Row 2", "Row 12", "Row 13" in place of descriptions
+    1. UNDER NO CIRCUMSTANCES output generic terms like "Row 1", "Row 2", "Row 12", "Row 13", "Row X" in place of descriptions
     2. Always extract the actual transaction narrative from the "REMARKS", "NARRATION", "PARTICULARS" or similar fields
     3. If no clear description exists, use merchant name, reference number, or any identifying information
     4. Combine relevant fields to create meaningful descriptions when necessary
     5. Remove any unnecessary prefixes, suffixes, or repetitive elements
     6. When descriptions appear as numbered rows, REPLACE them with actual descriptive content from other fields
+    7. If no meaningful description can be found, use null or "" instead of any "Row X" placeholder
     
     IMPORTANT: Preserve all original fields in the preservedColumns property.
     

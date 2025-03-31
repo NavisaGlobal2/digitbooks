@@ -1,3 +1,4 @@
+
 import { read, utils } from "https://cdn.jsdelivr.net/npm/xlsx/+esm";
 
 export async function parseExcelDirectly(file: File): Promise<any[]> {
@@ -48,7 +49,7 @@ export async function parseExcelDirectly(file: File): Promise<any[]> {
       const transaction = {
         id: `excel-row-${index}`,
         date: formatDateToIsoString(originalDate), // Convert to ISO format for consistency
-        description: originalDescription || `Row ${index + 1}`,
+        description: originalDescription || null, // Use null instead of "Row X" fallback
         amount: parseAmount(originalAmount),
         type: determineTransactionType(originalType, originalAmount),
         
