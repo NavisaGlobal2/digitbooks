@@ -23,9 +23,10 @@ export const parseViaEdgeFunction = async (
     formData.append('file', file);
     formData.append('fileName', file.name);
     formData.append('context', 'revenue'); // Specific context for revenue parsing
-    formData.append('useAIFormatting', useAIFormatting.toString());
+    formData.append('useAIFormatting', useAIFormatting.toString()); // Explicitly enable AI formatting
+    formData.append('preferredProvider', 'anthropic'); // Specifically request Anthropic for formatting
 
-    console.log(`Processing ${file.name} for revenue parsing via edge function`);
+    console.log(`Processing ${file.name} for revenue parsing via edge function with AI formatting ${useAIFormatting ? 'enabled' : 'disabled'}`);
 
     // Call the edge function
     const { data, error } = await supabase.functions.invoke('parse-bank-statement-ai', {
@@ -45,6 +46,7 @@ export const parseViaEdgeFunction = async (
 
     // Log the raw transactions data to debug
     console.log("Raw transactions from edge function:", data.transactions.slice(0, 2));
+    console.log("AI formatting applied:", data.formattingApplied || false);
 
     // Complete progress if provided
     if (completeProgress) {
@@ -70,7 +72,8 @@ export const parseViaEdgeFunction = async (
         const amount = extractAmount(tx);
         
         // Create a source suggestion based on the description
-        const sourceSuggestion = suggestRevenueSource(description);
+        // Use the AI-suggested source if available
+        const sourceSuggestion = tx.sourceSuggestion || suggestRevenueSource(description);
         
         return {
           id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
@@ -105,9 +108,12 @@ export const parseViaEdgeFunction = async (
 // Helper function to extract date from transaction
 function extractDate(tx: any): Date {
   try {
-    // Try different date fields based on common formats in bank statements
+    // First try to use the AI-formatted date if available
     if (tx.date) {
-      return new Date(tx.date);
+      const parsedDate = new Date(tx.date);
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate;
+      }
     }
     
     if (tx.preservedColumns) {
@@ -152,6 +158,7 @@ function extractDate(tx: any): Date {
 
 // Helper function to extract description from transaction
 function extractDescription(tx: any): string {
+  // First try to use the AI-formatted description if available
   if (tx.description) {
     return tx.description;
   }
@@ -179,7 +186,7 @@ function extractDescription(tx: any): string {
 
 // Helper function to extract credit amount from transaction
 function extractCreditAmount(tx: any): number {
-  // First check if we already have a processed amount
+  // First check if we already have a processed amount from AI formatting
   if (tx.amount && tx.type === 'credit') {
     return parseFloat(tx.amount);
   }
@@ -213,14 +220,14 @@ function extractCreditAmount(tx: any): number {
 
 // Helper function to extract amount (handles both credit and debit)
 function extractAmount(tx: any): number {
+  // First try to use the AI-formatted amount if available
+  if (typeof tx.amount === 'number') {
+    return Math.abs(tx.amount); // Convert negative to positive for revenue
+  }
+  
   const creditAmount = extractCreditAmount(tx);
   if (creditAmount > 0) {
     return creditAmount;
-  }
-  
-  // Already have a processed amount
-  if (typeof tx.amount === 'number') {
-    return Math.abs(tx.amount); // Convert negative to positive for revenue
   }
   
   return 0;
