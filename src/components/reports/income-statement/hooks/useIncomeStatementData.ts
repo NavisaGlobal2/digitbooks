@@ -1,6 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { calculateFinancialMetrics } from "../utils/financialCalculations";
+import { formatReportDates } from "../utils/dateFormatters";
+import { useReportDataLoading } from "./useReportDataLoading";
 
 export interface ReportData {
   totalRevenue: number;
@@ -21,48 +24,39 @@ export const useIncomeStatementData = (
   getExpensesByCategory: () => Record<string, number>,
   dateRange: { startDate: Date; endDate: Date } | null
 ) => {
-  const [isLoading, setIsLoading] = useState(true);
+  const { isLoading, setIsLoading } = useReportDataLoading();
   const [reportData, setReportData] = useState<ReportData | null>(null);
 
-  const today = new Date();
-  const formattedDate = format(today, "MMMM dd, yyyy");
-  
-  const startDateFormatted = dateRange ? format(dateRange.startDate, "MMM dd, yyyy") : "";
-  const endDateFormatted = dateRange ? format(dateRange.endDate, "MMM dd, yyyy") : "";
-  const reportDuration = dateRange ? 
-    Math.ceil((dateRange.endDate.getTime() - dateRange.startDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
-  const reportProgress = 100;
+  // Format the date information using the utility function
+  const {
+    formattedDate,
+    startDateFormatted,
+    endDateFormatted,
+    reportDuration
+  } = formatReportDates(dateRange);
+
+  const reportProgress = 100; // This could be made dynamic if needed
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      let filteredRevenues = revenues;
-      let totalRevenue = 0;
-      let revenueBySource = {};
+      // Extract revenue data based on date range if available
+      const { 
+        filteredRevenues, 
+        totalRevenue, 
+        revenueBySource 
+      } = getRevenueData(revenues, dateRange, getTotalRevenue, getRevenueBySource, getRevenueByPeriod);
       
-      if (dateRange) {
-        filteredRevenues = getRevenueByPeriod(dateRange.startDate, dateRange.endDate);
-        totalRevenue = filteredRevenues.reduce((total, revenue) => total + revenue.amount, 0);
-        
-        revenueBySource = filteredRevenues.reduce((acc, revenue) => {
-          const source = revenue.source;
-          if (!acc[source]) {
-            acc[source] = 0;
-          }
-          acc[source] += revenue.amount;
-          return acc;
-        }, {} as Record<string, number>);
-      } else {
-        totalRevenue = getTotalRevenue();
-        revenueBySource = getRevenueBySource();
-      }
-      
+      // Get expense data
       const totalExpenses = getTotalExpenses();
       const expensesByCategory = getExpensesByCategory();
       
-      const grossProfit = totalRevenue - totalExpenses;
-      const netProfit = grossProfit;
-      const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+      // Calculate financial metrics
+      const { grossProfit, netProfit, profitMargin } = calculateFinancialMetrics(
+        totalRevenue, 
+        totalExpenses
+      );
       
+      // Set the report data state
       setReportData({
         totalRevenue,
         revenueBySource,
@@ -77,7 +71,7 @@ export const useIncomeStatementData = (
     }, 800);
     
     return () => clearTimeout(timer);
-  }, [revenues, getTotalRevenue, getRevenueBySource, getTotalExpenses, getExpensesByCategory, dateRange, getRevenueByPeriod]);
+  }, [revenues, getTotalRevenue, getRevenueBySource, getTotalExpenses, getExpensesByCategory, dateRange, getRevenueByPeriod, setIsLoading]);
 
   return {
     isLoading,
@@ -88,4 +82,36 @@ export const useIncomeStatementData = (
     reportDuration,
     reportProgress
   };
+};
+
+// Helper function to get revenue data based on date range
+const getRevenueData = (
+  revenues: any[],
+  dateRange: { startDate: Date; endDate: Date } | null,
+  getTotalRevenue: () => number,
+  getRevenueBySource: () => Record<string, number>,
+  getRevenueByPeriod: (startDate: Date, endDate: Date) => any[]
+) => {
+  let filteredRevenues = revenues;
+  let totalRevenue = 0;
+  let revenueBySource = {};
+  
+  if (dateRange) {
+    filteredRevenues = getRevenueByPeriod(dateRange.startDate, dateRange.endDate);
+    totalRevenue = filteredRevenues.reduce((total, revenue) => total + revenue.amount, 0);
+    
+    revenueBySource = filteredRevenues.reduce((acc, revenue) => {
+      const source = revenue.source;
+      if (!acc[source]) {
+        acc[source] = 0;
+      }
+      acc[source] += revenue.amount;
+      return acc;
+    }, {} as Record<string, number>);
+  } else {
+    totalRevenue = getTotalRevenue();
+    revenueBySource = getRevenueBySource();
+  }
+  
+  return { filteredRevenues, totalRevenue, revenueBySource };
 };
