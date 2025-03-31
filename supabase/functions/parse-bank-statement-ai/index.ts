@@ -25,7 +25,6 @@ serve(async (req) => {
     const preferredProvider = formData.get("preferredProvider")?.toString() || null;
     
     // Only try to set the environment variable if explicitly provided
-    // This avoids the "operation not supported" error for PDF files
     if (preferredProvider) {
       try {
         console.log(`Setting preferred AI provider to: ${preferredProvider}`);
@@ -33,7 +32,6 @@ serve(async (req) => {
       } catch (envError) {
         // Log but don't fail if we can't set the environment variable
         console.log(`Could not set preferred AI provider: ${envError.message}`);
-        // Continue processing without failing
       }
     }
     
@@ -63,17 +61,20 @@ serve(async (req) => {
       if (isExcelFile(file)) {
         try {
           console.log('Using direct Excel parsing to preserve exact original data structure');
-          const transactions = await parseExcelDirectly(file);
+          const excelData = await parseExcelDirectly(file);
           
-          if (transactions && transactions.length > 0) {
-            console.log(`Successfully parsed ${transactions.length} transactions directly from Excel, preserving original format`);
+          if (excelData && Array.isArray(excelData) && excelData.length > 0) {
+            console.log(`Successfully parsed ${excelData.length} transactions directly from Excel, preserving original format`);
+            
+            // Return the transactions exactly as parsed from Excel without any AI processing
             return new Response(
               JSON.stringify({
                 success: true,
-                transactions,
-                message: `Successfully processed ${transactions.length} transactions directly from Excel`,
+                transactions: excelData,
+                message: `Successfully processed ${excelData.length} transactions directly from Excel`,
                 batchId,
-                preservedOriginalFormat: true
+                preservedOriginalFormat: true,
+                originalExcelData: true // Flag to indicate this is direct Excel data
               }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
@@ -137,7 +138,8 @@ serve(async (req) => {
           message: usedFallback 
             ? `Successfully processed ${transactions.length} transactions using fallback method` 
             : `Successfully processed ${transactions.length} transactions`,
-          batchId
+          batchId,
+          aiGenerated: true // Flag to indicate this is AI-processed data
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

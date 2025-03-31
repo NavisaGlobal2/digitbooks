@@ -1,308 +1,192 @@
-/**
- * Direct Excel parser for Edge Function that preserves original data format
- * This parses Excel files directly without using AI processing
- */
+import { read, utils } from "https://cdn.jsdelivr.net/npm/xlsx/+esm";
 
-// Check if a file is an Excel file based on extension
-export const isExcelFile = (file: File): boolean => {
-  const excelMimeTypes = [
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  ];
-  
-  const excelExtensions = ['.xlsx', '.xls', '.xlsm', '.xlsb'];
-  
-  // Check mime type
-  if (excelMimeTypes.includes(file.type)) {
-    return true;
-  }
-  
-  // Check file extension
-  const fileName = file.name.toLowerCase();
-  return excelExtensions.some(ext => fileName.endsWith(ext));
-};
-
-/**
- * Parse Excel file directly to extract data in its original format
- * @param file Excel file to parse 
- * @returns Array of transaction objects with original data preserved
- */
 export async function parseExcelDirectly(file: File): Promise<any[]> {
   try {
-    // Extract binary data from the file
-    const arrayBuffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
+    // Read the Excel file as an array buffer
+    const buffer = await file.arrayBuffer();
     
-    // Find potential table data in the Excel binary
-    const tableData = extractTabularDataFromBinary(bytes);
+    // Parse the Excel file
+    const workbook = read(buffer, { type: "array" });
+    console.log("Excel workbook parsed successfully");
     
-    if (!tableData || tableData.length === 0) {
+    // Get the first sheet
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    
+    if (!worksheet) {
+      console.log("No worksheet found in Excel file");
+      return [];
+    }
+    
+    // Convert the sheet to JSON
+    const rawData = utils.sheet_to_json(worksheet, { raw: false, defval: null });
+    console.log(`Excel sheet converted to JSON, found ${rawData.length} rows`);
+    
+    if (rawData.length === 0) {
       console.log("No table data found in Excel binary");
       return [];
     }
     
-    console.log(`Found ${tableData.length} potential rows of data`);
-    
-    // Find potential headers in the first few rows
-    const headerRowIndex = findHeaderRowIndex(tableData);
-    if (headerRowIndex === -1) {
-      console.log("Could not find header row in Excel data");
-      return [];
-    }
-    
-    // Get headers
-    const headers = tableData[headerRowIndex];
-    console.log("Found headers:", headers);
-    
-    // Process rows after the header
-    const transactions = [];
-    
-    for (let i = headerRowIndex + 1; i < tableData.length; i++) {
-      const row = tableData[i];
+    // Transform the data into our transaction format
+    const transactions = rawData.map((row: any, index: number) => {
+      // Extract column names (lowercased for case-insensitive matching)
+      const columns = Object.keys(row).map(key => key.toLowerCase());
       
-      // Skip empty rows
-      if (row.filter(Boolean).length === 0) continue;
+      // Try to identify date, description and amount columns
+      const dateKey = findColumnByPattern(row, ['date', 'transaction date', 'trans date', 'trans_date', 'txn date', 'txn_date']);
+      const descriptionKey = findColumnByPattern(row, ['description', 'narrative', 'details', 'transaction', 'particulars', 'remarks', 'note', 'desc']);
+      const amountKey = findColumnByPattern(row, ['amount', 'value', 'debit', 'credit', 'transaction amount', 'sum', 'total']);
+      const typeKey = findColumnByPattern(row, ['type', 'transaction type', 'txn_type', 'debit/credit', 'dc']);
       
-      // Create transaction object by mapping row to headers
-      const transaction: Record<string, any> = {};
-      let hasData = false;
+      // Preserve the original values
+      const originalDate = dateKey ? row[dateKey] : null;
+      const originalDescription = descriptionKey ? row[descriptionKey] : null;
+      const originalAmount = amountKey ? row[amountKey] : null;
+      const originalType = typeKey ? row[typeKey] : null;
       
-      for (let j = 0; j < headers.length; j++) {
-        if (j < row.length) {
-          // Store original header name and value
-          const headerName = headers[j]?.toString().trim() || `column${j}`;
-          const cellValue = row[j];
-          
-          // Store every original field from Excel with original name
-          const originalFieldName = `original_${headerName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
-          transaction[originalFieldName] = cellValue;
-          
-          // Attempt to map to standard field names while preserving originals
-          const lowerHeader = headerName.toLowerCase();
-          
-          // Map standard fields but preserve original values
-          if (lowerHeader.includes('date') || lowerHeader.includes('time')) {
-            transaction.date = cellValue; // Keep original date format
-            transaction.originalDate = cellValue; // Store original date separately
-            hasData = true;
-          } 
-          else if (lowerHeader.includes('desc') || lowerHeader.includes('narr') || 
-                  lowerHeader.includes('part') || lowerHeader.includes('det')) {
-            transaction.description = cellValue;
-            hasData = true;
-          }
-          else if (lowerHeader.includes('amount') || lowerHeader.includes('value') || 
-                  lowerHeader.includes('sum') || lowerHeader.includes('debit') || 
-                  lowerHeader.includes('credit')) {
-            
-            // Keep original amount format but try to convert to number for processing
-            let numValue: number | null = null;
-            
-            // First preserve original amount
-            transaction.originalAmount = cellValue;
-            
-            // Then try to convert to number for internal use if needed
-            if (typeof cellValue === 'number') {
-              numValue = cellValue;
-            } else if (typeof cellValue === 'string' && cellValue.trim()) {
-              // Try to parse amount, preserving negative signs
-              const cleanedAmount = cellValue.replace(/[^\d.-]/g, '');
-              if (cleanedAmount) {
-                numValue = parseFloat(cleanedAmount);
-              }
-            }
-            
-            if (numValue !== null && !isNaN(numValue)) {
-              transaction.amount = numValue;
-              
-              // Infer type but don't override explicit type if found later
-              if (!transaction.type) {
-                transaction.type = numValue < 0 ? 'debit' : 'credit';
-              }
-              hasData = true;
-            }
-          }
-          // Explicitly look for transaction type indicators
-          else if (lowerHeader.includes('type') || lowerHeader.includes('dr/cr')) {
-            transaction.type = cellValue;
-            hasData = true;
-          }
-        }
-      }
+      // Create a standardized transaction object with all original data preserved
+      const transaction = {
+        id: `excel-row-${index}`,
+        date: formatDateToIsoString(originalDate), // Convert to ISO format for consistency
+        description: originalDescription || `Row ${index + 1}`,
+        amount: parseAmount(originalAmount),
+        type: determineTransactionType(originalType, originalAmount),
+        
+        // Preserve original values
+        originalDate: originalDate,
+        originalAmount: originalAmount,
+        originalDescription: originalDescription,
+        originalType: originalType,
+        
+        // Include all columns from the Excel file
+        preservedColumns: { ...row }
+      };
       
-      // Only add if we found some valid data
-      if (hasData) {
-        // Generate a unique ID
-        transaction.id = `tx-${i}-${Math.random().toString(36).substr(2, 9)}`;
-        
-        // Ensure required fields exist with defaults only if missing
-        if (!transaction.date) {
-          transaction.date = `Row ${i + 1}`;
-          transaction.originalDate = `Row ${i + 1}`;
-        }
-        
-        if (!transaction.description) {
-          transaction.description = `Transaction from row ${i + 1}`;
-        }
-        
-        if (transaction.amount === undefined) {
-          transaction.amount = 0;
-        }
-        
-        if (!transaction.type) {
-          transaction.type = 'unknown';
-        }
-        
-        // Add all original column data as a preservedColumns property
-        transaction.preservedColumns = {};
-        for (let j = 0; j < headers.length && j < row.length; j++) {
-          const header = headers[j]?.toString().trim() || `column${j}`;
-          transaction.preservedColumns[header] = row[j];
-        }
-        
-        transactions.push(transaction);
-      }
-    }
+      return transaction;
+    });
     
-    console.log(`Successfully extracted ${transactions.length} transactions with original data preserved`);
+    console.log(`Processed ${transactions.length} transactions from Excel file with all original data preserved`);
     return transactions;
   } catch (error) {
-    console.error("Error parsing Excel directly:", error);
-    throw error;
+    console.error("Error parsing Excel file:", error);
+    throw new Error(`Failed to parse Excel file: ${error.message}`);
   }
 }
 
 /**
- * Extract tabular data from Excel binary
- * Uses pattern matching to find potential table structures
+ * Find a column that matches one of the patterns
  */
-function extractTabularDataFromBinary(data: Uint8Array): string[][] {
-  // This is a simplified approach - we'll try to find repeating patterns 
-  // that might represent rows and columns
+function findColumnByPattern(row: any, patterns: string[]): string | null {
+  const keys = Object.keys(row);
   
-  // Find sequences of text separated by zero bytes (common in Excel)
-  let textSegments: string[] = [];
-  let currentSegment = '';
-  
-  for (let i = 0; i < data.length - 1; i++) {
-    // Look for potential text characters (printable ASCII)
-    if ((data[i] >= 32 && data[i] < 127) && data[i+1] === 0) {
-      // UTF-16LE encoded text found (common in Excel)
-      const char = String.fromCharCode(data[i]);
-      currentSegment += char;
-    } else if (currentSegment.length > 0) {
-      // End of a segment
-      textSegments.push(currentSegment);
-      currentSegment = '';
-    }
-  }
-  
-  // Add any remaining segment
-  if (currentSegment.length > 0) {
-    textSegments.push(currentSegment);
-  }
-  
-  // Filter out very short segments and duplicates
-  textSegments = [...new Set(textSegments)].filter(s => s.length > 2);
-  
-  // Try to organize segments into potential rows and columns
-  const rows: string[][] = [];
-  let currentRow: string[] = [];
-  let rowCount = 0;
-  
-  // More sophisticated approach to detect table structures
-  for (let i = 0; i < textSegments.length; i++) {
-    const segment = textSegments[i];
+  for (const pattern of patterns) {
+    // First try exact match
+    const exactMatch = keys.find(key => key.toLowerCase() === pattern.toLowerCase());
+    if (exactMatch) return exactMatch;
     
-    // Check if this might be a new row marker
-    const isNewRowMarker = segment.includes('\n') || 
-                           segment.includes('\r') ||
-                           (i > 0 && (segment.match(/^\d+$/) || segment.match(/^\d{1,2}\/\d{1,2}\/\d{2,4}$/)));
-                           
-    if (isNewRowMarker && currentRow.length > 0) {
-      rows.push([...currentRow]);
-      currentRow = [];
-      rowCount++;
-      currentRow.push(segment);
-    }
-    else if (segment.match(/[\d.,\-+$£€¥]/)) {
-      // If segment contains numbers or currency symbols, likely part of a table
-      currentRow.push(segment);
-      
-      // Periodically check if we should start a new row
-      if (currentRow.length > 5) { // If we've accumulated many cells, start a new row
-        rows.push([...currentRow]);
-        currentRow = [];
-        rowCount++;
-      }
-    }
-    else if (segment.length > 5) {
-      // Longer text segments might be descriptions
-      currentRow.push(segment);
-      
-      // If we already have some columns, this might be the end of a row
-      if (currentRow.length > 2) {
-        rows.push([...currentRow]);
-        currentRow = [];
-        rowCount++;
-      }
-    }
-    else if (segment.trim().length > 0) {
-      // Add other non-empty segments
-      currentRow.push(segment);
-    }
-    
-    // Safety check for max rows
-    if (rowCount > 1000) {
-      console.log("Reached maximum row count, truncating Excel processing");
-      break;
-    }
+    // Then try contains match
+    const containsMatch = keys.find(key => key.toLowerCase().includes(pattern.toLowerCase()));
+    if (containsMatch) return containsMatch;
   }
   
-  // Add any remaining row
-  if (currentRow.length > 0) {
-    rows.push(currentRow);
-  }
-  
-  return rows;
+  return null;
 }
 
 /**
- * Find the most likely header row in table data
+ * Try to format a date string to ISO format
+ * Will preserve the original date and return a standardized version
  */
-function findHeaderRowIndex(rows: string[][]): number {
-  // Look for common header terms in the first 10 rows
-  const headerKeywords = ['date', 'description', 'amount', 'balance', 
-                          'debit', 'credit', 'type', 'ref', 'transaction',
-                          'details', 'narrative'];
+function formatDateToIsoString(dateStr: string | null): string {
+  if (!dateStr) return new Date().toISOString();
   
-  // Only check the first 10 rows
-  const rowsToCheck = Math.min(10, rows.length);
-  
-  for (let i = 0; i < rowsToCheck; i++) {
-    const row = rows[i];
-    if (!row) continue;
+  try {
+    // Try to detect common date formats
+    let date;
     
-    // Count how many header keywords are found in this row
-    let keywordMatches = 0;
-    for (const cell of row) {
-      if (!cell) continue;
-      
-      const cellLower = cell.toLowerCase();
-      for (const keyword of headerKeywords) {
-        if (cellLower.includes(keyword)) {
-          keywordMatches++;
-          break;
-        }
-      }
+    // Check if it's already an ISO date
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      date = new Date(dateStr);
+    }
+    // Check for DD/MM/YYYY format
+    else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+      const parts = dateStr.split('/');
+      date = new Date(`${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`);
+    }
+    // Check for MM/DD/YYYY format
+    else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+      date = new Date(dateStr);
+    }
+    // Try generic parsing as last resort
+    else {
+      date = new Date(dateStr);
     }
     
-    // If we found multiple header keywords in this row, it's likely the header
-    if (keywordMatches >= 2) {
-      return i;
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      console.log(`Invalid date format: ${dateStr}, using current date`);
+      return new Date().toISOString();
+    }
+    
+    return date.toISOString();
+  } catch (error) {
+    console.log(`Error parsing date: ${dateStr}`, error);
+    return new Date().toISOString();
+  }
+}
+
+/**
+ * Parse amount string or number to a numeric value
+ */
+function parseAmount(amountStr: string | number | null): number {
+  if (amountStr === null || amountStr === undefined) return 0;
+  
+  // If it's already a number, return it
+  if (typeof amountStr === 'number') return amountStr;
+  
+  try {
+    // Remove currency symbols, commas, and other non-numeric characters
+    // But keep minus sign and decimal point
+    const cleanedStr = amountStr.toString()
+      .replace(/[^0-9.-]/g, '')
+      .trim();
+    
+    if (!cleanedStr) return 0;
+    
+    return parseFloat(cleanedStr);
+  } catch (error) {
+    console.log(`Error parsing amount: ${amountStr}`, error);
+    return 0;
+  }
+}
+
+/**
+ * Determine transaction type (debit/credit) based on type column or amount
+ */
+function determineTransactionType(typeStr: string | null, amountStr: string | number | null): "debit" | "credit" | "unknown" {
+  if (!typeStr && !amountStr) return "unknown";
+  
+  // If we have a type string, try to determine from it
+  if (typeStr) {
+    const lowerType = typeStr.toLowerCase();
+    
+    if (lowerType.includes('debit') || lowerType.includes('dr') || 
+        lowerType.includes('expense') || lowerType.includes('payment') || 
+        lowerType.includes('withdrawal')) {
+      return "debit";
+    }
+    
+    if (lowerType.includes('credit') || lowerType.includes('cr') || 
+        lowerType.includes('deposit') || lowerType.includes('income') || 
+        lowerType.includes('receive')) {
+      return "credit";
     }
   }
   
-  // Fallback: use the first row
-  return 0;
+  // If we couldn't determine from type, try from amount
+  const amount = parseAmount(amountStr);
+  
+  if (amount < 0) return "debit";
+  if (amount > 0) return "credit";
+  
+  return "unknown";
 }

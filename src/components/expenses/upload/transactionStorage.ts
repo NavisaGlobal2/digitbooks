@@ -65,14 +65,22 @@ export const prepareExpensesFromTransactions = (
       dateObj = new Date();
     }
     
+    // Get original amount if available for display
+    const displayAmount = transaction.originalAmount || transaction.amount;
+    
+    // Get description from original data if available
+    const description = transaction.preservedColumns?.description || 
+                        transaction.preservedColumns?.narrative ||
+                        transaction.description;
+    
     // Create the expense object using the original data where possible
     return {
       id: uuidv4(), // Generate a new ID for each expense
       amount: Math.abs(transaction.amount), // Ensure amount is positive
       date: dateObj, // Use the properly parsed date
-      description: transaction.description,
+      description: description,
       category: transaction.category as ExpenseCategory, // Type cast to ExpenseCategory
-      vendor: inferVendorFromDescription(transaction.description),
+      vendor: inferVendorFromDescription(description),
       status: "pending", // Changed from "completed" to "pending" to match ExpenseStatus type
       paymentMethod: "bank transfer",
       fromStatement: true,

@@ -51,6 +51,38 @@ export const parseViaEdgeFunction = async (
     
     console.log("Received response from edge function:", data);
     
+    // For Excel data, prioritize the original data completely
+    if (data.originalExcelData) {
+      console.log("Using original Excel data with all original fields preserved");
+      
+      // Map the Excel transactions with minimal processing to preserve original data
+      const transactions = data.transactions.map((tx: any, index: number) => {
+        // Initialize with the original transaction data
+        const parsedTransaction: ParsedTransaction = {
+          id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
+          date: tx.date || new Date().toISOString(),
+          description: tx.description || "",
+          amount: typeof tx.amount === 'number' ? tx.amount : parseFloat(String(tx.amount || 0)),
+          type: tx.type as "debit" | "credit" | "unknown",
+          selected: false,
+          
+          // Preserve all original data
+          originalDate: tx.originalDate || tx.date,
+          originalAmount: tx.originalAmount || tx.amount,
+          preservedColumns: tx.preservedColumns || tx
+        };
+        
+        // Pre-select debits by default
+        parsedTransaction.selected = parsedTransaction.type === "debit" || parsedTransaction.amount < 0;
+        
+        return parsedTransaction;
+      });
+      
+      console.log(`Successfully processed ${transactions.length} transactions with original Excel data preserved`);
+      onSuccess(transactions);
+      return;
+    }
+    
     // Map the transactions to the expected format, preserving original data
     const transactions = data.transactions.map((tx: any) => {
       // Initialize a parsed transaction with defaults
@@ -102,7 +134,7 @@ export const parseViaEdgeFunction = async (
       
       // Pre-select debits by default
       parsedTransaction.selected = parsedTransaction.type === "debit" || 
-                                   parsedTransaction.amount < 0;
+                                 parsedTransaction.amount < 0;
       
       // For Excel files processed directly, preserve all original fields
       if (data.preservedOriginalFormat) {
