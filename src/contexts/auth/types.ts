@@ -1,8 +1,8 @@
 
 export interface User {
-  id: string;
-  email?: string;
+  id?: string;
   name?: string;
+  email?: string;
   avatar?: string;
   onboardingCompleted?: boolean;
 }
@@ -11,9 +11,9 @@ export interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => void;
   signup: (email: string, password: string, name: string) => Promise<void>;
-  verifyOtp?: (email: string, token: string) => Promise<any>;
   completeOnboarding: () => void;
+  verifyOtp: (email: string, token: string) => Promise<any>;
   signInWithGoogle: () => Promise<void>;
 }
