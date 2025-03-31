@@ -101,7 +101,7 @@ function extractTextFromExcelBinary(data: Uint8Array): string[] {
     }
     
     // Check for potential row boundaries
-    if (inTextSegment && (char === '\n' || char === '\r')) {
+    if (inTextSegment && (data[i] === 10 || data[i] === 13)) {
       if (currentSegment.length > 3) { // Ignore very short segments
         textSegments.push(currentSegment.trim());
       }

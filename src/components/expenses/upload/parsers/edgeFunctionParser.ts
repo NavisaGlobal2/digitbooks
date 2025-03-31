@@ -11,14 +11,6 @@ export const parseViaEdgeFunction = async (
   onError: (errorMessage: string) => boolean,
   preferredProvider?: string
 ): Promise<void> => {
-  // Check if file is CSV
-  const fileExt = file.name.split('.').pop()?.toLowerCase();
-  
-  if (fileExt !== 'csv') {
-    onError('Only CSV files are currently supported. Please upload a CSV file.');
-    return;
-  }
-  
   try {
     // Create form data with the file and preferences
     const formData = new FormData();

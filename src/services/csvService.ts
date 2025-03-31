@@ -1,86 +1,38 @@
 
+import Papa from 'papaparse';
+
 /**
  * Service for handling CSV file operations
  */
 export const CSVService = {
   /**
-   * Parse a CSV file and return the data as an array of arrays
+   * Parse a CSV file
    * @param file The CSV file to parse
-   * @returns Promise with the parsed CSV data
+   * @returns Promise with the parsed data
    */
-  parseCSV: async (file: File): Promise<string[][]> => {
-    try {
-      const text = await file.text();
-      const lines = text.split(/\r\n|\n/);
-      const result: string[][] = [];
-      
-      for (const line of lines) {
-        // Handle quoted values properly (values that might contain commas)
-        const row = parseCSVRow(line);
-        if (row.length > 0) {
-          result.push(row);
+  parseCSV: async (file: File): Promise<any[]> => {
+    return new Promise((resolve, reject) => {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          resolve(results.data);
+        },
+        error: (error) => {
+          reject(error);
         }
-      }
-      
-      return result;
-    } catch (error) {
-      console.error('Error parsing CSV file:', error);
-      throw new Error(`Failed to parse CSV file: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+      });
+    });
   },
-  
+
   /**
    * Extract text content from a CSV file
    * @param file The CSV file to extract text from
    * @returns Promise with the extracted text content
    */
   extractTextFromCSV: async (file: File): Promise<string> => {
-    try {
-      const csvData = await CSVService.parseCSV(file);
-      let textContent = `[CSV FILE: ${file.name}]\n\n`;
-      
-      // Add all rows
-      for (const row of csvData) {
-        textContent += row.join('\t') + '\n';
-      }
-      
-      return textContent;
-    } catch (error) {
-      console.error('Error extracting text from CSV file:', error);
-      throw new Error(`Failed to extract text from CSV file: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    return await file.text();
   }
-};
-
-/**
- * Helper function to parse a single CSV row respecting quotes
- * @param text The CSV row text
- * @returns Array of values from the row
- */
-const parseCSVRow = (text: string): string[] => {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-  
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    
-    if (char === '"') {
-      // Toggle quote state
-      inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
-      // Found delimiter, add current value to result
-      result.push(current);
-      current = '';
-    } else {
-      // Add character to current value
-      current += char;
-    }
-  }
-  
-  // Add the last value
-  result.push(current);
-  return result;
 };
 
 /**
@@ -89,18 +41,18 @@ const parseCSVRow = (text: string): string[] => {
  * @returns boolean indicating if the file is a CSV file
  */
 export const isCSVFile = (file: File): boolean => {
-  const csvMimeTypes = [
-    'text/csv',
-    'application/csv', 
-    'application/vnd.ms-excel'
-  ];
-  
-  // Check mime type
-  if (csvMimeTypes.includes(file.type)) {
+  // Check file extension
+  const fileName = file.name.toLowerCase();
+  if (fileName.endsWith('.csv')) {
     return true;
   }
   
-  // Check file extension
-  const fileName = file.name.toLowerCase();
-  return fileName.endsWith('.csv');
+  // Check mime type
+  const csvMimeTypes = [
+    'text/csv',
+    'application/csv',
+    'application/vnd.ms-excel' // Some systems use this for CSV too
+  ];
+  
+  return csvMimeTypes.includes(file.type);
 };
