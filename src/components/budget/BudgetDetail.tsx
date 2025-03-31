@@ -8,6 +8,7 @@ import BudgetHeader from "./detail/BudgetHeader";
 import BudgetOverview from "./detail/BudgetOverview";
 import CategoriesList from "./detail/CategoriesList";
 import { getProgressColorClass, calculateBudgetMetrics } from "./detail/helpers";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface BudgetDetailProps {
   budgetId: string;
@@ -15,9 +16,22 @@ interface BudgetDetailProps {
 }
 
 const BudgetDetail = ({ budgetId, onBack }: BudgetDetailProps) => {
-  const { budgets, updateBudget, deleteBudget } = useBudget();
+  const { budgets, updateBudget, deleteBudget, loading } = useBudget();
   const budget = budgets.find((b) => b.id === budgetId);
   const [showAddCategoryDialog, setShowAddCategoryDialog] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-10 w-24" />
+        </div>
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-60 w-full" />
+      </div>
+    );
+  }
 
   if (!budget) {
     return (
@@ -32,21 +46,19 @@ const BudgetDetail = ({ budgetId, onBack }: BudgetDetailProps) => {
 
   const { totalSpent, totalAllocated, percentUsed, unallocatedAmount } = calculateBudgetMetrics(budget);
   
-  const handleDeleteBudget = () => {
+  const handleDeleteBudget = async () => {
     if (confirm("Are you sure you want to delete this budget?")) {
-      deleteBudget(budgetId);
+      await deleteBudget(budgetId);
       onBack();
-      toast.success("Budget deleted successfully");
     }
   };
   
-  const handleUpdateCategorySpent = (categoryId: string, spent: number) => {
+  const handleUpdateCategorySpent = async (categoryId: string, spent: number) => {
     const updatedCategories = budget.categories.map((cat) =>
       cat.id === categoryId ? { ...cat, spent } : cat
     );
     
-    updateBudget(budgetId, { categories: updatedCategories });
-    toast.success("Category updated successfully");
+    await updateBudget(budgetId, { categories: updatedCategories });
   };
 
   return (
