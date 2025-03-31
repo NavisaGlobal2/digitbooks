@@ -35,11 +35,11 @@ export const parseViaEdgeFunction = async (
       onError,
       resetProgress,
       completeProgress,
-      true, // Cancel if needed
+      false, // isCancelled parameter
       undefined, // setIsWaitingForServer
       'anthropic', // Default AI provider
-      useAIFormatting, // Use AI formatting
-      context // Specify context (revenue)
+      useAIFormatting // Use AI formatting
+      // Removed the context parameter as it's causing the error - we'll handle it differently
     );
   } catch (error: any) {
     // Reset progress if provided
