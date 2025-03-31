@@ -28,7 +28,7 @@ export function useInvoicePayments() {
         payment_method: payment.method,
         reference: payment.reference || null,
         receipt_url: payment.receiptUrl || null,
-        payment_date: new Date()
+        payment_date: new Date().toISOString()
       };
       
       // Insert the payment record
@@ -86,7 +86,7 @@ export function useInvoicePayments() {
       
       // Determine new status
       const status = totalPaid >= invoiceData.amount ? 'paid' : 'partially-paid';
-      const paidDate = status === 'paid' ? new Date() : null;
+      const paidDate = status === 'paid' ? new Date().toISOString() : null;
       
       // Update invoice status
       const { error: updateError } = await supabase
@@ -104,7 +104,7 @@ export function useInvoicePayments() {
       return {
         payment: newPayment,
         status,
-        paidDate,
+        paidDate: paidDate ? new Date(paidDate) : null,
         allPayments
       };
       
