@@ -29,20 +29,22 @@ export const ReportsContent: React.FC<ReportsContentProps> = ({
 }) => {
   return (
     <div className="max-w-5xl mx-auto w-full">
-      {!selectedReportType && (
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold mb-4">Financial Reports</h2>
-          <p className="text-muted-foreground mb-5">
-            Generate financial reports and export them to analyze your business performance
-          </p>
-          <ReportDateFilter
-            selectedPeriod={selectedTimePeriod}
-            dateRange={dateRange}
-            onPeriodChange={onPeriodChange}
-            onDateRangeChange={onDateRangeChange}
-          />
-        </div>
-      )}
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold mb-4">
+          {selectedReportType ? "Report Details" : "Financial Reports"}
+        </h2>
+        <p className="text-muted-foreground mb-5">
+          {selectedReportType 
+            ? "View and export your financial report" 
+            : "Generate financial reports and export them to analyze your business performance"}
+        </p>
+        <ReportDateFilter
+          selectedPeriod={selectedTimePeriod}
+          dateRange={dateRange}
+          onPeriodChange={onPeriodChange}
+          onDateRangeChange={onDateRangeChange}
+        />
+      </div>
 
       {selectedReportType ? (
         <ReportView
