@@ -4,6 +4,9 @@ import IncomeStatementReport from "./income-statement";
 import GenericReportView from "./GenericReportView";
 import CashFlowReport from "./cash-flow";
 import ExpenseSummaryReport from "./expense-summary";
+import RevenueSummaryReport from "./revenue-summary";
+import BudgetAnalysisReport from "./budget-analysis";
+import ProfitLossReport from "./profit-loss";
 
 interface ReportViewProps {
   selectedReportType: string | null;
@@ -48,8 +51,29 @@ export const ReportView: React.FC<ReportViewProps> = ({
         />
       );
     case "revenue-summary":
+      return (
+        <RevenueSummaryReport 
+          onBack={onBack}
+          period={reportPeriod}
+          dateRange={dateRange}
+        />
+      );
     case "budget-analysis":
+      return (
+        <BudgetAnalysisReport 
+          onBack={onBack}
+          period={reportPeriod}
+          dateRange={dateRange}
+        />
+      );
     case "profit-loss":
+      return (
+        <ProfitLossReport 
+          onBack={onBack}
+          period={reportPeriod}
+          dateRange={dateRange}
+        />
+      );
     default:
       return (
         <GenericReportView 
