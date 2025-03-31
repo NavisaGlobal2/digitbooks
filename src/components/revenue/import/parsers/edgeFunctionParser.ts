@@ -10,6 +10,7 @@ import {
 } from "./utils/formatters";
 import { withRetry } from "@/components/expenses/upload/parsers/edge-function/retryHandler";
 
+// Reuse the same edge function parser as expenses but adapt it for revenue context
 export const parseViaEdgeFunction = async (
   file: File,
   onSuccess: (transactions: ParsedTransaction[]) => void,
@@ -20,91 +21,41 @@ export const parseViaEdgeFunction = async (
   context: 'revenue' | 'expense' = 'revenue'
 ): Promise<void> => {
   try {
-    // Check authentication first
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
-      throw new Error("Authentication required. Please sign in to continue.");
-    }
-
-    // Create form data with the file
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('fileName', file.name);
-    formData.append('context', context); // Specify if this is for revenue or expense
-    formData.append('useAIFormatting', useAIFormatting.toString()); // Explicitly enable AI formatting
-    formData.append('preferredProvider', 'anthropic'); // Specifically request Anthropic for formatting
-
-    console.log(`Processing ${file.name} for ${context} parsing via edge function with AI formatting ${useAIFormatting ? 'enabled' : 'disabled'}`);
-
-    // Call the edge function with retry logic
-    const invokeEdgeFunction = async () => {
-      const { data, error } = await supabase.functions.invoke('parse-bank-statement-ai', {
-        body: formData,
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      return data;
-    };
-
-    // Use retry logic for the edge function call
-    const data = await withRetry(invokeEdgeFunction, 3, 1500);
-
-    if (!data || !data.transactions || !Array.isArray(data.transactions)) {
-      onError("No transactions found in file");
-      return;
-    }
-
-    // Log the raw transactions data to debug
-    console.log("Raw transactions from edge function:", data.transactions.slice(0, 2));
-    console.log("AI formatting applied:", data.formattingApplied || false);
-
-    // Complete progress if provided
-    if (completeProgress) {
-      completeProgress();
-    }
-
-    // Filter out "Unknown Transaction" with zero amount
-    const validTransactions = data.transactions.filter(tx => {
-      const isUnknownZeroValue = 
-        (tx.amount === 0 || tx.amount === undefined || tx.amount === null) && 
-        (tx.description === "Unknown Transaction" || !tx.description);
-      
-      return !isUnknownZeroValue;
-    });
-
-    if (validTransactions.length === 0) {
-      console.warn("All transactions were filtered out as invalid");
-      onError("No valid transactions found. Please check the file format.");
-      return;
-    }
-
-    // Transform the raw transactions into the expected format for import
-    const transformedTransactions = context === 'revenue' ? 
-      transformRevenueTransactions(validTransactions) : 
-      transformExpenseTransactions(validTransactions);
+    // Import and use the same edge function parser from expenses
+    const { parseViaEdgeFunction: parseWithExpenseFunction } = await import('@/components/expenses/upload/parsers/edgeFunctionParser');
     
-    console.log(`Found ${transformedTransactions.length} ${context} transactions`);
-    console.log("Sample formatted transactions:", transformedTransactions.slice(0, 2));
-    
-    onSuccess(transformedTransactions);
+    // Call the expense parser but specify 'revenue' as the context
+    await parseWithExpenseFunction(
+      file,
+      (transactions, responseData) => {
+        // Apply revenue-specific transformations
+        const revenueTransactions = transformForRevenueContext(transactions);
+        onSuccess(revenueTransactions);
+      },
+      onError,
+      resetProgress,
+      completeProgress,
+      true, // Cancel if needed
+      undefined, // setIsWaitingForServer
+      'anthropic', // Default AI provider
+      useAIFormatting, // Use AI formatting
+      context // Specify context (revenue)
+    );
   } catch (error: any) {
     // Reset progress if provided
     if (resetProgress) {
       resetProgress();
     }
     
-    console.error(`Error in parseViaEdgeFunction for ${context}:`, error);
+    console.error(`Error in revenue parseViaEdgeFunction:`, error);
     onError(error.message || "Unexpected error processing file");
   }
 };
 
 /**
- * Transform raw transactions into revenue transactions
+ * Transform generic transactions into revenue-specific transactions
  */
-function transformRevenueTransactions(transactions: any[]): ParsedTransaction[] {
+function transformForRevenueContext(transactions: any[]): ParsedTransaction[] {
   return transactions
     .filter((tx: any) => {
       // Skip rows that don't have proper data
@@ -129,6 +80,7 @@ function transformRevenueTransactions(transactions: any[]): ParsedTransaction[] 
         amount: amount,
         type: "credit" as const,
         selected: true,
+        source: tx.source || undefined,
         // Preserve original data
         originalDate: tx.originalDate || tx.date,
         originalAmount: tx.originalAmount || tx.amount,
@@ -138,8 +90,12 @@ function transformRevenueTransactions(transactions: any[]): ParsedTransaction[] 
 }
 
 /**
- * Transform raw transactions into expense transactions
+ * Legacy functions maintained for backward compatibility
  */
+function transformRevenueTransactions(transactions: any[]): ParsedTransaction[] {
+  return transformForRevenueContext(transactions);
+}
+
 function transformExpenseTransactions(transactions: any[]): ParsedTransaction[] {
   return transactions
     .filter((tx: any) => {

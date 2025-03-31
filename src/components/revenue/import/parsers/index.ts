@@ -22,7 +22,7 @@ export const parseStatementFile = (
   }
   
   try {
-    // For all file types, use the edge function parser which handles PDF, CSV, and Excel
+    // Reuse the expense parsing infrastructure but specify 'revenue' context
     parseViaEdgeFunction(
       file,
       (transactions) => {
