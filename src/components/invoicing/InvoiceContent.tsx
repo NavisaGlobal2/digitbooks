@@ -38,7 +38,7 @@ const InvoiceContent = ({
     setFilteredInvoices(filtered);
   }, [invoices, searchQuery]);
   
-  const handleMarkAsPaid = useCallback(async (invoiceId: string, payments: PaymentRecord[]) => {
+  const handleMarkAsPaid = useCallback(async (invoiceId: string, payments: PaymentRecord[]): Promise<void> => {
     if (isProcessingPayment) return Promise.reject("Already processing payment");
     
     setIsProcessingPayment(true);
