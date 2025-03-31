@@ -6,6 +6,15 @@ import { toast } from "sonner";
 // Define the API base URL
 const API_BASE = "https://workspace.john644.repl.co";
 
+// Define interface for the API response
+interface ApiResponse {
+  success: boolean;
+  message?: string;
+  statement_id?: string;
+  transactions?: any[];
+  batchId?: string;
+}
+
 export const parseViaEdgeFunction = async (
   file: File,
   onSuccess: (transactions: ParsedTransaction[]) => void,
@@ -80,7 +89,7 @@ export const parseViaEdgeFunction = async (
       return [];
     }
 
-    const data = await response.json();
+    const data = await response.json() as ApiResponse;
 
     // Handle the new API response format
     if (data.success === false) {
@@ -88,50 +97,44 @@ export const parseViaEdgeFunction = async (
       return [];
     }
 
-    if (!data.transactions && !data.statement_id) {
-      // Check if we're getting the new API format
-      if (data.success && data.statement_id) {
-        // We need to fetch the transactions from Supabase directly
-        const { data: transactionsData, error: transactionError } = await supabase
-          .from('transactions')
-          .select('*')
-          .eq('statement_id', data.statement_id)
-          .order('date', { ascending: false });
-        
-        if (transactionError || !transactionsData) {
-          onError("Transactions were processed but couldn't be retrieved from the database.");
-          return [];
-        }
-        
-        // Map the database transactions to our ParsedTransaction format
-        const parsedTransactions: ParsedTransaction[] = transactionsData.map((tx: any) => ({
-          id: tx.id,
-          date: new Date(tx.date),
-          description: tx.description,
-          amount: Math.abs(parseFloat(tx.amount.toString())),
-          type: tx.transaction_type?.toLowerCase() === 'debit' ? 'debit' : 'credit',
-          category: tx.category || undefined,
-          selected: tx.transaction_type?.toLowerCase() === 'debit',
-          batchId: data.statement_id
-        }));
-        
-        // Call success callback with transactions
-        if (parsedTransactions.length > 0) {
-          onSuccess(parsedTransactions);
-          
-          if (parsedTransactions.length > 5) {
-            toast.success(`Parsed ${parsedTransactions.length} transactions from your statement`);
-          }
-          
-          return parsedTransactions;
-        } else {
-          onError("No transactions found in the processed statement.");
-          return [];
-        }
+    if (!data.transactions && data.statement_id) {
+      // We need to fetch the transactions from Supabase directly
+      const { data: transactionsData, error: transactionError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('statement_id', data.statement_id)
+        .order('date', { ascending: false });
+      
+      if (transactionError || !transactionsData) {
+        onError("Transactions were processed but couldn't be retrieved from the database.");
+        return [];
       }
       
-      onError("Invalid response from server. No transactions found in the response.");
-      return [];
+      // Map the database transactions to our ParsedTransaction format
+      const parsedTransactions: ParsedTransaction[] = transactionsData.map((tx: any) => ({
+        id: tx.id,
+        date: new Date(tx.date),
+        description: tx.description,
+        amount: Math.abs(parseFloat(tx.amount.toString())),
+        type: tx.transaction_type?.toLowerCase() === 'debit' ? 'debit' : 'credit',
+        category: tx.category || undefined,
+        selected: tx.transaction_type?.toLowerCase() === 'debit',
+        batchId: data.statement_id
+      }));
+      
+      // Call success callback with transactions
+      if (parsedTransactions.length > 0) {
+        onSuccess(parsedTransactions);
+        
+        if (parsedTransactions.length > 5) {
+          toast.success(`Parsed ${parsedTransactions.length} transactions from your statement`);
+        }
+        
+        return parsedTransactions;
+      } else {
+        onError("No transactions found in the processed statement.");
+        return [];
+      }
     }
 
     // Handle the legacy response format with transactions array directly in the response
