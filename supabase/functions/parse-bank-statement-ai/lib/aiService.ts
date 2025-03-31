@@ -23,54 +23,50 @@ export async function formatTransactionsWithAI(
 
     // Log the first raw transaction for debugging
     logSampleTransactions(transactions, "SAMPLE RAW TRANSACTION FROM PARSER");
-    
-    // Filter out header/summary rows first before sending to AI
-    const filteredTransactions = basicFormatting(transactions);
-    console.log(`Filtered ${transactions.length - filteredTransactions.length} invalid entries before AI processing`);
 
     // Determine which AI provider to use
     const { provider, reason } = selectAIProvider(preferredProvider);
     
     // If no AI provider is available, use basic formatting
     if (provider === "none") {
-      return filteredTransactions;
+      return basicFormatting(transactions);
     }
     
     try {
       // Send the ENTIRE raw transaction data to the AI model, preserving ALL original structure
       console.log("Sending RAW transaction data directly to AI without preprocessing");
-      console.log(`Total transactions for AI: ${filteredTransactions.length}`);
-      logSampleTransactions(filteredTransactions, "SAMPLE RAW DATA FOR AI");
+      console.log(`Total transactions for AI: ${transactions.length}`);
+      logSampleTransactions(transactions, "SAMPLE RAW DATA FOR AI");
       
       // Send to the selected AI service
       let aiProcessedData;
       if (provider === "anthropic") {
-        aiProcessedData = await processWithAnthropic(JSON.stringify(filteredTransactions), context);
+        aiProcessedData = await processWithAnthropic(JSON.stringify(transactions), context);
       } else if (provider === "deepseek") {
-        aiProcessedData = await processWithDeepseek(JSON.stringify(filteredTransactions), context);
+        aiProcessedData = await processWithDeepseek(JSON.stringify(transactions), context);
       }
       
       // Log sample of AI response
       logSampleTransactions(aiProcessedData, "SAMPLE AI PROCESSED TRANSACTION");
       
-      if (!aiProcessedData || !Array.isArray(aiProcessedData) || aiProcessedData.length === 0) {
-        console.log("AI processing failed or returned invalid data. Using filtered basic formatting.");
-        return filteredTransactions;
+      if (!aiProcessedData || !Array.isArray(aiProcessedData)) {
+        console.log("AI processing failed or returned invalid data. Falling back to basic formatting.");
+        return basicFormatting(transactions);
       }
       
       // Merge AI processed data with original transaction data to preserve all fields
-      const formattedTransactions = mergeTransactionData(filteredTransactions, aiProcessedData);
+      const formattedTransactions = mergeTransactionData(transactions, aiProcessedData);
       
       console.log("Successfully applied AI formatting to transactions");
       return formattedTransactions;
     } catch (aiError) {
       console.error("Error in AI processing:", aiError);
       // Fall back to basic formatting if AI processing fails
-      return filteredTransactions;
+      return basicFormatting(transactions);
     }
   } catch (error) {
     console.error("Error formatting transactions with AI:", error);
-    // Return filtered transactions if formatting fails
-    return basicFormatting(transactions);
+    // Return original transactions if formatting fails
+    return transactions;
   }
 }
