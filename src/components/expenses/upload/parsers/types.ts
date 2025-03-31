@@ -22,6 +22,7 @@ export interface TransactionParsingOptions {
   context?: string;
   fileType?: string;
   preserveOriginalFormat?: boolean;
+  useAIFormatting?: boolean;
 }
 
 export interface TransactionProcessResult {

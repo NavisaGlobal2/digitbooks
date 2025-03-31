@@ -1,5 +1,5 @@
 
-import { FileType, UploadArea } from "lucide-react";
+import { FileType } from "lucide-react";
 import { ParsedTransaction } from "../parsers/types";
 import ProcessingModeToggle from "./ProcessingModeToggle";
 import ProgressIndicator from "./ProgressIndicator";
@@ -108,6 +108,7 @@ const UploadDialogContent = ({
           <ProgressIndicator 
             progress={progress} 
             step={step}
+            isVisible={true}
           />
         )}
       </div>
