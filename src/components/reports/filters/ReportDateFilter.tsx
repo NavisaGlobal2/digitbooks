@@ -71,7 +71,7 @@ const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
             {displayDateRange}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
           <Calendar
             initialFocus
             mode="range"
@@ -79,7 +79,7 @@ const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
             selected={date}
             onSelect={handleSelect}
             numberOfMonths={2}
-            className="p-3"
+            className="p-3 pointer-events-auto"
           />
         </PopoverContent>
       </Popover>
@@ -87,7 +87,8 @@ const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
       {date?.from && date?.to && onGenerateReport && (
         <Button 
           onClick={onGenerateReport} 
-          className="bg-green-500 hover:bg-green-600 text-white"
+          variant="success"
+          className="text-white"
         >
           <FileText className="h-4 w-4 mr-2" />
           Generate Report

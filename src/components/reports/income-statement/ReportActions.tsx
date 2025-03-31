@@ -32,12 +32,6 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
 }) => {
   const handleDownload = async () => {
     try {
-      // If there's a direct generation function provided, use that instead
-      if (onDirectGeneration) {
-        onDirectGeneration();
-        return;
-      }
-      
       // Check for valid date range and reference to report content
       if (!dateRange) {
         toast.error("Please select a date range to generate a report");
@@ -81,14 +75,19 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
       
       // Save report metadata to database for history
       if (reportData) {
-        await saveReportToDatabase(
-          title.toLowerCase().replace(/\s+/g, "-"),
-          title,
-          period,
-          dateRange,
-          reportData,
-          "pdf"
-        );
+        try {
+          await saveReportToDatabase(
+            title.toLowerCase().replace(/\s+/g, "-"),
+            title,
+            period,
+            dateRange,
+            reportData,
+            "pdf"
+          );
+        } catch (saveError) {
+          console.error("Error saving report to database:", saveError);
+          // Continue with success message even if database save fails
+        }
       }
       
       toast.success(`${title} report downloaded successfully!`);
@@ -143,7 +142,8 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
           
           <Button
             onClick={handleDownload}
-            className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-1 flex-1"
+            variant="success"
+            className="flex items-center gap-1 flex-1"
           >
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">Download PDF</span>

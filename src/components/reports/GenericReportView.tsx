@@ -88,14 +88,18 @@ const GenericReportView = ({
       pdf.save(fileName);
       
       // Save report metadata to database for history
-      await saveReportToDatabase(
-        reportType,
-        title,
-        `${reportPeriod.start} — ${reportPeriod.end}`,
-        localDateRange,
-        { generatedAt: new Date().toISOString() },
-        "pdf"
-      );
+      try {
+        await saveReportToDatabase(
+          reportType,
+          title,
+          `${reportPeriod.start} — ${reportPeriod.end}`,
+          localDateRange,
+          { generatedAt: new Date().toISOString() },
+          "pdf"
+        );
+      } catch (error) {
+        console.error("Error saving report to database:", error);
+      }
       
       toast.success("Report downloaded successfully!");
     } catch (error) {
@@ -136,7 +140,8 @@ const GenericReportView = ({
             </Button>
             <Button
               onClick={handleDownload}
-              className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
+              variant="success"
+              className="flex items-center gap-2"
             >
               <Download className="h-4 w-4" />
               Download
