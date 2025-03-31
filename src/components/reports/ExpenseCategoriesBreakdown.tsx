@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LabelList } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { ExpenseBreakdown } from "@/hooks/useFinancialReports";
 import { formatNaira } from "@/utils/invoice/formatters";
 
@@ -19,60 +19,37 @@ const ExpenseCategoriesBreakdown = ({ data }: ExpenseCategoriesBreakdownProps) =
     return name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' ');
   };
 
-  // Format the data for the horizontal bar chart
-  const chartData = sortedData.map((item, index) => ({
-    ...item,
-    formattedCategory: formatCategoryName(item.category),
-    color: COLORS[index % COLORS.length],
-    formattedAmount: formatNaira(item.amount)
-  }));
-
   return (
     <Card className="border-none shadow-sm">
       <CardHeader>
         <CardTitle className="text-lg font-medium">Expense Categories</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col space-y-6">
-          <div className="h-[350px] w-full">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="h-64 w-full md:w-1/2">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                layout="vertical"
-                margin={{ top: 10, right: 30, left: 100, bottom: 10 }}
-              >
-                <XAxis type="number" tickFormatter={(value) => formatNaira(value)} />
-                <YAxis 
-                  type="category" 
-                  dataKey="formattedCategory" 
-                  tick={{ fill: '#6B7280', fontSize: 12 }}
-                  width={90}
-                />
-                <Tooltip
-                  formatter={(value) => formatNaira(value as number)}
-                  labelFormatter={(label) => `Category: ${label}`}
-                />
-                {chartData.map((entry, index) => (
-                  <Bar 
-                    key={`bar-${index}`}
-                    dataKey="amount" 
-                    fill={entry.color}
-                    name={entry.formattedCategory}
-                    radius={[0, 4, 4, 0]}
-                  >
-                    <LabelList 
-                      dataKey="percentage" 
-                      position="right" 
-                      formatter={(value: number) => `${value.toFixed(1)}%`}
-                      style={{ fill: '#6B7280', fontSize: 12 }}
-                    />
-                  </Bar>
-                ))}
-              </BarChart>
+              <PieChart>
+                <Pie
+                  data={sortedData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  innerRadius={50}
+                  dataKey="amount"
+                  nameKey="category"
+                >
+                  {sortedData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => formatNaira(value as number)} />
+                <Legend />
+              </PieChart>
             </ResponsiveContainer>
           </div>
           
-          <div className="w-full">
+          <div className="w-full md:w-1/2">
             <table className="w-full">
               <thead>
                 <tr>
