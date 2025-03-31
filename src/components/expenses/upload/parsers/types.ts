@@ -1,22 +1,36 @@
 
 export interface ParsedTransaction {
   id: string;
-  date: string;  // ISO string format for consistency across all parsers
+  date: string | Date;
   description: string;
   amount: number;
-  type: "debit" | "credit" | "unknown";  // Added "unknown" as a valid type
+  type: "debit" | "credit" | "unknown";
   selected: boolean;
   category?: string;
   source?: string;
-  categorySuggestion?: CategorySuggestion;
-  batchId?: string;
-  originalDate?: string | Date; // For preserving original date format if needed
-  originalAmount?: string | number; // For preserving original amount format
-  preservedColumns?: Record<string, any>; // For preserving additional columns from Excel
-  [key: string]: any; // Allow for additional properties that might be returned from the parser
+  
+  // Original format preservation
+  originalDate?: string | Date;
+  originalAmount?: string | number;
+  preservedColumns?: Record<string, any>;
+  
+  // Allow additional properties 
+  [key: string]: any;
 }
 
-export interface CategorySuggestion {
-  category: string;
-  confidence: number;
+export interface TransactionParsingOptions {
+  context?: string;
+  fileType?: string;
+  preserveOriginalFormat?: boolean;
+}
+
+export interface TransactionProcessResult {
+  transactions: ParsedTransaction[];
+  originalFormat?: boolean;
+  formatInfo?: {
+    dateFormat?: string;
+    decimalSeparator?: string;
+    thousandsSeparator?: string;
+  };
+  metadata?: Record<string, any>;
 }

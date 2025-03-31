@@ -17,6 +17,15 @@ export async function parseFile(file: File): Promise<Transaction[]> {
     
     console.log(`Processing file: ${fileName}, size: ${file.size} bytes, type: ${file.type}`)
     
+    // Enhanced detection for Excel files
+    const isExcel = fileName.endsWith('.xlsx') || 
+                   fileName.endsWith('.xls') || 
+                   fileName.endsWith('.xlsm') || 
+                   file.type.includes('excel') ||
+                   file.type.includes('spreadsheet') ||
+                   file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                   file.type === 'application/vnd.ms-excel';
+    
     if (fileName.endsWith('.csv')) {
       try {
         console.log('Processing CSV file...')
@@ -28,10 +37,10 @@ export async function parseFile(file: File): Promise<Transaction[]> {
         console.error('CSV processing error:', csvError)
         throw new Error(`Failed to process CSV file: ${csvError.message}. Please check if your file is properly formatted and contains date, description, and amount columns.`)
       }
-    } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+    } else if (isExcel) {
       try {
         console.log('Processing Excel file...')
-        const transactions = await processExcel(file)
+        const transactions = await processExcel(file, { preserveOriginalData: true })
         console.log(`Successfully extracted ${transactions.length} transactions from Excel`)
         console.log(`Transaction types breakdown: ${transactions.filter(t => t.type === 'debit').length} debits, ${transactions.filter(t => t.type === 'credit').length} credits`)
         return transactions

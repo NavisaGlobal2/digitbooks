@@ -23,6 +23,9 @@ export const parseViaEdgeFunction = async (
     formData.append('fileName', file.name);
     formData.append('context', 'general');
     
+    // Add a flag to explicitly request preserving original Excel format
+    formData.append('preserveOriginalFormat', 'true');
+    
     console.log(`Processing ${file.name} (${file.type}, ${file.size} bytes) via edge function`);
     
     // Get the current session token
@@ -63,7 +66,8 @@ export const parseViaEdgeFunction = async (
           date: tx.date || new Date().toISOString(),
           description: tx.description || "",
           amount: typeof tx.amount === 'number' ? tx.amount : parseFloat(String(tx.amount || 0)),
-          type: tx.type as "debit" | "credit" | "unknown",
+          type: (tx.type as "debit" | "credit" | "unknown") || 
+                (tx.amount && parseFloat(String(tx.amount)) < 0 ? "debit" : "credit"),
           selected: false,
           
           // Preserve all original data
@@ -141,7 +145,7 @@ export const parseViaEdgeFunction = async (
         // Copy all original_* fields to keep the raw data
         for (const key in tx) {
           if (key.startsWith('original_') || key === 'preservedColumns') {
-            parsedTransaction[key] = tx[key];
+            (parsedTransaction as any)[key] = tx[key];
           }
         }
         

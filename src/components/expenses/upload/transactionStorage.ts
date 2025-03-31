@@ -17,7 +17,7 @@ export const prepareExpensesFromTransactions = (
 ): Expense[] => {
   // Only create expenses from selected transactions that have categories
   const selectedAndTagged = transactions.filter(
-    (t) => t.selected && t.category && t.type === 'debit'
+    (t) => t.selected && t.type === 'debit'
   );
 
   console.log(`Preparing ${selectedAndTagged.length} expenses from ${transactions.length} transactions`);
@@ -73,13 +73,16 @@ export const prepareExpensesFromTransactions = (
                         transaction.preservedColumns?.narrative ||
                         transaction.description;
     
+    // Default category if none is provided
+    const category = transaction.category || "other";
+    
     // Create the expense object using the original data where possible
     return {
       id: uuidv4(), // Generate a new ID for each expense
       amount: Math.abs(transaction.amount), // Ensure amount is positive
       date: dateObj, // Use the properly parsed date
       description: description,
-      category: transaction.category as ExpenseCategory, // Type cast to ExpenseCategory
+      category: category as ExpenseCategory, // Type cast to ExpenseCategory
       vendor: inferVendorFromDescription(description),
       status: "pending", // Changed from "completed" to "pending" to match ExpenseStatus type
       paymentMethod: "bank transfer",
