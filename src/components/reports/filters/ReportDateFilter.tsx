@@ -70,7 +70,7 @@ const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
       <div>
         <label className="block text-sm font-medium text-muted-foreground mb-1">Time period</label>
         <Select value={selectedPeriod} onValueChange={handlePeriodChange}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] bg-white border-[#05D166]/20 hover:border-[#05D166]/50 transition-all">
             <SelectValue placeholder="Select timeframe" />
           </SelectTrigger>
           <SelectContent>
@@ -89,7 +89,10 @@ const ReportDateFilter: React.FC<ReportDateFilterProps> = ({
           <label className="block text-sm font-medium text-muted-foreground mb-1">Date range</label>
           <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="pl-3 pr-2 text-left font-normal flex justify-between">
+              <Button 
+                variant="outline" 
+                className="pl-3 pr-2 text-left font-normal flex justify-between bg-white border-[#05D166]/20 hover:border-[#05D166]/50 hover:bg-[#F2FCE2]/40 transition-all"
+              >
                 <span className="truncate">{formatDateRange()}</span>
                 <CalendarRange className="ml-2 h-4 w-4 opacity-70" />
               </Button>
