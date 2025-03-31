@@ -1,16 +1,17 @@
 
 import { useState } from "react";
-import { parseViaEdgeFunction, ParsedTransaction } from "../parsers";
-import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
+import { ParsedTransaction } from "../parsers/types";
 
-interface FileProcessingProps {
+interface UseFileProcessingProps {
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
-  handleError: (errorMessage: string) => boolean;
+  handleError: (message: string) => void;
   resetProgress: () => void;
   completeProgress: () => void;
-  showFallbackMessage: (message?: string) => void;
+  showFallbackMessage: () => void;
   isCancelled: boolean;
-  setIsWaitingForServer?: (isWaiting: boolean) => void;
+  setIsWaitingForServer: (waiting: boolean) => void;
 }
 
 export const useFileProcessing = ({
@@ -21,94 +22,125 @@ export const useFileProcessing = ({
   showFallbackMessage,
   isCancelled,
   setIsWaitingForServer
-}: FileProcessingProps) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+}: UseFileProcessingProps) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
-  // Check authentication status on mount
-  useState(() => {
-    const checkAuthStatus = async () => {
-      const { data } = await supabase.auth.getSession();
-      setIsAuthenticated(!!data.session);
-    };
-    
-    checkAuthStatus();
-  });
-
-  const processServerSide = async (file: File) => {
+  // Process using edge function
+  const processServerSide = async (file: File): Promise<void> => {
     try {
-      // If we're waiting for server, update the UI
-      if (setIsWaitingForServer) {
-        setIsWaitingForServer(true);
+      setIsWaitingForServer(true);
+      
+      // Prepare form data for the edge function
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      console.log(`Sending ${file.name} (${file.type}) to edge function for processing...`);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        setIsAuthenticated(false);
+        handleError("Authentication required to process bank statements");
+        resetProgress();
+        return;
+      }
+
+      // Call the appropriate edge function based on file type
+      let response;
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      
+      if (fileExt === 'pdf') {
+        response = await supabase.functions.invoke('parse-bank-statement-ai', {
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          }
+        });
+      } else {
+        // For CSV and Excel files
+        response = await supabase.functions.invoke('parse-bank-statement', {
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          }
+        });
       }
       
-      // Check authentication before starting the server request
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      if (!sessionData.session || !sessionData.session.access_token) {
-        handleError("You need to be signed in to use server-side processing. Please sign in and try again.");
+      // Handle the response
+      if (response.error) {
+        console.error('Edge function error:', response.error);
+        handleError(`Processing error: ${response.error.message || 'Unknown error'}`);
         resetProgress();
-        if (setIsWaitingForServer) {
-          setIsWaitingForServer(false);
-        }
         return;
       }
       
-      // Now process with edge function
-      await parseViaEdgeFunction(
-        file,
-        (transactions) => {
-          if (isCancelled) return;
-          completeProgress();
-          if (setIsWaitingForServer) {
-            setIsWaitingForServer(false);
-          }
-          onTransactionsParsed(transactions);
-        },
-        (errorMessage) => {
-          if (isCancelled) return true;
-          
-          if (setIsWaitingForServer) {
-            setIsWaitingForServer(false);
-          }
-          
-          const isAuthError = errorMessage.toLowerCase().includes('auth') || 
-                              errorMessage.toLowerCase().includes('sign in') ||
-                              errorMessage.toLowerCase().includes('token');
-          const isAPIError = errorMessage.toLowerCase().includes('anthropic') ||
-                             errorMessage.toLowerCase().includes('api key');
-          
-          handleError(errorMessage);
-          
-          // For auth or API errors, don't try to fallback
-          if (isAuthError || isAPIError) {
-            resetProgress();
-            
-            if (isAPIError) {
-              handleError("The AI processing feature requires a valid Anthropic API key. Please contact your administrator.");
-            }
-            
-            return true;
-          }
-          
-          resetProgress();
-          return true;
-        }
-      );
-    } catch (error: any) {
-      if (isCancelled) return;
-      
-      if (setIsWaitingForServer) {
-        setIsWaitingForServer(false);
+      if (!response.data || !Array.isArray(response.data)) {
+        console.error('Invalid response data:', response);
+        handleError("The server returned an invalid response. Please try again.");
+        resetProgress();
+        return;
       }
       
-      console.error("Edge function error:", error);
-      handleError(error.message || "Error processing file on server.");
+      // Map the response to ParsedTransaction objects
+      const transactions: ParsedTransaction[] = response.data.map((item: any, index: number) => ({
+        id: `trans-${index}`,
+        date: new Date(item.date),
+        description: item.description,
+        amount: Math.abs(parseFloat(item.amount)),
+        type: item.type || (parseFloat(item.amount) < 0 ? 'debit' : 'credit'),
+        category: '',
+        selected: item.type === 'debit' || parseFloat(item.amount) < 0, // Pre-select debits
+      }));
+      
+      if (transactions.length === 0) {
+        handleError("No transactions found in the file. Please check the format and try again.");
+        resetProgress();
+        return;
+      }
+      
+      console.log(`Successfully parsed ${transactions.length} transactions`);
+      
+      // Complete progress and return transactions
+      completeProgress();
+      onTransactionsParsed(transactions);
+      
+    } catch (error) {
+      console.error('Error in processServerSide:', error);
+      
+      if ((error as Error).message.includes('network') || (error as Error).message.includes('fetch')) {
+        handleError("Network error. Please check your connection and try again.");
+      } else {
+        handleError(`Error processing file: ${(error as Error).message}`);
+      }
+      
       resetProgress();
+      showFallbackMessage();
+    } finally {
+      setIsWaitingForServer(false);
     }
+  };
+
+  // Helper function to process receipt files
+  const processReceiptFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      
+      reader.onload = () => {
+        const receiptUrl = reader.result as string;
+        resolve(receiptUrl);
+      };
+      
+      reader.onerror = () => {
+        toast.error("Failed to process receipt file");
+        reject("Failed to process receipt file");
+      };
+    });
   };
 
   return {
     processServerSide,
+    processReceiptFile,
     isAuthenticated
   };
 };

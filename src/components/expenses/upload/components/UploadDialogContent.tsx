@@ -35,6 +35,13 @@ const UploadDialogContent = ({
     downloadCSVTemplate();
   };
 
+  // Helper function to check if file is supported for parsing
+  const isFileSupported = (file: File | null): boolean => {
+    if (!file) return false;
+    const ext = file.name.toLowerCase().split('.').pop();
+    return ext === 'csv' || ext === 'xlsx' || ext === 'xls';
+  };
+
   return (
     <>
       <DialogHeader title="Upload Bank Statement" />
@@ -73,7 +80,7 @@ const UploadDialogContent = ({
           onCancel={onClose}
           onParse={parseFile}
           uploading={uploading}
-          disabled={!file || !isAuthenticated || (file && !file.name.toLowerCase().endsWith('.csv'))}
+          disabled={!file || !isAuthenticated || !isFileSupported(file)}
           showCancelButton={uploading}
         />
       </div>

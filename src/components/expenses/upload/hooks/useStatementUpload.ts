@@ -115,6 +115,7 @@ export const useStatementUpload = (
         return;
       }
       
+      console.log(`Attempting to process file: ${file.name}, type: ${file.type}`);
       await processServerSide(file);
     } catch (error) {
       console.error("Unexpected error in parseFile:", error);
