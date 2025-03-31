@@ -2,8 +2,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./types";
 import { RevenueSource } from "@/types/revenue";
-import { extractDate, extractDescription, extractAmount, extractCreditAmount } from "./utils/transactionFormatters";
-import { suggestRevenueSource } from "./utils/sourcePredictor";
+import { extractDate, extractDescription, extractAmount, determineTransactionType } from "./utils/transactionFormatters";
+import { suggestRevenueSource, suggestExpenseCategory } from "./utils/sourcePredictor";
 
 export const parseViaEdgeFunction = async (
   file: File,
@@ -11,7 +11,8 @@ export const parseViaEdgeFunction = async (
   onError: (errorMessage: string) => boolean,
   resetProgress?: () => void,
   completeProgress?: () => void,
-  useAIFormatting: boolean = true
+  useAIFormatting: boolean = true,
+  context: 'revenue' | 'expense' = 'revenue'
 ): Promise<void> => {
   try {
     // Check authentication first
@@ -24,11 +25,11 @@ export const parseViaEdgeFunction = async (
     const formData = new FormData();
     formData.append('file', file);
     formData.append('fileName', file.name);
-    formData.append('context', 'revenue'); // Specific context for revenue parsing
+    formData.append('context', context); // Specify if this is for revenue or expense
     formData.append('useAIFormatting', useAIFormatting.toString()); // Explicitly enable AI formatting
     formData.append('preferredProvider', 'anthropic'); // Specifically request Anthropic for formatting
 
-    console.log(`Processing ${file.name} for revenue parsing via edge function with AI formatting ${useAIFormatting ? 'enabled' : 'disabled'}`);
+    console.log(`Processing ${file.name} for ${context} parsing via edge function with AI formatting ${useAIFormatting ? 'enabled' : 'disabled'}`);
 
     // Call the edge function
     const { data, error } = await supabase.functions.invoke('parse-bank-statement-ai', {
@@ -55,20 +56,22 @@ export const parseViaEdgeFunction = async (
       completeProgress();
     }
 
-    // Transform the raw transactions into the expected format for revenue import
-    const revenueTransactions = transformRawTransactions(data.transactions);
+    // Transform the raw transactions into the expected format for import
+    const transformedTransactions = context === 'revenue' ? 
+      transformRevenueTransactions(data.transactions) : 
+      transformExpenseTransactions(data.transactions);
     
-    console.log(`Found ${revenueTransactions.length} revenue transactions`);
-    console.log("Sample formatted transactions:", revenueTransactions.slice(0, 2));
+    console.log(`Found ${transformedTransactions.length} ${context} transactions`);
+    console.log("Sample formatted transactions:", transformedTransactions.slice(0, 2));
     
-    onSuccess(revenueTransactions);
+    onSuccess(transformedTransactions);
   } catch (error: any) {
     // Reset progress if provided
     if (resetProgress) {
       resetProgress();
     }
     
-    console.error("Error in parseViaEdgeFunction for revenue:", error);
+    console.error(`Error in parseViaEdgeFunction for ${context}:`, error);
     onError(error.message || "Unexpected error processing file");
   }
 };
@@ -76,17 +79,17 @@ export const parseViaEdgeFunction = async (
 /**
  * Transform raw transactions into revenue transactions
  */
-function transformRawTransactions(transactions: any[]): ParsedTransaction[] {
+function transformRevenueTransactions(transactions: any[]): ParsedTransaction[] {
   return transactions
     .filter((tx: any) => {
       // Skip rows that don't have proper data
-      if (!tx || !tx.preservedColumns) {
+      if (!tx || typeof tx !== 'object') {
         return false;
       }
       
-      // Extract and check for credit transactions
-      const creditAmount = extractCreditAmount(tx);
-      return creditAmount > 0;
+      // For revenue, we only want credit transactions
+      const type = determineTransactionType(tx);
+      return type === 'credit';
     })
     .map((tx: any) => {
       // Extract transaction details
@@ -106,6 +109,47 @@ function transformRawTransactions(transactions: any[]): ParsedTransaction[] {
         type: "credit" as const,
         selected: true,
         sourceSuggestion,
+        // Preserve original data
+        originalDate: tx.originalDate || tx.date,
+        originalAmount: tx.originalAmount || tx.amount,
+        preservedColumns: tx.preservedColumns || {}
+      };
+    });
+}
+
+/**
+ * Transform raw transactions into expense transactions
+ */
+function transformExpenseTransactions(transactions: any[]): ParsedTransaction[] {
+  return transactions
+    .filter((tx: any) => {
+      // Skip rows that don't have proper data
+      if (!tx || typeof tx !== 'object') {
+        return false;
+      }
+      
+      // For expenses, we only want debit transactions
+      const type = determineTransactionType(tx);
+      return type === 'debit';
+    })
+    .map((tx: any) => {
+      // Extract transaction details
+      const txDate = extractDate(tx);
+      const description = extractDescription(tx);
+      const amount = extractAmount(tx);
+      
+      // Create a category suggestion based on the description
+      // Use the AI-suggested category if available
+      const categorySuggestion = tx.categorySuggestion || suggestExpenseCategory(description);
+      
+      return {
+        id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
+        date: txDate,
+        description: description,
+        amount: amount,
+        type: "debit" as const,
+        selected: true,
+        categorySuggestion,
         // Preserve original data
         originalDate: tx.originalDate || tx.date,
         originalAmount: tx.originalAmount || tx.amount,
