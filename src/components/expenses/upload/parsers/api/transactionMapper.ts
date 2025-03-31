@@ -19,15 +19,15 @@ export const mapDatabaseTransactions = async (statementId: string): Promise<Pars
     }
     
     // Map the database transactions to our ParsedTransaction format
-    return transactionsData.map((tx: any) => {
+    return transactionsData.map((tx: TransactionData) => {
       // Handle amount conversion safely
-      const amountValue = typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount;
+      const amountValue = typeof tx.amount === 'string' ? parseFloat(tx.amount.toString()) : tx.amount;
       
       const parsedTx: ParsedTransaction = {
         id: tx.id,
         date: new Date(tx.date),
         description: tx.description,
-        amount: Math.abs(amountValue),
+        amount: Math.abs(Number(amountValue)),
         type: (tx.transaction_type?.toLowerCase() === 'debit') ? 'debit' : 'credit',
         category: tx.category as ExpenseCategory | undefined,
         selected: tx.transaction_type?.toLowerCase() === 'debit',

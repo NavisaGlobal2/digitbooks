@@ -3,9 +3,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { ParsedTransaction } from "../parsers/types";
-
-// Define the API base URL
-const API_BASE = "https://workspace.john644.repl.co";
+import { getAuthToken, getApiEndpoint, API_BASE } from "../parsers/api/apiHelpers";
+import { mapDatabaseTransactions, mapApiResponseTransactions } from "../parsers/api/transactionMapper";
+import { ApiResponse } from "../parsers/api/types";
 
 interface UseFileProcessingProps {
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
@@ -33,46 +33,32 @@ export const useFileProcessing = ({
     try {
       setIsWaitingForServer(true);
       
-      // Prepare form data for the API endpoint
-      const formData = new FormData();
-      formData.append('file', file);
+      // Check authentication
+      const token = await getAuthToken();
       
-      console.log(`Processing ${file.name} (${file.type}) to API endpoint...`);
-      
-      // Get the auth session token
-      const { data, error: authError } = await supabase.auth.getSession();
-      
-      if (authError) {
-        setIsAuthenticated(false);
-        handleError(`Authentication error: ${authError.message}`);
-        resetProgress();
-        return;
-      }
-      
-      const session = data.session;
-      
-      if (!session) {
+      if (!token) {
         setIsAuthenticated(false);
         handleError("Authentication required to process bank statements. Please sign in and try again.");
         resetProgress();
         return;
       }
-
-      // Call the appropriate API endpoint based on file type
-      const fileExt = file.name.split('.').pop()?.toLowerCase();
-      let endpoint;
-      if (fileExt === 'pdf') {
-        endpoint = 'api/upload'; // Use the new API for PDFs
-      } else {
-        endpoint = fileExt === 'pdf' ? 'parse-bank-statement-ai' : 'parse-bank-statement';
-      }
+      
+      console.log(`Processing ${file.name} (${file.type}) to API endpoint...`);
+      
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Get appropriate endpoint
+      const endpoint = getApiEndpoint(file);
       
       try {
+        // Call the API
         const response = await fetch(`${API_BASE}/${endpoint}`, {
           method: 'POST',
           body: formData,
           headers: {
-            'Authorization': `Bearer ${session.access_token}`
+            'Authorization': `Bearer ${token}`
           }
         });
         
@@ -81,9 +67,9 @@ export const useFileProcessing = ({
           throw new Error(`API returned status ${response.status}: ${errorText}`);
         }
         
-        const responseData = await response.json();
+        const responseData = await response.json() as ApiResponse;
         
-        // Handle the new API response format
+        // Handle API errors
         if (responseData.success === false) {
           handleError(`API Error: ${responseData.message || "Unknown error processing statement"}`);
           resetProgress();
@@ -92,64 +78,31 @@ export const useFileProcessing = ({
         
         // Check if we're getting the new API format with statement_id
         if (responseData.success && responseData.statement_id && !responseData.transactions) {
-          // We need to fetch the transactions from Supabase directly
-          const { data: transactionsData, error: transactionError } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('statement_id', responseData.statement_id)
-            .order('date', { ascending: false });
+          // Fetch transactions from database
+          const transactions = await mapDatabaseTransactions(responseData.statement_id);
           
-          if (transactionError || !transactionsData || transactionsData.length === 0) {
+          if (transactions.length === 0) {
             handleError("Transactions were processed but couldn't be retrieved from the database.");
             resetProgress();
             return;
           }
           
-          // Map the database transactions to our ParsedTransaction format
-          const transactions: ParsedTransaction[] = transactionsData.map((tx: any) => ({
-            id: tx.id,
-            date: new Date(tx.date),
-            description: tx.description,
-            amount: Math.abs(parseFloat(tx.amount.toString())),
-            type: tx.transaction_type?.toLowerCase() === 'debit' ? 'debit' : 'credit',
-            category: tx.category || '',
-            selected: tx.transaction_type?.toLowerCase() === 'debit', // Pre-select debits
-            batchId: responseData.statement_id
-          }));
-          
-          if (transactions.length === 0) {
-            handleError("No transactions found in the file. Please check the format and try again.");
-            resetProgress();
-            return;
-          }
-          
           console.log(`Successfully parsed ${transactions.length} transactions`);
-          
-          // Complete progress and return transactions
           completeProgress();
           onTransactionsParsed(transactions);
           return;
         }
         
         // Handle the legacy response format
-        if (!responseData || !Array.isArray(responseData.transactions)) {
+        if (!responseData.transactions || !Array.isArray(responseData.transactions)) {
           console.error('Invalid response data:', responseData);
           handleError("The server returned an invalid response. Please try again.");
           resetProgress();
           return;
         }
         
-        // Map the response to ParsedTransaction objects
-        const transactions: ParsedTransaction[] = responseData.transactions.map((item: any, index: number) => ({
-          id: `trans-${index}`,
-          date: new Date(item.date),
-          description: item.description,
-          amount: Math.abs(parseFloat(item.amount)),
-          type: item.type || (parseFloat(item.amount) < 0 ? 'debit' : 'credit'),
-          category: '',
-          selected: item.type === 'debit' || parseFloat(item.amount) < 0, // Pre-select debits
-          batchId: responseData.batchId
-        }));
+        // Map the transactions
+        const transactions = mapApiResponseTransactions(responseData.transactions, responseData.batchId);
         
         if (transactions.length === 0) {
           handleError("No transactions found in the file. Please check the format and try again.");
@@ -158,10 +111,9 @@ export const useFileProcessing = ({
         }
         
         console.log(`Successfully parsed ${transactions.length} transactions`);
-        
-        // Complete progress and return transactions
         completeProgress();
         onTransactionsParsed(transactions);
+        
       } catch (invokeError) {
         console.error("Error calling API:", invokeError);
         handleError(`Server error: ${invokeError instanceof Error ? invokeError.message : 'Unknown error'}`);
