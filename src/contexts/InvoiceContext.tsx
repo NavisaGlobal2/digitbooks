@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Invoice, InvoiceItem, InvoiceStatus, PaymentRecord } from '@/types/invoice';
 import { supabase } from "@/integrations/supabase/client";
@@ -96,7 +97,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           status: newInvoice.status,
           issued_date: new Date(newInvoice.issuedDate).toISOString(),
           due_date: new Date(newInvoice.dueDate).toISOString(),
-          items: newInvoice.items,
+          items: JSON.stringify(newInvoice.items), // Convert to JSON string
           bank_details: newInvoice.bankDetails,
           logo_url: newInvoice.logoUrl,
           additional_info: newInvoice.additionalInfo,
@@ -133,7 +134,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const invoice = invoices.find(inv => inv.id === invoiceId);
     if (!invoice) {
       toast.error("Invoice not found");
-      return;
+      return Promise.reject("Invoice not found");
     }
 
     const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
@@ -163,29 +164,43 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           .eq('id', invoiceId)
           .eq('user_id', user.id);
         
-        await supabase.from('invoice_payments')
+        // Use the type-safe way to access the new table
+        const { error: deletionError } = await supabase
+          .from('invoice_payments')
           .delete()
           .eq('invoice_id', invoiceId)
           .eq('user_id', user.id);
+          
+        if (deletionError) throw deletionError;
         
-        const paymentPromises = payments.map(payment => 
-          supabase.from('invoice_payments').insert({
-            invoice_id: invoiceId,
-            amount: payment.amount,
-            payment_date: new Date(payment.date).toISOString(),
-            payment_method: payment.method,
-            reference: payment.reference || null,
-            receipt_url: payment.receiptUrl || null,
-            user_id: user.id
-          })
-        );
+        // Insert all payment records
+        const paymentRecords = payments.map(payment => ({
+          invoice_id: invoiceId,
+          amount: payment.amount,
+          payment_date: new Date(payment.date).toISOString(),
+          payment_method: payment.method,
+          reference: payment.reference || null,
+          receipt_url: payment.receiptUrl || null,
+          user_id: user.id
+        }));
         
-        await Promise.all(paymentPromises);
+        if (paymentRecords.length > 0) {
+          const { error: insertError } = await supabase
+            .from('invoice_payments')
+            .insert(paymentRecords);
+            
+          if (insertError) throw insertError;
+        }
+        
+        return Promise.resolve();
       } catch (error) {
         console.error("Failed to save payment records to Supabase:", error);
         toast.error("Failed to save payment records to database");
+        return Promise.reject(error);
       }
     }
+    
+    return Promise.resolve();
   }, [invoices, user]);
 
   return (

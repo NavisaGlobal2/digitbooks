@@ -15,6 +15,15 @@ interface PaymentTableProps {
   invoices: Invoice[];
 }
 
+interface PaymentRecord {
+  id: string;
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  reference: string | null;
+  receipt_url: string | null;
+}
+
 const PaymentTable = ({ invoices }: PaymentTableProps) => {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -29,8 +38,9 @@ const PaymentTable = ({ invoices }: PaymentTableProps) => {
       setIsLoading(true);
       
       try {
+        // Use type casting for the table name until proper types are set up
         const { data, error } = await supabase
-          .from('invoice_payments')
+          .from('invoice_payments' as any)
           .select('*')
           .eq('invoice_id', selectedInvoiceId)
           .eq('user_id', user.id);
@@ -41,7 +51,7 @@ const PaymentTable = ({ invoices }: PaymentTableProps) => {
         if (data && data.length > 0) {
           // This just updates the UI for the payment details dialog
           // The actual state is managed in the InvoiceContext
-          const payments = data.map(payment => ({
+          const payments = data.map((payment: PaymentRecord) => ({
             amount: payment.amount,
             date: new Date(payment.payment_date),
             method: payment.payment_method,

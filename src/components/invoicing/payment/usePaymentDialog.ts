@@ -13,6 +13,15 @@ interface UsePaymentDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface DatabasePaymentRecord {
+  id: string;
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  reference: string | null;
+  receipt_url: string | null;
+}
+
 export const usePaymentDialog = ({
   invoiceId,
   invoiceAmount,
@@ -34,8 +43,9 @@ export const usePaymentDialog = ({
       setIsLoading(true);
       
       try {
+        // Type cast the table name until types are properly set up
         const { data, error } = await supabase
-          .from('invoice_payments')
+          .from('invoice_payments' as any)
           .select('*')
           .eq('invoice_id', invoiceId)
           .eq('user_id', user.id);
@@ -44,7 +54,7 @@ export const usePaymentDialog = ({
         
         // If we have DB payments, use them instead of the local ones
         if (data && data.length > 0) {
-          const dbPayments = data.map(payment => ({
+          const dbPayments = data.map((payment: DatabasePaymentRecord) => ({
             id: payment.id,
             amount: payment.amount,
             date: new Date(payment.payment_date),
