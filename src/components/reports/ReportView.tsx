@@ -28,20 +28,30 @@ export const ReportView: React.FC<ReportViewProps> = ({
 }) => {
   // Direct report generation function for PDF download
   const handleDirectDownload = () => {
-    if (!selectedReportType || !dateRange) return;
+    if (!selectedReportType || !dateRange) {
+      toast.error("Cannot generate report: Missing report type or date range");
+      return;
+    }
     
-    const title = selectedReportType.charAt(0).toUpperCase() + 
-                  selectedReportType.slice(1).replace(/-/g, " ");
-    
-    const period = `${format(dateRange.startDate, "MMM dd, yyyy")} — ${format(dateRange.endDate, "MMM dd, yyyy")}`;
-    
-    generateReportPdf({
-      title,
-      period,
-      dateRange
-    });
-    
-    toast.success(`${title} report generated and downloaded successfully`);
+    try {
+      const title = selectedReportType.charAt(0).toUpperCase() + 
+                    selectedReportType.slice(1).replace(/-/g, " ");
+      
+      const period = `${format(dateRange.startDate, "MMM dd, yyyy")} — ${format(dateRange.endDate, "MMM dd, yyyy")}`;
+      
+      toast.info(`Generating ${title} report...`);
+      
+      generateReportPdf({
+        title,
+        period,
+        dateRange
+      });
+      
+      toast.success(`${title} report generated and downloaded successfully`);
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error(`Failed to generate PDF report: ${error.message || "Unknown error"}`);
+    }
   };
 
   if (!selectedReportType) return null;

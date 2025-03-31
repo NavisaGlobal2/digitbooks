@@ -31,23 +31,35 @@ const GenericReportView = ({
   };
 
   const handleDownload = () => {
-    if (onDirectGeneration) {
-      onDirectGeneration();
-      return;
-    }
-    
-    const title = reportType.charAt(0).toUpperCase() + reportType.slice(1).replace("-", " ");
-    
-    generateReportPdf({
-      title,
-      period: `${reportPeriod.start} — ${reportPeriod.end}`,
-      dateRange: {
-        startDate,
-        endDate
+    try {
+      if (onDirectGeneration) {
+        onDirectGeneration();
+        return;
       }
-    });
-    
-    toast.success("Report downloaded successfully!");
+      
+      if (!dateRange) {
+        toast.error("Please select a date range first");
+        return;
+      }
+      
+      const title = reportType.charAt(0).toUpperCase() + reportType.slice(1).replace("-", " ");
+      
+      toast.info(`Generating ${title} report...`);
+      
+      generateReportPdf({
+        title,
+        period: `${reportPeriod.start} — ${reportPeriod.end}`,
+        dateRange: {
+          startDate,
+          endDate
+        }
+      });
+      
+      toast.success("Report downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating report:", error);
+      toast.error(`Failed to generate report: ${error.message || "Unknown error"}`);
+    }
   };
 
   return (

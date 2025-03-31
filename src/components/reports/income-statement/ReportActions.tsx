@@ -27,25 +27,25 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
   onDirectGeneration
 }) => {
   const handleDownload = async () => {
-    // Use direct generation if available (this specifically triggers PDF download)
-    if (onDirectGeneration) {
-      onDirectGeneration();
-      return;
-    }
-
-    // Check for valid date range and reference to report content
-    if (!dateRange) {
-      toast.error("Please select a date range to generate a report");
-      return;
-    }
-
-    if (!reportRef.current) {
-      toast.error("Could not find report content");
-      console.error("Report reference is null or undefined");
-      return;
-    }
-
     try {
+      // Use direct generation if available (this specifically triggers PDF download)
+      if (onDirectGeneration) {
+        onDirectGeneration();
+        return;
+      }
+
+      // Check for valid date range and reference to report content
+      if (!dateRange) {
+        toast.error("Please select a date range to generate a report");
+        return;
+      }
+
+      if (!reportRef.current) {
+        toast.error("Could not find report content");
+        console.error("Report reference is null or undefined");
+        return;
+      }
+
       toast.info(`Generating ${title} PDF...`);
       console.log("Capturing report content element:", reportRef.current);
       
