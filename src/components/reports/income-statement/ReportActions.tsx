@@ -24,7 +24,7 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
 
   const handleDownload = async () => {
     try {
-      toast.loading("Generating report...");
+      toast.loading("Preparing report for download...");
       
       // Allow time for rendering before capturing
       setTimeout(async () => {
@@ -35,7 +35,7 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
         });
         toast.dismiss();
         toast.success("Report downloaded successfully!");
-      }, 100);
+      }, 500); // Increased delay to ensure rendering is complete
     } catch (error) {
       console.error("Error generating report:", error);
       toast.dismiss();

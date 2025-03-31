@@ -83,7 +83,7 @@
 }
 
 @media print {
-  .print:hidden {
+  .print\:hidden {
     display: none !important;
   }
   
@@ -98,4 +98,37 @@
     page-break-inside: avoid;
     box-shadow: none !important;
   }
+}
+
+/* Specific styles for PDF report generation */
+.for-pdf-capture {
+  position: absolute;
+  left: -9999px;
+  visibility: hidden;
+}
+
+.income-statement-report-container,
+.cash-flow-report-container {
+  /* Ensure charts render properly */
+  overflow: visible !important;
+}
+
+.income-statement-report-container .recharts-wrapper,
+.cash-flow-report-container .recharts-wrapper {
+  overflow: visible !important;
+}
+
+/* Ensure proper table rendering in PDF */
+.income-statement-report-container table,
+.cash-flow-report-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.income-statement-report-container td,
+.cash-flow-report-container td,
+.income-statement-report-container th,
+.cash-flow-report-container th {
+  padding: 8px;
+  border: 1px solid #ddd;
 }
