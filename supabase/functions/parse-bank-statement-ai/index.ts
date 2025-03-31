@@ -68,6 +68,7 @@ serve(async (req) => {
           
           if (excelData && Array.isArray(excelData) && excelData.length > 0) {
             console.log(`Successfully parsed ${excelData.length} transactions directly from Excel`);
+            console.log(`Sample excel transaction: ${JSON.stringify(excelData[0], null, 2).substring(0, 300)}...`);
             transactions = excelData;
             preservedOriginalFormat = true;
           } else {
@@ -98,6 +99,7 @@ serve(async (req) => {
           
           if (csvData && Array.isArray(csvData) && csvData.length > 0) {
             console.log(`Successfully parsed ${csvData.length} transactions directly from CSV`);
+            console.log(`Sample CSV transaction: ${JSON.stringify(csvData[0], null, 2).substring(0, 300)}...`);
             transactions = csvData;
             preservedOriginalFormat = true;
           } else {
@@ -132,20 +134,23 @@ serve(async (req) => {
       let formattedTransactions = transactions;
       let formattingApplied = false;
       
-      if (useAIFormatting) {
+      if (useAIFormatting && transactions.length > 0) {
         console.log("Applying AI formatting to standardize transaction structure");
         try {
           const formatted = await formatTransactionsWithAI(transactions, context, preferredProvider);
-          if (formatted && formatted.length > 0) {
+          if (formatted && Array.isArray(formatted) && formatted.length > 0) {
+            console.log(`AI formatting returned ${formatted.length} transactions`);
+            console.log(`Sample AI-formatted transaction: ${JSON.stringify(formatted[0], null, 2).substring(0, 300)}...`);
             formattedTransactions = formatted;
             formattingApplied = true;
             console.log("Successfully applied AI formatting to transactions");
           } else {
-            console.log("AI formatting returned no results, using original transactions");
+            console.log("AI formatting returned no results or empty array, using original transactions");
           }
         } catch (formatError) {
           console.error("Error applying AI formatting:", formatError);
           console.log("Using original transactions due to formatting error");
+          // We'll continue with the original transactions
         }
       } else {
         console.log("Skipping AI formatting, returning original transaction structure");
@@ -156,11 +161,17 @@ serve(async (req) => {
         JSON.stringify({
           success: true,
           transactions: formattedTransactions,
+          count: formattedTransactions.length,
           message: `Successfully processed ${formattedTransactions.length} transactions`,
           batchId,
           preservedOriginalFormat,
           formattingApplied,
-          originalFormat: preservedOriginalFormat && !formattingApplied
+          originalFormat: preservedOriginalFormat && !formattingApplied,
+          fileDetails: {
+            name: file.name,
+            size: file.size,
+            type: file.type
+          }
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

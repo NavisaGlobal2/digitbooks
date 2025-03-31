@@ -15,6 +15,7 @@ export const useStatementUpload = (
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
   const [useAIFormatting, setUseAIFormatting] = useState<boolean>(true);
+  const [responseMetadata, setResponseMetadata] = useState<any>(null);
 
   // Check authentication status
   useEffect(() => {
@@ -108,6 +109,7 @@ export const useStatementUpload = (
 
     setUploading(true);
     clearError();
+    setResponseMetadata(null);
 
     try {
       // Start progress simulation
@@ -128,8 +130,21 @@ export const useStatementUpload = (
       
       await parseViaEdgeFunction(
         file,
-        (transactions) => {
+        (transactions, responseData) => {
           setUploading(false);
+          
+          // Save any extra metadata from the response
+          if (responseData) {
+            console.log("Server response metadata:", responseData);
+            setResponseMetadata(responseData);
+          }
+          
+          if (!transactions || transactions.length === 0) {
+            handleError("No transactions found in the statement file. Please check the file format or try another file.");
+            resetProgress();
+            return;
+          }
+          
           onTransactionsParsed(transactions);
         },
         (errorMessage) => {
@@ -155,6 +170,7 @@ export const useStatementUpload = (
       console.error("Unexpected error in parseFile:", error);
       handleError("An unexpected error occurred. Please try again.");
       setUploading(false);
+      resetProgress();
     }
   };
 
@@ -163,6 +179,7 @@ export const useStatementUpload = (
     clearError();
     setUploading(false);
     resetProgress();
+    setResponseMetadata(null);
   };
 
   return {
@@ -183,6 +200,8 @@ export const useStatementUpload = (
     setPreferredAIProvider,
     // AI formatting option
     useAIFormatting,
-    setUseAIFormatting
+    setUseAIFormatting,
+    // Response metadata
+    responseMetadata
   };
 };

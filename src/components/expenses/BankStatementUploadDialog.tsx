@@ -14,6 +14,8 @@ import {
 import UploadDialogContent from "./upload/components/UploadDialogContent";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface BankStatementUploadDialogProps {
   open: boolean;
@@ -31,15 +33,37 @@ const BankStatementUploadDialog = ({
   const [parsedTransactions, setParsedTransactions] = useState<ParsedTransaction[]>([]);
   const [processingComplete, setProcessingComplete] = useState(false);
   const [useAIFormatting, setUseAIFormatting] = useState(true);
+  const [processingStats, setProcessingStats] = useState<{
+    total: number;
+    credits: number;
+    debits: number;
+    message: string;
+  } | null>(null);
   
-  const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
+  const handleTransactionsParsed = (transactions: ParsedTransaction[], metadata?: any) => {
     console.log(`Received ${transactions.length} parsed transactions`);
+    
+    if (!transactions || transactions.length === 0) {
+      toast.error("No valid transactions found in the file");
+      return;
+    }
     
     // Pre-select all debit transactions by default
     const preSelectedTransactions = transactions.map(tx => ({
       ...tx,
       selected: tx.type === 'debit' // Automatically select debit transactions
     }));
+    
+    // Calculate some stats
+    const debits = transactions.filter(tx => tx.type === 'debit').length;
+    const credits = transactions.filter(tx => tx.type === 'credit').length;
+    
+    setProcessingStats({
+      total: transactions.length,
+      credits,
+      debits,
+      message: metadata?.message || `Processed ${transactions.length} transactions`
+    });
     
     setParsedTransactions(preSelectedTransactions);
     setProcessingComplete(true);
@@ -59,7 +83,8 @@ const BankStatementUploadDialog = ({
     cancelProgress,
     isAuthenticated,
     preferredAIProvider,
-    setPreferredAIProvider
+    setPreferredAIProvider,
+    responseMetadata
   } = useStatementUpload(handleTransactionsParsed);
 
   const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
@@ -107,6 +132,7 @@ const BankStatementUploadDialog = ({
       setParsedTransactions([]);
       setShowTaggingDialog(false);
       setProcessingComplete(false);
+      setProcessingStats(null);
       onOpenChange(false);
       onStatementProcessed();
     } catch (error) {
@@ -126,6 +152,7 @@ const BankStatementUploadDialog = ({
       clearFile();
       setParsedTransactions([]);
       setProcessingComplete(false);
+      setProcessingStats(null);
       onOpenChange(false);
     }
   };
@@ -149,6 +176,21 @@ const BankStatementUploadDialog = ({
             useAIFormatting={useAIFormatting}
             setUseAIFormatting={setUseAIFormatting}
           />
+          
+          {processingStats && !showTaggingDialog && (
+            <Alert className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Processing Summary</AlertTitle>
+              <AlertDescription>
+                <p>{processingStats.message}</p>
+                <p className="text-sm mt-1">
+                  Found {processingStats.total} transactions: 
+                  <span className="text-green-600 font-medium ml-1">{processingStats.credits} credits</span>,
+                  <span className="text-red-600 font-medium ml-1">{processingStats.debits} debits</span>
+                </p>
+              </AlertDescription>
+            </Alert>
+          )}
         </DialogContent>
       </Dialog>
 

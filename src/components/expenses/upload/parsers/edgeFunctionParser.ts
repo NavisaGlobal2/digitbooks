@@ -4,7 +4,7 @@ import { ParsedTransaction } from "./types";
 
 export const parseViaEdgeFunction = async (
   file: File,
-  onSuccess: (transactions: ParsedTransaction[]) => void,
+  onSuccess: (transactions: ParsedTransaction[], responseData?: any) => void,
   onError: (errorMessage: string) => boolean,
   resetProgress?: () => void,
   completeProgress?: () => void,
@@ -61,8 +61,23 @@ export const parseViaEdgeFunction = async (
       return;
     }
 
-    if (!data || !data.transactions || !Array.isArray(data.transactions) || data.transactions.length === 0) {
-      onError("No transactions found in file");
+    if (!data) {
+      console.error("No data returned from server");
+      onError("No response from server. Please try again.");
+      return;
+    }
+
+    console.log("Server response:", data);
+
+    if (!data.transactions || !Array.isArray(data.transactions)) {
+      console.error("Invalid response format:", data);
+      onError("Invalid response from server. Expected transactions array.");
+      return;
+    }
+
+    if (data.transactions.length === 0) {
+      console.warn("No transactions found in file");
+      onError("No transactions found in file. Please check the file format.");
       return;
     }
 
@@ -71,8 +86,7 @@ export const parseViaEdgeFunction = async (
       completeProgress();
     }
 
-    // Map API response to transactions with consistent format
-    // Note: AI formatting should have already prepared this structure properly
+    // Ensure transaction objects have all required fields
     const transactions = data.transactions.map((tx: any, index: number) => ({
       id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
       date: tx.date || new Date().toISOString(),
@@ -90,9 +104,20 @@ export const parseViaEdgeFunction = async (
     }));
 
     console.log(`Successfully parsed ${transactions.length} transactions with AI formatting: ${data.formattingApplied ? 'applied' : 'not applied'}`);
+    console.log("Sample transaction:", transactions[0]);
     
-    // Send the transactions to the caller
-    onSuccess(transactions);
+    // Extract metadata to return
+    const responseMetadata = {
+      count: data.count || transactions.length,
+      batchId: data.batchId,
+      formattingApplied: data.formattingApplied,
+      originalFormat: data.originalFormat,
+      fileDetails: data.fileDetails,
+      message: data.message
+    };
+    
+    // Send the transactions to the caller along with metadata
+    onSuccess(transactions, responseMetadata);
   } catch (error: any) {
     // Reset progress if provided
     if (resetProgress) {
