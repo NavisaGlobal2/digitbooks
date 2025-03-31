@@ -42,10 +42,10 @@ export const useInvoiceOperations = (invoices: Invoice[], setInvoices: React.Dis
         due_date: invoiceData.dueDate.toISOString(),
         amount: invoiceData.amount,
         status: invoiceData.status,
-        items: invoiceData.items || [], // This needs to be JSON compatible
+        items: invoiceData.items || [], // Convert to JSON for database
         logo_url: invoiceData.logoUrl || null,
         additional_info: invoiceData.additionalInfo || null,
-        bank_details: invoiceData.bankDetails || {} // This needs to be JSON compatible
+        bank_details: invoiceData.bankDetails || {} // Convert to JSON for database
       };
       
       const { data, error } = await supabase
@@ -76,10 +76,10 @@ export const useInvoiceOperations = (invoices: Invoice[], setInvoices: React.Dis
         dueDate: new Date(data.due_date),
         amount: data.amount,
         status: data.status as InvoiceStatus,
-        items: parsedItems,
+        items: parsedItems as any, // Type assertion to match expected Invoice.items type
         logoUrl: data.logo_url || undefined,
         additionalInfo: data.additional_info || undefined,
-        bankDetails: parsedBankDetails,
+        bankDetails: parsedBankDetails as any, // Type assertion for bankDetails
         paidDate: undefined // The DB doesn't have this field
       };
       

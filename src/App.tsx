@@ -1,4 +1,3 @@
-
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -19,6 +18,7 @@ import Help from "./pages/Help";
 import Careers from "./pages/Careers";
 import Dashboard from "./pages/Dashboard";
 import Invoicing from "./pages/Invoicing";
+import PaymentHistory from "./pages/PaymentHistory";
 import Expenses from "./pages/Expenses";
 import Revenue from "./pages/Revenue";
 import Clients from "./pages/Clients";
@@ -79,6 +79,11 @@ function App() {
                           <Route path="/invoicing" element={
                             <RequireAuth>
                               <Invoicing />
+                            </RequireAuth>
+                          } />
+                          <Route path="/payment-history" element={
+                            <RequireAuth>
+                              <PaymentHistory />
                             </RequireAuth>
                           } />
                           <Route path="/expenses" element={

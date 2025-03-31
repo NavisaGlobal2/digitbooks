@@ -7,10 +7,32 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { formatNaira } from '@/utils/invoice';
 import { format } from 'date-fns';
-import { Invoice } from '@/types/invoice';
+import { Invoice, PaymentRecord } from '@/types/invoice';
 
 interface PaymentHistoryPageProps {
   onBack: () => void;
+}
+
+interface DbInvoice {
+  id: string;
+  client_name: string;
+  invoice_number: string;
+  issued_date: string;
+  due_date: string;
+  amount: number;
+  status: string;
+  items: any;
+  logo_url?: string;
+  additional_info?: string;
+  bank_details: any;
+}
+
+interface DbPayment {
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  reference?: string;
+  receipt_url?: string;
 }
 
 const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
@@ -34,7 +56,7 @@ const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
         if (error) throw error;
 
         // For each invoice, fetch its payments
-        const invoicesWithPaymentsPromises = invoicesData.map(async (invoice) => {
+        const invoicesWithPaymentsPromises = invoicesData.map(async (invoice: DbInvoice) => {
           const { data: payments, error: paymentsError } = await supabase
             .from('invoice_payments')
             .select('*')
@@ -46,7 +68,7 @@ const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
           }
 
           // Map the payments to our format
-          const formattedPayments = payments.map(payment => ({
+          const formattedPayments: PaymentRecord[] = payments.map((payment: DbPayment) => ({
             amount: payment.amount,
             date: new Date(payment.payment_date),
             method: payment.payment_method,
@@ -54,7 +76,7 @@ const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
             receiptUrl: payment.receipt_url || undefined
           }));
 
-          // Parse the JSON fields from the database
+          // Parse JSON fields from the database
           const parsedItems = Array.isArray(invoice.items) ? invoice.items : [];
           const parsedBankDetails = typeof invoice.bank_details === 'object' ? invoice.bank_details : {
             accountName: '',
@@ -62,11 +84,10 @@ const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
             bankName: ''
           };
 
-          // Convert DB invoice to our Invoice format
-          return {
+          // Convert DB invoice to our Invoice format with type assertion
+          const formattedInvoice = {
             id: invoice.id,
             clientName: invoice.client_name,
-            // These fields might not exist in the database
             clientEmail: undefined,
             clientAddress: undefined,
             invoiceNumber: invoice.invoice_number,
@@ -81,6 +102,8 @@ const PaymentHistoryPage = ({ onBack }: PaymentHistoryPageProps) => {
             paidDate: undefined, // This field doesn't exist in the database
             payments: formattedPayments
           } as Invoice;
+
+          return formattedInvoice;
         });
 
         const results = await Promise.all(invoicesWithPaymentsPromises);
