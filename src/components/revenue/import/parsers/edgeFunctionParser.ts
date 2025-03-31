@@ -42,29 +42,81 @@ export const parseViaEdgeFunction = async (
       return;
     }
 
+    // Log the raw transactions data to debug
+    console.log("Raw transactions data from edge function:", data.transactions.slice(0, 2));
+
     // Complete progress if provided
     if (completeProgress) {
       completeProgress();
     }
 
     // Filter to only include credit (positive amount) transactions for revenue
+    // Also ensure proper data mapping and transformation
     const revenueTransactions = data.transactions
-      .filter((tx: any) => tx.type === 'credit' || (typeof tx.amount === 'number' && tx.amount > 0))
-      .map((tx: any) => ({
-        id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
-        date: tx.date || new Date().toISOString(),
-        description: tx.description || "Unknown revenue",
-        amount: typeof tx.amount === 'number' ? Math.abs(tx.amount) : Math.abs(parseFloat(tx.amount || '0')),
-        type: "credit",
-        selected: true,
-        source: tx.sourceSuggestion?.source || "",
-        sourceSuggestion: tx.sourceSuggestion,
-        originalDate: tx.originalDate || tx.date,
-        originalAmount: tx.originalAmount || tx.amount,
-        preservedColumns: tx.preservedColumns || {}
-      }));
+      .filter((tx: any) => {
+        // Check if the transaction has actual data (not just header or summary rows)
+        const hasValidData = tx.preservedColumns && 
+          (tx.amount > 0 || 
+           (tx.preservedColumns['__EMPTY'] && tx.preservedColumns['__EMPTY'].includes('₦')));
+        
+        // For revenue, we want credit transactions or positive amounts
+        return hasValidData && (tx.type === 'credit' || tx.amount > 0);
+      })
+      .map((tx: any) => {
+        // Extract the actual date and amount from preserved columns
+        let extractedDate = '';
+        let extractedAmount = 0;
+        let extractedDescription = '';
+        
+        // Check if this is from the Excel format we're seeing
+        if (tx.preservedColumns) {
+          // Extract date from first column if it exists and matches date pattern
+          const datePattern = /\d{2}\/\d{2}\/\d{2}/;
+          const dateColumn = tx.preservedColumns["JOHN OLUSEYE ONIFADE\n13 ILUPEJU ESTATE AS- SALLAM SECONDARY SCHOOL, IBADAN, OYO"];
+          
+          if (dateColumn && datePattern.test(dateColumn)) {
+            extractedDate = dateColumn;
+          }
+          
+          // Extract amount - look for the ₦ symbol in columns
+          if (tx.preservedColumns["__EMPTY"]) {
+            const amountText = tx.preservedColumns["__EMPTY"];
+            if (typeof amountText === 'string' && amountText.includes('₦')) {
+              extractedAmount = parseFloat(amountText.replace('₦', '').replace(/,/g, '').trim());
+            }
+          }
+          
+          // Extract description from transfer details if available
+          const descriptionSources = [
+            tx.preservedColumns["__EMPTY_7"], 
+            tx.preservedColumns["__EMPTY_4"]
+          ];
+          
+          extractedDescription = descriptionSources
+            .filter(Boolean)
+            .join(" - ")
+            .trim() || "Unknown transaction";
+        }
+        
+        // Format the transaction for revenue
+        return {
+          id: tx.id || `tx-${Math.random().toString(36).substr(2, 9)}`,
+          date: extractedDate ? new Date(extractedDate) : new Date(),
+          description: extractedDescription,
+          amount: extractedAmount || Math.abs(tx.amount || 0),
+          type: "credit",
+          selected: true,
+          source: tx.sourceSuggestion?.source || "",
+          sourceSuggestion: tx.sourceSuggestion,
+          // Preserve original data
+          originalDate: tx.originalDate || extractedDate || tx.date,
+          originalAmount: tx.originalAmount || extractedAmount || tx.amount,
+          preservedColumns: tx.preservedColumns || {}
+        };
+      });
 
     console.log(`Found ${revenueTransactions.length} revenue transactions out of ${data.transactions.length} total`);
+    console.log("Sample formatted transactions:", revenueTransactions.slice(0, 2));
     
     // Send the filtered revenue transactions to the caller
     onSuccess(revenueTransactions);
