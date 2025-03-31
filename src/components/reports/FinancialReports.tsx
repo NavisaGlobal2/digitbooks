@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { ArrowLeft, BarChart3, Download, FileText } from "lucide-react";
@@ -9,34 +8,40 @@ import { ReportCard } from "@/components/reports/ReportCard";
 import { toast } from "sonner";
 import MobileSidebar from "../dashboard/layout/MobileSidebar";
 import IncomeStatementReport from "./IncomeStatementReport";
+import { format } from "date-fns";
 
 const FinancialReports = () => {
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [selectedReportType, setSelectedReportType] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [reportPeriod, setReportPeriod] = useState("Current Month");
+  const [dateRange, setDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
 
   const handleGenerateReport = (
     reportType: string,
     reportPeriod: string,
-    fileFormat: string
+    fileFormat: string,
+    customDateRange?: { startDate: Date; endDate: Date }
   ) => {
+    let displayPeriod = reportPeriod.replace("-", " ");
+    
+    if (customDateRange) {
+      displayPeriod = `${format(customDateRange.startDate, "MMM dd, yyyy")} - ${format(customDateRange.endDate, "MMM dd, yyyy")}`;
+      setDateRange(customDateRange);
+    } else {
+      setDateRange(null);
+    }
+    
     toast.success(
-      `Generating ${reportType.replace("-", " ")} report for ${reportPeriod.replace(
-        "-",
-        " "
-      )} in ${fileFormat.toUpperCase()} format`
+      `Generating ${reportType.replace("-", " ")} report for ${displayPeriod} in ${fileFormat.toUpperCase()} format`
     );
     
-    setReportPeriod(reportPeriod.replace("-", " "));
+    setReportPeriod(displayPeriod);
     
-    // Set the selected report type to display the specific report
     if (reportType === "income-statement") {
       setSelectedReportType("income-statement");
     } else {
-      // For other report types, we would implement similar logic
       setSelectedReportType(reportType);
-      // In a real app, this would call an API to generate the report
       setTimeout(() => {
         toast.success("Report generated successfully!");
       }, 2000);
@@ -50,6 +55,7 @@ const FinancialReports = () => {
           <IncomeStatementReport 
             onBack={() => setSelectedReportType(null)}
             period={reportPeriod}
+            dateRange={dateRange}
           />
         );
       case "revenue-summary":
@@ -109,12 +115,10 @@ const FinancialReports = () => {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden md:block">
         <Sidebar />
       </div>
 
-      {/* Mobile Sidebar */}
       <MobileSidebar
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}

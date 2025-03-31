@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useRevenue } from "@/contexts/RevenueContext";
 import { useExpenses } from "@/contexts/ExpenseContext";
@@ -19,10 +18,11 @@ import { formatCurrency } from "@/utils/invoice/formatters";
 interface IncomeStatementReportProps {
   onBack: () => void;
   period: string;
+  dateRange: { startDate: Date; endDate: Date } | null;
 }
 
-const IncomeStatementReport = ({ onBack, period }: IncomeStatementReportProps) => {
-  const { revenues, getTotalRevenue, getRevenueBySource } = useRevenue();
+const IncomeStatementReport = ({ onBack, period, dateRange }: IncomeStatementReportProps) => {
+  const { revenues, getTotalRevenue, getRevenueBySource, getRevenueByPeriod } = useRevenue();
   const { getTotalExpenses, getExpensesByCategory } = useExpenses();
   const [isLoading, setIsLoading] = useState(true);
   const [reportData, setReportData] = useState<{
@@ -38,8 +38,30 @@ const IncomeStatementReport = ({ onBack, period }: IncomeStatementReportProps) =
   useEffect(() => {
     // Simulate loading time to fetch data
     const timer = setTimeout(() => {
-      const totalRevenue = getTotalRevenue();
-      const revenueBySource = getRevenueBySource();
+      let filteredRevenues = revenues;
+      let totalRevenue = 0;
+      let revenueBySource = {};
+      
+      // If dateRange is provided, filter revenues by the date range
+      if (dateRange) {
+        filteredRevenues = getRevenueByPeriod(dateRange.startDate, dateRange.endDate);
+        totalRevenue = filteredRevenues.reduce((total, revenue) => total + revenue.amount, 0);
+        
+        // Calculate revenue by source using the filtered revenues
+        revenueBySource = filteredRevenues.reduce((acc, revenue) => {
+          const source = revenue.source;
+          if (!acc[source]) {
+            acc[source] = 0;
+          }
+          acc[source] += revenue.amount;
+          return acc;
+        }, {} as Record<string, number>);
+      } else {
+        // Otherwise use the context methods for total calculations
+        totalRevenue = getTotalRevenue();
+        revenueBySource = getRevenueBySource();
+      }
+      
       const totalExpenses = getTotalExpenses();
       const expensesByCategory = getExpensesByCategory();
       
@@ -62,7 +84,7 @@ const IncomeStatementReport = ({ onBack, period }: IncomeStatementReportProps) =
     }, 800);
     
     return () => clearTimeout(timer);
-  }, [revenues, getTotalRevenue, getRevenueBySource, getTotalExpenses, getExpensesByCategory]);
+  }, [revenues, getTotalRevenue, getRevenueBySource, getTotalExpenses, getExpensesByCategory, dateRange, getRevenueByPeriod]);
 
   const handlePrint = () => {
     window.print();
