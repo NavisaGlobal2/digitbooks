@@ -9,7 +9,6 @@ import ExpenseBreakdownChart from "./charts/ExpenseBreakdownChart";
 import ExpenseFilters from "./filters/ExpenseFilters";
 import ConnectBankBanner from "./ConnectBankBanner";
 import BillsSection from "@/components/dashboard/BillsSection";
-import VendorsSection from "./VendorsSection";
 import ExpensesTable from "./ExpensesTable";
 import { DateRange } from "react-day-picker";
 
@@ -70,7 +69,26 @@ const ExpensesContent = ({
       case "bills":
         return <BillsSection />;
       case "vendors":
-        return <VendorsSection vendors={uniqueVendors} expenses={expenses} />;
+        return (
+          <div className="p-4 bg-white rounded-lg shadow">
+            <h2 className="text-lg font-semibold mb-4">Vendors</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {uniqueVendors.map((vendor, index) => (
+                <div key={index} className="border rounded p-3 hover:shadow-md transition">
+                  <div className="font-medium">{vendor}</div>
+                  <div className="text-sm text-gray-500">
+                    {expenses.filter(e => e.vendor === vendor).length} transactions
+                  </div>
+                </div>
+              ))}
+              {uniqueVendors.length === 0 && (
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  No vendors found
+                </div>
+              )}
+            </div>
+          </div>
+        );
       case "expenses":
       default:
         return (
