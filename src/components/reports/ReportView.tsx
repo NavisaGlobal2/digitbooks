@@ -1,6 +1,6 @@
 
 import React from "react";
-import IncomeStatementReport from "./IncomeStatementReport";
+import IncomeStatementReport from "./income-statement";
 import GenericReportView from "./GenericReportView";
 
 interface ReportViewProps {
@@ -27,7 +27,6 @@ export const ReportView: React.FC<ReportViewProps> = ({
           onBack={onBack}
           period={reportPeriod}
           dateRange={dateRange}
-          // Remove isCustomDateRange prop as it's not in IncomeStatementReport props
         />
       );
     case "revenue-summary":
