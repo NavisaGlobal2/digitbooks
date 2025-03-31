@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedTransaction } from "./types";
 import { RevenueSource } from "@/types/revenue";
@@ -8,7 +7,7 @@ import {
   extractAmount, 
   determineTransactionType 
 } from "./utils/formatters";
-import { withRetry } from "../../expenses/upload/parsers/edge-function/retryHandler";
+import { withRetry } from "@/components/expenses/upload/parsers/edge-function/retryHandler";
 
 export const parseViaEdgeFunction = async (
   file: File,
