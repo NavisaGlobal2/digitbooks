@@ -1,6 +1,6 @@
 
 // Import the services from correct paths
-import { isExcelFile, ExcelService } from './excelService.ts';
+import { isExcelFile } from './excelService.ts';
 import { isCSVFile, CSVService } from './csvService.ts';
 
 /**
@@ -18,7 +18,7 @@ export async function extractTextFromFile(file: File): Promise<string> {
     
     // Check if it's an Excel file
     if (isExcelFile(file)) {
-      return await ExcelService.extractTextFromExcel(file);
+      throw new Error(`Excel files should be processed using the direct Excel parser, not text extraction.`);
     }
     
     // If we reach here, use the default file type handling
@@ -26,7 +26,7 @@ export async function extractTextFromFile(file: File): Promise<string> {
       // For CSV, we fall back to the raw text if our function failed
       return await file.text();
     } else if (fileType === 'xlsx' || fileType === 'xls') {
-      throw new Error(`Excel file processing failed. Please try again or use CSV format.`);
+      throw new Error(`Excel file processing failed. Please check your file format.`);
     } else {
       // For unsupported file types, throw an error
       throw new Error(`Unsupported file type: ${fileType}`);

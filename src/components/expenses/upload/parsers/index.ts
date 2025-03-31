@@ -1,6 +1,6 @@
 
 import { toast } from "sonner";
-import { ParsedTransaction } from "./types";
+import { ParsedTransaction, TransactionParsingOptions } from "./types";
 import { parseViaEdgeFunction } from "./edgeFunctionParser";
 
 export type { ParsedTransaction } from "./types";
@@ -10,7 +10,8 @@ export { parseViaEdgeFunction } from "./edgeFunctionParser";
 export const parseStatementFile = (
   file: File,
   onSuccess: (result: ParsedTransaction[]) => void,
-  onError: (errorMessage: string) => void
+  onError: (errorMessage: string) => void,
+  options: TransactionParsingOptions = {}
 ) => {
   if (!file) {
     toast.error("Please select a bank statement file");

@@ -1,31 +1,11 @@
 
 import { useState } from "react";
-import { toast } from "sonner";
-import { ParsedTransaction } from "../parsers";
+import { ParsedTransaction } from "../parsers/types";
 import { parseViaEdgeFunction } from "../parsers/edgeFunctionParser";
 import { supabase } from "@/integrations/supabase/client";
 
-interface FileProcessingProps {
-  onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
-  handleError: (errorMessage: string) => boolean;
-  resetProgress: () => void;
-  completeProgress: () => void;
-  showFallbackMessage: (message?: string) => void;
-  isCancelled: boolean;
-  setIsWaitingForServer?: (isWaiting: boolean) => void;
-}
-
-export const useFileProcessing = ({
-  onTransactionsParsed,
-  handleError,
-  resetProgress,
-  completeProgress,
-  showFallbackMessage,
-  isCancelled,
-  setIsWaitingForServer
-}: FileProcessingProps) => {
+export const useFileProcessing = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [preferredAIProvider, setPreferredAIProvider] = useState<string>("anthropic");
   const [processing, setProcessing] = useState(false);
 
   // Check authentication status on mount
@@ -38,7 +18,16 @@ export const useFileProcessing = ({
     checkAuthStatus();
   });
 
-  const processServerSide = async (file: File) => {
+  const processServerSide = async (
+    file: File,
+    onSuccess: (transactions: ParsedTransaction[]) => void,
+    onError: (errorMessage: string) => boolean,
+    resetProgress: () => void,
+    completeProgress: () => void,
+    isCancelled: boolean,
+    setIsWaitingForServer?: (isWaiting: boolean) => void,
+    preferredProvider?: string
+  ) => {
     try {
       setProcessing(true);
       
@@ -60,7 +49,7 @@ export const useFileProcessing = ({
         return;
       }
       
-      // Now process with edge function
+      // Process with edge function - direct parsing only
       await parseViaEdgeFunction(
         file,
         (transactions) => {
@@ -70,7 +59,7 @@ export const useFileProcessing = ({
             setIsWaitingForServer(false);
           }
           setProcessing(false);
-          onTransactionsParsed(transactions);
+          onSuccess(transactions);
         },
         (errorMessage) => {
           if (isCancelled) return true;
@@ -81,12 +70,15 @@ export const useFileProcessing = ({
             setIsWaitingForServer(false);
           }
           
-          // Show the error message to the user
-          handleError(errorMessage);
+          onError(errorMessage);
           resetProgress();
           return true;
         },
-        preferredAIProvider
+        resetProgress,
+        completeProgress,
+        isCancelled,
+        setIsWaitingForServer,
+        preferredProvider
       );
     } catch (error: any) {
       if (isCancelled) return;
@@ -97,17 +89,14 @@ export const useFileProcessing = ({
         setIsWaitingForServer(false);
       }
       
-      console.error("Edge function error:", error);
-      handleError(error.message || "Error processing file on server.");
+      onError(error.message || "Unexpected error processing file");
       resetProgress();
     }
   };
 
   return {
-    processing,
     processServerSide,
     isAuthenticated,
-    preferredAIProvider,
-    setPreferredAIProvider
+    processing
   };
 };

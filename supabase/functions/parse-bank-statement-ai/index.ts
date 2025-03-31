@@ -1,11 +1,9 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders, handleCorsRequest } from "./lib/cors.ts";
-import { extractTextFromFile } from "./lib/textExtractor.ts";
-import { processWithAI } from "./lib/aiService.ts";
-import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
 import { parseExcelDirectly } from "./lib/excelParser.ts";
 import { isExcelFile } from "./lib/excelService.ts";
+import { fallbackCSVProcessing } from "./lib/fallbackProcessor.ts";
 
 serve(async (req) => {
   // Log request information
@@ -20,20 +18,6 @@ serve(async (req) => {
     // Parse the request body - this will contain our file
     const formData = await req.formData();
     const file = formData.get("file");
-    
-    // Get the preferred AI provider from the request, if provided
-    const preferredProvider = formData.get("preferredProvider")?.toString() || null;
-    
-    // Only try to set the environment variable if explicitly provided
-    if (preferredProvider) {
-      try {
-        console.log(`Setting preferred AI provider to: ${preferredProvider}`);
-        Deno.env.set("PREFERRED_AI_PROVIDER", preferredProvider);
-      } catch (envError) {
-        // Log but don't fail if we can't set the environment variable
-        console.log(`Could not set preferred AI provider: ${envError.message}`);
-      }
-    }
     
     if (!file || !(file instanceof File)) {
       return new Response(
@@ -57,7 +41,7 @@ serve(async (req) => {
     const batchId = crypto.randomUUID();
     
     try {
-      // PRIORITIZE DIRECT EXCEL PARSING: Always use direct parsing for Excel files
+      // ALWAYS USE DIRECT EXCEL PARSING: for Excel files
       if (isExcelFile(file)) {
         try {
           console.log('Using direct Excel parsing to preserve exact original data structure');
@@ -79,69 +63,70 @@ serve(async (req) => {
               { headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
           } else {
-            console.log("Direct Excel parsing returned no transactions, falling back to AI processing");
-          }
-        } catch (excelError) {
-          console.error("Direct Excel parsing error:", excelError);
-          console.log("Falling back to AI processing for Excel file");
-          // Continue with AI processing as fallback
-        }
-      }
-      
-      // For non-Excel files or if direct parsing failed, proceed with regular flow
-      // 1. Extract text from the file
-      const fileText = await extractTextFromFile(file);
-      let transactions = [];
-      let usedFallback = false;
-      
-      try {
-        // 2. Try to process with AI service
-        transactions = await processWithAI(fileText, fileType, context);
-        
-        if (transactions.length === 0) {
-          throw new Error("No transactions were extracted by the AI service");
-        }
-      } catch (aiError) {
-        console.error("AI processing failed:", aiError);
-        
-        // If it's a CSV, try the fallback parser as last resort
-        if (fileType === "csv") {
-          console.log("Attempting fallback CSV processing");
-          usedFallback = true;
-          transactions = await fallbackCSVProcessing(fileText);
-          
-          if (transactions.length === 0) {
+            console.log("Direct Excel parsing returned no transactions");
             return new Response(
               JSON.stringify({ 
-                error: "Could not parse transactions using either AI or fallback methods. Please check the file format." 
+                error: "Could not extract transaction data from Excel file. Please check the format." 
               }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
             );
           }
-        } else {
-          // For non-CSV files with AI service failures, provide a detailed error
+        } catch (excelError) {
+          console.error("Direct Excel parsing error:", excelError);
           return new Response(
             JSON.stringify({ 
-              error: `AI processing failed: ${aiError.message}. Please try again later or use a CSV file.` 
+              error: `Failed to parse Excel file: ${excelError.message}. Please check the file format.` 
             }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 }
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
           );
         }
       }
       
-      console.log(`Parsed ${transactions.length} transactions from file`);
+      // For CSV files, use the fallback CSV processor directly (no AI)
+      if (fileType === "csv") {
+        try {
+          console.log("Processing CSV file with direct CSV processor");
+          // Extract text from the CSV file
+          const fileText = await file.text();
+          const transactions = await fallbackCSVProcessing(fileText);
+          
+          if (transactions.length === 0) {
+            return new Response(
+              JSON.stringify({ 
+                error: "Could not parse transactions from CSV file. Please check the file format." 
+              }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
+            );
+          }
+          
+          console.log(`Parsed ${transactions.length} transactions from CSV file`);
+          
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              transactions,
+              message: `Successfully processed ${transactions.length} transactions from CSV file`,
+              batchId
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } catch (csvError) {
+          console.error("CSV processing error:", csvError);
+          return new Response(
+            JSON.stringify({ 
+              error: `Failed to process CSV file: ${csvError.message}. Please check the file format.` 
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
+          );
+        }
+      }
       
+      // For unsupported file types, return an error
       return new Response(
         JSON.stringify({ 
-          success: true, 
-          transactions,
-          message: usedFallback 
-            ? `Successfully processed ${transactions.length} transactions using fallback method` 
-            : `Successfully processed ${transactions.length} transactions`,
-          batchId,
-          aiGenerated: true // Flag to indicate this is AI-processed data
+          error: `Unsupported file type: ${fileType}. Please upload an Excel (.xlsx, .xls) or CSV (.csv) file.` 
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 415 }
       );
     } catch (processingError) {
       console.error("Processing error:", processingError);
