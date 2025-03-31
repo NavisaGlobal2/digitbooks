@@ -9,6 +9,9 @@ import { SendIcon, MicIcon, Bot, ArrowLeft, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
+import { useFinancialInsights } from "@/hooks/useFinancialInsights";
+import { getAIInsights } from "@/services/aiService";
+import { useAuth } from "@/contexts/auth";
 
 type Message = {
   id: string;
@@ -32,6 +35,8 @@ const Agent = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { financialData, isLoading: isLoadingFinancialData } = useFinancialInsights();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -41,8 +46,13 @@ const Agent = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return;
+    
+    if (!user?.id) {
+      toast.error("Please sign in to use the AI assistant");
+      return;
+    }
 
     // Add user message
     const userMessage: Message = {
@@ -56,29 +66,55 @@ const Agent = () => {
     setInput("");
     setIsTyping(true);
 
-    // Simulate AI response (in a real app, this would be an API call)
-    setTimeout(() => {
-      const responseOptions = [
-        "Based on your financial data, your revenue has increased by 12% this quarter compared to last quarter.",
-        "Looking at your expense breakdown, the largest category is 'Salaries' at 31.5% of your total expenses.",
-        "I notice you have 3 unpaid invoices that are overdue. Would you like me to generate reminders?",
-        "Your cash flow trend shows a positive trajectory over the last 6 months, with a 15% increase overall.",
-        "I can help you optimize your budget allocations. Your marketing expenses seem higher than industry average.",
-        "Your current financial health score is 82/100, which is considered strong. However, I see opportunities to improve your liquidity ratio.",
-        "Would you like me to prepare a financial forecast for the next quarter based on your current trends?",
-      ];
+    try {
+      // If financial data is still loading, inform the user
+      if (isLoadingFinancialData) {
+        setTimeout(() => {
+          const loadingMessage: Message = {
+            id: `${Date.now()}-loading`,
+            content: "I'm still gathering your financial data. This will help me provide more accurate insights. Please ask your question again in a moment.",
+            sender: "agent",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, loadingMessage]);
+          setIsTyping(false);
+        }, 1000);
+        return;
+      }
 
+      // Get AI response using actual financial data
+      const response = await getAIInsights({
+        query: input,
+        financialData,
+        userId: user.id
+      });
+
+      // Add AI message
       const agentMessage: Message = {
         id: Date.now().toString(),
-        content: responseOptions[Math.floor(Math.random() * responseOptions.length)],
+        content: response || "I couldn't analyze your financial data at the moment. Please try again later.",
         sender: "agent",
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, agentMessage]);
-      setIsTyping(false);
       toast.success("New insight from your financial agent");
-    }, 1500);
+    } catch (error) {
+      console.error("Error getting AI insights:", error);
+      
+      // Add error message
+      const errorMessage: Message = {
+        id: `${Date.now()}-error`,
+        content: "I'm having trouble analyzing your financial data right now. Please try again later.",
+        sender: "agent",
+        timestamp: new Date(),
+      };
+      
+      setMessages((prev) => [...prev, errorMessage]);
+      toast.error("Failed to get financial insights");
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
