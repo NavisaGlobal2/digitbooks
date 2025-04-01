@@ -33,7 +33,12 @@ export const useExpenses = () => {
         .order('date', { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      
+      // Ensure numeric values
+      return (data || []).map(expense => ({
+        ...expense,
+        amount: parseFloat(expense.amount) || 0
+      }));
     } catch (error) {
       console.error("Error fetching expenses:", error);
       toast.error("Failed to load expenses");
@@ -54,7 +59,12 @@ export const useRevenues = () => {
         .order('date', { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      
+      // Ensure numeric values
+      return (data || []).map(revenue => ({
+        ...revenue,
+        amount: parseFloat(revenue.amount) || 0
+      }));
     } catch (error) {
       console.error("Error fetching revenues:", error);
       toast.error("Failed to load revenues");

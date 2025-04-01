@@ -25,20 +25,32 @@ const Dashboard = () => {
     netCashflow: 0,
     positive: true
   });
+  
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
+      setIsLoading(true);
       try {
+        console.log("Fetching dashboard data...");
         const [invoices, expenses, revenues] = await Promise.all([
           fetchInvoices(),
           fetchExpenses(),
           fetchRevenues()
         ]);
 
+        console.log("Data fetched:", { 
+          invoicesCount: invoices?.length || 0,
+          expensesCount: expenses?.length || 0, 
+          revenuesCount: revenues?.length || 0 
+        });
+
         // Calculate totals
-        const totalRevenue = revenues?.reduce((sum, rev) => sum + rev.amount, 0) || 0;
-        const totalExpenses = expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
+        const totalRevenue = revenues?.reduce((sum, rev) => sum + Number(rev.amount), 0) || 0;
+        const totalExpenses = expenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) || 0;
         const netCashflow = totalRevenue - totalExpenses;
+
+        console.log("Calculated financials:", { totalRevenue, totalExpenses, netCashflow });
 
         setFinancialData({
           totalRevenue,
@@ -49,11 +61,13 @@ const Dashboard = () => {
       } catch (error) {
         console.error("Error loading dashboard data:", error);
         toast.error("Failed to load dashboard data");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [fetchInvoices, fetchExpenses, fetchRevenues]);
 
   return (
     <DashboardContainer>
@@ -64,7 +78,7 @@ const Dashboard = () => {
       </div>
       
       <div className="mb-3 sm:mb-4 md:mb-6">
-        <FinancialOverview data={financialData} />
+        <FinancialOverview data={financialData} isLoading={isLoading} />
       </div>
 
       <div className="mb-3 sm:mb-4 md:mb-6">
