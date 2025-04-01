@@ -10,11 +10,18 @@ interface AIQueryParams {
 
 export const getAIInsights = async ({ query, financialData, userId, formatAsHuman = true }: AIQueryParams) => {
   try {
-    // Create a context with the user's financial data or leave it minimal for general chat
-    const context = financialData ? JSON.stringify({
-      query,
-      financialData,
-    }) : "";
+    // Generate embeddings for the financial data if it exists
+    let context = "";
+    if (financialData) {
+      // First, generate and potentially store embeddings
+      await generateEmbeddings(financialData, userId);
+      
+      // Create a context with the user's financial data
+      context = JSON.stringify({
+        query,
+        financialData,
+      });
+    }
 
     console.log("Sending query to AI:", query);
     console.log("With context size:", context.length);
@@ -43,3 +50,24 @@ export const getAIInsights = async ({ query, financialData, userId, formatAsHuma
     throw new Error('Sorry, I encountered an issue while processing your message. Let\'s try talking about something else?');
   }
 };
+
+// Function to generate embeddings for financial data
+async function generateEmbeddings(financialData: any, userId: string) {
+  try {
+    // Call the embedding generation edge function
+    const { data, error } = await supabase.functions.invoke('generate-embeddings', {
+      body: { financialData, userId }
+    });
+    
+    if (error) {
+      console.error("Error generating embeddings:", error);
+      return false;
+    }
+    
+    console.log("Embeddings generated successfully");
+    return true;
+  } catch (err) {
+    console.error("Error in embedding generation:", err);
+    return false;
+  }
+}

@@ -52,11 +52,20 @@ serve(async (req) => {
     
     Your goal is to be helpful and engaging, making the conversation feel natural and enjoyable.`;
 
+    // Generate embeddings for the query to improve matching
+    const queryEmbeddingsResponse = await generateQueryEmbedding(query);
+    
+    // Extract the financial data with the best semantic match if available
+    let enhancedContext = context;
+    if (context && queryEmbeddingsResponse.success) {
+      enhancedContext = await enhanceContextWithEmbeddings(context, queryEmbeddingsResponse.embedding);
+    }
+
     // Combine user query with financial data context
     let fullPrompt = `
       USER MESSAGE: ${query}
       
-      ${context ? `FINANCIAL CONTEXT: ${context}` : "No specific financial data available for this query."}
+      ${enhancedContext ? `FINANCIAL CONTEXT: ${enhancedContext}` : "No specific financial data available for this query."}
       
       Please respond conversationally as if you're having a natural chat. Be helpful, friendly, and personable.
     `;
@@ -64,7 +73,7 @@ serve(async (req) => {
     console.log("Processing with AI...");
     
     // For this example, we'll generate appropriate responses based on the query
-    let aiResponse = generateResponse(query, context);
+    let aiResponse = generateResponse(query, enhancedContext);
     
     // Return the conversational response
     return new Response(
@@ -83,6 +92,130 @@ serve(async (req) => {
     );
   }
 });
+
+// Function to generate embeddings for user queries
+async function generateQueryEmbedding(query: string): Promise<{ success: boolean, embedding?: number[] }> {
+  try {
+    // In a production environment, you would call an embedding API like OpenAI
+    // For now, we'll use a simplified cosine similarity based on key terms
+    return {
+      success: true,
+      embedding: generateSimpleEmbedding(query)
+    };
+  } catch (error) {
+    console.error("Error generating query embedding:", error);
+    return { success: false };
+  }
+}
+
+// Generate a simple term-based embedding vector
+function generateSimpleEmbedding(text: string): number[] {
+  // This is a simplified version - in production use a real embedding API
+  const financialKeywords = [
+    "revenue", "sales", "income", "money", "profit", "loss", 
+    "expense", "spend", "cost", "budget", "financial", "finance",
+    "account", "invoice", "cash", "payment", "transaction", "tax",
+    "dollar", "euro", "pound", "naira", "currency", "bank", "debt", "credit",
+    "roi", "margin", "equity", "asset", "liability", "balance"
+  ];
+  
+  const lowerText = text.toLowerCase();
+  // Create a simple embedding based on keyword presence
+  return financialKeywords.map(keyword => lowerText.includes(keyword) ? 1 : 0);
+}
+
+// Enhance the context using embeddings to find the most relevant data
+async function enhanceContextWithEmbeddings(contextString: string, queryEmbedding: number[]): Promise<string> {
+  try {
+    // Parse the financial context if it exists
+    let context;
+    try {
+      context = JSON.parse(contextString);
+    } catch (e) {
+      // If parsing fails, use the raw string
+      return contextString;
+    }
+    
+    // In a real implementation, you would retrieve the most semantically similar data
+    // from your vector database based on the embedding.
+    // For now, we'll just return the filtered context
+    
+    // Sample implementation - extract only the most relevant sections
+    if (context.financialData) {
+      const relevance = calculateDataRelevance(context.financialData, queryEmbedding);
+      
+      // Create an enhanced context with the most relevant data sections
+      const enhancedData = {
+        query: context.query,
+        financialData: extractMostRelevantData(context.financialData, relevance)
+      };
+      
+      return JSON.stringify(enhancedData);
+    }
+    
+    return contextString;
+  } catch (error) {
+    console.error("Error enhancing context:", error);
+    return contextString;
+  }
+}
+
+// Calculate relevance scores for data sections
+function calculateDataRelevance(financialData: any, queryEmbedding: number[]): Record<string, number> {
+  const relevance: Record<string, number> = {};
+  
+  // For each main data section, generate a simple embedding and calculate similarity
+  for (const section in financialData) {
+    const sectionText = JSON.stringify(financialData[section]).toLowerCase();
+    const sectionEmbedding = generateSimpleEmbedding(sectionText);
+    
+    // Calculate cosine similarity
+    relevance[section] = cosineSimilarity(queryEmbedding, sectionEmbedding);
+  }
+  
+  return relevance;
+}
+
+// Simple cosine similarity implementation
+function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+  
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+  
+  if (normA === 0 || normB === 0) return 0;
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+// Extract the most relevant data sections based on relevance scores
+function extractMostRelevantData(financialData: any, relevance: Record<string, number>) {
+  const threshold = 0.1; // Minimum relevance threshold
+  const relevantData: any = {};
+  
+  for (const section in relevance) {
+    if (relevance[section] > threshold && financialData[section]) {
+      relevantData[section] = financialData[section];
+    }
+  }
+  
+  // If nothing meets the threshold, return the highest scoring section
+  if (Object.keys(relevantData).length === 0) {
+    const highestSection = Object.keys(relevance).reduce((a, b) => 
+      relevance[a] > relevance[b] ? a : b
+    );
+    
+    if (highestSection && financialData[highestSection]) {
+      relevantData[highestSection] = financialData[highestSection];
+    }
+  }
+  
+  return relevantData;
+}
 
 function generateResponse(query: string, context?: string): string {
   // Check if it's a financial query with context
