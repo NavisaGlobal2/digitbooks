@@ -5,9 +5,10 @@ interface AIQueryParams {
   query: string;
   financialData: any;
   userId: string;
+  formatAsHuman?: boolean;
 }
 
-export const getAIInsights = async ({ query, financialData, userId }: AIQueryParams) => {
+export const getAIInsights = async ({ query, financialData, userId, formatAsHuman = true }: AIQueryParams) => {
   try {
     // Create a context with the user's financial data or leave it minimal for general chat
     const context = financialData ? JSON.stringify({
@@ -18,13 +19,13 @@ export const getAIInsights = async ({ query, financialData, userId }: AIQueryPar
     console.log("Sending query to AI:", query);
     console.log("With context size:", context.length);
 
-    // Call the Supabase Edge Function using the existing anthropicProcessor
+    // Call the Supabase Edge Function
     const { data, error } = await supabase.functions.invoke('analyze-financial-data', {
       body: {
         query,
         context,
         userId,
-        preferredProvider: 'anthropic',
+        formatAsHuman,
       },
     });
 

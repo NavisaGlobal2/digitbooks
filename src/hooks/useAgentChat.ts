@@ -44,17 +44,24 @@ export const useAgentChat = () => {
       // Only use financial data if it's a finance-related question
       const isFinanceQuestion = /financ|money|spend|earn|invoice|expense|budget|revenue|profit|loss|cashflow|payment|bill|transaction|report|account|balance|tax|dollar|cost/i.test(input);
       
-      console.log("Sending query to AI:", input);
+      // Give the AI some time to "think" for a more natural feeling chat
+      const minTypingTime = 1000; // 1 second minimum "thinking" time
+      const startTime = Date.now();
       
       // Get AI response
       const response = await getAIInsights({
         query: input,
         financialData: isFinanceQuestion ? financialData : null,
-        userId: user.id
+        userId: user.id,
+        formatAsHuman: true
       });
 
-      console.log("AI response received:", response);
-      
+      // Ensure typing indicator shows for at least the minimum time
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime < minTypingTime) {
+        await new Promise(resolve => setTimeout(resolve, minTypingTime - elapsedTime));
+      }
+
       // Add AI message
       const agentMessage: Message = {
         id: Date.now().toString(),
