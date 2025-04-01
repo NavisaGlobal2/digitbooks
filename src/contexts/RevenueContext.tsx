@@ -37,7 +37,6 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
   const [revenues, setRevenues] = useState<Revenue[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Fetch revenues from Supabase when component mounts
   useEffect(() => {
     fetchRevenues();
   }, []);
@@ -52,7 +51,6 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       
       if (error) throw error;
       
-      // Transform the data from Supabase to match our Revenue type
       if (data) {
         const transformedRevenues: Revenue[] = data.map(item => mapDbToRevenue(item as RevenueDB));
         setRevenues(transformedRevenues);
@@ -69,10 +67,8 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
     try {
       setLoading(true);
       
-      // Generate a revenue number if not provided
       const revenueNumber = revenue.revenue_number || `REV-${uuidv4().substring(0, 8).toUpperCase()}`;
       
-      // Prepare the data for Supabase using our helper function
       const revenueData = mapRevenueToDb({
         ...revenue,
         revenue_number: revenueNumber,
@@ -85,7 +81,6 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       
       if (error) throw error;
       
-      // Add the new revenue to the local state
       if (data && data[0]) {
         const newRevenue: Revenue = mapDbToRevenue(data[0] as RevenueDB);
         setRevenues(prev => [newRevenue, ...prev]);
@@ -105,28 +100,35 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
     try {
       setLoading(true);
       
-      // Prepare revenues with revenue numbers and ISO date strings
       const revenuesWithNumbers = revenueItems.map(revenue => mapRevenueToDb({
         ...revenue,
         revenue_number: `REV-${uuidv4().substring(0, 8).toUpperCase()}`,
       }));
+      
+      console.log("Mapped revenues for database insertion:", revenuesWithNumbers);
       
       const { data, error } = await supabase
         .from('revenues')
         .insert(revenuesWithNumbers)
         .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase insert error:", error);
+        throw error;
+      }
       
-      // Add the new revenues to the local state
       if (data && data.length > 0) {
+        console.log("Successfully inserted revenue data:", data);
         const newRevenues: Revenue[] = data.map(item => mapDbToRevenue(item as RevenueDB));
         setRevenues(prev => [...newRevenues, ...prev]);
+        toast.success(`Successfully imported ${data.length} revenue entries`);
+      } else {
+        console.warn("No data returned from insert operation");
       }
       
     } catch (error) {
       console.error("Error importing revenues:", error);
-      toast.error("Failed to import revenues");
+      toast.error(`Failed to import revenues: ${error.message || "Unknown error"}`);
       throw error;
     } finally {
       setLoading(false);
@@ -137,7 +139,6 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
     try {
       setLoading(true);
       
-      // Prepare updates for Supabase, handling date conversions
       const updates: any = {};
       if (revenueUpdates.description) updates.description = revenueUpdates.description;
       if (revenueUpdates.amount) updates.amount = revenueUpdates.amount;
@@ -147,7 +148,7 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       if (revenueUpdates.payment_method) updates.payment_method = revenueUpdates.payment_method;
       if (revenueUpdates.payment_status) {
         updates.payment_status = revenueUpdates.payment_status;
-        updates.status = revenueUpdates.payment_status; // Update both fields
+        updates.status = revenueUpdates.payment_status;
       }
       if (revenueUpdates.client_name !== undefined) updates.client_name = revenueUpdates.client_name;
       if (revenueUpdates.revenue_number) updates.revenue_number = revenueUpdates.revenue_number;
@@ -160,7 +161,6 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       
       if (error) throw error;
       
-      // Update the revenue in local state
       if (data && data[0]) {
         const updatedRevenue: Revenue = mapDbToRevenue(data[0] as RevenueDB);
         
@@ -189,7 +189,6 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       
       if (error) throw error;
       
-      // Remove the revenue from local state
       setRevenues(prev => prev.filter(revenue => revenue.id !== id));
       
     } catch (error) {
@@ -231,7 +230,6 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
     return statusTotals;
   };
 
-  // Get revenues for a specific time period
   const getRevenueByPeriod = (startDate: Date, endDate: Date) => {
     return revenues.filter(revenue => {
       const revenueDate = revenue.date instanceof Date ? revenue.date : new Date(revenue.date);
@@ -239,12 +237,10 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
     });
   };
 
-  // Get total receivables (all invoiced revenue)
   const getTotalReceivables = () => {
     return revenues.reduce((total, revenue) => total + revenue.amount, 0);
   };
 
-  // Get outstanding receivables (pending + overdue)
   const getOutstandingReceivables = () => {
     return revenues.reduce((total, revenue) => {
       if (revenue.payment_status === 'pending' || revenue.payment_status === 'overdue') {

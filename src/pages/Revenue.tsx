@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useRevenue } from "@/contexts/RevenueContext";
 import { toast } from "sonner";
@@ -21,9 +20,7 @@ const RevenuePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Check if we're in a detail view based on the URL
   useEffect(() => {
-    // This is a simplified check - adapt as needed based on your routing structure
     const path = location.pathname;
     setIsDetailView(path.includes('/detail') || editRevenueId !== null);
   }, [location.pathname, editRevenueId]);
@@ -64,7 +61,6 @@ const RevenuePage = () => {
     }
     
     try {
-      // Log the entire revenues array for debugging
       console.log(`Importing ${revenues.length} revenues:`, revenues);
       
       await importRevenues(revenues);
@@ -72,7 +68,7 @@ const RevenuePage = () => {
       setShowImportDialog(false);
     } catch (error) {
       console.error("Failed to import revenues:", error);
-      toast.error("Failed to import revenues");
+      toast.error(`Import failed: ${error.message || "Unknown error"}`);
     }
   };
 
@@ -80,7 +76,6 @@ const RevenuePage = () => {
     navigate("/reports");
   };
   
-  // Only show the Reports button when not in a detail view
   const showReportsButton = !isDetailView;
   
   return (
@@ -114,21 +109,18 @@ const RevenuePage = () => {
         />
       </div>
 
-      {/* Add Revenue Dialog */}
       <AddRevenueDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         onRevenueAdded={handleRevenueAdded}
       />
       
-      {/* Import Revenue Dialog */}
       <ImportRevenueDialog
         open={showImportDialog}
         onOpenChange={setShowImportDialog}
         onRevenuesImported={handleRevenuesImported}
       />
       
-      {/* Edit Revenue Dialog */}
       <EditRevenueDialog
         open={editRevenueId !== null}
         onOpenChange={(open) => {

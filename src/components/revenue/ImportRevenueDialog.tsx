@@ -120,12 +120,9 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
         amount: tx.amount,
         date: new Date(tx.date),
         source: tx.source || "other",
-        payment_method: "bank transfer",
-        payment_status: "paid",
-        status: "paid", // Make sure the status field is included
+        status: "paid",
         revenue_number: `REV-${Math.floor(Math.random() * 10000)}`,
         notes: `Imported from bank statement: ${file?.name || "unknown"}`
-        // Remove client_name as it doesn't exist in the database schema
       }));
       
       if (onRevenuesImported) {
