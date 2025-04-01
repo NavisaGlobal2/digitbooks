@@ -63,61 +63,91 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
     setError(null);
 
     try {
-      parseStatementFile(
-        file,
-        (transactions) => {
-          console.log(`Successfully parsed ${Array.isArray(transactions) ? transactions.length : 0} transactions`);
-          if (Array.isArray(transactions)) {
-            setParsedTransactions(transactions);
-            setShowTaggingDialog(true);
-          } else {
-            console.log("Received CSVParseResult object instead of transactions array");
-            setError("Unsupported file format. Please use a bank statement file.");
+      // Set a timeout to abort if processing takes too long
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Processing timeout - file may be too large")), 30000);
+      });
+
+      const processPromise = new Promise<void>((resolve, reject) => {
+        parseStatementFile(
+          file,
+          (transactions) => {
+            console.log(`Successfully parsed ${Array.isArray(transactions) ? transactions.length : 0} transactions`);
+            if (Array.isArray(transactions)) {
+              setParsedTransactions(transactions);
+              setShowTaggingDialog(true);
+              resolve();
+            } else {
+              console.log("Received CSVParseResult object instead of transactions array");
+              if (transactions && 'transactions' in transactions) {
+                setParsedTransactions(transactions.transactions);
+                setShowTaggingDialog(true);
+                resolve();
+              } else {
+                reject("Unsupported file format. Please use a bank statement file.");
+              }
+            }
+          },
+          (errorMessage) => {
+            console.error("Error parsing file:", errorMessage);
+            reject(errorMessage);
+            return true;
           }
-          setIsUploading(false);
-        },
-        (errorMessage) => {
-          console.error("Error parsing file:", errorMessage);
-          setError(errorMessage);
-          setIsUploading(false);
-          return true;
-        }
-      );
+        );
+      });
+
+      await Promise.race([processPromise, timeoutPromise]);
+      setIsUploading(false);
     } catch (error) {
       console.error("Error processing file:", error);
-      setError("Failed to process file. Please check the format and try again.");
+      setError(typeof error === 'string' ? error : "Failed to process file. The file may be too large or in an unsupported format.");
       setIsUploading(false);
+      toast.error("File processing failed. Please try a smaller file or different format.");
     }
   };
 
   const handleTaggingComplete = (taggedTransactions: ParsedTransaction[]) => {
-    const selectedTransactions = taggedTransactions.filter(tx => tx.selected);
+    const selectedTransactions = taggedTransactions.filter(tx => tx.selected && tx.source);
     
     if (selectedTransactions.length === 0) {
       toast.warning("No transactions were selected for import");
       return;
     }
     
-    const revenues: Omit<Revenue, "id">[] = selectedTransactions.map(tx => ({
-      description: tx.description,
-      amount: tx.amount,
-      date: new Date(tx.date),
-      source: tx.source || "other",
-      payment_method: "bank transfer",
-      payment_status: "paid",
-      notes: `Imported from bank statement: ${file?.name || "unknown"}`
-    }));
-    
-    if (onRevenuesImported) {
-      onRevenuesImported(revenues);
+    try {
+      // Prepare revenue entries from the selected transactions
+      const revenues: Omit<Revenue, "id">[] = selectedTransactions.map(tx => ({
+        description: tx.description,
+        amount: tx.amount,
+        date: new Date(tx.date),
+        source: tx.source || "other",
+        payment_method: "bank transfer",
+        payment_status: "paid",
+        status: "paid", // Make sure the status field is included
+        revenue_number: `REV-${Math.floor(Math.random() * 10000)}`,
+        notes: `Imported from bank statement: ${file?.name || "unknown"}`
+      }));
+      
+      if (onRevenuesImported) {
+        // Call the callback to save the revenues in the parent component
+        console.log("Importing revenues:", revenues);
+        onRevenuesImported(revenues);
+        toast.success(`Successfully imported ${revenues.length} revenue entries`);
+      } else {
+        console.error("onRevenuesImported callback not provided");
+        toast.error("Failed to import revenues: configuration error");
+      }
+      
+      setShowTaggingDialog(false);
+      onOpenChange(false);
+      
+      setFile(null);
+      setParsedTransactions([]);
+      setError(null);
+    } catch (err) {
+      console.error("Error during revenue import:", err);
+      toast.error("Failed to import revenues. Please try again.");
     }
-    
-    setShowTaggingDialog(false);
-    onOpenChange(false);
-    
-    setFile(null);
-    setParsedTransactions([]);
-    setError(null);
   };
 
   return (
@@ -184,6 +214,7 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
               <li>CSV or Excel format</li>
               <li>Contains transaction data with dates and amounts</li>
               <li>First row should be column headers</li>
+              <li>For larger files, consider splitting into smaller batches</li>
             </ul>
           </div>
 

@@ -9,6 +9,7 @@ import TransactionTable from "./TransactionTable";
 import { formatCurrency } from "@/utils/invoice/formatters";
 import { toast } from "sonner";
 import { RevenueSource } from "@/types/revenue";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface RevenueTaggingDialogProps {
   open: boolean;
@@ -27,6 +28,7 @@ const RevenueTaggingDialog = ({
 }: RevenueTaggingDialogProps) => {
   const [localTransactions, setLocalTransactions] = useState<ParsedTransaction[]>([]);
   const [selectAll, setSelectAll] = useState(true);
+  const [bulkSource, setBulkSource] = useState<RevenueSource | "">("");
   
   // Count of selected transactions
   const selectedCount = localTransactions.filter(t => t.selected).length;
@@ -43,11 +45,17 @@ const RevenueTaggingDialog = ({
   
   useEffect(() => {
     // Log the incoming transactions for debugging
-    console.log("TransactionTable rendering:", transactions.length, "transactions,", 
-      transactions.filter(t => t.selected).length, "selected");
+    console.log("RevenueTaggingDialog - transactions received:", transactions.length);
     
-    // Initialize local transactions with the passed transactions
-    setLocalTransactions(transactions);
+    // Filter to only credit transactions and pre-select them
+    const filteredTransactions = transactions
+      .filter(tx => tx.type === 'credit')
+      .map(tx => ({...tx, selected: true}));
+      
+    console.log("RevenueTaggingDialog - filtered credit transactions:", filteredTransactions.length);
+    
+    // Initialize local transactions with the filtered transactions
+    setLocalTransactions(filteredTransactions);
   }, [transactions]);
   
   // Toggle selection for a single transaction
@@ -74,15 +82,43 @@ const RevenueTaggingDialog = ({
     );
   };
   
+  // Apply source to all selected transactions
+  const handleApplyBulkSource = () => {
+    if (!bulkSource) {
+      toast.warning("Please select a source first");
+      return;
+    }
+    
+    setLocalTransactions(prev => 
+      prev.map(t => t.selected ? { ...t, source: bulkSource } : t)
+    );
+    
+    toast.success(`Applied ${bulkSource} source to ${selectedCount} transactions`);
+  };
+  
   // Complete the tagging process
   const handleComplete = () => {
     // Check if all selected transactions have sources
     if (noSourceCount > 0) {
-      toast.warning(`${noSourceCount} selected transaction(s) are missing a source.`);
+      toast.warning(`${noSourceCount} selected transaction(s) are missing a revenue source.`);
       return;
     }
     
-    onTaggingComplete(localTransactions);
+    // Make sure we have at least one transaction selected
+    if (selectedCount === 0) {
+      toast.warning("Please select at least one transaction to import");
+      return;
+    }
+    
+    // Pass the complete transaction list back
+    try {
+      console.log("RevenueTaggingDialog - completing with transactions:", 
+        localTransactions.filter(t => t.selected).length);
+      onTaggingComplete(localTransactions);
+    } catch (err) {
+      console.error("Error during tagging completion:", err);
+      toast.error("Failed to process transactions");
+    }
   };
 
   return (
@@ -127,6 +163,31 @@ const RevenueTaggingDialog = ({
             </Badge>
           </div>
           
+          <div className="flex items-center gap-2">
+            <Select value={bulkSource} onValueChange={(value) => setBulkSource(value as RevenueSource)}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Set source for all" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sales">Sales</SelectItem>
+                <SelectItem value="services">Services</SelectItem>
+                <SelectItem value="investments">Investments</SelectItem>
+                <SelectItem value="grants">Grants</SelectItem>
+                <SelectItem value="donations">Donations</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleApplyBulkSource}
+              disabled={!bulkSource}
+            >
+              Apply
+            </Button>
+          </div>
+          
           {noSourceCount > 0 && (
             <div className="flex items-center text-amber-500 text-xs">
               <AlertCircle className="h-3 w-3 mr-1" />
@@ -156,7 +217,7 @@ const RevenueTaggingDialog = ({
             className="bg-green-500 hover:bg-green-600"
           >
             <Check className="h-4 w-4 mr-2" />
-            Confirm selection
+            Confirm selection ({selectedCount})
           </Button>
         </div>
       </DialogContent>

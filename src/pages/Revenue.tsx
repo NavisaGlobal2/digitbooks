@@ -45,16 +45,35 @@ const RevenuePage = () => {
     toast.success("Revenue deleted successfully");
   };
 
-  const handleRevenueAdded = (revenue: Omit<Revenue, "id">) => {
-    addRevenue(revenue);
-    toast.success("Revenue added successfully");
-    setShowAddDialog(false);
+  const handleRevenueAdded = async (revenue: Omit<Revenue, "id">) => {
+    try {
+      await addRevenue(revenue);
+      toast.success("Revenue added successfully");
+      setShowAddDialog(false);
+    } catch (error) {
+      console.error("Failed to add revenue:", error);
+      toast.error("Failed to add revenue");
+    }
   };
   
-  const handleRevenuesImported = (revenues: Omit<Revenue, "id">[]) => {
-    importRevenues(revenues);
-    toast.success(`${revenues.length} revenues imported successfully`);
-    setShowImportDialog(false);
+  const handleRevenuesImported = async (revenues: Omit<Revenue, "id">[]) => {
+    if (!revenues || revenues.length === 0) {
+      toast.warning("No revenues to import");
+      setShowImportDialog(false);
+      return;
+    }
+    
+    try {
+      // Log the entire revenues array for debugging
+      console.log(`Importing ${revenues.length} revenues:`, revenues);
+      
+      await importRevenues(revenues);
+      toast.success(`${revenues.length} revenues imported successfully`);
+      setShowImportDialog(false);
+    } catch (error) {
+      console.error("Failed to import revenues:", error);
+      toast.error("Failed to import revenues");
+    }
   };
 
   const handleNavigateToReports = () => {

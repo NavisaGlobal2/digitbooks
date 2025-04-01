@@ -8,6 +8,8 @@ import { formatTransactionsWithAI } from "./lib/aiService.ts";
 import { isCSVFile, CSVService } from "./lib/csvService.ts";
 import { parseCSVDirectly } from "./lib/csvParser.ts";
 
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB file size limit
+
 serve(async (req) => {
   // Log request information
   console.log(`Received ${req.method} request from origin: ${req.headers.get("origin") || "unknown"}`);
@@ -30,6 +32,14 @@ serve(async (req) => {
     }
     
     console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
+    
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      return new Response(
+        JSON.stringify({ error: `File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB.` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 413 }
+      );
+    }
     
     // Extract file type for potential fallback decisions
     const fileType = file.name.split('.').pop()?.toLowerCase() || '';
@@ -59,17 +69,26 @@ serve(async (req) => {
     try {
       let transactions = [];
       let preservedOriginalFormat = false;
+      
+      // For large files, set a timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Processing timeout - file is too complex")), 25000);
+      });
 
       // Process Excel files directly
       if (isExcelFile(file)) {
         try {
           console.log('Using direct Excel parsing to preserve exact original data structure');
-          const excelData = await parseExcelDirectly(file);
+          
+          const processPromise = parseExcelDirectly(file);
+          const excelData = await Promise.race([processPromise, timeoutPromise]);
           
           if (excelData && Array.isArray(excelData) && excelData.length > 0) {
-            console.log(`Successfully parsed ${excelData.length} transactions directly from Excel`);
-            console.log(`Sample excel transaction: ${JSON.stringify(excelData[0], null, 2).substring(0, 300)}...`);
-            transactions = excelData;
+            // Trim down to first 1000 rows maximum to prevent processing errors
+            const trimmedData = excelData.slice(0, 1000);
+            console.log(`Successfully parsed ${trimmedData.length} transactions directly from Excel${excelData.length > 1000 ? ' (limited from ' + excelData.length + ')' : ''}`);
+            console.log(`Sample excel transaction: ${JSON.stringify(trimmedData[0], null, 2).substring(0, 300)}...`);
+            transactions = trimmedData;
             preservedOriginalFormat = true;
           } else {
             console.log("Direct Excel parsing returned no transactions");
@@ -84,7 +103,7 @@ serve(async (req) => {
           console.error("Direct Excel parsing error:", excelError);
           return new Response(
             JSON.stringify({ 
-              error: `Failed to parse Excel file: ${excelError.message}. Please check the file format.` 
+              error: `Failed to parse Excel file: ${excelError.message}. Please check the file format or try with a smaller file.` 
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
           );
@@ -95,12 +114,15 @@ serve(async (req) => {
         try {
           console.log("Processing CSV file with direct CSV parser");
           // Use direct parsing similar to Excel
-          const csvData = await parseCSVDirectly(file);
+          const processPromise = parseCSVDirectly(file);
+          const csvData = await Promise.race([processPromise, timeoutPromise]);
           
           if (csvData && Array.isArray(csvData) && csvData.length > 0) {
-            console.log(`Successfully parsed ${csvData.length} transactions directly from CSV`);
-            console.log(`Sample CSV transaction: ${JSON.stringify(csvData[0], null, 2).substring(0, 300)}...`);
-            transactions = csvData;
+            // Trim down to first 1000 rows maximum to prevent processing errors
+            const trimmedData = csvData.slice(0, 1000);
+            console.log(`Successfully parsed ${trimmedData.length} transactions directly from CSV${csvData.length > 1000 ? ' (limited from ' + csvData.length + ')' : ''}`);
+            console.log(`Sample CSV transaction: ${JSON.stringify(trimmedData[0], null, 2).substring(0, 300)}...`);
+            transactions = trimmedData;
             preservedOriginalFormat = true;
           } else {
             console.log("Direct CSV parsing returned no transactions");
@@ -115,7 +137,7 @@ serve(async (req) => {
           console.error("CSV direct processing error:", csvError);
           return new Response(
             JSON.stringify({ 
-              error: `Failed to process CSV file: ${csvError.message}. Please check the file format.` 
+              error: `Failed to process CSV file: ${csvError.message}. Please check the file format or try with a smaller file.` 
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 }
           );
@@ -137,11 +159,19 @@ serve(async (req) => {
       if (useAIFormatting && transactions.length > 0) {
         console.log("Applying AI formatting to standardize transaction structure");
         try {
-          const formatted = await formatTransactionsWithAI(transactions, context, preferredProvider);
+          const aiPromise = formatTransactionsWithAI(transactions, context, preferredProvider);
+          const formatted = await Promise.race([aiPromise, timeoutPromise]);
+          
           if (formatted && Array.isArray(formatted) && formatted.length > 0) {
             console.log(`AI formatting returned ${formatted.length} transactions`);
             console.log(`Sample AI-formatted transaction: ${JSON.stringify(formatted[0], null, 2).substring(0, 300)}...`);
-            formattedTransactions = formatted;
+            
+            // Make sure each transaction has an id
+            formattedTransactions = formatted.map((tx, idx) => ({
+              ...tx,
+              id: tx.id || `formatted-tx-${idx}`
+            }));
+            
             formattingApplied = true;
             console.log("Successfully applied AI formatting to transactions");
           } else {
