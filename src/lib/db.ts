@@ -34,10 +34,10 @@ export const useExpenses = () => {
       
       if (error) throw error;
       
-      // Ensure numeric values - properly handle type conversion
+      // Ensure numeric values
       return (data || []).map(expense => ({
         ...expense,
-        amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : Number(expense.amount) || 0
+        amount: parseFloat(expense.amount as string) || 0
       }));
     } catch (error) {
       console.error("Error fetching expenses:", error);
@@ -60,10 +60,10 @@ export const useRevenues = () => {
       
       if (error) throw error;
       
-      // Ensure numeric values - properly handle type conversion
+      // Ensure numeric values
       return (data || []).map(revenue => ({
         ...revenue,
-        amount: typeof revenue.amount === 'string' ? parseFloat(revenue.amount) : Number(revenue.amount) || 0
+        amount: parseFloat(revenue.amount as string) || 0
       }));
     } catch (error) {
       console.error("Error fetching revenues:", error);
