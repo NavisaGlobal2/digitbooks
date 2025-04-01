@@ -12,7 +12,7 @@ export const getAIInsights = async ({ query, financialData, userId, formatAsHuma
   try {
     // Generate embeddings for the financial data if it exists
     let context = "";
-    if (financialData) {
+    if (financialData && Object.keys(financialData).length > 0) {
       // First, generate and potentially store embeddings
       await generateEmbeddings(financialData, userId);
       

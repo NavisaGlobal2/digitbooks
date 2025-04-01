@@ -45,10 +45,16 @@ export const useAgentChat = () => {
       const minTypingTime = 1200; // 1.2 second minimum "thinking" time
       const startTime = Date.now();
       
+      // Log data being sent to ensure it's complete
+      console.log("Sending financial data to AI:", 
+        financialData ? 
+        `${Object.keys(financialData).length} categories` : 
+        "No financial data available");
+      
       // Get AI response
       const response = await getAIInsights({
         query: input,
-        financialData: financialData, // Always include financial data
+        financialData: financialData || {}, // Always include financial data
         userId: user.id,
         formatAsHuman: true
       });
