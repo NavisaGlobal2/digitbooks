@@ -6,6 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Environment variables for API keys
+const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY");
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -25,48 +29,11 @@ serve(async (req) => {
     console.log("Processing AI query:", query);
     console.log("Context length:", context ? context.length : 0);
 
-    // Create system prompt for a more conversational chatbot experience
-    const systemPrompt = `You are DigitBooks AI Assistant, a friendly, conversational financial advisor and chatbot. 
-    
-    YOU MUST ALWAYS:
-    - Use a warm, friendly tone like you're chatting with a friend
-    - Speak in first-person perspective ("I")
-    - Keep responses brief and conversational
-    - Respond directly to the question or comment first
-    - Format your responses in natural, readable text
-    - When formatting currency, ALWAYS use Naira (₦) as the currency symbol, NEVER dollars ($)
-    - When asked about specific financial data, ALWAYS provide actual numbers from the provided financial context
-    
-    When discussing finances:
-    - If provided financial data exists, ALWAYS use it to provide accurate insights and numbers
-    - If asked about financial data that doesn't exist in the context, politely explain you don't have that information
-    - Never make up financial data or numbers
-    - Offer actionable advice when appropriate
-    
-    DO NOT:
-    - Return JSON or formatted data unless specifically asked
-    - Use formal, stiff language or jargon
-    - Give overly detailed responses unless asked for details
-    - Never use $ symbol for currency, always use ₦ (Naira)
-    - NEVER respond with "I'm not sure about the specific information you're asking for"
-    
-    If the user's message isn't about finances, you can still chat normally about general topics, give advice, or just be friendly. If you don't know something, it's fine to say so.
-    
-    Your goal is to be helpful and engaging, making the conversation feel natural and enjoyable.`;
-
-    // Generate embeddings for the query to improve matching
-    const queryEmbeddingsResponse = await generateQueryEmbedding(query);
-    
-    // Extract the financial data with the best semantic match if available
-    let enhancedContext = context;
-    if (context && queryEmbeddingsResponse.success) {
-      enhancedContext = await enhanceContextWithEmbeddings(context, queryEmbeddingsResponse.embedding);
-    }
-
+    // Extract financial data from context if available
     let financialData = null;
-    if (enhancedContext) {
+    if (context) {
       try {
-        const contextObj = JSON.parse(enhancedContext);
+        const contextObj = JSON.parse(context);
         if (contextObj.financialData) {
           financialData = contextObj.financialData;
         }
@@ -75,12 +42,24 @@ serve(async (req) => {
       }
     }
 
-    // Generate response based on query and financial data
-    let aiResponse = generateResponseWithFinancialData(query, financialData);
+    // Determine which AI provider to use
+    const aiProvider = selectAIProvider();
     
-    // Return the conversational response
+    // If no AI providers are available, fall back to the rule-based system
+    if (aiProvider.provider === "none") {
+      const ruleBasedResponse = generateRuleBasedResponse(query, financialData);
+      return new Response(
+        JSON.stringify({ response: ruleBasedResponse }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create a hybrid response: use AI for reasoning but include financial data
+    const response = await generateHybridResponse(query, financialData, aiProvider.provider);
+
+    // Return the response
     return new Response(
-      JSON.stringify({ response: aiResponse }),
+      JSON.stringify({ response }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
@@ -96,134 +75,169 @@ serve(async (req) => {
   }
 });
 
-// Function to generate embeddings for user queries
-async function generateQueryEmbedding(query: string): Promise<{ success: boolean, embedding?: number[] }> {
+// Function to select the AI provider based on available API keys
+function selectAIProvider(): { provider: string; reason: string } {
+  // Check available API keys
+  const anthropicApiKey = ANTHROPIC_API_KEY;
+  const deepseekApiKey = DEEPSEEK_API_KEY;
+  
+  // Log available providers
+  const availableProviders = [];
+  if (anthropicApiKey) availableProviders.push("Anthropic");
+  if (deepseekApiKey) availableProviders.push("DeepSeek");
+  
+  console.log("Available providers: " + 
+    (availableProviders.length > 0 ? availableProviders.join(", ") : "None")
+  );
+
+  // If no providers are available, return none
+  if (!anthropicApiKey && !deepseekApiKey) {
+    console.log("No AI service configured. Using rule-based system.");
+    return { provider: "none", reason: "no API keys configured" };
+  }
+
+  // Default provider selection logic
+  if (anthropicApiKey) {
+    console.log("Using Anthropic for AI responses (preferred)");
+    return { provider: "anthropic", reason: "default" };
+  } else if (deepseekApiKey) {
+    console.log("Using DeepSeek for AI responses (fallback)");
+    return { provider: "deepseek", reason: "available" };
+  }
+  
+  // Fallback
+  return { provider: "none", reason: "no valid provider" };
+}
+
+// Generate a response using the selected AI provider
+async function generateHybridResponse(query: string, financialData: any, provider: string): Promise<string> {
+  // Create a system prompt that includes financial knowledge and guidelines
+  const systemPrompt = `You are DigitBooks AI Assistant, a friendly, conversational financial advisor and chatbot.
+  
+  YOU MUST ALWAYS:
+  - Use a warm, friendly tone like you're chatting with a friend
+  - Speak in first-person perspective ("I")
+  - Keep responses brief and conversational
+  - Respond directly to the question or comment first
+  - Format your responses in natural, readable text
+  - When formatting currency, ALWAYS use Naira (₦) as the currency symbol, NEVER dollars ($)
+  - When asked about specific financial data, ALWAYS provide actual numbers from the provided financial context
+  
+  When discussing finances:
+  - If provided financial data exists, ALWAYS use it to provide accurate insights and numbers
+  - If asked about financial data that doesn't exist in the context, politely explain you don't have that information
+  - Never make up financial data or numbers
+  - Offer actionable advice when appropriate
+  
+  DO NOT:
+  - Return JSON or formatted data unless specifically asked
+  - Use formal, stiff language or jargon
+  - Give overly detailed responses unless asked for details
+  - Never use $ symbol for currency, always use ₦ (Naira)
+  
+  If the user's message isn't about finances, you can still chat normally about general topics, give advice, or just be friendly. If you don't know something, it's fine to say so.
+  
+  Your goal is to be helpful and engaging, making the conversation feel natural and enjoyable.`;
+
+  // Format financial data for inclusion in the prompt
+  let financialContext = "";
+  if (financialData) {
+    financialContext = `Here is the user's current financial information:
+    ${JSON.stringify(financialData, null, 2)}
+    
+    Use this actual data when answering financial questions. Remember to format currency values in Naira (₦).`;
+  } else {
+    financialContext = "Note: The user doesn't have any financial data available at the moment.";
+  }
+
+  // Prepare the user prompt with financial context
+  const userPrompt = `${query}\n\n${financialContext}`;
+
+  // Call the appropriate AI provider
+  if (provider === "anthropic") {
+    return await callAnthropic(systemPrompt, userPrompt);
+  } else if (provider === "deepseek") {
+    return await callDeepSeek(systemPrompt, userPrompt);
+  } else {
+    // Fallback to rule-based system
+    return generateRuleBasedResponse(query, financialData);
+  }
+}
+
+// Call Anthropic API (Claude)
+async function callAnthropic(systemPrompt: string, userPrompt: string): Promise<string> {
   try {
-    // In a production environment, you would call an embedding API like OpenAI
-    // For now, we'll use a simplified cosine similarity based on key terms
-    return {
-      success: true,
-      embedding: generateSimpleEmbedding(query)
-    };
+    console.log("Calling Anthropic API...");
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY || "",
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-3-haiku-20240307",
+        max_tokens: 1000,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Anthropic API error:", errorText);
+      throw new Error(`Anthropic API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log("Anthropic response received");
+    return result.content[0].text;
   } catch (error) {
-    console.error("Error generating query embedding:", error);
-    return { success: false };
+    console.error("Error calling Anthropic:", error);
+    throw error;
   }
 }
 
-// Generate a simple term-based embedding vector
-function generateSimpleEmbedding(text: string): number[] {
-  // This is a simplified version - in production use a real embedding API
-  const financialKeywords = [
-    "revenue", "sales", "income", "money", "profit", "loss", 
-    "expense", "spend", "cost", "budget", "financial", "finance",
-    "account", "invoice", "cash", "payment", "transaction", "tax",
-    "naira", "currency", "bank", "debt", "credit",
-    "roi", "margin", "equity", "asset", "liability", "balance",
-    "total", "quarterly", "monthly", "annual", "increase", "decrease",
-    "trend", "projection", "forecast", "actual", "target", "goal",
-    "category", "vendor", "client", "customer", "paid", "unpaid"
-  ];
-  
-  const lowerText = text.toLowerCase();
-  // Create a simple embedding based on keyword presence
-  return financialKeywords.map(keyword => lowerText.includes(keyword) ? 1 : 0);
-}
-
-// Enhance the context using embeddings to find the most relevant data
-async function enhanceContextWithEmbeddings(contextString: string, queryEmbedding: number[]): Promise<string> {
+// Call DeepSeek API
+async function callDeepSeek(systemPrompt: string, userPrompt: string): Promise<string> {
   try {
-    // Parse the financial context if it exists
-    let context;
-    try {
-      context = JSON.parse(contextString);
-    } catch (e) {
-      // If parsing fails, use the raw string
-      return contextString;
+    console.log("Calling DeepSeek API...");
+    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${DEEPSEEK_API_KEY || ""}`,
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("DeepSeek API error:", errorText);
+      throw new Error(`DeepSeek API error: ${response.status}`);
     }
-    
-    // In a real implementation, you would retrieve the most semantically similar data
-    // from your vector database based on the embedding.
-    // For now, we'll just return the filtered context
-    
-    // Sample implementation - extract only the most relevant sections
-    if (context.financialData) {
-      const relevance = calculateDataRelevance(context.financialData, queryEmbedding);
-      
-      // Create an enhanced context with the most relevant data sections
-      const enhancedData = {
-        query: context.query,
-        financialData: extractMostRelevantData(context.financialData, relevance)
-      };
-      
-      return JSON.stringify(enhancedData);
-    }
-    
-    return contextString;
+
+    const result = await response.json();
+    console.log("DeepSeek response received");
+    return result.choices[0].message.content;
   } catch (error) {
-    console.error("Error enhancing context:", error);
-    return contextString;
+    console.error("Error calling DeepSeek:", error);
+    throw error;
   }
 }
 
-// Calculate relevance scores for data sections
-function calculateDataRelevance(financialData: any, queryEmbedding: number[]): Record<string, number> {
-  const relevance: Record<string, number> = {};
-  
-  // For each main data section, generate a simple embedding and calculate similarity
-  for (const section in financialData) {
-    const sectionText = JSON.stringify(financialData[section]).toLowerCase();
-    const sectionEmbedding = generateSimpleEmbedding(sectionText);
-    
-    // Calculate cosine similarity
-    relevance[section] = cosineSimilarity(queryEmbedding, sectionEmbedding);
-  }
-  
-  return relevance;
-}
-
-// Simple cosine similarity implementation
-function cosineSimilarity(vecA: number[], vecB: number[]): number {
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-  
-  for (let i = 0; i < vecA.length; i++) {
-    dotProduct += vecA[i] * vecB[i];
-    normA += vecA[i] * vecA[i];
-    normB += vecB[i] * vecB[i];
-  }
-  
-  if (normA === 0 || normB === 0) return 0;
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-}
-
-// Extract the most relevant data sections based on relevance scores
-function extractMostRelevantData(financialData: any, relevance: Record<string, number>) {
-  const threshold = 0.1; // Minimum relevance threshold
-  const relevantData: any = {};
-  
-  for (const section in relevance) {
-    if (relevance[section] > threshold && financialData[section]) {
-      relevantData[section] = financialData[section];
-    }
-  }
-  
-  // If nothing meets the threshold, return the highest scoring section
-  if (Object.keys(relevantData).length === 0) {
-    const highestSection = Object.keys(relevance).reduce((a, b) => 
-      relevance[a] > relevance[b] ? a : b
-    );
-    
-    if (highestSection && financialData[highestSection]) {
-      relevantData[highestSection] = financialData[highestSection];
-    }
-  }
-  
-  return relevantData;
-}
-
-function generateResponseWithFinancialData(query: string, financialData: any): string {
+// The rule-based response generator (fallback method)
+function generateRuleBasedResponse(query: string, financialData: any): string {
   const lowerQuery = query.toLowerCase();
   
   // Handle general queries about available data
@@ -331,47 +345,7 @@ function generateResponseWithFinancialData(query: string, financialData: any): s
     return "I don't have enough revenue and expense data to calculate your profit accurately. Would you like me to explain how to track your full financial picture in DigitBooks?";
   }
   
-  // Handle invoice-related queries
-  if (lowerQuery.includes("invoice") || lowerQuery.includes("bill") || lowerQuery.includes("payment")) {
-    if (financialData.invoices) {
-      const totalInvoices = financialData.invoices.total || 0;
-      const paidInvoices = financialData.invoices.paid || 0;
-      const unpaidInvoices = financialData.invoices.unpaid || 0;
-      const overdueInvoices = financialData.invoices.overdue || 0;
-      
-      let response = `You have ${totalInvoices} total invoices, with ${paidInvoices} paid and ${unpaidInvoices} unpaid. `;
-      
-      if (overdueInvoices > 0) {
-        response += `There are ${overdueInvoices} overdue invoices that require attention. `;
-      }
-      
-      if (financialData.invoices.recentPayments && financialData.invoices.recentPayments.length > 0) {
-        const latestPayment = financialData.invoices.recentPayments[0];
-        response += `Your most recent payment was ${formatCurrency(latestPayment.amount)} received on ${formatDate(new Date(latestPayment.payment_date))}.`;
-      }
-      
-      return response;
-    }
-    return "I don't have detailed invoice information in my current data. Would you like me to explain how to manage invoices in DigitBooks?";
-  }
-  
-  // Handle cashflow-related queries
-  if (lowerQuery.includes("cashflow") || lowerQuery.includes("cash flow") || lowerQuery.includes("cash")) {
-    if (financialData.cashflow) {
-      const netCashflow = financialData.cashflow.netCashflow || 0;
-      const trend = financialData.cashflow.trend || "stable";
-      
-      let trendDescription = "";
-      if (trend === "positive") trendDescription = "improving";
-      else if (trend === "negative") trendDescription = "declining";
-      else trendDescription = "stable";
-      
-      return `Your current net cashflow is ${formatCurrency(netCashflow)}, and the trend is ${trendDescription}. ${getFinancialAdvice(netCashflow, trend)}`;
-    }
-    return "I don't have detailed cashflow information in my current data. Would you like me to explain how to track cashflow in DigitBooks?";
-  }
-  
-  // If nothing specific matches, provide a summary
+  // Handle other financial queries with more generic responses
   if (financialData.revenues || financialData.expenses) {
     const revenue = financialData.revenues?.total || 0;
     const expenses = financialData.expenses?.total || 0;
@@ -383,28 +357,7 @@ function generateResponseWithFinancialData(query: string, financialData: any): s
   return "I have your financial data, but I'm not sure what specific information you're looking for. You can ask me about your expenses, revenue, profit, invoices, or cashflow.";
 }
 
-function getFinancialAdvice(netCashflow: number, trend: string): string {
-  if (netCashflow > 0 && trend === "positive") {
-    return "You're in a strong financial position. Consider investing surplus cash or expanding your business.";
-  } else if (netCashflow > 0 && trend === "negative") {
-    return "While your cashflow is positive, the downward trend suggests you should monitor expenses carefully.";
-  } else if (netCashflow < 0 && trend === "negative") {
-    return "Your negative cashflow is concerning. Consider reducing expenses or increasing revenue sources.";
-  } else if (netCashflow < 0 && trend === "positive") {
-    return "Your cashflow is improving, but still negative. Continue your current strategy to reach positive territory.";
-  } else {
-    return "Your cashflow appears stable. Regular monitoring will help maintain this balance.";
-  }
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-NG', { 
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
-}
-
+// Helper function to format currency
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-NG', {
     style: 'currency',
