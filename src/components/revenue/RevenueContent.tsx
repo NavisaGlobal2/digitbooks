@@ -25,7 +25,6 @@ const RevenueContent = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   
-  // Filter revenues based on search query
   const filteredRevenues = revenues.filter((revenue) => {
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -35,7 +34,6 @@ const RevenueContent = ({
     );
   });
   
-  // Sort revenues by date
   const sortedRevenues = [...filteredRevenues].sort((a, b) => {
     const dateA = new Date(a.date).getTime();
     const dateB = new Date(b.date).getTime();
@@ -46,11 +44,8 @@ const RevenueContent = ({
     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
   };
 
-  // Function to handle updating payment status 
   const handleUpdateStatus = (id: string, status: PaymentStatus) => {
-    // This would typically call a method from the context to update the status
     console.log(`Update status for ${id} to ${status}`);
-    // If there's a context method to update status, it would be called here
   };
   
   if (revenues.length === 0) {
@@ -84,10 +79,8 @@ const RevenueContent = ({
   
   return (
     <div className="space-y-8">
-      {/* Stats Cards */}
       <RevenueStatsCards />
       
-      {/* Revenue Chart */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium">Revenue Trends</h3>
@@ -106,7 +99,6 @@ const RevenueContent = ({
         <RevenueChart />
       </div>
       
-      {/* Search and Actions */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-100">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
@@ -148,7 +140,6 @@ const RevenueContent = ({
         </div>
       </div>
       
-      {/* Table */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
         <RevenueTable 
           revenues={sortedRevenues} 

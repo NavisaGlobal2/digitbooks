@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -120,7 +121,99 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
   };
 
   return (
-    <></>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Import Revenue</DialogTitle>
+          </DialogHeader>
+          
+          <div
+            className={`mt-4 border-2 border-dashed rounded-lg p-8 text-center ${
+              isDragging ? 'border-green-500 bg-green-50' : 'border-gray-300'
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <Upload className="mx-auto h-12 w-12 text-gray-400" />
+            <p className="mt-2 text-sm text-gray-600">
+              Drag and drop your CSV file here, or click to browse
+            </p>
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleFileChange}
+              id="file-upload"
+            />
+            <Button
+              variant="outline"
+              onClick={handleBrowseClick}
+              className="mt-4"
+            >
+              Browse Files
+            </Button>
+          </div>
+
+          {file && (
+            <div className="mt-4 flex items-center justify-between bg-gray-50 p-3 rounded-md">
+              <div className="flex items-center">
+                <FileText className="h-5 w-5 mr-2 text-gray-500" />
+                <span className="text-sm font-medium">{file.name}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setFile(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="mt-4 text-sm text-gray-500">
+            <p>File format requirements:</p>
+            <ul className="list-disc list-inside mt-2">
+              <li>CSV format only</li>
+              <li>Required columns: date, description, amount</li>
+              <li>First row must be column headers</li>
+            </ul>
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={!file || isUploading}
+            >
+              {isUploading ? "Processing..." : "Import"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {showTaggingDialog && (
+        <RevenueTaggingDialog
+          open={showTaggingDialog}
+          onOpenChange={setShowTaggingDialog}
+          transactions={parsedTransactions}
+          onComplete={handleTaggingComplete}
+          fileName={file?.name || "Unknown file"}
+        />
+      )}
+    </>
   );
 };
 
