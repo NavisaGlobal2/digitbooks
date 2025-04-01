@@ -22,7 +22,7 @@ const RevenueSourcesBreakdown = ({ data }: RevenueSourcesBreakdownProps) => {
   return (
     <Card className="border-none shadow-sm">
       <CardHeader>
-        <CardTitle className="text-lg font-medium">Revenue Sources</CardTitle>
+        <CardTitle className="text-lg font-medium">Revenue Lines</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -53,7 +53,7 @@ const RevenueSourcesBreakdown = ({ data }: RevenueSourcesBreakdownProps) => {
             <table className="w-full">
               <thead>
                 <tr>
-                  <th className="text-left text-sm font-medium text-muted-foreground">Source</th>
+                  <th className="text-left text-sm font-medium text-muted-foreground">Revenue Line</th>
                   <th className="text-right text-sm font-medium text-muted-foreground">Amount</th>
                   <th className="text-right text-sm font-medium text-muted-foreground">%</th>
                 </tr>

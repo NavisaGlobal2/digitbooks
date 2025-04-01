@@ -19,12 +19,10 @@ export const RevenueTable = ({ revenues, onUpdateStatus, onDelete }: RevenueTabl
     switch (status) {
       case "paid":
         return <Badge variant="success">Paid</Badge>;
-      case "pending":
-        return <Badge variant="warning">Pending</Badge>;
+      case "unpaid":
+        return <Badge variant="warning">Unpaid</Badge>;
       case "overdue":
         return <Badge variant="destructive">Overdue</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -35,7 +33,7 @@ export const RevenueTable = ({ revenues, onUpdateStatus, onDelete }: RevenueTabl
           <TableRow>
             <TableHead>Revenue #</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead>Source</TableHead>
+            <TableHead>Revenue Line</TableHead>
             <TableHead>Description</TableHead>
             <TableHead className="text-right">Amount</TableHead>
             <TableHead>Status</TableHead>
@@ -45,12 +43,12 @@ export const RevenueTable = ({ revenues, onUpdateStatus, onDelete }: RevenueTabl
         <TableBody>
           {revenues.map((revenue) => (
             <TableRow key={revenue.id}>
-              <TableCell className="font-medium">{revenue.id.substring(0, 8)}</TableCell>
-              <TableCell>{format(new Date(revenue.date), "dd/MM/yyyy")}</TableCell>
+              <TableCell className="font-medium">{revenue.revenueNumber}</TableCell>
+              <TableCell>{format(revenue.date, "dd/MM/yyyy")}</TableCell>
               <TableCell className="capitalize">{revenue.source}</TableCell>
               <TableCell>{revenue.description}</TableCell>
               <TableCell className="text-right">{formatNaira(revenue.amount)}</TableCell>
-              <TableCell>{getStatusBadge(revenue.paymentStatus)}</TableCell>
+              <TableCell>{getStatusBadge(revenue.status)}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -61,19 +59,19 @@ export const RevenueTable = ({ revenues, onUpdateStatus, onDelete }: RevenueTabl
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
                       onClick={() => onUpdateStatus(revenue.id, "paid")}
-                      disabled={revenue.paymentStatus === "paid"}
+                      disabled={revenue.status === "paid"}
                     >
                       Mark as Paid
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => onUpdateStatus(revenue.id, "pending")}
-                      disabled={revenue.paymentStatus === "pending"}
+                      onClick={() => onUpdateStatus(revenue.id, "unpaid")}
+                      disabled={revenue.status === "unpaid"}
                     >
-                      Mark as Pending
+                      Mark as Unpaid
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => onUpdateStatus(revenue.id, "overdue")}
-                      disabled={revenue.paymentStatus === "overdue"}
+                      disabled={revenue.status === "overdue"}
                     >
                       Mark as Overdue
                     </DropdownMenuItem>

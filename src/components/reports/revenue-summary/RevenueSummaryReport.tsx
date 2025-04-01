@@ -116,7 +116,7 @@ const RevenueSummaryReport: React.FC<RevenueSummaryReportProps> = ({
           {revenueData.length > 0 ? (
             <>
               <div className="mt-8">
-                <h3 className="text-lg font-medium mb-4">Revenue Sources Breakdown</h3>
+                <h3 className="text-lg font-medium mb-4">Revenue Lines Breakdown</h3>
                 <div className="h-[400px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -129,7 +129,7 @@ const RevenueSummaryReport: React.FC<RevenueSummaryReportProps> = ({
                       <YAxis type="category" dataKey="source" width={90} />
                       <Tooltip 
                         formatter={(value: number) => [formatCurrency(value), "Amount"]}
-                        labelFormatter={(label) => `Source: ${label}`}
+                        labelFormatter={(label) => `Revenue Line: ${label}`}
                       />
                       <Bar dataKey="amount" fill="#22c55e" radius={[0, 4, 4, 0]}>
                         {revenueData.map((entry, index) => (
@@ -142,11 +142,11 @@ const RevenueSummaryReport: React.FC<RevenueSummaryReportProps> = ({
               </div>
 
               <div className="mt-8 overflow-x-auto">
-                <h3 className="text-lg font-medium mb-4">Revenue Sources Detail</h3>
+                <h3 className="text-lg font-medium mb-4">Revenue Lines Detail</h3>
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-green-50">
-                      <th className="border border-gray-200 px-4 py-2 text-left">Source</th>
+                      <th className="border border-gray-200 px-4 py-2 text-left">Revenue Line</th>
                       <th className="border border-gray-200 px-4 py-2 text-right">Amount</th>
                       <th className="border border-gray-200 px-4 py-2 text-right">Percentage</th>
                     </tr>

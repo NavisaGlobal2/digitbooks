@@ -28,14 +28,14 @@ const RevenueSourceField = ({ control }: RevenueSourceFieldProps) => {
       name="source"
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-sm font-medium">Revenue source</FormLabel>
+          <FormLabel className="text-sm font-medium">Revenue line</FormLabel>
           <Select
             onValueChange={field.onChange}
             defaultValue={field.value}
           >
             <FormControl>
               <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Input details" />
+                <SelectValue placeholder="Select revenue line" />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
