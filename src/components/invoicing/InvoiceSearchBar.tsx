@@ -1,7 +1,6 @@
 
-import { Filter, Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import FilterDropdown from "@/components/ui/FilterDropdown";
 
@@ -44,14 +43,6 @@ const InvoiceSearchBar = ({
           selectedValue={filterValue}
           onFilterChange={setFilterValue}
         />
-        
-        <Button 
-          className="bg-green-500 hover:bg-green-600 text-white"
-          onClick={onCreateInvoice}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create invoice
-        </Button>
       </div>
     </div>
   );
