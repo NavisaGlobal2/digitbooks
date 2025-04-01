@@ -35,9 +35,10 @@ serve(async (req) => {
     - Respond directly to the question or comment first
     - Format your responses in natural, readable text
     - When formatting currency, ALWAYS use Naira (₦) as the currency symbol, NEVER dollars ($)
+    - When asked about specific financial data, ALWAYS provide actual numbers from the provided financial context
     
     When discussing finances:
-    - If provided financial data exists, use it to provide accurate insights
+    - If provided financial data exists, ALWAYS use it to provide accurate insights and numbers
     - If asked about financial data that doesn't exist in the context, politely explain you don't have that information
     - Never make up financial data or numbers
     - Offer actionable advice when appropriate
@@ -47,6 +48,7 @@ serve(async (req) => {
     - Use formal, stiff language or jargon
     - Give overly detailed responses unless asked for details
     - Never use $ symbol for currency, always use ₦ (Naira)
+    - NEVER respond with "I'm not sure about the specific information you're asking for"
     
     If the user's message isn't about finances, you can still chat normally about general topics, give advice, or just be friendly. If you don't know something, it's fine to say so.
     
@@ -61,19 +63,20 @@ serve(async (req) => {
       enhancedContext = await enhanceContextWithEmbeddings(context, queryEmbeddingsResponse.embedding);
     }
 
-    // Combine user query with financial data context
-    let fullPrompt = `
-      USER MESSAGE: ${query}
-      
-      ${enhancedContext ? `FINANCIAL CONTEXT: ${enhancedContext}` : "No specific financial data available for this query."}
-      
-      Please respond conversationally as if you're having a natural chat. Be helpful, friendly, and personable.
-    `;
+    let financialData = null;
+    if (enhancedContext) {
+      try {
+        const contextObj = JSON.parse(enhancedContext);
+        if (contextObj.financialData) {
+          financialData = contextObj.financialData;
+        }
+      } catch (e) {
+        console.error("Error parsing context:", e);
+      }
+    }
 
-    console.log("Processing with AI...");
-    
-    // For this example, we'll generate appropriate responses based on the query
-    let aiResponse = generateResponse(query, enhancedContext);
+    // Generate response based on query and financial data
+    let aiResponse = generateResponseWithFinancialData(query, financialData);
     
     // Return the conversational response
     return new Response(
@@ -115,8 +118,11 @@ function generateSimpleEmbedding(text: string): number[] {
     "revenue", "sales", "income", "money", "profit", "loss", 
     "expense", "spend", "cost", "budget", "financial", "finance",
     "account", "invoice", "cash", "payment", "transaction", "tax",
-    "dollar", "euro", "pound", "naira", "currency", "bank", "debt", "credit",
-    "roi", "margin", "equity", "asset", "liability", "balance"
+    "naira", "currency", "bank", "debt", "credit",
+    "roi", "margin", "equity", "asset", "liability", "balance",
+    "total", "quarterly", "monthly", "annual", "increase", "decrease",
+    "trend", "projection", "forecast", "actual", "target", "goal",
+    "category", "vendor", "client", "customer", "paid", "unpaid"
   ];
   
   const lowerText = text.toLowerCase();
@@ -217,101 +223,181 @@ function extractMostRelevantData(financialData: any, relevance: Record<string, n
   return relevantData;
 }
 
-function generateResponse(query: string, context?: string): string {
-  // Check if it's a financial query with context
-  if (context && isFinancialQuery(query)) {
-    // Generate a response based on the financial data in the context
-    return generateFinancialResponse(query, context);
-  }
-  
-  // Handle general conversations and greetings
+function generateResponseWithFinancialData(query: string, financialData: any): string {
   const lowerQuery = query.toLowerCase();
   
-  if (lowerQuery.includes("hello") || lowerQuery.includes("hi ") || lowerQuery === "hi") {
-    return "Hello there! It's great to chat with you today. How can I help you with your finances or anything else on your mind?";
+  // Check if it's a financial query with data
+  if (!financialData) {
+    // Handle general conversations and greetings
+    if (lowerQuery.includes("hello") || lowerQuery.includes("hi ") || lowerQuery === "hi") {
+      return "Hello there! It's great to chat with you today. How can I help you with your finances or anything else on your mind?";
+    }
+    
+    if (lowerQuery.includes("how are you")) {
+      return "I'm doing great, thanks for asking! I'm here and ready to help with any questions you might have about your finances or anything else. How are you doing today?";
+    }
+    
+    if (lowerQuery.includes("thank")) {
+      return "You're very welcome! I'm always happy to help. Is there anything else you'd like to know?";
+    }
+    
+    if (lowerQuery.includes("bye") || lowerQuery.includes("goodbye")) {
+      return "It was nice chatting with you! Feel free to come back anytime you have questions or just want to chat. Have a great day!";
+    }
+    
+    if (lowerQuery.includes("data") || lowerQuery.includes("available") || lowerQuery.includes("information")) {
+      return "I can provide insights about your expenses, revenues, invoices, and overall financial health. Just ask me specific questions like 'What are my total expenses?', 'How much revenue did I generate?', or 'What's my profit?'";
+    }
+    
+    // For other general queries
+    return "That's an interesting topic! I can provide insights about your expenses, revenues, invoices, and cashflow. What specific financial information would you like to know?";
   }
   
-  if (lowerQuery.includes("how are you")) {
-    return "I'm doing great, thanks for asking! I'm here and ready to help with any questions you might have about your finances or anything else. How are you doing today?";
+  // Handle expense-related queries
+  if (lowerQuery.includes("expense") || lowerQuery.includes("spending") || lowerQuery.includes("cost")) {
+    if (financialData.expenses) {
+      const totalExpenses = financialData.expenses.total || 0;
+      let response = `Your total expenses are ${formatCurrency(totalExpenses)}. `;
+      
+      // Add expense breakdown if available
+      if (financialData.expenses.byCategory && Object.keys(financialData.expenses.byCategory).length > 0) {
+        response += "Here's a breakdown by category:\n";
+        const categories = Object.entries(financialData.expenses.byCategory)
+          .sort(([, amountA]: any, [, amountB]: any) => amountB - amountA)
+          .slice(0, 3);
+        
+        categories.forEach(([category, amount]: [string, any]) => {
+          response += `- ${category}: ${formatCurrency(amount)}\n`;
+        });
+        
+        if (Object.keys(financialData.expenses.byCategory).length > 3) {
+          response += "...and other smaller categories.";
+        }
+      }
+      
+      return response;
+    }
+    return "I don't have detailed expense information in my current data. Would you like me to explain how to track expenses in DigitBooks?";
   }
   
-  if (lowerQuery.includes("thank")) {
-    return "You're very welcome! I'm always happy to help. Is there anything else you'd like to know?";
+  // Handle revenue-related queries
+  if (lowerQuery.includes("revenue") || lowerQuery.includes("income") || lowerQuery.includes("earnings") || lowerQuery.includes("sales")) {
+    if (financialData.revenues) {
+      const totalRevenue = financialData.revenues.total || 0;
+      let response = `Your total revenue is ${formatCurrency(totalRevenue)}. `;
+      
+      // Add revenue sources breakdown if available
+      if (financialData.revenues.bySources && Object.keys(financialData.revenues.bySources).length > 0) {
+        response += "Here's a breakdown by source:\n";
+        const sources = Object.entries(financialData.revenues.bySources)
+          .sort(([, amountA]: any, [, amountB]: any) => amountB - amountA)
+          .slice(0, 3);
+        
+        sources.forEach(([source, amount]: [string, any]) => {
+          response += `- ${source}: ${formatCurrency(amount)}\n`;
+        });
+        
+        if (Object.keys(financialData.revenues.bySources).length > 3) {
+          response += "...and other sources.";
+        }
+      }
+      
+      return response;
+    }
+    return "I don't have detailed revenue information in my current data. Would you like me to explain how to track revenues in DigitBooks?";
   }
   
-  if (lowerQuery.includes("bye") || lowerQuery.includes("goodbye")) {
-    return "It was nice chatting with you! Feel free to come back anytime you have questions or just want to chat. Have a great day!";
+  // Handle profit-related queries
+  if (lowerQuery.includes("profit") || lowerQuery.includes("margin") || lowerQuery.includes("earnings")) {
+    const revenue = financialData.revenues?.total || 0;
+    const expenses = financialData.expenses?.total || 0;
+    
+    if (revenue > 0 || expenses > 0) {
+      const profit = revenue - expenses;
+      const profitMargin = revenue > 0 ? ((profit / revenue) * 100).toFixed(1) : 0;
+      
+      let status = "breaking even";
+      if (profit > 0) status = "profitable";
+      if (profit < 0) status = "operating at a loss";
+      
+      return `Based on the available data, your business is ${status}. Your revenue is ${formatCurrency(revenue)} and expenses are ${formatCurrency(expenses)}, giving you a net profit of ${formatCurrency(profit)} (${profitMargin}% margin).`;
+    }
+    
+    return "I don't have enough revenue and expense data to calculate your profit accurately. Would you like me to explain how to track your full financial picture in DigitBooks?";
   }
   
-  // For other general queries
-  return "That's an interesting topic! I can chat about lots of things, but I'm especially knowledgeable about financial matters. Is there something specific about your finances you'd like to know more about?";
+  // Handle invoice-related queries
+  if (lowerQuery.includes("invoice") || lowerQuery.includes("bill") || lowerQuery.includes("payment")) {
+    if (financialData.invoices) {
+      const totalInvoices = financialData.invoices.total || 0;
+      const paidInvoices = financialData.invoices.paid || 0;
+      const unpaidInvoices = financialData.invoices.unpaid || 0;
+      const overdueInvoices = financialData.invoices.overdue || 0;
+      
+      let response = `You have ${totalInvoices} total invoices, with ${paidInvoices} paid and ${unpaidInvoices} unpaid. `;
+      
+      if (overdueInvoices > 0) {
+        response += `There are ${overdueInvoices} overdue invoices that require attention. `;
+      }
+      
+      if (financialData.invoices.recentPayments && financialData.invoices.recentPayments.length > 0) {
+        const latestPayment = financialData.invoices.recentPayments[0];
+        response += `Your most recent payment was ${formatCurrency(latestPayment.amount)} received on ${formatDate(new Date(latestPayment.payment_date))}.`;
+      }
+      
+      return response;
+    }
+    return "I don't have detailed invoice information in my current data. Would you like me to explain how to manage invoices in DigitBooks?";
+  }
+  
+  // Handle cashflow-related queries
+  if (lowerQuery.includes("cashflow") || lowerQuery.includes("cash flow") || lowerQuery.includes("cash")) {
+    if (financialData.cashflow) {
+      const netCashflow = financialData.cashflow.netCashflow || 0;
+      const trend = financialData.cashflow.trend || "stable";
+      
+      let trendDescription = "";
+      if (trend === "positive") trendDescription = "improving";
+      else if (trend === "negative") trendDescription = "declining";
+      else trendDescription = "stable";
+      
+      return `Your current net cashflow is ${formatCurrency(netCashflow)}, and the trend is ${trendDescription}. ${getFinancialAdvice(netCashflow, trend)}`;
+    }
+    return "I don't have detailed cashflow information in my current data. Would you like me to explain how to track cashflow in DigitBooks?";
+  }
+  
+  // If nothing specific matches, provide a summary
+  if (financialData.revenues || financialData.expenses) {
+    const revenue = financialData.revenues?.total || 0;
+    const expenses = financialData.expenses?.total || 0;
+    const cashflow = revenue - expenses;
+    
+    return `Based on the available data, I can see: Revenue: ${formatCurrency(revenue)}, Expenses: ${formatCurrency(expenses)}, Net Cashflow: ${formatCurrency(cashflow)}. What specific aspect would you like to know more about?`;
+  }
+  
+  return "I have your financial data, but I'm not sure what specific information you're looking for. You can ask me about your expenses, revenue, profit, invoices, or cashflow.";
 }
 
-function isFinancialQuery(query: string): boolean {
-  const financialKeywords = [
-    "revenue", "sales", "income", "money", "profit", "loss", 
-    "expense", "spend", "cost", "budget", "financial", "finance",
-    "account", "invoice", "cash", "payment", "transaction", "tax",
-    "dollar", "euro", "pound", "naira", "currency", "bank", "debt", "credit",
-    "roi", "margin", "equity", "asset", "liability", "balance"
-  ];
-  
-  const lowerQuery = query.toLowerCase();
-  return financialKeywords.some(keyword => lowerQuery.includes(keyword));
+function getFinancialAdvice(netCashflow: number, trend: string): string {
+  if (netCashflow > 0 && trend === "positive") {
+    return "You're in a strong financial position. Consider investing surplus cash or expanding your business.";
+  } else if (netCashflow > 0 && trend === "negative") {
+    return "While your cashflow is positive, the downward trend suggests you should monitor expenses carefully.";
+  } else if (netCashflow < 0 && trend === "negative") {
+    return "Your negative cashflow is concerning. Consider reducing expenses or increasing revenue sources.";
+  } else if (netCashflow < 0 && trend === "positive") {
+    return "Your cashflow is improving, but still negative. Continue your current strategy to reach positive territory.";
+  } else {
+    return "Your cashflow appears stable. Regular monitoring will help maintain this balance.";
+  }
 }
 
-function generateFinancialResponse(query: string, contextString: string): string {
-  try {
-    // Parse the financial context if it exists
-    let context;
-    try {
-      context = JSON.parse(contextString);
-    } catch (e) {
-      // If parsing fails, use the raw string
-      context = contextString;
-    }
-    
-    const lowerQuery = query.toLowerCase();
-    
-    // Example responses based on different financial query types
-    if (lowerQuery.includes("revenue") || lowerQuery.includes("sales")) {
-      if (context.financialData?.revenues) {
-        const totalRevenue = context.financialData.revenues.total || 0;
-        return `Based on the data I have, your total revenue is ${formatCurrency(totalRevenue)}. Is there anything specific about your revenue you'd like to know more about?`;
-      }
-    }
-    
-    if (lowerQuery.includes("expense")) {
-      if (context.financialData?.expenses) {
-        const totalExpenses = context.financialData.expenses.total || 0;
-        return `Looking at your records, your total expenses amount to ${formatCurrency(totalExpenses)}. Would you like to see a breakdown by category?`;
-      }
-    }
-    
-    if (lowerQuery.includes("profit") || lowerQuery.includes("margin")) {
-      if (context.financialData?.revenues && context.financialData?.expenses) {
-        const revenue = context.financialData.revenues.total || 0;
-        const expenses = context.financialData.expenses.total || 0;
-        const profit = revenue - expenses;
-        return `Based on your data, your net profit is ${formatCurrency(profit)}. That's the difference between your revenue (${formatCurrency(revenue)}) and your expenses (${formatCurrency(expenses)}).`;
-      }
-    }
-    
-    if (lowerQuery.includes("cashflow")) {
-      if (context.financialData?.cashflow) {
-        const netCashflow = context.financialData.cashflow.netCashflow || 0;
-        const trend = context.financialData.cashflow.trend || "stable";
-        return `Your current net cashflow is ${formatCurrency(netCashflow)}, and the trend is ${trend}. Would you like more details on your cash flow?`;
-      }
-    }
-    
-    // Default response if we have financial data but no specific match
-    return "I have some financial data available, but I'm not sure about the specific information you're asking for. Could you clarify what financial aspect you'd like to know about?";
-    
-  } catch (error) {
-    console.error("Error generating financial response:", error);
-    return "I'd be happy to help with your financial question, but I'm having trouble processing the data right now. Could we try a different question?";
-  }
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-NG', { 
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
 }
 
 function formatCurrency(amount: number): string {
