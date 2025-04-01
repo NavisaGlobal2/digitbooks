@@ -42,17 +42,24 @@ export const parseViaEdgeFunction = async (
           formData.append("preferredProvider", preferredProvider);
         }
         
-        // Since we're dealing with potentially large files, increase the timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
-        
-        // Call the edge function
-        const { data, error } = await supabase.functions.invoke("parse-bank-statement-ai", {
-          body: formData,
-          signal: controller.signal
+        // Since we're dealing with potentially large files, implement timeout handling differently
+        // Using a Promise.race pattern instead of AbortController
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Processing timed out")), 60000); // 60 second timeout
         });
         
-        clearTimeout(timeoutId);
+        // Call the edge function without using signal
+        const functionPromise = supabase.functions.invoke("parse-bank-statement-ai", {
+          body: formData
+        });
+        
+        // Use Promise.race to implement the timeout
+        const { data, error } = await Promise.race([
+          functionPromise,
+          timeoutPromise.then(() => {
+            throw new Error(`Processing timed out. The file may be too large (${fileSizeMB}MB) or complex.`);
+          })
+        ]);
         
         if (error) {
           console.error(`Edge function error:`, error);
@@ -87,7 +94,7 @@ export const parseViaEdgeFunction = async (
         }
         
         // Special handling for timeout errors
-        if (err.name === 'AbortError') {
+        if (err.name === 'AbortError' || err.message.includes('timed out')) {
           throw new Error(`Processing timed out. The file may be too large (${fileSizeMB}MB) or complex. Please try a smaller file.`);
         }
         
