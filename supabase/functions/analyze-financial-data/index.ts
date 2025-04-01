@@ -226,6 +226,15 @@ function extractMostRelevantData(financialData: any, relevance: Record<string, n
 function generateResponseWithFinancialData(query: string, financialData: any): string {
   const lowerQuery = query.toLowerCase();
   
+  // Handle general queries about available data
+  if (lowerQuery.includes("what data") || lowerQuery.includes("avai") || lowerQuery.includes("have available")) {
+    if (financialData) {
+      let availableDataTypes = Object.keys(financialData).join(", ");
+      return `I have information about your ${availableDataTypes}. You can ask me specific questions about any of these areas like "What's my total expenses?" or "Show me my revenue breakdown."`;
+    }
+    return "I can provide insights about your expenses, revenues, invoices, and overall financial health. Just ask me specific questions like 'What are my total expenses?', 'How much revenue did I generate?', or 'What's my profit?'";
+  }
+  
   // Check if it's a financial query with data
   if (!financialData) {
     // Handle general conversations and greetings
@@ -245,12 +254,8 @@ function generateResponseWithFinancialData(query: string, financialData: any): s
       return "It was nice chatting with you! Feel free to come back anytime you have questions or just want to chat. Have a great day!";
     }
     
-    if (lowerQuery.includes("data") || lowerQuery.includes("available") || lowerQuery.includes("information")) {
-      return "I can provide insights about your expenses, revenues, invoices, and overall financial health. Just ask me specific questions like 'What are my total expenses?', 'How much revenue did I generate?', or 'What's my profit?'";
-    }
-    
     // For other general queries
-    return "That's an interesting topic! I can provide insights about your expenses, revenues, invoices, and cashflow. What specific financial information would you like to know?";
+    return "That's an interesting topic! I can provide insights about your expenses, revenues, invoices, and cashflow when you connect your financial data. What would you like to know?";
   }
   
   // Handle expense-related queries

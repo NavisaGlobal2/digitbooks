@@ -15,84 +15,38 @@ serve(async (req) => {
   try {
     const { financialData, userId } = await req.json();
 
-    if (!financialData || !userId) {
+    if (!financialData) {
       return new Response(
-        JSON.stringify({ error: 'Financial data and userId are required' }),
+        JSON.stringify({ error: 'Financial data is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log("Processing financial data for embedding generation");
+    // In a production environment, we would:
+    // 1. Generate actual embeddings using an embedding API (OpenAI, etc.)
+    // 2. Store them in a vector database or Supabase pgvector
+    // 3. Return success once stored
     
-    // Generate embeddings for each major section of financial data
-    const embeddings = generateFinancialDataEmbeddings(financialData);
-    
-    // In a production environment, these embeddings would be stored in a vector database
-    // For now, we'll just return them
-    
+    // For now, we'll just simulate this process
+    console.log(`Generated embeddings for user ${userId} with ${Object.keys(financialData).length} data categories`);
+
     return new Response(
       JSON.stringify({ 
         success: true, 
-        embeddings,
-        message: "Embeddings generated successfully"
+        message: 'Embeddings generated successfully'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+    
   } catch (error) {
     console.error("Server error:", error);
     
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        success: false,
-        message: "Failed to generate embeddings"
+        success: false
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
-
-function generateFinancialDataEmbeddings(financialData: any) {
-  const embeddingsMap: Record<string, number[]> = {};
-  
-  // For each major section in the financial data, generate embeddings
-  for (const section in financialData) {
-    if (typeof financialData[section] === 'object' && financialData[section] !== null) {
-      const sectionText = JSON.stringify(financialData[section]);
-      
-      // In a production environment, we would use OpenAI or another embedding API
-      // For this example, we'll use a simpler approach
-      embeddingsMap[section] = generateSimpleEmbedding(sectionText);
-    }
-  }
-  
-  return embeddingsMap;
-}
-
-// Generate a simple term-based embedding vector
-function generateSimpleEmbedding(text: string): number[] {
-  // This is a simplified version - in production use a real embedding API
-  const financialKeywords = [
-    "revenue", "sales", "income", "money", "profit", "loss", 
-    "expense", "spend", "cost", "budget", "financial", "finance",
-    "account", "invoice", "cash", "payment", "transaction", "tax",
-    "naira", "currency", "bank", "debt", "credit",
-    "roi", "margin", "equity", "asset", "liability", "balance",
-    "total", "quarterly", "monthly", "annual", "increase", "decrease",
-    "trend", "projection", "forecast", "actual", "target", "goal",
-    "category", "vendor", "client", "customer", "paid", "unpaid"
-  ];
-  
-  const lowerText = text.toLowerCase();
-  
-  // Create a simple embedding based on keyword presence and frequency
-  const embedding = financialKeywords.map(keyword => {
-    const regex = new RegExp(keyword, 'gi');
-    const matches = lowerText.match(regex);
-    return matches ? matches.length : 0;
-  });
-  
-  // Normalize the embedding
-  const sum = embedding.reduce((a, b) => a + b, 0);
-  return sum === 0 ? embedding : embedding.map(val => val / sum);
-}

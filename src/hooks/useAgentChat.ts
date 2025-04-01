@@ -41,17 +41,14 @@ export const useAgentChat = () => {
     setIsTyping(true);
 
     try {
-      // Only use financial data if it's a finance-related question
-      const isFinanceQuestion = /financ|money|spend|earn|invoice|expense|budget|revenue|profit|loss|cashflow|payment|bill|transaction|report|account|balance|tax|dollar|naira|cost/i.test(input);
-      
-      // Give the AI some time to "think" for a more natural feeling chat
+      // Always include financial data for better responses - the AI will use it when relevant
       const minTypingTime = 1200; // 1.2 second minimum "thinking" time
       const startTime = Date.now();
       
       // Get AI response
       const response = await getAIInsights({
         query: input,
-        financialData: isFinanceQuestion ? financialData : null,
+        financialData: financialData, // Always include financial data
         userId: user.id,
         formatAsHuman: true
       });
@@ -99,5 +96,6 @@ export const useAgentChat = () => {
     isTyping,
     handleSendMessage,
     resetChat,
+    isLoadingFinancialData
   };
 };
