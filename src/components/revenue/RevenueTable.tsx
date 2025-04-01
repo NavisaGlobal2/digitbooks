@@ -19,10 +19,14 @@ export const RevenueTable = ({ revenues, onUpdateStatus, onDelete }: RevenueTabl
     switch (status) {
       case "paid":
         return <Badge variant="success">Paid</Badge>;
-      case "unpaid":
-        return <Badge variant="warning">Unpaid</Badge>;
+      case "pending":
+        return <Badge variant="warning">Pending</Badge>;
       case "overdue":
         return <Badge variant="destructive">Overdue</Badge>;
+      case "cancelled":
+        return <Badge variant="outline">Cancelled</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -43,12 +47,12 @@ export const RevenueTable = ({ revenues, onUpdateStatus, onDelete }: RevenueTabl
         <TableBody>
           {revenues.map((revenue) => (
             <TableRow key={revenue.id}>
-              <TableCell className="font-medium">{revenue.revenueNumber}</TableCell>
+              <TableCell className="font-medium">{revenue.id.substring(0, 8)}</TableCell>
               <TableCell>{format(revenue.date, "dd/MM/yyyy")}</TableCell>
               <TableCell className="capitalize">{revenue.source}</TableCell>
               <TableCell>{revenue.description}</TableCell>
               <TableCell className="text-right">{formatNaira(revenue.amount)}</TableCell>
-              <TableCell>{getStatusBadge(revenue.status)}</TableCell>
+              <TableCell>{getStatusBadge(revenue.paymentStatus)}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -59,19 +63,19 @@ export const RevenueTable = ({ revenues, onUpdateStatus, onDelete }: RevenueTabl
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
                       onClick={() => onUpdateStatus(revenue.id, "paid")}
-                      disabled={revenue.status === "paid"}
+                      disabled={revenue.paymentStatus === "paid"}
                     >
                       Mark as Paid
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => onUpdateStatus(revenue.id, "unpaid")}
-                      disabled={revenue.status === "unpaid"}
+                      onClick={() => onUpdateStatus(revenue.id, "pending")}
+                      disabled={revenue.paymentStatus === "pending"}
                     >
-                      Mark as Unpaid
+                      Mark as Pending
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => onUpdateStatus(revenue.id, "overdue")}
-                      disabled={revenue.status === "overdue"}
+                      disabled={revenue.paymentStatus === "overdue"}
                     >
                       Mark as Overdue
                     </DropdownMenuItem>

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Revenue } from "@/types/revenue";
 import { Form } from "@/components/ui/form";
 
-import RevenueDialog from "./RevenueDialog";
+import { RevenueDialog } from "./RevenueDialog";
 import RevenueSourceField from "./form/RevenueSourceField";
 import RevenueDescriptionField from "./form/RevenueDescriptionField";
 import RevenueAmountField from "./form/RevenueAmountField";
