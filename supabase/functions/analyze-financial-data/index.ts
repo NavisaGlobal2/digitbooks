@@ -34,6 +34,7 @@ serve(async (req) => {
     - Keep responses brief and conversational
     - Respond directly to the question or comment first
     - Format your responses in natural, readable text
+    - When formatting currency, ALWAYS use Naira (₦) as the currency symbol, NEVER dollars ($)
     
     When discussing finances:
     - If provided financial data exists, use it to provide accurate insights
@@ -45,6 +46,7 @@ serve(async (req) => {
     - Return JSON or formatted data unless specifically asked
     - Use formal, stiff language or jargon
     - Give overly detailed responses unless asked for details
+    - Never use $ symbol for currency, always use ₦ (Naira)
     
     If the user's message isn't about finances, you can still chat normally about general topics, give advice, or just be friendly. If you don't know something, it's fine to say so.
     
@@ -117,7 +119,7 @@ function isFinancialQuery(query: string): boolean {
     "revenue", "sales", "income", "money", "profit", "loss", 
     "expense", "spend", "cost", "budget", "financial", "finance",
     "account", "invoice", "cash", "payment", "transaction", "tax",
-    "dollar", "euro", "pound", "currency", "bank", "debt", "credit",
+    "dollar", "euro", "pound", "naira", "currency", "bank", "debt", "credit",
     "roi", "margin", "equity", "asset", "liability", "balance"
   ];
   
@@ -180,9 +182,9 @@ function generateFinancialResponse(query: string, contextString: string): string
 }
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-NG', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'NGN',
     minimumFractionDigits: 2
   }).format(amount);
 }

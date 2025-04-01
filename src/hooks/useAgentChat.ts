@@ -42,7 +42,7 @@ export const useAgentChat = () => {
 
     try {
       // Only use financial data if it's a finance-related question
-      const isFinanceQuestion = /financ|money|spend|earn|invoice|expense|budget|revenue|profit|loss|cashflow|payment|bill|transaction|report|account|balance|tax|dollar|cost/i.test(input);
+      const isFinanceQuestion = /financ|money|spend|earn|invoice|expense|budget|revenue|profit|loss|cashflow|payment|bill|transaction|report|account|balance|tax|dollar|naira|cost/i.test(input);
       
       // Give the AI some time to "think" for a more natural feeling chat
       const minTypingTime = 1200; // 1.2 second minimum "thinking" time
