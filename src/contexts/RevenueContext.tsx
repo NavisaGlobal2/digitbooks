@@ -55,13 +55,18 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       
       // Transform the data from Supabase to match our Revenue type
       const transformedRevenues: Revenue[] = data.map(item => ({
-        ...item,
+        id: item.id,
+        description: item.description,
+        amount: item.amount,
         date: new Date(item.date),
-        created_at: item.created_at ? new Date(item.created_at) : undefined,
-        // Map status to payment_status if needed
-        payment_status: item.payment_status || item.status,
-        // Ensure source is a valid RevenueSource
-        source: item.source || 'other',
+        source: item.source,
+        payment_method: item.payment_method || "bank transfer", // Default value
+        payment_status: item.payment_status || item.status || "paid", // Handle both fields
+        client_name: item.client_name,
+        notes: item.notes,
+        revenue_number: item.revenue_number,
+        user_id: item.user_id,
+        created_at: item.created_at ? new Date(item.created_at) : undefined
       }));
       
       setRevenues(transformedRevenues);
@@ -87,7 +92,7 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
         // Convert date objects to ISO strings for Supabase
         date: revenue.date.toISOString(),
         created_at: new Date().toISOString(),
-        // Map fields if coming from old code
+        // Map payment_status to status for backward compatibility
         status: revenue.payment_status
       };
       
@@ -102,8 +107,12 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       if (data && data[0]) {
         const newRevenue: Revenue = {
           ...data[0],
+          id: data[0].id,
           date: new Date(data[0].date),
-          created_at: data[0].created_at ? new Date(data[0].created_at) : undefined
+          created_at: data[0].created_at ? new Date(data[0].created_at) : undefined,
+          payment_method: data[0].payment_method,
+          payment_status: data[0].payment_status || data[0].status,
+          source: data[0].source
         };
         setRevenues(prev => [newRevenue, ...prev]);
       }
@@ -128,7 +137,7 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
         revenue_number: `REV-${uuidv4().substring(0, 8).toUpperCase()}`,
         date: revenue.date.toISOString(),
         created_at: new Date().toISOString(),
-        // Map fields if needed
+        // Map payment_status to status for backward compatibility
         status: revenue.payment_status
       }));
       
@@ -142,8 +151,17 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       // Add the new revenues to the local state
       if (data && data.length > 0) {
         const newRevenues: Revenue[] = data.map(item => ({
-          ...item,
+          id: item.id,
+          description: item.description,
+          amount: item.amount,
           date: new Date(item.date),
+          source: item.source,
+          payment_method: item.payment_method,
+          payment_status: item.payment_status || item.status,
+          client_name: item.client_name,
+          notes: item.notes,
+          revenue_number: item.revenue_number,
+          user_id: item.user_id,
           created_at: item.created_at ? new Date(item.created_at) : undefined
         }));
         setRevenues(prev => [...newRevenues, ...prev]);
@@ -168,8 +186,8 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
         // Convert Date objects to ISO strings
         date: revenueUpdates.date ? revenueUpdates.date.toISOString() : undefined,
         created_at: revenueUpdates.created_at ? revenueUpdates.created_at.toISOString() : undefined,
-        // Map fields if needed
-        status: revenueUpdates.payment_status || undefined
+        // Map payment_status to status for backward compatibility
+        status: revenueUpdates.payment_status
       };
       
       const { data, error } = await supabase
@@ -183,8 +201,17 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       // Update the revenue in local state
       if (data && data[0]) {
         const updatedRevenue: Revenue = {
-          ...data[0],
+          id: data[0].id,
+          description: data[0].description,
+          amount: data[0].amount,
           date: new Date(data[0].date),
+          source: data[0].source,
+          payment_method: data[0].payment_method,
+          payment_status: data[0].payment_status || data[0].status,
+          client_name: data[0].client_name,
+          notes: data[0].notes,
+          revenue_number: data[0].revenue_number,
+          user_id: data[0].user_id,
           created_at: data[0].created_at ? new Date(data[0].created_at) : undefined
         };
         

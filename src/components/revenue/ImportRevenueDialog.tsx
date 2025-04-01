@@ -103,8 +103,8 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
       date: new Date(tx.date),
       source: tx.source || "other",
       payment_method: "bank transfer",
-      notes: `Imported from bank statement: ${file?.name || "unknown"}`,
-      payment_status: "paid"
+      payment_status: "paid",
+      notes: `Imported from bank statement: ${file?.name || "unknown"}`
     }));
     
     if (onRevenuesImported) {
@@ -120,109 +120,7 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
   };
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={(isOpen) => {
-        if (!isUploading) {
-          onOpenChange(isOpen);
-        }
-      }}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Import revenue</DialogTitle>
-            <button 
-              onClick={() => !isUploading && onOpenChange(false)} 
-              className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus:outline-none"
-              aria-label="Close"
-              disabled={isUploading}
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <div 
-              className={`border-2 border-dashed rounded-md p-8 ${isDragging ? 'border-green-500 bg-green-50' : error ? 'border-red-200' : 'border-gray-200'} flex flex-col items-center justify-center text-center cursor-pointer`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={handleBrowseClick}
-            >
-              <FileText className="h-12 w-12 text-gray-400 mb-2" />
-              <p className="text-gray-600 mb-1">Drag & drop bank statement here</p>
-              <p className="text-gray-500 text-sm mb-2">Or</p>
-              <button 
-                type="button" 
-                className="text-green-500 font-medium text-sm hover:text-green-600 focus:outline-none"
-                disabled={isUploading}
-              >
-                Browse files
-              </button>
-              <input
-                id="file-upload"
-                type="file"
-                accept=".csv,.xlsx,.xls,.pdf"
-                onChange={handleFileChange}
-                className="hidden"
-                disabled={isUploading}
-              />
-              <p className="text-xs text-gray-400 mt-3">Supported formats: CSV, Excel, PDF</p>
-            </div>
-            
-            {error && (
-              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-600">{error}</p>
-              </div>
-            )}
-            
-            {file && !error && (
-              <div className="mt-4 p-2 bg-gray-50 rounded-md flex items-center justify-between">
-                <div className="flex items-center">
-                  <FileText className="h-4 w-4 mr-2 text-gray-500" />
-                  <span className="text-sm font-medium truncate">{file.name}</span>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setFile(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                  disabled={isUploading}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex justify-between gap-3 mt-2">
-            <Button 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              className="flex-1"
-              disabled={isUploading}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleImport} 
-              disabled={!file || isUploading}
-              className="flex-1 bg-green-500 hover:bg-green-600 text-white"
-            >
-              {isUploading ? "Processing..." : "Upload"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {showTaggingDialog && (
-        <RevenueTaggingDialog
-          open={showTaggingDialog}
-          onOpenChange={setShowTaggingDialog}
-          transactions={parsedTransactions}
-          onTaggingComplete={handleTaggingComplete}
-        />
-      )}
-    </>
+    <></>
   );
 };
 

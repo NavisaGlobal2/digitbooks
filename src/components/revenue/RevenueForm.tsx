@@ -49,9 +49,9 @@ const RevenueForm = ({ open, onOpenChange, onSubmit, defaultValues, isEdit = fal
         description: values.description,
         amount: values.amount,
         date: values.date,
-        source: values.source as RevenueSource, // Ensure proper casting
-        payment_method: values.payment_method as PaymentMethod, // Ensure proper casting
-        payment_status: values.payment_status as PaymentStatus, // Ensure proper casting
+        source: values.source as RevenueSource,
+        payment_method: values.payment_method as PaymentMethod,
+        payment_status: values.payment_status as PaymentStatus,
         client_name: values.client_name || undefined,
         notes: values.notes || undefined,
         revenue_number: defaultValues?.revenue_number,
