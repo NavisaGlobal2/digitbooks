@@ -40,6 +40,6 @@ export const getAIInsights = async ({ query, financialData, userId, formatAsHuma
     return data.response;
   } catch (err) {
     console.error("AI service error:", err);
-    throw err;
+    throw new Error('Sorry, I encountered an issue while processing your message. Let\'s try talking about something else?');
   }
 };

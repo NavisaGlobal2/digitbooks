@@ -45,7 +45,7 @@ export const useAgentChat = () => {
       const isFinanceQuestion = /financ|money|spend|earn|invoice|expense|budget|revenue|profit|loss|cashflow|payment|bill|transaction|report|account|balance|tax|dollar|cost/i.test(input);
       
       // Give the AI some time to "think" for a more natural feeling chat
-      const minTypingTime = 1000; // 1 second minimum "thinking" time
+      const minTypingTime = 1200; // 1.2 second minimum "thinking" time
       const startTime = Date.now();
       
       // Get AI response
