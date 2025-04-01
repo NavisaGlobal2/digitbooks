@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/utils/invoice/formatters";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
@@ -16,9 +17,10 @@ interface TransactionTableProps {
 
 const sourcesOptions: Array<{ value: RevenueSource; label: string }> = [
   { value: "sales", label: "Sales" },
-  { value: "service", label: "Service" },
-  { value: "refund", label: "Refund" },
-  { value: "investment", label: "Investment" },
+  { value: "services", label: "Services" },
+  { value: "investments", label: "Investments" },
+  { value: "grants", label: "Grants" },
+  { value: "donations", label: "Donations" },
   { value: "other", label: "Other" }
 ];
 
