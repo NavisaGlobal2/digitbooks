@@ -54,8 +54,8 @@ export const RevenueDialog = ({ open, onOpenChange, children, title = "Add New R
       description,
       amount: Number(amount),
       date: new Date(date),
-      paymentStatus,
-      paymentMethod: "bank transfer" // Default payment method
+      payment_status: paymentStatus, // Fixed property name
+      payment_method: "bank transfer" // Required field with correct naming
     });
 
     toast.success("Revenue added successfully");

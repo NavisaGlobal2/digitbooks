@@ -1,7 +1,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Revenue } from "@/types/revenue";
+import { Revenue, RevenueSource, PaymentMethod, PaymentStatus } from "@/types/revenue";
 import { Form } from "@/components/ui/form";
 import { RevenueDialog } from "./RevenueDialog";
 import RevenueSourceField from "./form/RevenueSourceField";
@@ -49,9 +49,9 @@ const RevenueForm = ({ open, onOpenChange, onSubmit, defaultValues, isEdit = fal
         description: values.description,
         amount: values.amount,
         date: values.date,
-        source: values.source,
-        payment_method: values.payment_method,
-        payment_status: values.payment_status,
+        source: values.source as RevenueSource, // Ensure proper casting
+        payment_method: values.payment_method as PaymentMethod, // Ensure proper casting
+        payment_status: values.payment_status as PaymentStatus, // Ensure proper casting
         client_name: values.client_name || undefined,
         notes: values.notes || undefined,
         revenue_number: defaultValues?.revenue_number,

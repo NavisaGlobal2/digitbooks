@@ -54,9 +54,14 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       if (error) throw error;
       
       // Transform the data from Supabase to match our Revenue type
-      const transformedRevenues = data.map(item => ({
+      const transformedRevenues: Revenue[] = data.map(item => ({
         ...item,
         date: new Date(item.date),
+        created_at: item.created_at ? new Date(item.created_at) : undefined,
+        // Map status to payment_status if needed
+        payment_status: item.payment_status || item.status,
+        // Ensure source is a valid RevenueSource
+        source: item.source || 'other',
       }));
       
       setRevenues(transformedRevenues);
@@ -75,23 +80,30 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       // Generate a revenue number if not provided
       const revenueNumber = revenue.revenue_number || `REV-${uuidv4().substring(0, 8).toUpperCase()}`;
       
+      // Prepare the data for Supabase
+      const revenueData = {
+        ...revenue,
+        revenue_number: revenueNumber,
+        // Convert date objects to ISO strings for Supabase
+        date: revenue.date.toISOString(),
+        created_at: new Date().toISOString(),
+        // Map fields if coming from old code
+        status: revenue.payment_status
+      };
+      
       const { data, error } = await supabase
         .from('revenues')
-        .insert([
-          { 
-            ...revenue,
-            revenue_number: revenueNumber
-          }
-        ])
+        .insert([revenueData])
         .select();
       
       if (error) throw error;
       
       // Add the new revenue to the local state
       if (data && data[0]) {
-        const newRevenue = {
+        const newRevenue: Revenue = {
           ...data[0],
-          date: new Date(data[0].date)
+          date: new Date(data[0].date),
+          created_at: data[0].created_at ? new Date(data[0].created_at) : undefined
         };
         setRevenues(prev => [newRevenue, ...prev]);
       }
@@ -110,10 +122,14 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
     try {
       setLoading(true);
       
-      // Prepare revenues with revenue numbers
+      // Prepare revenues with revenue numbers and ISO date strings
       const revenuesWithNumbers = revenueItems.map(revenue => ({
         ...revenue,
-        revenue_number: `REV-${uuidv4().substring(0, 8).toUpperCase()}`
+        revenue_number: `REV-${uuidv4().substring(0, 8).toUpperCase()}`,
+        date: revenue.date.toISOString(),
+        created_at: new Date().toISOString(),
+        // Map fields if needed
+        status: revenue.payment_status
       }));
       
       const { data, error } = await supabase
@@ -125,9 +141,10 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       
       // Add the new revenues to the local state
       if (data && data.length > 0) {
-        const newRevenues = data.map(item => ({
+        const newRevenues: Revenue[] = data.map(item => ({
           ...item,
-          date: new Date(item.date)
+          date: new Date(item.date),
+          created_at: item.created_at ? new Date(item.created_at) : undefined
         }));
         setRevenues(prev => [...newRevenues, ...prev]);
       }
@@ -145,9 +162,19 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
     try {
       setLoading(true);
       
+      // Prepare updates for Supabase
+      const updates = { 
+        ...revenueUpdates,
+        // Convert Date objects to ISO strings
+        date: revenueUpdates.date ? revenueUpdates.date.toISOString() : undefined,
+        created_at: revenueUpdates.created_at ? revenueUpdates.created_at.toISOString() : undefined,
+        // Map fields if needed
+        status: revenueUpdates.payment_status || undefined
+      };
+      
       const { data, error } = await supabase
         .from('revenues')
-        .update(revenueUpdates)
+        .update(updates)
         .eq('id', id)
         .select();
       
@@ -155,9 +182,10 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       
       // Update the revenue in local state
       if (data && data[0]) {
-        const updatedRevenue = {
+        const updatedRevenue: Revenue = {
           ...data[0],
-          date: new Date(data[0].date)
+          date: new Date(data[0].date),
+          created_at: data[0].created_at ? new Date(data[0].created_at) : undefined
         };
         
         setRevenues(prev =>

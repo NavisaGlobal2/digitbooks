@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -63,17 +62,14 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
     setError(null);
 
     try {
-      // Process the file using the parseStatementFile function
       parseStatementFile(
         file,
         (transactions) => {
-          // Handle successful parsing
           console.log(`Successfully parsed ${Array.isArray(transactions) ? transactions.length : 0} transactions`);
           if (Array.isArray(transactions)) {
             setParsedTransactions(transactions);
             setShowTaggingDialog(true);
           } else {
-            // This handles the CSVParseResult case if needed
             console.log("Received CSVParseResult object instead of transactions array");
             setError("Unsupported file format. Please use a bank statement file.");
           }
@@ -83,7 +79,7 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
           console.error("Error parsing file:", errorMessage);
           setError(errorMessage);
           setIsUploading(false);
-          return true; // Return true to indicate error was handled
+          return true;
         }
       );
     } catch (error) {
@@ -94,7 +90,6 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
   };
 
   const handleTaggingComplete = (taggedTransactions: ParsedTransaction[]) => {
-    // Convert tagged transactions to Revenue objects
     const selectedTransactions = taggedTransactions.filter(tx => tx.selected);
     
     if (selectedTransactions.length === 0) {
@@ -107,9 +102,9 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
       amount: tx.amount,
       date: new Date(tx.date),
       source: tx.source || "other",
-      paymentMethod: "bank transfer",
+      payment_method: "bank transfer",
       notes: `Imported from bank statement: ${file?.name || "unknown"}`,
-      paymentStatus: "paid"
+      payment_status: "paid"
     }));
     
     if (onRevenuesImported) {
@@ -119,7 +114,6 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
     setShowTaggingDialog(false);
     onOpenChange(false);
     
-    // Reset state for next import
     setFile(null);
     setParsedTransactions([]);
     setError(null);

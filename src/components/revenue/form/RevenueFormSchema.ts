@@ -1,5 +1,6 @@
 
 import { z } from "zod";
+import { RevenueSource, PaymentMethod, PaymentStatus } from "@/types/revenue";
 
 export const revenueFormSchema = z.object({
   description: z.string().min(1, "Description is required"),

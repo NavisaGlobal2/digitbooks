@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useRevenue } from "@/contexts/RevenueContext";
 import { Input } from "@/components/ui/input";
@@ -31,7 +30,7 @@ const RevenueContent = ({
     const searchLower = searchQuery.toLowerCase();
     return (
       revenue.description.toLowerCase().includes(searchLower) ||
-      revenue.clientName?.toLowerCase().includes(searchLower) ||
+      revenue.client_name?.toLowerCase().includes(searchLower) ||
       revenue.source.toLowerCase().includes(searchLower)
     );
   });
@@ -155,6 +154,7 @@ const RevenueContent = ({
           revenues={sortedRevenues} 
           onUpdateStatus={handleUpdateStatus}
           onDelete={onDeleteRevenue}
+          onEdit={onEditRevenue}
         />
       </div>
     </div>
