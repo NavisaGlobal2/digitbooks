@@ -1,6 +1,5 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { Revenue, PaymentStatus } from "@/types/revenue";
+import { Revenue, PaymentStatus, mapDbToRevenue, mapRevenueToDb, RevenueDB } from "@/types/revenue";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -54,22 +53,10 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       if (error) throw error;
       
       // Transform the data from Supabase to match our Revenue type
-      const transformedRevenues: Revenue[] = data.map(item => ({
-        id: item.id,
-        description: item.description,
-        amount: item.amount,
-        date: new Date(item.date),
-        source: item.source,
-        payment_method: item.payment_method || "bank transfer", // Default value
-        payment_status: item.payment_status || item.status || "paid", // Handle both fields
-        client_name: item.client_name,
-        notes: item.notes,
-        revenue_number: item.revenue_number,
-        user_id: item.user_id,
-        created_at: item.created_at ? new Date(item.created_at) : undefined
-      }));
-      
-      setRevenues(transformedRevenues);
+      if (data) {
+        const transformedRevenues: Revenue[] = data.map(item => mapDbToRevenue(item as RevenueDB));
+        setRevenues(transformedRevenues);
+      }
     } catch (error) {
       console.error("Error fetching revenues:", error);
       toast.error("Failed to load revenues");
@@ -85,16 +72,11 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       // Generate a revenue number if not provided
       const revenueNumber = revenue.revenue_number || `REV-${uuidv4().substring(0, 8).toUpperCase()}`;
       
-      // Prepare the data for Supabase
-      const revenueData = {
+      // Prepare the data for Supabase using our helper function
+      const revenueData = mapRevenueToDb({
         ...revenue,
         revenue_number: revenueNumber,
-        // Convert date objects to ISO strings for Supabase
-        date: revenue.date.toISOString(),
-        created_at: new Date().toISOString(),
-        // Map payment_status to status for backward compatibility
-        status: revenue.payment_status
-      };
+      });
       
       const { data, error } = await supabase
         .from('revenues')
@@ -105,15 +87,7 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       
       // Add the new revenue to the local state
       if (data && data[0]) {
-        const newRevenue: Revenue = {
-          ...data[0],
-          id: data[0].id,
-          date: new Date(data[0].date),
-          created_at: data[0].created_at ? new Date(data[0].created_at) : undefined,
-          payment_method: data[0].payment_method,
-          payment_status: data[0].payment_status || data[0].status,
-          source: data[0].source
-        };
+        const newRevenue: Revenue = mapDbToRevenue(data[0] as RevenueDB);
         setRevenues(prev => [newRevenue, ...prev]);
       }
       
@@ -132,13 +106,9 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       setLoading(true);
       
       // Prepare revenues with revenue numbers and ISO date strings
-      const revenuesWithNumbers = revenueItems.map(revenue => ({
+      const revenuesWithNumbers = revenueItems.map(revenue => mapRevenueToDb({
         ...revenue,
         revenue_number: `REV-${uuidv4().substring(0, 8).toUpperCase()}`,
-        date: revenue.date.toISOString(),
-        created_at: new Date().toISOString(),
-        // Map payment_status to status for backward compatibility
-        status: revenue.payment_status
       }));
       
       const { data, error } = await supabase
@@ -150,20 +120,7 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       
       // Add the new revenues to the local state
       if (data && data.length > 0) {
-        const newRevenues: Revenue[] = data.map(item => ({
-          id: item.id,
-          description: item.description,
-          amount: item.amount,
-          date: new Date(item.date),
-          source: item.source,
-          payment_method: item.payment_method,
-          payment_status: item.payment_status || item.status,
-          client_name: item.client_name,
-          notes: item.notes,
-          revenue_number: item.revenue_number,
-          user_id: item.user_id,
-          created_at: item.created_at ? new Date(item.created_at) : undefined
-        }));
+        const newRevenues: Revenue[] = data.map(item => mapDbToRevenue(item as RevenueDB));
         setRevenues(prev => [...newRevenues, ...prev]);
       }
       
@@ -180,15 +137,20 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
     try {
       setLoading(true);
       
-      // Prepare updates for Supabase
-      const updates = { 
-        ...revenueUpdates,
-        // Convert Date objects to ISO strings
-        date: revenueUpdates.date ? revenueUpdates.date.toISOString() : undefined,
-        created_at: revenueUpdates.created_at ? revenueUpdates.created_at.toISOString() : undefined,
-        // Map payment_status to status for backward compatibility
-        status: revenueUpdates.payment_status
-      };
+      // Prepare updates for Supabase, handling date conversions
+      const updates: any = {};
+      if (revenueUpdates.description) updates.description = revenueUpdates.description;
+      if (revenueUpdates.amount) updates.amount = revenueUpdates.amount;
+      if (revenueUpdates.date) updates.date = revenueUpdates.date.toISOString();
+      if (revenueUpdates.source) updates.source = revenueUpdates.source;
+      if (revenueUpdates.notes !== undefined) updates.notes = revenueUpdates.notes;
+      if (revenueUpdates.payment_method) updates.payment_method = revenueUpdates.payment_method;
+      if (revenueUpdates.payment_status) {
+        updates.payment_status = revenueUpdates.payment_status;
+        updates.status = revenueUpdates.payment_status; // Update both fields
+      }
+      if (revenueUpdates.client_name !== undefined) updates.client_name = revenueUpdates.client_name;
+      if (revenueUpdates.revenue_number) updates.revenue_number = revenueUpdates.revenue_number;
       
       const { data, error } = await supabase
         .from('revenues')
@@ -200,20 +162,7 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       
       // Update the revenue in local state
       if (data && data[0]) {
-        const updatedRevenue: Revenue = {
-          id: data[0].id,
-          description: data[0].description,
-          amount: data[0].amount,
-          date: new Date(data[0].date),
-          source: data[0].source,
-          payment_method: data[0].payment_method,
-          payment_status: data[0].payment_status || data[0].status,
-          client_name: data[0].client_name,
-          notes: data[0].notes,
-          revenue_number: data[0].revenue_number,
-          user_id: data[0].user_id,
-          created_at: data[0].created_at ? new Date(data[0].created_at) : undefined
-        };
+        const updatedRevenue: Revenue = mapDbToRevenue(data[0] as RevenueDB);
         
         setRevenues(prev =>
           prev.map(revenue => revenue.id === id ? updatedRevenue : revenue)
