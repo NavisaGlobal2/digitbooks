@@ -2,7 +2,6 @@
 import { ArrowDown, ArrowUp, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatNaira } from "@/utils/invoice/formatters";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface FinancialData {
   totalRevenue: number;
@@ -13,10 +12,9 @@ interface FinancialData {
 
 interface FinancialOverviewProps {
   data: FinancialData;
-  isLoading?: boolean;
 }
 
-const FinancialOverview = ({ data, isLoading = false }: FinancialOverviewProps) => {
+const FinancialOverview = ({ data }: FinancialOverviewProps) => {
   return (
     <div className="mb-2 relative">
       {/* Background decorative elements */}
@@ -34,13 +32,7 @@ const FinancialOverview = ({ data, isLoading = false }: FinancialOverviewProps) 
                 <ArrowDown className="text-green-500 h-5 w-5" />
               </div>
             </div>
-            {isLoading ? (
-              <Skeleton className="h-8 w-32 mb-2" />
-            ) : (
-              <div className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">
-                {formatNaira(data.totalRevenue)}
-              </div>
-            )}
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">{formatNaira(data.totalRevenue)}</div>
             <div className="flex items-center text-sm">
               <span className="text-muted-foreground">Cash inflow</span>
             </div>
@@ -56,13 +48,7 @@ const FinancialOverview = ({ data, isLoading = false }: FinancialOverviewProps) 
                 <ArrowUp className="text-purple-500 h-5 w-5" />
               </div>
             </div>
-            {isLoading ? (
-              <Skeleton className="h-8 w-32 mb-2" />
-            ) : (
-              <div className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-transparent">
-                {formatNaira(data.totalExpenses)}
-              </div>
-            )}
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-transparent">{formatNaira(data.totalExpenses)}</div>
             <div className="flex items-center text-sm">
               <span className="text-muted-foreground">Cash outflow</span>
             </div>
@@ -78,17 +64,9 @@ const FinancialOverview = ({ data, isLoading = false }: FinancialOverviewProps) 
                 <TrendingUp className="text-blue-500 h-5 w-5" />
               </div>
             </div>
-            {isLoading ? (
-              <Skeleton className="h-8 w-32 mb-2" />
-            ) : (
-              <div className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">
-                {formatNaira(data.netCashflow)}
-              </div>
-            )}
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-success mb-2 bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">{formatNaira(data.netCashflow)}</div>
             <div className="flex items-center text-sm">
-              <span className={data.positive ? "text-success" : "text-destructive"}>
-                {data.positive ? "Positive cashflow" : "Negative cashflow"}
-              </span>
+              <span className="text-success">Positive cashflow</span>
             </div>
           </CardContent>
         </Card>

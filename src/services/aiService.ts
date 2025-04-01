@@ -23,7 +23,7 @@ export const getAIInsights = async ({ query, financialData, userId, formatAsHuma
     const context = prepareQueryContext(query, financialData);
     
     // Log request details for debugging
-    logRequestDetails(query, context, financialData);
+    logRequestDetails(query, context);
 
     // Call the Edge Function to process the query
     const response = await callAnalysisFunction(query, context, userId, formatAsHuman);
@@ -54,17 +54,9 @@ function prepareQueryContext(query: string, financialData: any): string {
 /**
  * Logs request information for debugging purposes
  */
-function logRequestDetails(query: string, context: string, financialData: any): void {
+function logRequestDetails(query: string, context: string): void {
   console.log("Sending query to AI:", query);
   console.log("With context size:", context.length);
-  console.log("Financial data:", financialData ? 
-    `${Object.keys(financialData).length} categories available` : 
-    "No financial data available");
-  
-  // Log specific revenue data if available
-  if (financialData && financialData.totalRevenue !== undefined) {
-    console.log("Revenue data available:", financialData.totalRevenue);
-  }
 }
 
 /**
