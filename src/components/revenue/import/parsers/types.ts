@@ -1,30 +1,26 @@
 
 import { RevenueSource } from "@/types/revenue";
 
-export type ParsedTransactionType = 'debit' | 'credit';
-
-export interface SourceSuggestion {
-  source: RevenueSource;
-  confidence: number;
-}
-
 export interface ParsedTransaction {
   id: string;
-  date: string | Date;
+  date: string;
   description: string;
   amount: number;
-  type: ParsedTransactionType;
+  type: "debit" | "credit" | "unknown";
+  selected: boolean;
   source?: RevenueSource;
-  selected?: boolean;
-  sourceSuggestion?: SourceSuggestion;
-  batchId?: string;
-  originalDate?: string | Date;
-  originalAmount?: number | string;
-  preservedColumns?: Record<string, any>;
+  sourceSuggestion?: {
+    source: RevenueSource;
+    confidence: number;
+  };
+  originalDate?: string;
+  originalAmount?: string | number;
+  preservedColumns?: Record<string, string | number>;
 }
 
 export interface CSVParseResult {
   transactions: ParsedTransaction[];
+  fileName: string;
   headers: string[];
-  rawData: any[][];
+  rawData: any[];
 }

@@ -142,7 +142,7 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
             </p>
             <input
               type="file"
-              accept=".csv"
+              accept=".csv,.xlsx,.xls"
               className="hidden"
               onChange={handleFileChange}
               id="file-upload"
@@ -181,9 +181,9 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
           <div className="mt-4 text-sm text-gray-500">
             <p>File format requirements:</p>
             <ul className="list-disc list-inside mt-2">
-              <li>CSV format only</li>
-              <li>Required columns: date, description, amount</li>
-              <li>First row must be column headers</li>
+              <li>CSV or Excel format</li>
+              <li>Contains transaction data with dates and amounts</li>
+              <li>First row should be column headers</li>
             </ul>
           </div>
 
