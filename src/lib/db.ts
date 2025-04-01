@@ -37,7 +37,7 @@ export const useExpenses = () => {
       // Ensure numeric values
       return (data || []).map(expense => ({
         ...expense,
-        amount: parseFloat(expense.amount) || 0
+        amount: parseFloat(expense.amount as string) || 0
       }));
     } catch (error) {
       console.error("Error fetching expenses:", error);
@@ -63,7 +63,7 @@ export const useRevenues = () => {
       // Ensure numeric values
       return (data || []).map(revenue => ({
         ...revenue,
-        amount: parseFloat(revenue.amount) || 0
+        amount: parseFloat(revenue.amount as string) || 0
       }));
     } catch (error) {
       console.error("Error fetching revenues:", error);
