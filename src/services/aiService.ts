@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
+// Types for AI service
 interface AIQueryParams {
   query: string;
   financialData: any;
@@ -8,51 +9,87 @@ interface AIQueryParams {
   formatAsHuman?: boolean;
 }
 
-export const getAIInsights = async ({ query, financialData, userId, formatAsHuman = true }: AIQueryParams) => {
+interface EmbeddingResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Main function to get AI insights based on user queries and financial data
+ */
+export const getAIInsights = async ({ query, financialData, userId, formatAsHuman = true }: AIQueryParams): Promise<string> => {
   try {
-    // Generate embeddings for the financial data if it exists
-    let context = "";
-    if (financialData && Object.keys(financialData).length > 0) {
-      // First, generate and potentially store embeddings
-      await generateEmbeddings(financialData, userId);
-      
-      // Create a context with the user's financial data
-      context = JSON.stringify({
-        query,
-        financialData,
-      });
-    }
+    // Prepare context with financial data if it exists
+    const context = prepareQueryContext(query, financialData);
+    
+    // Log request details for debugging
+    logRequestDetails(query, context);
 
-    console.log("Sending query to AI:", query);
-    console.log("With context size:", context.length);
-
-    // Call the Supabase Edge Function
-    const { data, error } = await supabase.functions.invoke('analyze-financial-data', {
-      body: {
-        query,
-        context,
-        userId,
-        formatAsHuman,
-      },
-    });
-
-    if (error) {
-      console.error("Error calling AI service:", error);
-      throw new Error('I had trouble processing your message. Can you try asking me in a different way?');
-    }
-
-    console.log("AI response received:", data);
+    // Call the Edge Function to process the query
+    const response = await callAnalysisFunction(query, context, userId, formatAsHuman);
     
     // Return the conversational response
-    return data.response;
+    return response.data.response;
   } catch (err) {
     console.error("AI service error:", err);
     throw new Error('Sorry, I encountered an issue while processing your message. Let\'s try talking about something else?');
   }
 };
 
-// Function to generate embeddings for financial data
-async function generateEmbeddings(financialData: any, userId: string) {
+/**
+ * Prepares the context object for the AI query
+ */
+function prepareQueryContext(query: string, financialData: any): string {
+  if (!financialData || Object.keys(financialData).length === 0) {
+    return "";
+  }
+  
+  // Create a context with the user's financial data
+  return JSON.stringify({
+    query,
+    financialData,
+  });
+}
+
+/**
+ * Logs request information for debugging purposes
+ */
+function logRequestDetails(query: string, context: string): void {
+  console.log("Sending query to AI:", query);
+  console.log("With context size:", context.length);
+}
+
+/**
+ * Calls the analyze-financial-data edge function
+ */
+async function callAnalysisFunction(
+  query: string, 
+  context: string, 
+  userId: string, 
+  formatAsHuman: boolean
+) {
+  const { data, error } = await supabase.functions.invoke('analyze-financial-data', {
+    body: {
+      query,
+      context,
+      userId,
+      formatAsHuman,
+    },
+  });
+
+  if (error) {
+    console.error("Error calling AI service:", error);
+    throw new Error('I had trouble processing your message. Can you try asking me in a different way?');
+  }
+
+  console.log("AI response received:", data);
+  return { data };
+}
+
+/**
+ * Generates embeddings for financial data and stores them
+ */
+export async function generateEmbeddings(financialData: any, userId: string): Promise<EmbeddingResult> {
   try {
     // Call the embedding generation edge function
     const { data, error } = await supabase.functions.invoke('generate-embeddings', {
@@ -61,13 +98,13 @@ async function generateEmbeddings(financialData: any, userId: string) {
     
     if (error) {
       console.error("Error generating embeddings:", error);
-      return false;
+      return { success: false, error: error.message };
     }
     
     console.log("Embeddings generated successfully");
-    return true;
-  } catch (err) {
+    return { success: true };
+  } catch (err: any) {
     console.error("Error in embedding generation:", err);
-    return false;
+    return { success: false, error: err.message };
   }
 }
