@@ -1,27 +1,28 @@
 
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface RevenueFormActionsProps {
   onCancel: () => void;
-  isEdit: boolean;
+  isEdit?: boolean;
+  isSubmitting?: boolean;
 }
 
-const RevenueFormActions = ({ onCancel, isEdit }: RevenueFormActionsProps) => {
+const RevenueFormActions = ({ onCancel, isEdit = false, isSubmitting = false }: RevenueFormActionsProps) => {
   return (
-    <div className="flex justify-between gap-3">
-      <Button 
-        type="button" 
-        variant="outline" 
-        onClick={onCancel}
-        className="flex-1 h-12"
-      >
+    <div className="flex justify-end space-x-2">
+      <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
         Cancel
       </Button>
-      <Button 
-        type="submit" 
-        className="flex-1 h-12 bg-[#05D166] hover:bg-[#05D166]/80 text-white"
-      >
-        {isEdit ? "Update revenue" : "Save revenue"}
+      <Button type="submit" disabled={isSubmitting} className="bg-green-500 hover:bg-green-600 text-white">
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            {isEdit ? 'Saving...' : 'Adding...'}
+          </>
+        ) : (
+          isEdit ? 'Save changes' : 'Add revenue'
+        )}
       </Button>
     </div>
   );

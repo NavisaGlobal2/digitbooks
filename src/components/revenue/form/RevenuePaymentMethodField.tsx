@@ -4,9 +4,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Control } from "react-hook-form";
 
 const paymentMethods = [
-  { value: "cash", label: "Cash" },
-  { value: "card", label: "Card" },
   { value: "bank transfer", label: "Bank Transfer" },
+  { value: "cash", label: "Cash" },
+  { value: "card", label: "Card Payment" },
   { value: "crypto", label: "Cryptocurrency" },
   { value: "other", label: "Other" },
 ];
@@ -19,7 +19,7 @@ const RevenuePaymentMethodField = ({ control }: RevenuePaymentMethodFieldProps) 
   return (
     <FormField
       control={control}
-      name="paymentMethod"
+      name="payment_method"
       render={({ field }) => (
         <FormItem>
           <FormLabel className="text-sm font-medium">Payment method</FormLabel>
@@ -29,7 +29,7 @@ const RevenuePaymentMethodField = ({ control }: RevenuePaymentMethodFieldProps) 
           >
             <FormControl>
               <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select method" />
+                <SelectValue placeholder="Select payment method" />
               </SelectTrigger>
             </FormControl>
             <SelectContent>

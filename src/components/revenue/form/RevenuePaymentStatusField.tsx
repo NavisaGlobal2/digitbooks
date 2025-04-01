@@ -2,7 +2,6 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Control } from "react-hook-form";
-import { PaymentStatus } from "@/types/revenue";
 
 const paymentStatuses = [
   { value: "paid", label: "Paid" },
@@ -19,7 +18,7 @@ const RevenuePaymentStatusField = ({ control }: RevenuePaymentStatusFieldProps) 
   return (
     <FormField
       control={control}
-      name="paymentStatus"
+      name="payment_status"
       render={({ field }) => (
         <FormItem>
           <FormLabel className="text-sm font-medium">Payment status</FormLabel>
@@ -29,7 +28,7 @@ const RevenuePaymentStatusField = ({ control }: RevenuePaymentStatusFieldProps) 
           >
             <FormControl>
               <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select status" />
+                <SelectValue placeholder="Select payment status" />
               </SelectTrigger>
             </FormControl>
             <SelectContent>

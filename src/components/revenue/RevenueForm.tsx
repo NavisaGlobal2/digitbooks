@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Revenue } from "@/types/revenue";
 import { Form } from "@/components/ui/form";
-
 import { RevenueDialog } from "./RevenueDialog";
 import RevenueSourceField from "./form/RevenueSourceField";
 import RevenueDescriptionField from "./form/RevenueDescriptionField";
@@ -15,6 +14,7 @@ import RevenueClientNameField from "./form/RevenueClientNameField";
 import RevenueNotesField from "./form/RevenueNotesField";
 import RevenueFormActions from "./form/RevenueFormActions";
 import { revenueFormSchema, RevenueFormValues } from "./form/RevenueFormSchema";
+import { useState } from "react";
 
 interface RevenueFormProps {
   open: boolean;
@@ -25,6 +25,8 @@ interface RevenueFormProps {
 }
 
 const RevenueForm = ({ open, onOpenChange, onSubmit, defaultValues, isEdit = false }: RevenueFormProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm<RevenueFormValues>({
     resolver: zodResolver(revenueFormSchema),
     defaultValues: {
@@ -32,25 +34,35 @@ const RevenueForm = ({ open, onOpenChange, onSubmit, defaultValues, isEdit = fal
       amount: defaultValues?.amount || 0,
       date: defaultValues?.date ? new Date(defaultValues.date) : new Date(),
       source: defaultValues?.source || "sales",
-      paymentMethod: defaultValues?.paymentMethod || "bank transfer",
-      paymentStatus: defaultValues?.paymentStatus || "paid",
-      clientName: defaultValues?.clientName || "",
+      payment_method: defaultValues?.payment_method || "bank transfer",
+      payment_status: defaultValues?.payment_status || "paid",
+      client_name: defaultValues?.client_name || "",
       notes: defaultValues?.notes || "",
     },
   });
 
-  const handleSubmit = (values: RevenueFormValues) => {
-    onSubmit({
-      description: values.description,
-      amount: values.amount,
-      date: values.date,
-      source: values.source,
-      paymentMethod: values.paymentMethod,
-      paymentStatus: values.paymentStatus,
-      clientName: values.clientName || undefined,
-      notes: values.notes || undefined,
-    });
-    onOpenChange(false);
+  const handleSubmit = async (values: RevenueFormValues) => {
+    try {
+      setIsSubmitting(true);
+      
+      await onSubmit({
+        description: values.description,
+        amount: values.amount,
+        date: values.date,
+        source: values.source,
+        payment_method: values.payment_method,
+        payment_status: values.payment_status,
+        client_name: values.client_name || undefined,
+        notes: values.notes || undefined,
+        revenue_number: defaultValues?.revenue_number,
+      });
+      
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error submitting revenue form:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -71,7 +83,11 @@ const RevenueForm = ({ open, onOpenChange, onSubmit, defaultValues, isEdit = fal
           <RevenueNotesField control={form.control} />
           
           <div className="pt-4">
-            <RevenueFormActions onCancel={() => onOpenChange(false)} isEdit={isEdit} />
+            <RevenueFormActions 
+              onCancel={() => onOpenChange(false)} 
+              isEdit={isEdit} 
+              isSubmitting={isSubmitting} 
+            />
           </div>
         </form>
       </Form>

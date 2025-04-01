@@ -2,13 +2,13 @@
 import { z } from "zod";
 
 export const revenueFormSchema = z.object({
-  description: z.string().min(3, "Description must be at least 3 characters"),
-  amount: z.coerce.number().positive("Amount must be positive"),
+  description: z.string().min(1, "Description is required"),
+  amount: z.number().min(0.01, "Amount must be greater than 0"),
   date: z.date(),
-  source: z.enum(["sales", "services", "investments", "grants", "donations", "royalties", "rental", "consulting", "affiliate", "other"]),
-  paymentMethod: z.enum(["cash", "card", "bank transfer", "crypto", "other"]),
-  paymentStatus: z.enum(["paid", "pending", "overdue", "cancelled"]),
-  clientName: z.string().optional(),
+  source: z.string(),
+  payment_method: z.string(),
+  payment_status: z.string(),
+  client_name: z.string().optional(),
   notes: z.string().optional(),
 });
 
