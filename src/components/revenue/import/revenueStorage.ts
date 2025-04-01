@@ -44,7 +44,8 @@ export const saveTransactionsToDatabase = async (
       payment_method: 'bank transfer',
       status: 'paid',
       created_at: new Date().toISOString(),
-      user_id: userId
+      user_id: userId,
+      client_name: '' // Add empty client_name field
     }));
     
     // Store in revenues table
@@ -99,7 +100,8 @@ export const prepareRevenuesFromTransactions = async (
       payment_method: 'bank transfer',
       status: 'paid',
       created_at: new Date(),
-      notes: `Imported from bank statement: ${fileName}. Batch ID: ${batchId}`
+      notes: `Imported from bank statement: ${fileName}. Batch ID: ${batchId}`,
+      client_name: '' // Add empty client_name field
     }));
     
     return revenues;

@@ -736,6 +736,7 @@ export type Database = {
       revenues: {
         Row: {
           amount: number
+          client_name: string | null
           created_at: string
           date: string
           description: string
@@ -751,6 +752,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          client_name?: string | null
           created_at?: string
           date: string
           description: string
@@ -766,6 +768,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          client_name?: string | null
           created_at?: string
           date?: string
           description?: string

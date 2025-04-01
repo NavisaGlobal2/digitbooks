@@ -124,7 +124,8 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
         payment_method: "bank transfer",
         status: "paid",
         revenue_number: `REV-${Math.floor(Math.random() * 10000)}`,
-        notes: `Imported from bank statement: ${file?.name || "unknown"}`
+        notes: `Imported from bank statement: ${file?.name || "unknown"}`,
+        client_name: ""
       }));
       
       if (onRevenuesImported) {
