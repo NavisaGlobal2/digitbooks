@@ -209,7 +209,7 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
           open={showTaggingDialog}
           onOpenChange={setShowTaggingDialog}
           transactions={parsedTransactions}
-          onComplete={handleTaggingComplete}
+          onTaggingComplete={handleTaggingComplete}
           fileName={file?.name || "Unknown file"}
         />
       )}

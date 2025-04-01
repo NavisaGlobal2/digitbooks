@@ -15,13 +15,15 @@ interface RevenueTaggingDialogProps {
   onOpenChange: (open: boolean) => void;
   transactions: ParsedTransaction[];
   onTaggingComplete: (transactions: ParsedTransaction[]) => void;
+  fileName?: string;
 }
 
 const RevenueTaggingDialog = ({ 
   open, 
   onOpenChange,
   transactions,
-  onTaggingComplete
+  onTaggingComplete,
+  fileName = "unknown"
 }: RevenueTaggingDialogProps) => {
   const [localTransactions, setLocalTransactions] = useState<ParsedTransaction[]>([]);
   const [selectAll, setSelectAll] = useState(true);
