@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -126,13 +125,13 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
         status: "paid", // Make sure the status field is included
         revenue_number: `REV-${Math.floor(Math.random() * 10000)}`,
         notes: `Imported from bank statement: ${file?.name || "unknown"}`
+        // Remove client_name as it doesn't exist in the database schema
       }));
       
       if (onRevenuesImported) {
         // Call the callback to save the revenues in the parent component
         console.log("Importing revenues:", revenues);
         onRevenuesImported(revenues);
-        toast.success(`Successfully imported ${revenues.length} revenue entries`);
       } else {
         console.error("onRevenuesImported callback not provided");
         toast.error("Failed to import revenues: configuration error");

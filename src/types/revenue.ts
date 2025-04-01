@@ -1,4 +1,3 @@
-
 export type RevenueSource = 
   | 'sales' 
   | 'services' 
@@ -83,9 +82,8 @@ export function mapRevenueToDb(revenue: Omit<Revenue, "id">): any {
     created_at: new Date().toISOString(),
     // Map payment_status to status for database compatibility
     status: revenue.payment_status,
-    // Include these fields as they might be added to the schema later
+    // Include payment_method but omit client_name which doesn't exist in the schema
     payment_method: revenue.payment_method,
     payment_status: revenue.payment_status,
-    client_name: revenue.client_name,
   };
 }

@@ -1,4 +1,3 @@
-
 import * as XLSX from 'xlsx';
 import { toast } from "sonner";
 
@@ -22,6 +21,12 @@ export const ExcelService = {
   readFile: async (file: File): Promise<SheetData> => {
     return new Promise((resolve, reject) => {
       try {
+        // Check file size first
+        if (file.size > 10 * 1024 * 1024) {
+          reject(new Error('File is too large. Maximum size is 10MB'));
+          return;
+        }
+        
         const reader = new FileReader();
         
         reader.onload = (e) => {
@@ -36,12 +41,21 @@ export const ExcelService = {
             // Convert sheet to JSON
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
             
+            // Limit the number of rows to prevent browser freezing
+            const maxRows = 1000;
+            const limitedData = jsonData.slice(0, maxRows + 1);
+            
+            if (jsonData.length > maxRows) {
+              console.warn(`Excel file has ${jsonData.length} rows. Limiting to ${maxRows} rows to prevent performance issues.`);
+              toast.warning(`Large file detected. Only the first ${maxRows} rows will be processed.`);
+            }
+            
             // Identify headers (first row)
-            const headers = jsonData.length > 0 ? 
-              (jsonData[0] as any[]).map(cell => String(cell || '')) : [];
+            const headers = limitedData.length > 0 ? 
+              (limitedData[0] as any[]).map(cell => String(cell || '')) : [];
             
             // Get data rows (everything after first row)
-            const rows = jsonData.slice(1) as any[][];
+            const rows = limitedData.slice(1) as any[][];
             
             resolve({
               headers,
