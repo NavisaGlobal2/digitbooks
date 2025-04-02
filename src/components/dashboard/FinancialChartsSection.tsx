@@ -12,28 +12,16 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
-
-// Sample data for the pie charts
-const expenseData = [
-  { name: "Salaries", value: 55000, percentage: "31.5%", color: "#10B981" },
-  { name: "Rent", value: 35000, percentage: "20.1%", color: "#F87171" },
-  { name: "Utilities", value: 25000, percentage: "14.3%", color: "#1E293B" },
-  { name: "Marketing", value: 40000, percentage: "22.9%", color: "#93C5FD" },
-  { name: "Travel", value: 20000, percentage: "11.2%", color: "#9CA3AF" }
-];
-
-const revenueData = [
-  { name: "Product Sales", value: 75000, percentage: "42.6%", color: "#10B981" },
-  { name: "Services", value: 45000, percentage: "25.6%", color: "#F87171" },
-  { name: "Subscriptions", value: 30000, percentage: "17.0%", color: "#1E293B" },
-  { name: "Consulting", value: 15000, percentage: "8.5%", color: "#93C5FD" },
-  { name: "Other", value: 11000, percentage: "6.3%", color: "#9CA3AF" }
-];
+import { useFinancialBreakdown } from "@/hooks/useFinancialBreakdown";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const FinancialChartsSection = () => {
   const [filterPeriod, setFilterPeriod] = useState("Last six month");
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  
+  // Use our custom hook to fetch financial data
+  const { expenseData, revenueData, isLoading } = useFinancialBreakdown(filterPeriod);
 
   const handleCalendarSelect = (date: Date | undefined) => {
     setDate(date);
@@ -70,12 +58,15 @@ const FinancialChartsSection = () => {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
-              <CalendarComponent
-                mode="single"
-                selected={date}
-                onSelect={handleCalendarSelect}
-                initialFocus
-              />
+              <div className="p-3">
+                <p className="px-2 py-2 text-sm text-muted-foreground">Select a specific month:</p>
+                <CalendarComponent
+                  mode="single"
+                  selected={date}
+                  onSelect={handleCalendarSelect}
+                  initialFocus
+                />
+              </div>
             </PopoverContent>
           </Popover>
           
@@ -116,10 +107,18 @@ const FinancialChartsSection = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-5 relative">
         <div className="transform transition-all duration-300 hover:scale-[1.01] hover:shadow-md">
-          <PieChartCard title="Expense breakdown" data={expenseData} />
+          {isLoading ? (
+            <Skeleton className="w-full h-[420px] rounded-lg" />
+          ) : (
+            <PieChartCard title="Expense breakdown" data={expenseData} />
+          )}
         </div>
         <div className="transform transition-all duration-300 hover:scale-[1.01] hover:shadow-md">
-          <PieChartCard title="Revenue sources" data={revenueData} />
+          {isLoading ? (
+            <Skeleton className="w-full h-[420px] rounded-lg" />
+          ) : (
+            <PieChartCard title="Revenue sources" data={revenueData} />
+          )}
         </div>
       </div>
       
