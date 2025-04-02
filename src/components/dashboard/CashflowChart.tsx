@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import {
   Area,
   AreaChart,
@@ -10,22 +9,7 @@ import {
   YAxis,
 } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
-
-// Sample data for the chart
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-const generateRandomData = () => {
-  return MONTHS.map(month => {
-    const inflow = Math.floor(Math.random() * 10000) + 2000;
-    const outflow = Math.floor(Math.random() * 8000) + 1000;
-    
-    return {
-      name: month,
-      inflow,
-      outflow,
-    };
-  });
-};
+import { useCashflowData, CashflowDataPoint } from "@/hooks/useCashflowData";
 
 const chartConfig = {
   inflow: {
@@ -38,8 +22,36 @@ const chartConfig = {
   }
 };
 
-const CashflowChart = () => {
-  const [data] = useState(generateRandomData());
+interface CashflowChartProps {
+  data?: CashflowDataPoint[];
+  isLoading?: boolean;
+}
+
+const CashflowChart = ({ data: propData, isLoading: propIsLoading }: CashflowChartProps) => {
+  const { data: fetchedData, isLoading: fetchedIsLoading } = useCashflowData(6);
+  
+  // Use provided data or fetch it if not provided
+  const data = propData || fetchedData;
+  const isLoading = propIsLoading !== undefined ? propIsLoading : fetchedIsLoading;
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full w-full">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-dashed border-green-500"></div>
+      </div>
+    );
+  }
+  
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full w-full text-muted-foreground text-center">
+        <div>
+          <p>No cashflow data available</p>
+          <p className="text-xs mt-1">Try adding some revenues and expenses</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <ChartContainer

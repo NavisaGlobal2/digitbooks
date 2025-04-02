@@ -12,11 +12,15 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { useCashflowData } from "@/hooks/useCashflowData";
 
 const CashflowSection = () => {
-  const [filterPeriod, setFilterPeriod] = useState("Last six month");
+  const [filterPeriod, setFilterPeriod] = useState("Last six months");
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [periodMonths, setPeriodMonths] = useState(6);
+  
+  const { data, isLoading } = useCashflowData(periodMonths);
 
   const handleCalendarSelect = (date: Date | undefined) => {
     setDate(date);
@@ -35,6 +39,13 @@ const CashflowSection = () => {
       toast.success("Filter options opened");
     }
   };
+  
+  const handlePeriodChange = (months: number, label: string) => {
+    setPeriodMonths(months);
+    setFilterPeriod(label);
+    setIsFilterOpen(false);
+    toast.success(`Showing data for ${label}`);
+  };
 
   return (
     <Card className="border-none shadow-sm">
@@ -49,12 +60,39 @@ const CashflowSection = () => {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
-              <CalendarComponent
-                mode="single"
-                selected={date}
-                onSelect={handleCalendarSelect}
-                initialFocus
-              />
+              <div className="p-2">
+                <div className="space-y-2">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-left" 
+                    onClick={() => handlePeriodChange(3, "Last three months")}
+                  >
+                    Last three months
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-left" 
+                    onClick={() => handlePeriodChange(6, "Last six months")}
+                  >
+                    Last six months
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-left" 
+                    onClick={() => handlePeriodChange(12, "Last twelve months")}
+                  >
+                    Last twelve months
+                  </Button>
+                </div>
+                <div className="border-t my-2"></div>
+                <p className="px-2 py-1 text-xs text-muted-foreground">Or select a specific month:</p>
+                <CalendarComponent
+                  mode="single"
+                  selected={date}
+                  onSelect={handleCalendarSelect}
+                  initialFocus
+                />
+              </div>
             </PopoverContent>
           </Popover>
           
@@ -94,7 +132,7 @@ const CashflowSection = () => {
       </CardHeader>
       <CardContent className="px-3 sm:px-4 md:px-6 pb-3 sm:pb-4">
         <div className="h-[200px] sm:h-[260px] md:h-[320px]">
-          <CashflowChart />
+          <CashflowChart data={data} isLoading={isLoading} />
         </div>
       </CardContent>
     </Card>
