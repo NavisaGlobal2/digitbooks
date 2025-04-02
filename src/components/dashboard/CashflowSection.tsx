@@ -69,13 +69,6 @@ const CashflowSection = () => {
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start text-left py-3 px-4 text-base hover:bg-green-100 rounded-md" 
-                    onClick={() => handlePeriodChange(3, "Last three months")}
-                  >
-                    Last three months
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start text-left py-3 px-4 text-base hover:bg-green-100 rounded-md" 
                     onClick={() => handlePeriodChange(6, "Last six months")}
                   >
                     Last six months
