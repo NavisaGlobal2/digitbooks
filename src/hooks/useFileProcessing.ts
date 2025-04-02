@@ -122,8 +122,8 @@ export const useFileProcessing = () => {
         },
         resetProgress,
         completeProgress,
-        isCancelled,
-        setIsWaitingForServer,
+        true, // useAIFormatting 
+        'expense', // context
         preferredProvider || preferredAIProvider
       );
     } catch (error: any) {

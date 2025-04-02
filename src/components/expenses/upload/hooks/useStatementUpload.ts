@@ -161,10 +161,9 @@ export const useStatementUpload = (
         },
         resetProgress,
         completeProgress,
-        isCancelled,
-        setIsWaitingForServer,
-        preferredAIProvider,
-        useAIFormatting
+        useAIFormatting,
+        'expense',
+        preferredAIProvider
       );
     } catch (error) {
       console.error("Unexpected error in parseFile:", error);

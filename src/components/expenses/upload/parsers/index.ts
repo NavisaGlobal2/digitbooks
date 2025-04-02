@@ -41,10 +41,9 @@ export const parseStatementFile = (
         },
         undefined,
         undefined,
-        undefined,
-        undefined,
-        undefined,
-        options.useAIFormatting ?? true // Use AI formatting by default
+        options.useAIFormatting ?? true,
+        options.context ?? 'expense',
+        options.preferredProvider ?? 'anthropic'
       );
     } else {
       onError(`Unsupported file format: ${fileExt || 'unknown'}. Currently only CSV and Excel files are supported.`);
