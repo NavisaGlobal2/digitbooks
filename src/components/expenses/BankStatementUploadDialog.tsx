@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useExpenses } from "@/contexts/ExpenseContext";
@@ -48,26 +47,42 @@ const BankStatementUploadDialog = ({
       return;
     }
     
-    // Pre-select all debit transactions by default
-    const preSelectedTransactions = transactions.map(tx => ({
-      ...tx,
-      selected: tx.type === 'debit' // Automatically select debit transactions
-    }));
-    
-    // Calculate some stats
-    const debits = transactions.filter(tx => tx.type === 'debit').length;
-    const credits = transactions.filter(tx => tx.type === 'credit').length;
-    
-    setProcessingStats({
-      total: transactions.length,
-      credits,
-      debits,
-      message: metadata?.message || `Processed ${transactions.length} transactions`
-    });
-    
-    setParsedTransactions(preSelectedTransactions);
-    setProcessingComplete(true);
-    setShowTaggingDialog(true);
+    try {
+      // Convert amounts to numbers if they're strings
+      const validatedTransactions = transactions.map(tx => ({
+        ...tx,
+        amount: typeof tx.amount === 'number' ? tx.amount : parseFloat(String(tx.amount).replace(/[^\d.-]/g, '')),
+        selected: tx.selected !== undefined ? tx.selected : (tx.type === 'debit')
+      }));
+      
+      // Filter out any transactions with invalid amounts (NaN)
+      const filteredTransactions = validatedTransactions.filter(tx => !isNaN(tx.amount));
+      
+      if (filteredTransactions.length === 0) {
+        toast.error("No valid transactions found after filtering");
+        return;
+      }
+      
+      // Calculate some stats
+      const debits = filteredTransactions.filter(tx => tx.type === 'debit').length;
+      const credits = filteredTransactions.filter(tx => tx.type === 'credit').length;
+      
+      setProcessingStats({
+        total: filteredTransactions.length,
+        credits,
+        debits,
+        message: metadata?.message || `Processed ${filteredTransactions.length} transactions`
+      });
+      
+      setParsedTransactions(filteredTransactions);
+      setProcessingComplete(true);
+      setShowTaggingDialog(true);
+      
+      console.log("Opening tagging dialog with transactions:", filteredTransactions.length);
+    } catch (error) {
+      console.error("Error processing transactions:", error);
+      toast.error("Error processing transactions. Please try again.");
+    }
   };
 
   const {
