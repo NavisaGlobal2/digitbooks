@@ -45,8 +45,9 @@ export interface RevenueDB {
   status: string;
   reference?: string;
   created_at?: string;
-  payment_method: string;
-  payment_status: string;
+  // These fields might not exist in the DB schema yet
+  payment_method?: string;
+  payment_status?: string;
   client_name?: string;
 }
 
@@ -62,10 +63,11 @@ export function mapDbToRevenue(dbRevenue: RevenueDB): Revenue {
     revenue_number: dbRevenue.revenue_number,
     user_id: dbRevenue.user_id,
     created_at: dbRevenue.created_at ? new Date(dbRevenue.created_at) : undefined,
-    payment_method: dbRevenue.payment_method as PaymentMethod,
-    payment_status: dbRevenue.payment_status as PaymentStatus,
+    // Map the fields correctly based on DB structure
+    payment_method: (dbRevenue.payment_method || 'bank transfer') as PaymentMethod,
+    payment_status: (dbRevenue.payment_status || dbRevenue.status) as PaymentStatus,
     client_name: dbRevenue.client_name,
-    status: dbRevenue.status as PaymentStatus
+    status: (dbRevenue.payment_status || dbRevenue.status) as PaymentStatus
   };
 }
 
@@ -79,9 +81,8 @@ export function mapRevenueToDb(revenue: Omit<Revenue, "id">): any {
     notes: revenue.notes,
     revenue_number: revenue.revenue_number,
     created_at: new Date().toISOString(),
-    payment_method: revenue.payment_method,
-    payment_status: revenue.payment_status,
-    status: revenue.payment_status,
-    client_name: revenue.client_name
+    // Only include fields that exist in the database schema
+    status: revenue.payment_status
+    // Remove payment_method, payment_status, and client_name as they don't exist in the schema
   };
 }
