@@ -39,7 +39,7 @@ const BankStatementUploadDialog = ({
     message: string;
   } | null>(null);
   
-  const handleTransactionsParsed = (transactions: ParsedTransaction[], metadata?: any) => {
+  const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
     console.log(`Received ${transactions.length} parsed transactions`);
     
     if (!transactions || transactions.length === 0) {
@@ -71,7 +71,7 @@ const BankStatementUploadDialog = ({
         total: filteredTransactions.length,
         credits,
         debits,
-        message: metadata?.message || `Processed ${filteredTransactions.length} transactions`
+        message: responseMetadata?.message || `Processed ${filteredTransactions.length} transactions`
       });
       
       setParsedTransactions(filteredTransactions);
