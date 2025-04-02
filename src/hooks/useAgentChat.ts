@@ -1,7 +1,7 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Message } from "@/types/agent";
-import { supabase } from "@/integrations/supabase/client";
+import { getAIInsights } from "@/services/aiService";
 import { useAuth } from "@/contexts/auth";
 import { useFinancialInsights } from "@/hooks/useFinancialInsights";
 import { toast } from "sonner";
@@ -20,7 +20,7 @@ export const useAgentChat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const { user } = useAuth();
   const { financialData, isLoading: isLoadingFinancialData } = useFinancialInsights();
-  
+
   const handleSendMessage = async (input: string) => {
     if (!input.trim()) return;
     
@@ -41,44 +41,34 @@ export const useAgentChat = () => {
     setIsTyping(true);
 
     try {
-      // Prepare conversation history for context (excluding the welcome message)
-      const conversationHistory = messages
-        .filter(msg => msg.id !== "welcome")
-        .map(msg => ({
-          content: msg.content,
-          sender: msg.sender
-        }));
-      
-      // Ensure minimum typing time for UX
-      const minTypingTime = 1500;
+      // Always include financial data for better responses - the AI will use it when relevant
+      const minTypingTime = 1200; // 1.2 second minimum "thinking" time
       const startTime = Date.now();
       
-      console.log("Sending query to Anthropic with financial data context");
+      // Log data being sent to ensure it's complete
+      console.log("Sending financial data to AI:", 
+        financialData ? 
+        `${Object.keys(financialData).length} categories` : 
+        "No financial data available");
       
-      // Call our edge function with the user's message and financial data
-      const { data, error } = await supabase.functions.invoke('chat-with-anthropic', {
-        body: {
-          query: input,
-          financialData: financialData || {},
-          conversationHistory: conversationHistory
-        },
+      // Get AI response
+      const response = await getAIInsights({
+        query: input,
+        financialData: financialData || {}, // Always include financial data
+        userId: user.id,
+        formatAsHuman: true
       });
 
-      if (error) {
-        console.error("Error calling Anthropic:", error);
-        throw new Error(error.message || "Failed to get response from assistant");
-      }
-
-      // Ensure typing indicator shows for at least the minimum time for better UX
+      // Ensure typing indicator shows for at least the minimum time
       const elapsedTime = Date.now() - startTime;
       if (elapsedTime < minTypingTime) {
         await new Promise(resolve => setTimeout(resolve, minTypingTime - elapsedTime));
       }
 
-      // Add AI response message
+      // Add AI message
       const agentMessage: Message = {
         id: Date.now().toString(),
-        content: data.response || "I'm sorry, I couldn't process that message properly.",
+        content: response,
         sender: "agent",
         timestamp: new Date(),
       };

@@ -76,8 +76,8 @@ export const useFileProcessing = () => {
         },
         resetProgress,
         completeProgress,
-        true, // useAIFormatting
-        'expense', // context 
+        isCancelled,
+        setIsWaitingForServer,
         preferredProvider
       );
     } catch (error: any) {

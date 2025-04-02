@@ -22,60 +22,56 @@ export const prepareExpensesFromTransactions = (
 
   console.log(`Preparing ${selectedAndTagged.length} expenses from ${transactions.length} transactions`);
 
-  // If no transactions are selected, return an empty array
-  if (selectedAndTagged.length === 0) {
-    return [];
-  }
-
   return selectedAndTagged.map((transaction) => {
     // Use originalDate if available, otherwise use the processed date
     const transactionDate = transaction.originalDate || transaction.date;
     
     // Convert to Date object - but handle string or Date inputs
+    // Important: Try to preserve the exact date format from the original Excel
     let dateObj: Date;
     
     if (transactionDate instanceof Date) {
       // If it's already a Date object, use it directly
       dateObj = transactionDate;
     } else if (typeof transactionDate === 'string') {
-      try {
-        // Try to parse the date string
+      // Handle different date formats from Excel
+      // Try to parse the date in a way that respects the original format
+      if (transactionDate.match(/^\d{1,2}\/\d{1,2}\/\d{2,4}$/)) {
+        // Format like MM/DD/YYYY or DD/MM/YYYY
+        const parts = transactionDate.split('/');
+        // If the last part is a 2-digit year, convert it to 4 digits
+        if (parts[2].length === 2) {
+          parts[2] = '20' + parts[2];
+        }
+        // Try both MM/DD/YYYY and DD/MM/YYYY interpretations
+        // (browser default usually interprets as MM/DD/YYYY)
         dateObj = new Date(transactionDate);
-        
-        // Check if date is valid
-        if (isNaN(dateObj.getTime())) {
-          console.warn(`Invalid date: ${transactionDate}, using current date`);
+      } else if (transactionDate.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+        // Format like YYYY-MM-DD (ISO format)
+        dateObj = new Date(transactionDate);
+      } else {
+        // For any other format, use the built-in parser
+        // but be careful with ambiguous formats
+        try {
+          dateObj = new Date(transactionDate);
+        } catch (e) {
+          // If parsing fails, use current date as fallback
+          console.warn(`Failed to parse date '${transactionDate}', using current date instead`);
           dateObj = new Date();
         }
-      } catch (e) {
-        console.warn(`Failed to parse date '${transactionDate}', using current date instead`);
-        dateObj = new Date();
       }
     } else {
       // Fallback if we have neither Date nor string
       dateObj = new Date();
     }
     
-    // Get amount and ensure it's positive for expenses
-    let amount: number;
-    try {
-      if (typeof transaction.amount === 'number') {
-        amount = Math.abs(transaction.amount);
-      } else if (typeof transaction.amount === 'string') {
-        amount = Math.abs(parseFloat(transaction.amount));
-      } else {
-        amount = 0;
-      }
-    } catch (e) {
-      console.warn(`Failed to parse amount: ${transaction.amount}, using 0`);
-      amount = 0;
-    }
+    // Get original amount if available for display
+    const displayAmount = transaction.originalAmount || transaction.amount;
     
     // Get description from original data if available
     const description = transaction.preservedColumns?.description || 
                         transaction.preservedColumns?.narrative ||
-                        transaction.description || 
-                        "Unknown transaction";
+                        transaction.description;
     
     // Default category if none is provided
     const category = transaction.category || "other";
@@ -83,12 +79,12 @@ export const prepareExpensesFromTransactions = (
     // Create the expense object using the original data where possible
     return {
       id: uuidv4(), // Generate a new ID for each expense
-      amount, // Use the validated amount
+      amount: Math.abs(transaction.amount), // Ensure amount is positive
       date: dateObj, // Use the properly parsed date
-      description, // Use the extracted description
+      description: description,
       category: category as ExpenseCategory, // Type cast to ExpenseCategory
       vendor: inferVendorFromDescription(description),
-      status: "pending", // Use "pending" status to match ExpenseStatus type
+      status: "pending", // Changed from "completed" to "pending" to match ExpenseStatus type
       paymentMethod: "bank transfer",
       fromStatement: true,
       batchId: batchId,
