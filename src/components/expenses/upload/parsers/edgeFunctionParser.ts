@@ -55,16 +55,32 @@ export const parseViaEdgeFunction = async (
       return onError("No valid transactions found in the uploaded file. Please check the file format.");
     }
 
+    // Filter out invalid transactions (zero amount and unknown description)
+    const validTransactions = data.transactions.filter((tx: any) => {
+      const amount = typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount || "0");
+      const hasValidAmount = !isNaN(amount) && amount !== 0;
+      const hasValidDescription = tx.description && tx.description !== "Unknown transaction";
+      return hasValidAmount && hasValidDescription;
+    });
+
+    if (validTransactions.length === 0) {
+      console.error("No valid transactions after filtering", data);
+      return onError("No valid transactions found in the uploaded file. All transactions had zero amounts or missing descriptions.");
+    }
+
     // Ensure each transaction has the required fields
-    const processedTransactions = data.transactions.map((tx: any, index: number) => {
+    const processedTransactions = validTransactions.map((tx: any, index: number) => {
+      // Parse amount to ensure it's a number
+      const parsedAmount = typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount || "0");
+      
       // Create a valid transaction object with defaults for missing fields
       return {
         id: tx.id || `tx-${index}-${Date.now()}`,
         date: tx.date || new Date().toISOString(),
-        description: tx.description || "Unknown transaction",
-        amount: typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount || "0"),
-        type: tx.type || (parseFloat(tx.amount || "0") < 0 ? "debit" : "credit"),
-        selected: tx.type === "debit" || parseFloat(tx.amount || "0") < 0,
+        description: tx.description || "Transaction " + (index + 1),
+        amount: isNaN(parsedAmount) ? 0 : parsedAmount,
+        type: tx.type || (parsedAmount < 0 ? "debit" : "credit"),
+        selected: tx.type === "debit" || parsedAmount < 0,
         category: tx.category || "",
         source: tx.source || "",
         originalDate: tx.originalDate || tx.date,
