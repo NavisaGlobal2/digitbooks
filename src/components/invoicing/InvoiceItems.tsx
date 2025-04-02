@@ -31,11 +31,11 @@ const InvoiceItems = ({ invoiceItems, setInvoiceItems, addInvoiceItem }: Invoice
   };
 
   return (
-    <div className="bg-white p-4 sm:p-6 rounded-lg border border-border">
+    <div className="bg-white p-6 rounded-lg border border-border">
       <h3 className="text-lg font-medium mb-4">Itemized products/services</h3>
       {invoiceItems.map((item, index) => (
-        <div key={index} className="mb-4 border border-gray-200 rounded-md p-3 sm:p-4">
-          <div className="mb-3 sm:mb-4">
+        <div key={index} className="mb-4 border border-gray-200 rounded-md p-4">
+          <div className="mb-4">
             <Label htmlFor={`description-${index}`}>Description</Label>
             <Input 
               id={`description-${index}`} 
@@ -44,7 +44,7 @@ const InvoiceItems = ({ invoiceItems, setInvoiceItems, addInvoiceItem }: Invoice
               onChange={(e) => handleItemChange(index, 'description', e.target.value)}
             />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3 sm:mb-4">
+          <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
               <Label htmlFor={`quantity-${index}`}>Quantity</Label>
               <Input 
@@ -67,7 +67,7 @@ const InvoiceItems = ({ invoiceItems, setInvoiceItems, addInvoiceItem }: Invoice
                 onChange={(e) => handleItemChange(index, 'price', e.target.value)}
               />
             </div>
-            <div className="col-span-2 sm:col-span-1">
+            <div>
               <Label htmlFor={`tax-${index}`}>Tax (%)</Label>
               <Input 
                 id={`tax-${index}`} 
