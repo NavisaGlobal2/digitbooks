@@ -40,7 +40,5 @@ enable_signup = true
 enable_confirmations = true
 
 [functions]
-port = 54321
-serve_port = 54327
 [functions.generate-ai-insights]
 verify_jwt = true
