@@ -56,7 +56,7 @@ const Navigation = () => {
             )}
           </button>
           
-          <Link to="/auth" className="ml-4">
+          <Link to="/signup" className="ml-4">
             <Button className="bg-[#05D166] hover:bg-[#05D166]/80 text-white">
               Get Started
             </Button>
