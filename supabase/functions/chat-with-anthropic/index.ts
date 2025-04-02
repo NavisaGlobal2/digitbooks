@@ -66,9 +66,7 @@ serve(async (req) => {
     Your goal is to be helpful and engaging, making the conversation feel natural and enjoyable.`;
 
     // Convert conversation history to message format
-    const messages = [
-      { role: "system", content: systemPrompt }
-    ];
+    const messages = [];
     
     // Add conversation history
     if (conversationHistory && Array.isArray(conversationHistory)) {
@@ -104,6 +102,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "claude-3-haiku-20240307",
+        system: systemPrompt,
         max_tokens: 1000,
         messages: messages
       })
