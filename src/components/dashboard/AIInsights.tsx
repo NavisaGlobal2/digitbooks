@@ -5,7 +5,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAIInsights } from "@/hooks/useAIInsights";
-import { useState } from "react";
 
 interface InsightProps {
   message: string;
@@ -54,14 +53,7 @@ const Insight = ({ message, type }: InsightProps) => {
 };
 
 const AIInsights = () => {
-  const { insights, isLoading, error, refreshInsights } = useAIInsights();
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await refreshInsights();
-    setIsRefreshing(false);
-  };
+  const { insights, isLoading, error, refreshInsights, isRefreshing } = useAIInsights();
 
   return (
     <Card className="border-none shadow-sm h-full">
@@ -73,7 +65,7 @@ const AIInsights = () => {
         <Button 
           variant="outline" 
           size="sm"
-          onClick={handleRefresh}
+          onClick={refreshInsights}
           disabled={isLoading || isRefreshing}
           className="h-8 w-8 p-0"
         >
@@ -83,7 +75,7 @@ const AIInsights = () => {
       </CardHeader>
       <CardContent className="px-4 md:px-6 pb-6">
         <div className="space-y-2">
-          {isLoading ? (
+          {isLoading || isRefreshing ? (
             // Loading skeleton
             Array(5).fill(0).map((_, i) => (
               <div key={i} className="flex items-center mb-2">
@@ -93,7 +85,7 @@ const AIInsights = () => {
             ))
           ) : error ? (
             // Error state
-            <Alert className="bg-error/10 border-error/30 text-error border">
+            <Alert className="bg-error/10 border-error/30 text-error border mb-2">
               <AlertDescription className="flex items-center text-xs">
                 <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />
                 Failed to load insights. Please try again later.

@@ -42,32 +42,55 @@ Based on the provided financial data, generate 5 insights that are:
 4. Well-categorized - use "success" for positive trends, "warning" for concerns, "error" for serious issues, and "info" for neutral observations`;
 
     try {
-      // Call Anthropic API
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-          model: "claude-3-haiku-20240307",
-          max_tokens: 1024,
-          system: systemPrompt,
-          messages: [
-            {
-              role: "user",
-              content: `Here is the financial data to analyze: ${JSON.stringify(financialData)}. 
-              Generate 5 insights formatted as a JSON array of objects with "message" and "type" properties.`
-            }
-          ]
-        }),
-      });
+      // Call Anthropic API with retries
+      let retries = 2;
+      let response;
+      let error;
+      
+      while (retries >= 0) {
+        try {
+          response = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": ANTHROPIC_API_KEY,
+              "anthropic-version": "2023-06-01"
+            },
+            body: JSON.stringify({
+              model: "claude-3-haiku-20240307",
+              max_tokens: 1024,
+              system: systemPrompt,
+              messages: [
+                {
+                  role: "user",
+                  content: `Here is the financial data to analyze: ${JSON.stringify(financialData)}. 
+                  Generate 5 insights formatted as a JSON array of objects with "message" and "type" properties.`
+                }
+              ]
+            }),
+          });
+          
+          if (response.ok) {
+            break;
+          }
+          
+          error = await response.text();
+          console.error(`Attempt ${2-retries} failed with status ${response.status}: ${error}`);
+        } catch (err) {
+          error = err;
+          console.error(`Attempt ${2-retries} failed with error:`, err);
+        }
+        
+        retries--;
+        if (retries >= 0) {
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * (2-retries)));
+        }
+      }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Anthropic API error:", errorData);
-        throw new Error(`Anthropic API error: ${errorData.error?.message || "Unknown error"}`);
+      if (!response || !response.ok) {
+        console.error("All attempts failed:", error);
+        throw new Error(`Failed to connect to Anthropic API: ${error}`);
       }
 
       const data = await response.json();
@@ -92,6 +115,8 @@ Based on the provided financial data, generate 5 insights that are:
             ? insight.type 
             : "info"
         })).slice(0, 5);
+
+        console.log("Successfully generated insights:", insights);
       } catch (error) {
         console.error("Error parsing insights:", error, "Raw content:", content);
         throw new Error("Failed to parse insights from AI response");
