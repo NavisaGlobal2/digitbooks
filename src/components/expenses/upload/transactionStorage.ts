@@ -1,9 +1,8 @@
 
 import { ParsedTransaction } from "./parsers/types";
-import { Expense } from "@/types/expense";
+import { Expense, ExpenseStatus, ExpenseCategory } from "@/types/expense";
 import { v4 as uuidv4 } from "uuid";
 import { saveTransactionsToDatabase } from "./storage/databaseOperations";
-import { ExpenseCategory } from "@/types/expense";
 import { inferVendorFromDescription } from "./storage/vendorInference";
 
 export { saveTransactionsToDatabase } from "./storage/databaseOperations";

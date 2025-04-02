@@ -68,9 +68,8 @@ export const addTeamMember = async (
       token: string;
     }
 
-    // Call the RPC function using the correct type parameters
-    // First parameter is the function name (as a string literal type)
-    const { data, error: inviteError } = await supabase.rpc<TeamInviteResponse>(
+    // Call the RPC function with proper type parameters
+    const { data, error: inviteError } = await supabase.rpc<"create_team_invite", TeamInviteResponse>(
       'create_team_invite', 
       {
         p_name: name,
@@ -84,8 +83,12 @@ export const addTeamMember = async (
       throw inviteError;
     }
 
-    // Safely access the token property with type checking
-    const token = data?.token;
+    // Safely access the token property
+    if (!data) {
+      throw new Error("Failed to get invitation token");
+    }
+    
+    const token = data.token;
     if (!token) {
       throw new Error("Failed to get invitation token");
     }
