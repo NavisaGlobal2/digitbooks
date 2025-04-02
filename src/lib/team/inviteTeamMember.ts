@@ -1,104 +1,94 @@
 
-import { TeamMember, TeamMemberRole } from "@/types/teamMember";
+import { supabase } from "@/integrations/supabase/client";
+import { TeamMemberRole } from "@/types/teamMember";
 import { toast } from "sonner";
-import { handleTeamError } from "./teamMemberUtils";
+import { canManageTeam } from "./userPermissions";
+import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from "@/contexts/auth";
 
-// Flag to control database connectivity - must be the same as in fetchTeamMembers.ts
-const OFFLINE_MODE = false;
-
-export const inviteTeamMember = async (teamMember: Omit<TeamMember, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-  if (OFFLINE_MODE) {
-    console.log("Running in offline mode - simulating team member invite");
-    
-    const mockTeamMember = {
-      id: `mock-${Date.now()}`,
-      user_id: 'offline-user',
-      name: teamMember.name,
-      email: teamMember.email,
-      role: teamMember.role,
-      status: 'pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    } as TeamMember;
-    
-    toast.success(`Invitation sent to ${teamMember.email} (offline mode)`);
-    return mockTeamMember;
-  }
-
+/**
+ * Invites a new team member via email
+ * @param name - The name of the person being invited
+ * @param email - The email address to send the invitation to
+ * @param role - The role to assign to the new team member
+ * @returns Promise with the invitation result
+ */
+export const inviteTeamMember = async (
+  name: string,
+  email: string,
+  role: TeamMemberRole
+): Promise<{ id: string; token: string }> => {
   try {
-    console.log("Attempting to invite team member:", teamMember);
-    
-    // Use the database function we created
-    const { supabase } = await import("@/integrations/supabase/client");
+    // Verify the current user has permission to invite team members
+    const hasPermission = await canManageTeam();
+    if (!hasPermission) {
+      throw new Error("You don't have permission to invite team members");
+    }
+
+    // Create a database function call to handle the invitation
     const { data, error } = await supabase.rpc('create_team_invite', {
-      p_name: teamMember.name,
-      p_email: teamMember.email,
-      p_role: teamMember.role
+      p_name: name,
+      p_email: email,
+      p_role: role
     });
-    
+
     if (error) {
-      console.error("Error inviting team member:", error);
+      console.error("Supabase error creating team invitation:", error);
+      // Check for specific error messages
+      if (error.message.includes("role")) {
+        throw new Error("You don't have permission to assign this role");
+      }
       throw error;
     }
-    
-    console.log("Invitation created successfully, response:", data);
-    
-    // Properly handle the response, which should be a JSONB object
-    const responseData = data as { id: string; token: string };
-    
-    if (!responseData || typeof responseData !== 'object' || !responseData.id) {
-      console.error("Unexpected response format:", responseData);
-      throw new Error("Invalid response format from server");
+
+    // Get current user info for the email
+    const { data: { user } } = await supabase.auth.getUser();
+    const inviterName = user?.user_metadata?.name || user?.email || "Your team admin";
+
+    // Send the invitation email via edge function
+    const inviteResponse = await fetch(`${import.meta.env.VITE_SUPABASE_FUNCTIONS_URL}/send-team-invitation`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+      },
+      body: JSON.stringify({
+        token: data.token,
+        email,
+        inviterName,
+        role,
+        name
+      })
+    });
+
+    if (!inviteResponse.ok) {
+      const errorData = await inviteResponse.json();
+      console.error("Error sending invitation email:", errorData);
+      // Don't throw here - we've created the invitation in the database,
+      // but the email failed. The admin can resend or manage invites later.
+      toast.warning("Invitation created but email delivery may be delayed");
     }
-    
-    // Create a properly typed response that matches what we'd expect
-    const typedData = {
-      id: responseData.id,
-      user_id: '', // This will be assigned when the invitation is accepted
-      name: teamMember.name,
-      email: teamMember.email,
-      role: teamMember.role as TeamMemberRole,
-      status: 'pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    } as TeamMember;
-    
-    console.log("Calling edge function to send invitation email...");
-    
-    // Call the edge function to send the invitation email
-    const inviterName = (await supabase.auth.getUser()).data.user?.user_metadata?.name || "Team Admin";
-    
-    try {
-      const { data: emailData, error: emailError } = await supabase.functions.invoke("send-team-invitation", {
-        body: {
-          token: responseData.token,
-          email: teamMember.email,
-          inviterName,
-          role: teamMember.role,
-          name: teamMember.name
-        }
+
+    // Insert a pending team member
+    const { error: memberError } = await supabase
+      .from('team_members')
+      .insert({
+        name,
+        email,
+        role,
+        status: 'pending',
       });
-      
-      if (emailError) {
-        console.warn("Error sending invitation email:", emailError);
-        toast.warning("Invitation created but email could not be sent", {
-          description: "Using Resend's free tier: The invitation has been sent to the admin email, who will need to forward it to the team member."
-        });
-      } else {
-        toast.success(`Invitation created for ${teamMember.email}`, {
-          description: "Using Resend's free tier: The invitation has been sent to the admin email, who will need to forward it to the team member."
-        });
-      }
-    } catch (emailSendError: any) {
-      console.warn("Exception when sending invitation email:", emailSendError);
-      toast.warning("Invitation created but email notification requires manual forwarding", {
-        description: "The user has been invited, but due to email service limitations, you'll need to manually share the invitation link with them."
-      });
+
+    if (memberError) {
+      console.error("Error creating pending team member:", memberError);
+      // Don't throw - this is a secondary action
     }
-    
-    return typedData;
-  } catch (error: any) {
-    handleTeamError(error, "Failed to invite team member");
-    return null;
+
+    toast.success(`Invitation sent to ${email}`);
+    return data;
+  } catch (error) {
+    console.error("Error inviting team member:", error);
+    toast.error(error instanceof Error ? error.message : "Failed to invite team member");
+    throw error;
   }
 };

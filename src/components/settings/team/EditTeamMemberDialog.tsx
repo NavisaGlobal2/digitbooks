@@ -1,147 +1,157 @@
-import React, { useEffect } from "react";
-import { 
-  Dialog, DialogContent, DialogDescription, DialogFooter, 
-  DialogHeader, DialogTitle
-} from "@/components/ui/dialog";
+
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TeamMember, TeamMemberRole } from "@/types/teamMember";
-import { useTeamMembers } from "@/lib/teamMembers";
-
-const teamMemberFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  role: z.enum(["Owner", "Admin", "Member", "Viewer"])
-});
-
-type TeamMemberFormValues = z.infer<typeof teamMemberFormSchema>;
+import { useAuth } from "@/contexts/auth";
 
 interface EditTeamMemberDialogProps {
-  isOpen: boolean;
+  member: TeamMember;
+  open: boolean;
   onOpenChange: (open: boolean) => void;
-  teamMember: TeamMember | null;
-  onUpdate: (member: TeamMember) => void;
+  onUpdate: (id: string, updates: Partial<TeamMember>) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const EditTeamMemberDialog = ({ 
-  isOpen, 
-  onOpenChange, 
-  teamMember, 
-  onUpdate 
-}: EditTeamMemberDialogProps) => {
-  const { updateTeamMember } = useTeamMembers();
+export function EditTeamMemberDialog({ member, open, onOpenChange, onUpdate }: EditTeamMemberDialogProps) {
+  const [name, setName] = useState(member.name);
+  const [role, setRole] = useState<TeamMemberRole>(member.role);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  // Check if the current user is editing themselves
+  const isSelf = user?.id === member.user_id;
   
-  const form = useForm<TeamMemberFormValues>({
-    resolver: zodResolver(teamMemberFormSchema),
-    defaultValues: {
-      name: teamMember?.name || "",
-      email: teamMember?.email || "",
-      role: (teamMember?.role as TeamMemberRole) || "Member"
-    }
-  });
+  // Owner should only be editable by another Owner
+  const isCurrentUserOwner = member.role === 'Owner';
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+    
+    try {
+      // Validation
+      if (!name.trim()) {
+        setError("Name is required");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Prevent users from changing their own role
+      if (isSelf && role !== member.role) {
+        setError("You cannot change your own role");
+        setIsSubmitting(false);
+        return;
+      }
 
-  useEffect(() => {
-    if (teamMember) {
-      form.reset({
-        name: teamMember.name,
-        email: teamMember.email,
-        role: teamMember.role as TeamMemberRole
+      // Only allow changing between Member and Viewer roles
+      if (isCurrentUserOwner && role !== member.role) {
+        setError("Owner role cannot be changed");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const result = await onUpdate(member.id, { 
+        name: name.trim(),
+        role
       });
-    }
-  }, [teamMember, form]);
-
-  const handleSubmit = async (data: TeamMemberFormValues) => {
-    if (!teamMember) return;
-
-    const updatedMember = await updateTeamMember(teamMember.id, {
-      name: data.name,
-      email: data.email,
-      role: data.role as TeamMemberRole
-    });
-
-    if (updatedMember) {
-      onUpdate(updatedMember);
+      
+      if (!result.success) {
+        setError(result.error || "Failed to update team member");
+        setIsSubmitting(false);
+        return;
+      }
+      
       onOpenChange(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit Team Member</DialogTitle>
           <DialogDescription>
-            Update details for this team member.
+            Update team member details. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          {error && (
+            <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+              {error}
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter name"
+              required
             />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="Enter email" disabled={true} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                  <p className="text-xs text-muted-foreground">Email cannot be changed</p>
-                </FormItem>
-              )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              value={member.email}
+              disabled
+              className="bg-muted"
             />
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Role</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="Member">Member</SelectItem>
-                      <SelectItem value="Viewer">Viewer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">Update</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Select
+              value={role}
+              onValueChange={(value) => setRole(value as TeamMemberRole)}
+              disabled={isSelf || isCurrentUserOwner}
+            >
+              <SelectTrigger id="role" className={isSelf || isCurrentUserOwner ? "bg-muted" : ""}>
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Owner">Owner</SelectItem>
+                <SelectItem value="Admin">Admin</SelectItem>
+                <SelectItem value="Member">Member</SelectItem>
+                <SelectItem value="Viewer">Viewer</SelectItem>
+              </SelectContent>
+            </Select>
+            {(isSelf || isCurrentUserOwner) && (
+              <p className="text-xs text-muted-foreground">
+                {isSelf ? "You cannot change your own role" : "Owner role cannot be changed"}
+              </p>
+            )}
+          </div>
+          
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save changes"}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
-};
+}
