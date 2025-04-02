@@ -54,8 +54,8 @@ export const RevenueDialog = ({ open, onOpenChange, children, title = "Add New R
       description,
       amount: Number(amount),
       date: new Date(date),
-      payment_status: paymentStatus, // Fixed property name
-      payment_method: "bank transfer" // Required field with correct naming
+      payment_status: paymentStatus,
+      payment_method: "bank transfer"
     });
 
     toast.success("Revenue added successfully");
@@ -73,17 +73,17 @@ export const RevenueDialog = ({ open, onOpenChange, children, title = "Add New R
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[400px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         
         {children || (
-          <form onSubmit={handleSubmit} className="space-y-4 py-4">
-            <div className="space-y-2">
+          <form onSubmit={handleSubmit} className="space-y-3 py-2">
+            <div className="space-y-1">
               <Label htmlFor="source">Revenue Line</Label>
               <Select value={source} onValueChange={(value) => setSource(value as RevenueSource)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="Select revenue line" />
                 </SelectTrigger>
                 <SelectContent>
@@ -96,17 +96,18 @@ export const RevenueDialog = ({ open, onOpenChange, children, title = "Add New R
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Enter description"
+                className="h-9"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="amount">Amount</Label>
               <Input
                 id="amount"
@@ -116,23 +117,25 @@ export const RevenueDialog = ({ open, onOpenChange, children, title = "Add New R
                 placeholder="Enter amount"
                 min="0"
                 step="0.01"
+                className="h-9"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="date">Date</Label>
               <Input
                 id="date"
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
+                className="h-9"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="status">Payment Status</Label>
               <Select value={paymentStatus} onValueChange={(value) => setPaymentStatus(value as PaymentStatus)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -145,11 +148,12 @@ export const RevenueDialog = ({ open, onOpenChange, children, title = "Add New R
               </Select>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <div className="flex justify-end gap-3 pt-3">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} 
+                className="h-8 px-3 py-0">
                 Cancel
               </Button>
-              <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
+              <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white h-8 px-3 py-0">
                 Add Revenue
               </Button>
             </div>

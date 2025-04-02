@@ -13,16 +13,16 @@ const RevenueNotesField = ({ control }: RevenueNotesFieldProps) => {
       control={control}
       name="notes"
       render={({ field }) => (
-        <FormItem>
+        <FormItem className="space-y-1">
           <FormLabel className="text-sm font-medium">Notes (optional)</FormLabel>
           <FormControl>
             <Textarea 
               placeholder="Enter additional notes" 
-              className="resize-none min-h-[80px]" 
+              className="resize-none min-h-[60px]" 
               {...field} 
             />
           </FormControl>
-          <FormMessage />
+          <FormMessage className="text-xs" />
         </FormItem>
       )}
     />

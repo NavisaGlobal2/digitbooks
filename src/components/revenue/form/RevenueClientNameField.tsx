@@ -13,16 +13,16 @@ const RevenueClientNameField = ({ control }: RevenueClientNameFieldProps) => {
       control={control}
       name="clientName"
       render={({ field }) => (
-        <FormItem>
+        <FormItem className="space-y-1">
           <FormLabel className="text-sm font-medium">Client name (optional)</FormLabel>
           <FormControl>
             <Input 
               placeholder="Enter client name" 
-              className="h-12" 
+              className="h-9" 
               {...field} 
             />
           </FormControl>
-          <FormMessage />
+          <FormMessage className="text-xs" />
         </FormItem>
       )}
     />

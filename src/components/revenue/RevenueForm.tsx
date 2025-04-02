@@ -72,7 +72,7 @@ const RevenueForm = ({ open, onOpenChange, onSubmit, defaultValues, isEdit = fal
       title={isEdit ? "Edit revenue" : "New revenue"}
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
           <RevenueSourceField control={form.control} />
           <RevenueDescriptionField control={form.control} />
           <RevenueAmountField control={form.control} />
@@ -82,7 +82,7 @@ const RevenueForm = ({ open, onOpenChange, onSubmit, defaultValues, isEdit = fal
           <RevenueClientNameField control={form.control} />
           <RevenueNotesField control={form.control} />
           
-          <div className="pt-4">
+          <div className="pt-3">
             <RevenueFormActions 
               onCancel={() => onOpenChange(false)} 
               isEdit={isEdit} 
