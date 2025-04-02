@@ -68,7 +68,12 @@ export const addTeamMember = async (
       token: string;
     }
 
-    const { data, error: inviteError } = await supabase.rpc<TeamInviteResponse>('create_team_invite', {
+    // Properly use generic type parameters for the RPC call
+    const { data, error: inviteError } = await supabase.rpc<TeamInviteResponse, {
+      p_name: string;
+      p_email: string;
+      p_role: string;
+    }>('create_team_invite', {
       p_name: name,
       p_email: email,
       p_role: role
