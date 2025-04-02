@@ -11,7 +11,7 @@ const RevenueClientNameField = ({ control }: RevenueClientNameFieldProps) => {
   return (
     <FormField
       control={control}
-      name="clientName"
+      name="client_name"
       render={({ field }) => (
         <FormItem className="space-y-1">
           <FormLabel className="text-sm font-medium">Client name (optional)</FormLabel>

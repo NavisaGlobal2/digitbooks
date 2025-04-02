@@ -47,7 +47,7 @@ const RevenueForm = ({ open, onOpenChange, onSubmit, defaultValues, isEdit = fal
       
       await onSubmit({
         description: values.description,
-        amount: values.amount,
+        amount: Number(values.amount),  // Ensure amount is converted to a number
         date: values.date,
         source: values.source as RevenueSource,
         payment_method: values.payment_method as PaymentMethod,

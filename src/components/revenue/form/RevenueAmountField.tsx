@@ -12,19 +12,20 @@ const RevenueAmountField = ({ control }: RevenueAmountFieldProps) => {
     <FormField
       control={control}
       name="amount"
-      render={({ field }) => (
+      render={({ field: { onChange, ...field } }) => (
         <FormItem>
           <FormLabel className="text-sm font-medium">Amount</FormLabel>
           <FormControl>
             <Input 
               type="number" 
               step="0.01" 
-              placeholder="Input details" 
-              className="h-12" 
+              placeholder="Enter amount" 
+              className="h-9" 
+              onChange={(e) => onChange(Number(e.target.value))}
               {...field} 
             />
           </FormControl>
-          <FormMessage />
+          <FormMessage className="text-xs" />
         </FormItem>
       )}
     />
