@@ -1,3 +1,4 @@
+
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
@@ -28,7 +29,7 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in [animation-delay:400ms]">
               <a 
-                href="/signup"
+                href="https://digitbookwise.lovable.app/auth"
                 className="group px-8 py-4 bg-primary text-white rounded-full hover:bg-primary/90 transition-all duration-300 transform hover:-translate-y-1"
               >
                 Try Free for 14 Days
@@ -58,6 +59,7 @@ const Index = () => {
             )}
           </div>
 
+          {/* Hero Image with Animation */}
           <div className="relative mt-16 sm:mt-20 animate-fade-in [animation-delay:600ms]">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/80 pointer-events-none" />
             <div className="flex justify-center px-4">
@@ -169,7 +171,7 @@ const Index = () => {
               Join thousands of businesses saving 10+ hours every week with automated bookkeeping.
             </p>
             <a 
-              href="/signup"
+              href="https://digitbookwise.lovable.app/auth"
               className="inline-block group px-8 py-4 bg-accent text-primary rounded-full font-semibold hover:bg-accent/90 transition-all duration-300 transform hover:-translate-y-1 animate-fade-in [animation-delay:400ms]"
             >
               Start Your Free Trial
