@@ -62,26 +62,32 @@ export const addTeamMember = async (
       throw insertError;
     }
 
-    // Create invitation with proper type definition for the response
+    // Define the expected response type
     interface TeamInviteResponse {
       id: string;
       token: string;
     }
 
-    // Properly use generic type parameters for the RPC call
-    const { data, error: inviteError } = await supabase.rpc<TeamInviteResponse, {
-      p_name: string;
-      p_email: string;
-      p_role: string;
-    }>('create_team_invite', {
-      p_name: name,
-      p_email: email,
-      p_role: role
-    });
+    // Call the RPC function using the correct type parameters
+    // First parameter is the function name (as a string literal type)
+    const { data, error: inviteError } = await supabase.rpc<TeamInviteResponse>(
+      'create_team_invite', 
+      {
+        p_name: name,
+        p_email: email,
+        p_role: role
+      }
+    );
 
     if (inviteError) {
       console.error("Error creating team invitation:", inviteError);
       throw inviteError;
+    }
+
+    // Safely access the token property with type checking
+    const token = data?.token;
+    if (!token) {
+      throw new Error("Failed to get invitation token");
     }
 
     // Send invitation email
@@ -92,7 +98,7 @@ export const addTeamMember = async (
         'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
       },
       body: JSON.stringify({
-        token: data?.token || "",
+        token,
         email,
         inviterName: user?.user_metadata?.name || user?.email || "Your team admin",
         role,
