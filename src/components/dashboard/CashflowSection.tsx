@@ -91,6 +91,7 @@ const CashflowSection = () => {
                   selected={date}
                   onSelect={handleCalendarSelect}
                   initialFocus
+                  className="w-[250px]"
                 />
               </div>
             </PopoverContent>
