@@ -2,12 +2,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Mail, Shield, Trash2, User, Users } from "lucide-react";
+import { Edit, Mail, Shield, Trash2, User as UserIcon, Users } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TeamMember, TeamMemberRole } from "@/types/teamMember";
 import { useState } from "react";
 import { EditTeamMemberDialog } from "./EditTeamMemberDialog";
-import { User } from "@/contexts/auth/types";
+import { type User } from "@/contexts/auth/types";
 
 interface TeamMemberListProps {
   members: TeamMember[];
@@ -51,11 +51,11 @@ export const TeamMemberList = ({
       case "Admin":
         return <Shield className="h-3 w-3 mr-1" />;
       case "Member":
-        return <User className="h-3 w-3 mr-1" />;
+        return <UserIcon className="h-3 w-3 mr-1" />;
       case "Viewer":
         return <Users className="h-3 w-3 mr-1" />;
       default:
-        return <User className="h-3 w-3 mr-1" />;
+        return <UserIcon className="h-3 w-3 mr-1" />;
     }
   };
 

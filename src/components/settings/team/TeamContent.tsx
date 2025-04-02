@@ -62,12 +62,28 @@ export const TeamContent = ({
     );
   }
 
+  // Convert onEdit and onDelete to the format expected by TeamMemberList
+  const handleUpdate = async (id: string, updates: Partial<TeamMember>) => {
+    const member = members.find(m => m.id === id);
+    if (member) {
+      onEdit({ ...member, ...updates });
+    }
+    return { success: true };
+  };
+
+  const handleRemove = async (id: string) => {
+    const member = members.find(m => m.id === id);
+    if (member) {
+      onDelete(member);
+    }
+    return { success: true };
+  };
+
   return (
     <TeamMemberList 
       members={members}
-      searchQuery={searchQuery}
-      onEdit={onEdit}
-      onDelete={onDelete}
+      onUpdate={handleUpdate}
+      onRemove={handleRemove}
       canManage={canManage}
     />
   );

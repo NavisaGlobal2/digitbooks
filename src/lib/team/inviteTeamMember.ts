@@ -4,7 +4,6 @@ import { TeamMemberRole } from "@/types/teamMember";
 import { toast } from "sonner";
 import { canManageTeam } from "./userPermissions";
 import { v4 as uuidv4 } from 'uuid';
-import { useAuth } from "@/contexts/auth";
 
 interface TeamInviteResponse {
   id: string;
@@ -22,7 +21,7 @@ export const inviteTeamMember = async (
   name: string,
   email: string,
   role: TeamMemberRole
-): Promise<{ id: string; token: string }> => {
+): Promise<{ success: boolean; error?: string }> => {
   try {
     // Verify the current user has permission to invite team members
     const hasPermission = await canManageTeam();
@@ -48,7 +47,7 @@ export const inviteTeamMember = async (
 
     // Parse the response data and convert it to expected type
     const inviteData = data as unknown as TeamInviteResponse;
-    if (!inviteData || !inviteData.token) {
+    if (!inviteData || !inviteData.id) {
       throw new Error("Invalid response from server");
     }
 
@@ -64,7 +63,7 @@ export const inviteTeamMember = async (
         'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
       },
       body: JSON.stringify({
-        token: inviteData.token,
+        token: inviteData.token || uuidv4(), // Use token from response or generate a new one
         email,
         inviterName,
         role,
@@ -88,7 +87,8 @@ export const inviteTeamMember = async (
         email,
         role,
         status: 'pending',
-        user_id: uuidv4() // Use temporary UUID until the user accepts the invite
+        user_id: uuidv4(), // Use temporary UUID until the user accepts the invite
+        business_id: user?.user_metadata?.business_id // Add the business_id if your schema requires it
       });
 
     if (memberError) {
@@ -97,10 +97,13 @@ export const inviteTeamMember = async (
     }
 
     toast.success(`Invitation sent to ${email}`);
-    return inviteData;
+    return { success: true };
   } catch (error) {
     console.error("Error inviting team member:", error);
     toast.error(error instanceof Error ? error.message : "Failed to invite team member");
-    throw error;
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Failed to invite team member" 
+    };
   }
 };

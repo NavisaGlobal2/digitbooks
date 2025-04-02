@@ -7,16 +7,16 @@ interface TeamErrorAlertProps {
   title?: string;
   description?: string;
   actionLabel?: string;
-  onAction?: () => void;
   onRetry?: () => void;
+  onAction?: () => void;
 }
 
 export const TeamErrorAlert = ({ 
   title = "Error Loading Team Members", 
-  description = "There was an error loading team members. Please try again.",
+  description = "There was an error loading the team members. Please try again.", 
   actionLabel,
-  onAction,
-  onRetry
+  onRetry, 
+  onAction
 }: TeamErrorAlertProps) => {
   return (
     <Alert className="my-8 border-red-500 bg-red-50">
@@ -33,13 +33,14 @@ export const TeamErrorAlert = ({
               onClick={onRetry}
             >
               <RefreshCcw className="mr-2 h-4 w-4" />
-              Retry
+              Try Again
             </Button>
           )}
           {actionLabel && onAction && (
             <Button 
-              variant="default" 
+              variant="outline" 
               size="sm"
+              className="border-red-500 text-red-700 hover:bg-red-100" 
               onClick={onAction}
             >
               {actionLabel}
