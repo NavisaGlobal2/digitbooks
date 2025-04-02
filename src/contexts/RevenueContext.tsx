@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { Revenue, PaymentStatus, mapDbToRevenue, mapRevenueToDb, RevenueDB } from "@/types/revenue";
 import { supabase } from "@/integrations/supabase/client";
@@ -101,10 +102,24 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
     try {
       setLoading(true);
       
-      const revenuesWithNumbers = revenueItems.map(revenue => mapRevenueToDb({
-        ...revenue,
-        revenue_number: `REV-${uuidv4().substring(0, 8).toUpperCase()}`,
-        client_name: revenue.client_name || "",
+      // Get current authenticated user first
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !authData.user) {
+        console.error("Auth error:", authError);
+        toast.error("Authentication error. Please sign in again.");
+        return;
+      }
+      
+      const userId = authData.user.id;
+      
+      const revenuesWithNumbers = revenueItems.map(revenue => ({
+        ...mapRevenueToDb({
+          ...revenue,
+          revenue_number: `REV-${uuidv4().substring(0, 8).toUpperCase()}`,
+          client_name: revenue.client_name || "",
+        }),
+        user_id: userId // Explicitly set user_id for each revenue record
       }));
       
       console.log("Mapped revenues for database insertion:", revenuesWithNumbers);

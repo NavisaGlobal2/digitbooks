@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { parseStatementFile } from "./import/parsers";
 import { ParsedTransaction } from "./import/parsers/types";
 import RevenueTaggingDialog from "./import/RevenueTaggingDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ImportRevenueDialogProps {
   open: boolean;
@@ -62,7 +63,6 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
     setError(null);
 
     try {
-      // Set a timeout to abort if processing takes too long
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error("Processing timeout - file may be too large")), 30000);
       });
@@ -105,7 +105,7 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
     }
   };
 
-  const handleTaggingComplete = (taggedTransactions: ParsedTransaction[]) => {
+  const handleTaggingComplete = async (taggedTransactions: ParsedTransaction[]) => {
     const selectedTransactions = taggedTransactions.filter(tx => tx.selected && tx.source);
     
     if (selectedTransactions.length === 0) {
@@ -114,7 +114,13 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
     }
     
     try {
-      // Prepare revenue entries from the selected transactions
+      const { data: userData, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !userData?.user) {
+        toast.error("Authentication error. Please sign in again.");
+        return;
+      }
+      
       const revenues: Omit<Revenue, "id">[] = selectedTransactions.map(tx => ({
         description: tx.description,
         amount: tx.amount,
@@ -129,7 +135,6 @@ const ImportRevenueDialog = ({ open, onOpenChange, onRevenuesImported }: ImportR
       }));
       
       if (onRevenuesImported) {
-        // Call the callback to save the revenues in the parent component
         console.log("Importing revenues:", revenues);
         onRevenuesImported(revenues);
       } else {
