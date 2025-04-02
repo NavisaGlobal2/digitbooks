@@ -62,8 +62,13 @@ export const addTeamMember = async (
       throw insertError;
     }
 
-    // Create invitation
-    const { data, error: inviteError } = await supabase.rpc('create_team_invite', {
+    // Create invitation with proper type definition for the response
+    interface TeamInviteResponse {
+      id: string;
+      token: string;
+    }
+
+    const { data, error: inviteError } = await supabase.rpc<TeamInviteResponse>('create_team_invite', {
       p_name: name,
       p_email: email,
       p_role: role
