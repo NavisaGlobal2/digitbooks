@@ -10,6 +10,9 @@ import { TeamConnectionError } from "./TeamConnectionError";
 import { TeamErrorAlert } from "./TeamErrorAlert";
 import { canManageTeam } from "@/lib/team/userPermissions";
 import { useAuth } from "@/contexts/auth";
+import { Button } from "@/components/ui/button";
+import { UserPlus } from "lucide-react";
+import { AddTeamMemberDialog } from "./AddTeamMemberDialog";
 
 export const TeamManagementContainer = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -18,6 +21,7 @@ export const TeamManagementContainer = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [canManage, setCanManage] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { fetchTeamMembers, inviteTeamMember, updateTeamMember, removeTeamMember } = useTeamMembers();
   const { user } = useAuth();
 
@@ -61,8 +65,8 @@ export const TeamManagementContainer = () => {
     setFilteredMembers(filtered);
   }, [searchTerm, teamMembers]);
 
-  // Handle invite team member
-  const handleInviteTeamMember = async (
+  // Handle add team member
+  const handleAddTeamMember = async (
     name: string,
     email: string,
     role: TeamMemberRole
@@ -70,7 +74,7 @@ export const TeamManagementContainer = () => {
     try {
       await inviteTeamMember(name, email, role);
       
-      // Refresh team members list after invitation
+      // Refresh team members list after adding
       const updatedMembers = await fetchTeamMembers();
       setTeamMembers(updatedMembers);
       setFilteredMembers(
@@ -84,10 +88,10 @@ export const TeamManagementContainer = () => {
       
       return { success: true };
     } catch (error) {
-      console.error("Error inviting team member:", error);
+      console.error("Error adding team member:", error);
       return { 
         success: false, 
-        error: error instanceof Error ? error.message : "Failed to invite team member" 
+        error: error instanceof Error ? error.message : "Failed to add team member" 
       };
     }
   };
@@ -185,7 +189,24 @@ export const TeamManagementContainer = () => {
         </div>
         
         {canManage && (
-          <TeamHeaderActions onInvite={handleInviteTeamMember} />
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => setIsAddDialogOpen(true)}
+              className="flex items-center gap-2"
+              variant="default"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>Add Team Member</span>
+            </Button>
+            
+            <TeamHeaderActions onInvite={handleInviteTeamMember} />
+            
+            <AddTeamMemberDialog 
+              open={isAddDialogOpen}
+              onOpenChange={setIsAddDialogOpen}
+              onAdd={handleAddTeamMember}
+            />
+          </div>
         )}
       </div>
 
@@ -211,9 +232,9 @@ export const TeamManagementContainer = () => {
       {teamMembers.length === 0 && (
         <TeamErrorAlert
           title="No team members found"
-          description="You haven't added any team members yet. Invite team members to collaborate."
-          actionLabel={canManage ? "Invite Team Member" : undefined}
-          onAction={canManage ? () => document.getElementById('invite-team-member-button')?.click() : undefined}
+          description="You haven't added any team members yet. Add team members to collaborate."
+          actionLabel={canManage ? "Add Team Member" : undefined}
+          onAction={canManage ? () => setIsAddDialogOpen(true) : undefined}
         />
       )}
     </div>
