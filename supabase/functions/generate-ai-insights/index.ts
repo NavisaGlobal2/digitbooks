@@ -29,14 +29,15 @@ serve(async (req) => {
     console.log("Generating insights for financial data:", 
       JSON.stringify(financialData, null, 2).substring(0, 200) + "...");
 
-    // Create system prompt for financial insights
-    const systemPrompt = `You are an expert financial analyst specialized in small business finances. 
+    // Create system prompt for financial insights with Nigerian context
+    const systemPrompt = `You are an expert financial analyst specialized in small business finances in Nigeria. 
 Your job is to analyze financial data and provide insightful, actionable observations.
 Each insight should be concise (under 70 characters), actionable, and highlight something meaningful.
 For each insight, categorize it as one of: "success", "warning", "error", "info".
+ALWAYS use Naira (₦) as the currency symbol, never use pounds (£) or dollars ($).
 
 Based on the provided financial data, generate 5 insights that are:
-1. Specific - refer to actual numbers and percentages
+1. Specific - refer to actual numbers and percentages using Naira (₦) currency
 2. Actionable - suggest what action might be taken
 3. Diverse - cover different aspects of the business (revenue, expenses, cashflow, etc.)
 4. Well-categorized - use "success" for positive trends, "warning" for concerns, "error" for serious issues, and "info" for neutral observations`;
@@ -64,7 +65,8 @@ Based on the provided financial data, generate 5 insights that are:
                 {
                   role: "user",
                   content: `Here is the financial data to analyze: ${JSON.stringify(financialData)}. 
-                  Generate 5 insights formatted as a JSON array of objects with "message" and "type" properties.`
+                  Generate 5 insights formatted as a JSON array of objects with "message" and "type" properties.
+                  Make sure to use Naira (₦) as the currency symbol in all monetary values.`
                 }
               ]
             }),
@@ -108,9 +110,13 @@ Based on the provided financial data, generate 5 insights that are:
           insights = JSON.parse(content);
         }
         
-        // Validate insights structure
+        // Validate insights structure and ensure Naira symbol is used
         insights = insights.map(insight => ({
-          message: String(insight.message || "").substring(0, 100),
+          message: String(insight.message || "")
+            .substring(0, 100)
+            // Replace any $ or £ symbols with ₦
+            .replace(/\$/g, "₦")
+            .replace(/£/g, "₦"),
           type: ["success", "warning", "error", "info"].includes(insight.type) 
             ? insight.type 
             : "info"

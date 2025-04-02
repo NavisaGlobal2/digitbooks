@@ -48,7 +48,7 @@ export const useAIInsights = () => {
         return;
       }
       
-      console.log("Calling edge function to generate insights");
+      console.log("Calling edge function to generate insights with financial data:", financialData);
       // Call the Supabase edge function to generate insights
       const { data, error } = await supabase.functions.invoke('generate-ai-insights', {
         body: { financialData },
@@ -61,10 +61,17 @@ export const useAIInsights = () => {
       
       if (data?.insights && Array.isArray(data.insights)) {
         console.log("Received insights from edge function:", data.insights);
-        setInsights(data.insights);
+        
+        // Ensure all insight messages use the Naira symbol
+        const formattedInsights = data.insights.map(insight => ({
+          ...insight,
+          message: insight.message.replace(/\$/g, "₦").replace(/£/g, "₦")
+        }));
+        
+        setInsights(formattedInsights);
         
         // Cache the insights
-        localStorage.setItem('aiInsights', JSON.stringify(data.insights));
+        localStorage.setItem('aiInsights', JSON.stringify(formattedInsights));
         localStorage.setItem('aiInsightsTimestamp', now.toString());
       } else if (data?.error) {
         throw new Error(data.error);
@@ -83,7 +90,7 @@ export const useAIInsights = () => {
           type: "success"
         },
         {
-          message: "Expenses are up 20% compared to last month.",
+          message: "Expenses are up ₦420,000 compared to last month.",
           type: "error"
         },
         {
@@ -95,7 +102,7 @@ export const useAIInsights = () => {
           type: "warning"
         },
         {
-          message: "You spent 10% more on software—review subscriptions.",
+          message: "You spent ₦50,000 more on software—review subscriptions.",
           type: "warning"
         }
       ]);
@@ -105,6 +112,9 @@ export const useAIInsights = () => {
   };
 
   useEffect(() => {
+    // Clear cached insights when financial data changes to ensure fresh insights
+    localStorage.removeItem('aiInsights');
+    localStorage.removeItem('aiInsightsTimestamp');
     generateInsights();
   }, [user, financialData]);
 
