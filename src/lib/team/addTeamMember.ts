@@ -62,14 +62,8 @@ export const addTeamMember = async (
       throw insertError;
     }
 
-    // Define the expected response type
-    interface TeamInviteResponse {
-      id: string;
-      token: string;
-    }
-
-    // Call the RPC function with proper type parameters
-    const { data, error: inviteError } = await supabase.rpc<"create_team_invite", TeamInviteResponse>(
+    // Call the RPC function
+    const { data, error: inviteError } = await supabase.rpc(
       'create_team_invite', 
       {
         p_name: name,
@@ -88,8 +82,15 @@ export const addTeamMember = async (
       throw new Error("Failed to get invitation token");
     }
     
-    const token = data.token;
-    if (!token) {
+    let token: string;
+    
+    // Check if data is an object with a token property
+    if (typeof data === 'object' && data !== null && 'token' in data) {
+      token = data.token as string;
+      if (!token) {
+        throw new Error("Invalid invitation token received");
+      }
+    } else {
       throw new Error("Failed to get invitation token");
     }
 

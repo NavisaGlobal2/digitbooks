@@ -74,7 +74,7 @@ export const prepareExpensesFromTransactions = (
       category: category as ExpenseCategory, // Type cast to ExpenseCategory
       vendor: inferVendorFromDescription(description),
       status: "pending" as ExpenseStatus, // Explicitly cast to ExpenseStatus
-      paymentMethod: "bank transfer",
+      paymentMethod: "bank transfer" as "bank transfer", // Explicitly type as a literal
       fromStatement: true,
       batchId: batchId,
       notes: `Imported from bank statement: ${fileName}`,
