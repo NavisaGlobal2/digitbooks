@@ -2,8 +2,8 @@
 import React from "react";
 
 interface AuthFormFooterProps {
-  mode: 'login' | 'signup';
-  setMode: React.Dispatch<React.SetStateAction<'login' | 'signup'>>;
+  mode: 'login' | 'signup' | 'resetPassword';
+  setMode: React.Dispatch<React.SetStateAction<'login' | 'signup' | 'resetPassword'>>;
   isLoading: boolean;
 }
 

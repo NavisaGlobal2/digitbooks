@@ -3,7 +3,7 @@ import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
 import { AuthContext } from "./AuthContext";
-import { login, logout, signup, completeOnboarding, signInWithGoogle } from "./authActions";
+import { login, logout, signup, completeOnboarding, signInWithGoogle, resetPassword, updatePassword } from "./authActions";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -78,6 +78,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     await signInWithGoogle();
   };
 
+  const handleResetPassword = async (email: string): Promise<boolean> => {
+    return await resetPassword(email);
+  };
+
+  const handleUpdatePassword = async (newPassword: string): Promise<boolean> => {
+    return await updatePassword(newPassword);
+  };
+
   return (
     <AuthContext.Provider
       value={{ 
@@ -102,7 +110,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             throw error;
           }
         },
-        signInWithGoogle: handleSignInWithGoogle
+        signInWithGoogle: handleSignInWithGoogle,
+        resetPassword: handleResetPassword,
+        updatePassword: handleUpdatePassword
       }}
     >
       {children}

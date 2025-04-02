@@ -10,7 +10,7 @@ import AuthFormFooter from "./AuthFormFooter";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 
-type AuthMode = 'login' | 'signup';
+type AuthMode = 'login' | 'signup' | 'resetPassword';
 
 interface LoginSignupFormProps {
   mode: AuthMode;
@@ -25,6 +25,7 @@ interface LoginSignupFormProps {
   confirmPassword: string;
   setConfirmPassword: React.Dispatch<React.SetStateAction<string>>;
   isLoading: boolean;
+  onForgotPassword?: () => void;
 }
 
 const LoginSignupForm: React.FC<LoginSignupFormProps> = ({
@@ -39,7 +40,8 @@ const LoginSignupForm: React.FC<LoginSignupFormProps> = ({
   setName,
   confirmPassword,
   setConfirmPassword,
-  isLoading
+  isLoading,
+  onForgotPassword
 }) => {
   const { signInWithGoogle } = useAuth();
 
@@ -106,6 +108,18 @@ const LoginSignupForm: React.FC<LoginSignupFormProps> = ({
             placeholder="Re-enter password"
             disabled={isLoading}
           />
+        )}
+
+        {mode === 'login' && onForgotPassword && (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              className="text-xs text-green-500 hover:text-green-600 transition-colors"
+              onClick={onForgotPassword}
+            >
+              Forgot password?
+            </button>
+          </div>
         )}
 
         <Button 

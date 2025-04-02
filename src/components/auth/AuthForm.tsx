@@ -5,11 +5,12 @@ import { toast } from "sonner";
 import { useNavigate, useLocation } from "react-router-dom";
 import LoginSignupForm from "./LoginSignupForm";
 import VerificationForm from "./VerificationForm";
+import ResetPasswordForm from "./ResetPasswordForm";
 
-type AuthMode = 'login' | 'signup';
+type AuthMode = 'login' | 'signup' | 'resetPassword';
 
 interface AuthFormProps {
-  mode: AuthMode;
+  mode: 'login' | 'signup';
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
@@ -82,6 +83,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     );
   }
 
+  // For reset password step
+  if (currentMode === 'resetPassword') {
+    return (
+      <ResetPasswordForm
+        onBack={handleBackToLogin}
+      />
+    );
+  }
+
   return (
     <LoginSignupForm
       mode={currentMode}
@@ -96,6 +106,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
       confirmPassword={confirmPassword}
       setConfirmPassword={setConfirmPassword}
       isLoading={isLoading}
+      onForgotPassword={() => setCurrentMode('resetPassword')}
     />
   );
 };

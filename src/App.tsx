@@ -1,3 +1,4 @@
+
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -37,6 +38,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Verify from "./pages/Verify";
 import ExcelDemo from "./pages/ExcelDemo";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +65,7 @@ function App() {
                           
                           {/* Auth routes */}
                           <Route path="/auth" element={<Auth />} />
+                          <Route path="/reset-password" element={<ResetPassword />} />
                           <Route path="/accept-invitation" element={<AcceptInvitation />} />
                           <Route path="/onboarding" element={
                             <RequireAuth>

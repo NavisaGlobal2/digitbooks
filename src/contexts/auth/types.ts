@@ -16,4 +16,6 @@ export interface AuthContextValue {
   completeOnboarding: () => void;
   verifyOtp: (email: string, token: string) => Promise<any>;
   signInWithGoogle: () => Promise<void>;
+  resetPassword: (email: string) => Promise<boolean>;
+  updatePassword: (newPassword: string) => Promise<boolean>;
 }

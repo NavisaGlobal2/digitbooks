@@ -99,6 +99,40 @@ export const signup = async (email: string, password: string, name: string) => {
   }
 };
 
+export const resetPassword = async (email: string) => {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + "/reset-password",
+    });
+    
+    if (error) throw error;
+    
+    toast.success("Password reset instructions sent to your email");
+    return true;
+  } catch (error: any) {
+    console.error("Reset password error:", error);
+    toast.error(error.message || "Failed to send reset instructions");
+    throw error;
+  }
+};
+
+export const updatePassword = async (newPassword: string) => {
+  try {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) throw error;
+    
+    toast.success("Password updated successfully");
+    return true;
+  } catch (error: any) {
+    console.error("Update password error:", error);
+    toast.error(error.message || "Failed to update password");
+    throw error;
+  }
+};
+
 export const completeOnboarding = async (user: User | null) => {
   if (user) {
     try {
