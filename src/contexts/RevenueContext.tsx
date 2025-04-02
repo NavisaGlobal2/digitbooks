@@ -72,6 +72,7 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       const revenueData = mapRevenueToDb({
         ...revenue,
         revenue_number: revenueNumber,
+        client_name: revenue.client_name || "",
       });
       
       const { data, error } = await supabase
@@ -103,6 +104,7 @@ export const RevenueProvider = ({ children }: RevenueProviderProps) => {
       const revenuesWithNumbers = revenueItems.map(revenue => mapRevenueToDb({
         ...revenue,
         revenue_number: `REV-${uuidv4().substring(0, 8).toUpperCase()}`,
+        client_name: revenue.client_name || "",
       }));
       
       console.log("Mapped revenues for database insertion:", revenuesWithNumbers);

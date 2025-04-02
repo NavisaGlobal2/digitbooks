@@ -736,11 +736,14 @@ export type Database = {
       revenues: {
         Row: {
           amount: number
+          client_name: string | null
           created_at: string
           date: string
           description: string
           id: string
           notes: string | null
+          payment_method: string
+          payment_status: string
           reference: string | null
           revenue_number: string
           source: string
@@ -749,11 +752,14 @@ export type Database = {
         }
         Insert: {
           amount: number
+          client_name?: string | null
           created_at?: string
           date: string
           description: string
           id?: string
           notes?: string | null
+          payment_method?: string
+          payment_status?: string
           reference?: string | null
           revenue_number: string
           source: string
@@ -762,11 +768,14 @@ export type Database = {
         }
         Update: {
           amount?: number
+          client_name?: string | null
           created_at?: string
           date?: string
           description?: string
           id?: string
           notes?: string | null
+          payment_method?: string
+          payment_status?: string
           reference?: string | null
           revenue_number?: string
           source?: string

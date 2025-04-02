@@ -40,9 +40,12 @@ export const saveTransactionsToDatabase = async (
       type: tx.type,
       source: tx.source || 'other',
       revenue_number: `REV-${Math.floor(Math.random() * 10000)}`,
-      status: 'paid', // Add the required status field
+      payment_status: 'paid',
+      payment_method: 'bank transfer',
+      status: 'paid',
       created_at: new Date().toISOString(),
-      user_id: userId
+      user_id: userId,
+      client_name: '' // Add empty client_name field
     }));
     
     // Store in revenues table
@@ -93,9 +96,12 @@ export const prepareRevenuesFromTransactions = async (
       amount: tx.amount,
       date: new Date(tx.date),
       source: tx.source || 'other',
-      status: 'paid', // Add the required status field
+      payment_status: 'paid',
+      payment_method: 'bank transfer',
+      status: 'paid',
       created_at: new Date(),
-      notes: `Imported from bank statement: ${fileName}. Batch ID: ${batchId}`
+      notes: `Imported from bank statement: ${fileName}. Batch ID: ${batchId}`,
+      client_name: '' // Add empty client_name field
     }));
     
     return revenues;
