@@ -65,22 +65,20 @@ const CashflowSection = () => {
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 bg-[#F2FCE2] border border-green-100 shadow-md rounded-lg" align="end">
               <div className="p-3">
-                <div className="space-y-2">
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start text-left py-3 px-4 text-base hover:bg-green-100 rounded-md" 
-                    onClick={() => handlePeriodChange(6, "Last six months")}
-                  >
-                    Last six months
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start text-left py-3 px-4 text-base hover:bg-green-100 rounded-md" 
-                    onClick={() => handlePeriodChange(12, "Last twelve months")}
-                  >
-                    Last twelve months
-                  </Button>
-                </div>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-left py-3 px-4 text-base hover:bg-green-100 rounded-md" 
+                  onClick={() => handlePeriodChange(6, "Last six months")}
+                >
+                  Last six months
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-left py-3 px-4 text-base hover:bg-green-100 rounded-md mt-2" 
+                  onClick={() => handlePeriodChange(12, "Last twelve months")}
+                >
+                  Last twelve months
+                </Button>
                 <div className="border-t border-green-100 my-3"></div>
                 <p className="px-2 py-2 text-sm text-muted-foreground">Or select a specific month:</p>
                 <CalendarComponent
