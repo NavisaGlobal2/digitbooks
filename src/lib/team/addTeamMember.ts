@@ -82,7 +82,7 @@ export const addTeamMember = async (
         'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
       },
       body: JSON.stringify({
-        token: data.token,
+        token: data?.token || "",
         email,
         inviterName: user?.user_metadata?.name || user?.email || "Your team admin",
         role,
