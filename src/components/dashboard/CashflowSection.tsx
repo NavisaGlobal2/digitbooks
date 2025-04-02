@@ -54,44 +54,48 @@ const CashflowSection = () => {
         <div className="flex flex-wrap w-full sm:w-auto items-center gap-2">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 gap-2 w-full sm:w-auto">
+              <Button 
+                variant="success" 
+                size="sm" 
+                className="text-xs sm:text-sm h-8 sm:h-9 gap-2 w-full sm:w-auto"
+              >
                 <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span className="truncate">{filterPeriod}</span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
+            <PopoverContent className="w-auto p-0 bg-[#F2FCE2] border border-green-100 shadow-md rounded-lg" align="end">
               <div className="p-2">
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Button 
                     variant="ghost" 
-                    className="w-full justify-start text-left" 
+                    className="w-full justify-start text-left hover:bg-green-100" 
                     onClick={() => handlePeriodChange(3, "Last three months")}
                   >
                     Last three months
                   </Button>
                   <Button 
                     variant="ghost" 
-                    className="w-full justify-start text-left" 
+                    className="w-full justify-start text-left hover:bg-green-100" 
                     onClick={() => handlePeriodChange(6, "Last six months")}
                   >
                     Last six months
                   </Button>
                   <Button 
                     variant="ghost" 
-                    className="w-full justify-start text-left" 
+                    className="w-full justify-start text-left hover:bg-green-100" 
                     onClick={() => handlePeriodChange(12, "Last twelve months")}
                   >
                     Last twelve months
                   </Button>
                 </div>
-                <div className="border-t my-2"></div>
+                <div className="border-t border-green-100 my-2"></div>
                 <p className="px-2 py-1 text-xs text-muted-foreground">Or select a specific month:</p>
                 <CalendarComponent
                   mode="single"
                   selected={date}
                   onSelect={handleCalendarSelect}
                   initialFocus
-                  className="w-[250px]"
+                  className="w-[270px] p-3 pointer-events-auto"
                 />
               </div>
             </PopoverContent>
@@ -108,7 +112,7 @@ const CashflowSection = () => {
                 <Filter className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-56" align="end">
+            <PopoverContent className="w-56 bg-[#F2FCE2] border border-green-100" align="end">
               <div className="space-y-2">
                 <h4 className="font-medium text-sm">Filter Options</h4>
                 <div className="grid gap-1">
@@ -116,7 +120,7 @@ const CashflowSection = () => {
                     <Button
                       key={option}
                       variant="ghost"
-                      className="justify-start text-xs h-8"
+                      className="justify-start text-xs h-8 hover:bg-green-100"
                       onClick={() => {
                         toast.success(`Filtered by ${option}`);
                         setIsFilterOpen(false);
