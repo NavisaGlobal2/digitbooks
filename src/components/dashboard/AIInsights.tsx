@@ -1,7 +1,11 @@
 
-import { AlertTriangle, TrendingUp, TrendingDown, DollarSign, AlertCircle, Lightbulb } from "lucide-react";
+import { AlertTriangle, TrendingUp, TrendingDown, DollarSign, AlertCircle, Lightbulb, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAIInsights } from "@/hooks/useAIInsights";
+import { useState } from "react";
 
 interface InsightProps {
   message: string;
@@ -50,28 +54,14 @@ const Insight = ({ message, type }: InsightProps) => {
 };
 
 const AIInsights = () => {
-  const insights = [
-    {
-      message: "Revenue increased by 15% this month.",
-      type: "success" as const
-    },
-    {
-      message: "Expenses are up 20% compared to last month.",
-      type: "error" as const
-    },
-    {
-      message: "Your cash flow is negative; consider reducing expenses.",
-      type: "error" as const
-    },
-    {
-      message: "Net profit margin dropped from 30% to 22%.",
-      type: "warning" as const
-    },
-    {
-      message: "You spent 10% more on software—review subscriptions.",
-      type: "warning" as const
-    }
-  ];
+  const { insights, isLoading, error, refreshInsights } = useAIInsights();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshInsights();
+    setIsRefreshing(false);
+  };
 
   return (
     <Card className="border-none shadow-sm h-full">
@@ -80,12 +70,46 @@ const AIInsights = () => {
           <Lightbulb className="h-5 w-5 text-amber-500" />
           AI Insights
         </CardTitle>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={handleRefresh}
+          disabled={isLoading || isRefreshing}
+          className="h-8 w-8 p-0"
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span className="sr-only">Refresh insights</span>
+        </Button>
       </CardHeader>
       <CardContent className="px-4 md:px-6 pb-6">
         <div className="space-y-2">
-          {insights.map((insight, index) => (
-            <Insight key={index} message={insight.message} type={insight.type} />
-          ))}
+          {isLoading ? (
+            // Loading skeleton
+            Array(5).fill(0).map((_, i) => (
+              <div key={i} className="flex items-center mb-2">
+                <Skeleton className="h-4 w-4 mr-2 rounded-full" />
+                <Skeleton className="h-4 flex-1 rounded-md" />
+              </div>
+            ))
+          ) : error ? (
+            // Error state
+            <Alert className="bg-error/10 border-error/30 text-error border">
+              <AlertDescription className="flex items-center text-xs">
+                <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />
+                Failed to load insights. Please try again later.
+              </AlertDescription>
+            </Alert>
+          ) : insights.length > 0 ? (
+            // Insights list
+            insights.map((insight, index) => (
+              <Insight key={index} message={insight.message} type={insight.type} />
+            ))
+          ) : (
+            // Empty state
+            <div className="text-center py-4">
+              <p className="text-muted-foreground text-sm">No insights available</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
