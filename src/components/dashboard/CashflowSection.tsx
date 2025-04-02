@@ -72,13 +72,6 @@ const CashflowSection = () => {
                 >
                   Last six months
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-start text-left py-3 px-4 text-base hover:bg-green-100 rounded-md mt-2" 
-                  onClick={() => handlePeriodChange(12, "Last twelve months")}
-                >
-                  Last twelve months
-                </Button>
                 <div className="border-t border-green-100 my-3"></div>
                 <p className="px-2 py-2 text-sm text-muted-foreground">Or select a specific month:</p>
                 <CalendarComponent
