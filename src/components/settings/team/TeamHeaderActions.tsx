@@ -1,33 +1,27 @@
 
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { TeamMemberRole } from "@/types/teamMember";
 import { InviteTeamMemberDialog } from "./InviteTeamMemberDialog";
-import { TeamMember } from "@/types/teamMember";
 
 interface TeamHeaderActionsProps {
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  onInvite: (member: TeamMember) => void;
-  canInvite?: boolean;
+  onInvite: (name: string, email: string, role: TeamMemberRole) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const TeamHeaderActions = ({ 
-  searchQuery, 
-  onSearchChange, 
-  onInvite,
-  canInvite = false 
-}: TeamHeaderActionsProps) => {
+export const TeamHeaderActions = ({ onInvite }: TeamHeaderActionsProps) => {
   return (
-    <div className="flex flex-col lg:flex-row items-center justify-between gap-4 mt-4">
-      <Input
-        placeholder="Search team members..."
-        value={searchQuery}
-        onChange={(e) => onSearchChange(e.target.value)}
-        className="w-full lg:w-72"
-      />
+    <div className="flex items-center gap-2">
+      <Button
+        id="invite-team-member-button"
+        variant="default"
+        className="flex items-center gap-1"
+        onClick={() => {}}
+      >
+        <Plus className="h-4 w-4" />
+        <span>Invite Team Member</span>
+      </Button>
       
-      {canInvite && (
-        <InviteTeamMemberDialog onInvite={onInvite} />
-      )}
+      <InviteTeamMemberDialog onInvite={onInvite} />
     </div>
   );
 };

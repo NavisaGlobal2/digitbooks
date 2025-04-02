@@ -1,23 +1,52 @@
 
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { AlertCircle, RefreshCcw } from "lucide-react";
 
 interface TeamErrorAlertProps {
-  onRetry: () => void;
+  title?: string;
+  description?: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  onRetry?: () => void;
 }
 
-export const TeamErrorAlert = ({ onRetry }: TeamErrorAlertProps) => {
+export const TeamErrorAlert = ({ 
+  title = "Error Loading Team Members", 
+  description = "There was an error loading team members. Please try again.",
+  actionLabel,
+  onAction,
+  onRetry
+}: TeamErrorAlertProps) => {
   return (
-    <div className="flex flex-col items-center justify-center p-6 rounded-lg border border-red-200 bg-red-50 text-red-800">
-      <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-      <h3 className="text-lg font-medium mb-2">Failed to load team members</h3>
-      <p className="text-center text-red-600 mb-4">
-        There was an error loading your team members. Please try again.
-      </p>
-      <Button onClick={onRetry} className="flex items-center gap-2">
-        <RefreshCw className="h-4 w-4" />
-        Try Again
-      </Button>
-    </div>
+    <Alert className="my-8 border-red-500 bg-red-50">
+      <AlertCircle className="h-5 w-5 text-red-500" />
+      <AlertTitle className="text-red-800">{title}</AlertTitle>
+      <AlertDescription className="text-red-700">
+        <p className="mb-4">{description}</p>
+        <div className="flex gap-3">
+          {onRetry && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-red-500 text-red-700 hover:bg-red-100"
+              onClick={onRetry}
+            >
+              <RefreshCcw className="mr-2 h-4 w-4" />
+              Retry
+            </Button>
+          )}
+          {actionLabel && onAction && (
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={onAction}
+            >
+              {actionLabel}
+            </Button>
+          )}
+        </div>
+      </AlertDescription>
+    </Alert>
   );
 };

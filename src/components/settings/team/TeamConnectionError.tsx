@@ -1,23 +1,34 @@
 
-import { WifiOff, RefreshCw } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { RefreshCcw, WifiOff } from "lucide-react";
 
 interface TeamConnectionErrorProps {
-  onRetry: () => void;
+  error?: Error;
+  onRetry?: () => void;
 }
 
-export const TeamConnectionError = ({ onRetry }: TeamConnectionErrorProps) => {
+export const TeamConnectionError = ({ error, onRetry }: TeamConnectionErrorProps) => {
   return (
-    <div className="flex flex-col items-center justify-center p-6 rounded-lg border border-yellow-200 bg-yellow-50 text-yellow-800">
-      <WifiOff className="h-12 w-12 text-yellow-500 mb-4" />
-      <h3 className="text-lg font-medium mb-2">Connection Error</h3>
-      <p className="text-center text-yellow-700 mb-4">
-        Could not connect to the database. Check your internet connection and try again.
-      </p>
-      <Button onClick={onRetry} variant="outline" className="flex items-center gap-2">
-        <RefreshCw className="h-4 w-4" />
-        Retry Connection
-      </Button>
-    </div>
+    <Alert className="my-8 border-amber-500 bg-amber-50">
+      <WifiOff className="h-5 w-5 text-amber-500" />
+      <AlertTitle className="text-amber-800">Connection Error</AlertTitle>
+      <AlertDescription className="text-amber-700">
+        <p className="mb-4">
+          {error?.message || "Unable to connect to the database. Please check your internet connection."}
+        </p>
+        {onRetry && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-amber-500 text-amber-700 hover:bg-amber-100"
+            onClick={onRetry}
+          >
+            <RefreshCcw className="mr-2 h-4 w-4" />
+            Retry Connection
+          </Button>
+        )}
+      </AlertDescription>
+    </Alert>
   );
 };

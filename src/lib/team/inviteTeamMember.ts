@@ -6,6 +6,11 @@ import { canManageTeam } from "./userPermissions";
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from "@/contexts/auth";
 
+interface TeamInviteResponse {
+  id: string;
+  token: string;
+}
+
 /**
  * Invites a new team member via email
  * @param name - The name of the person being invited
@@ -41,6 +46,12 @@ export const inviteTeamMember = async (
       throw error;
     }
 
+    // Parse the response data and convert it to expected type
+    const inviteData = data as unknown as TeamInviteResponse;
+    if (!inviteData || !inviteData.token) {
+      throw new Error("Invalid response from server");
+    }
+
     // Get current user info for the email
     const { data: { user } } = await supabase.auth.getUser();
     const inviterName = user?.user_metadata?.name || user?.email || "Your team admin";
@@ -53,7 +64,7 @@ export const inviteTeamMember = async (
         'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
       },
       body: JSON.stringify({
-        token: data.token,
+        token: inviteData.token,
         email,
         inviterName,
         role,
@@ -77,6 +88,7 @@ export const inviteTeamMember = async (
         email,
         role,
         status: 'pending',
+        user_id: uuidv4() // Use temporary UUID until the user accepts the invite
       });
 
     if (memberError) {
@@ -85,7 +97,7 @@ export const inviteTeamMember = async (
     }
 
     toast.success(`Invitation sent to ${email}`);
-    return data;
+    return inviteData;
   } catch (error) {
     console.error("Error inviting team member:", error);
     toast.error(error instanceof Error ? error.message : "Failed to invite team member");

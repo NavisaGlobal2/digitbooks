@@ -152,12 +152,26 @@ export const TeamManagementContainer = () => {
     }
   };
 
+  const handleRetry = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const members = await fetchTeamMembers();
+      setTeamMembers(members);
+      setFilteredMembers(members);
+    } catch (error) {
+      setError(error instanceof Error ? error : new Error("Failed to load team members"));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (isLoading) {
     return <TeamLoadingState />;
   }
 
   if (error) {
-    return <TeamConnectionError error={error} />;
+    return <TeamConnectionError error={error} onRetry={handleRetry} />;
   }
 
   return (
