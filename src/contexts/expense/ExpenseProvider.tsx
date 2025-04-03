@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Expense, ExpenseStatus } from '@/types/expense';
 import { toast } from 'sonner';
 import { useExpenseData } from '@/hooks/useExpenseData';
-import { safelyStoreExpenses, loadExpensesFromLocalStorage } from '@/utils/expenseStorage';
 import { useExpenseDatabase } from '@/hooks/useExpenseDatabase';
 import { ExpenseContextType } from './types';
 
@@ -33,47 +32,19 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (dbExpenses && dbExpenses.length > 0) {
           console.log(`Loaded ${dbExpenses.length} expenses from database`);
           setExpenses(dbExpenses);
-        } else {
-          console.log('No expenses found in database, checking local storage');
-          // Fallback to local storage if no database expenses found
-          const localExpenses = loadExpensesFromLocalStorage();
-          
-          if (localExpenses && localExpenses.length > 0) {
-            console.log(`Loaded ${localExpenses.length} expenses from local storage`);
-            setExpenses(localExpenses);
-            
-            // If user is authenticated, sync local expenses to database
-            if (currentUserId && localExpenses.length > 0) {
-              console.log(`Syncing ${localExpenses.length} local expenses to database`);
-              syncLocalExpensesToDatabase(localExpenses);
-            }
-          } else {
-            console.log('No expenses found in local storage either');
-          }
         }
       } catch (error) {
         console.error("Failed to load expenses:", error);
-        
-        // Fallback to local storage on error
-        const localExpenses = loadExpensesFromLocalStorage();
-        if (localExpenses) {
-          setExpenses(localExpenses);
-        }
       }
     };
     
-    fetchExpenses();
-  }, [currentUserId]);
-
-  // Sync local expenses to database when user is authenticated
-  const syncLocalExpensesToDatabase = async (localExpenses: Expense[]) => {
-    try {
-      const result = await addExpensesBatch(localExpenses);
-      console.log(`Synced ${result.syncedCount} of ${localExpenses.length} expenses to database`);
-    } catch (error) {
-      console.error("Failed to sync local expenses to database:", error);
+    if (currentUserId) {
+      fetchExpenses();
+    } else {
+      // Clear expenses when no user is logged in
+      setExpenses([]);
     }
-  };
+  }, [currentUserId]);
 
   // Add a single expense
   const addExpense = async (expenseData: Omit<Expense, 'id'>) => {
@@ -97,7 +68,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     } catch (error) {
       console.error("Failed to save expense to database:", error);
-      toast.error("Expense saved locally but failed to sync with database");
+      toast.error("Failed to save expense to database");
     }
   };
 
@@ -122,7 +93,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     } catch (error) {
       console.error("Failed to save expenses batch to database:", error);
-      toast.error("Expenses saved locally but failed to sync with database");
+      toast.error("Failed to save expenses to database");
     }
   };
 
@@ -150,7 +121,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
       } catch (error) {
         console.error("Failed to update expense status in database:", error);
-        toast.error("Status updated locally but failed to sync with database");
+        toast.error("Failed to update expense status in database");
       }
     }
   };
@@ -176,7 +147,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     } catch (error) {
       console.error("Failed to update expense in database:", error);
-      toast.error("Expense updated locally but failed to sync with database");
+      toast.error("Failed to update expense in database");
     }
   };
 
@@ -195,16 +166,9 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     } catch (error) {
       console.error("Failed to delete expense from database:", error);
-      toast.error("Expense removed locally but failed to sync with database");
+      toast.error("Failed to delete expense from database");
     }
   };
-
-  // Store expenses in local storage when they change
-  useEffect(() => {
-    if (expenses.length > 0) {
-      safelyStoreExpenses(expenses);
-    }
-  }, [expenses]);
 
   if (isLoading) {
     return (

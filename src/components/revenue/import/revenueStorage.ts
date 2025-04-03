@@ -66,7 +66,7 @@ export const saveTransactionsToDatabase = async (
 };
 
 /**
- * Prepare revenue entries from selected transactions
+ * Prepare revenue entries from selected transactions - no client-side persistence
  */
 export const prepareRevenuesFromTransactions = async (
   transactions: ParsedTransaction[],
