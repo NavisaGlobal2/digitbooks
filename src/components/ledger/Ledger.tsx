@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLedger } from "@/contexts/LedgerContext";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { BookOpen, ArrowLeft, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
+import { BookOpen, ArrowLeft, Loader2, RefreshCw, AlertTriangle, Bug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { AddTransactionDialog } from "@/components/ledger/AddTransactionDialog";
@@ -11,6 +11,7 @@ import { EditTransactionDialog } from "./EditTransactionDialog";
 import MobileSidebar from "../dashboard/layout/MobileSidebar";
 import { toast } from "sonner";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 const Ledger = () => {
   const { transactions, isLoading, refreshTransactions, error } = useLedger();
@@ -19,7 +20,27 @@ const Ledger = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshAttempts, setRefreshAttempts] = useState(0);
+  const [authStatus, setAuthStatus] = useState<string | null>(null);
   const MAX_AUTO_REFRESH_ATTEMPTS = 1;
+
+  // Check authentication status on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Auth check error:", error);
+        setAuthStatus("Error checking authentication status");
+      } else if (!data.session) {
+        console.log("User is not authenticated");
+        setAuthStatus("Not authenticated");
+      } else {
+        console.log("User is authenticated as:", data.session.user?.id);
+        setAuthStatus("Authenticated");
+      }
+    };
+    
+    checkAuth();
+  }, []);
 
   const refreshData = useCallback(async () => {
     if (refreshAttempts >= MAX_AUTO_REFRESH_ATTEMPTS) {
@@ -62,6 +83,14 @@ const Ledger = () => {
     }
   };
 
+  // Debug button to show current auth state
+  const showDebugInfo = () => {
+    toast.info(`Authentication status: ${authStatus || "unknown"}
+    Transaction count: ${transactions.length}
+    Error: ${error ? error.message : "none"}
+    Loading: ${isLoading ? "yes" : "no"}`);
+  };
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <div className="hidden md:block">
@@ -102,30 +131,52 @@ const Ledger = () => {
             <h1 className="text-lg sm:text-xl font-semibold">General ledger</h1>
           </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleManualRefresh}
-            disabled={isRefreshing}
-            className="text-xs sm:text-sm flex items-center gap-1"
-          >
-            {isRefreshing ? (
-              <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
-            )}
-            <span className="hidden xs:inline">Refresh</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={showDebugInfo}
+              className="text-xs sm:text-sm flex items-center gap-1"
+              title="Show debugging information"
+            >
+              <Bug className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Debug</span>
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              className="text-xs sm:text-sm flex items-center gap-1"
+            >
+              {isRefreshing ? (
+                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
+              )}
+              <span className="hidden xs:inline">Refresh</span>
+            </Button>
+          </div>
         </header>
 
         <main className="flex-1 overflow-auto p-3 sm:p-6">
+          {authStatus === "Not authenticated" && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Authentication Error</AlertTitle>
+              <AlertDescription>
+                You are not authenticated. Please log in to view your transactions.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Error loading transactions</AlertTitle>
               <AlertDescription>
-                There was a problem loading your transactions. Please check your 
-                connection or try again later.
+                {error.message || "There was a problem loading your transactions"}
               </AlertDescription>
             </Alert>
           )}

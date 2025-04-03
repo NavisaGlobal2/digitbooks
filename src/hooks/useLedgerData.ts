@@ -13,17 +13,27 @@ export const useLedgerData = () => {
 
   // Fetch transactions from the database on component mount
   useEffect(() => {
+    console.log("Initial fetch of transactions");
     fetchTransactions();
   }, []);
 
   const fetchTransactions = async () => {
     try {
+      console.log("Starting to fetch transactions");
       setIsLoading(true);
       setError(null);
       
       // Get current user session to filter by user_id
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log("Getting user session...");
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Error getting session:", sessionError);
+        throw sessionError;
+      }
+      
       const userId = session?.user?.id;
+      console.log("Current user ID:", userId);
       
       if (!userId) {
         console.error("User not authenticated");
@@ -33,14 +43,25 @@ export const useLedgerData = () => {
       }
       
       // Using the generic "from" method with user_id filter
+      console.log(`Querying ledger_transactions for user_id: ${userId}`);
       const { data, error } = await supabase
         .from("ledger_transactions")
         .select("*")
         .eq("user_id", userId) // Add filter by user_id
         .order("date", { ascending: false }) as { data: any[], error: any };
 
+      console.log("Query result:", { data, error });
+
       if (error) {
+        console.error("Database query error:", error);
         throw error;
+      }
+      
+      // Check if we got data back
+      if (!data || data.length === 0) {
+        console.log("No transactions found for this user");
+      } else {
+        console.log(`Found ${data.length} transactions`);
       }
       
       // Transform the data into our Transaction format
@@ -53,6 +74,7 @@ export const useLedgerData = () => {
         category: item.category
       }));
       
+      console.log("Formatted transactions:", formattedTransactions);
       setTransactions(formattedTransactions);
     } catch (error: any) {
       console.error("Error fetching transactions:", error.message);
@@ -61,6 +83,7 @@ export const useLedgerData = () => {
     } finally {
       setIsLoading(false);
       setLastRefreshTime(Date.now());
+      console.log("Fetch transactions completed");
     }
   };
 
@@ -70,10 +93,11 @@ export const useLedgerData = () => {
       // Prevent excessive refreshing
       const now = Date.now();
       if (now - lastRefreshTime < MIN_REFRESH_INTERVAL) {
-        console.log("Refresh rate limited, try again later");
+        console.log(`Refresh rate limited, try again later. Last refresh was ${(now - lastRefreshTime)/1000} seconds ago`);
         return;
       }
       
+      console.log("Manual refresh triggered");
       await fetchTransactions();
       // Only show success toast for manual refreshes
       toast.success("Transactions refreshed");
