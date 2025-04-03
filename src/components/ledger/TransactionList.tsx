@@ -10,10 +10,11 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash } from "lucide-react";
+import { Edit, Trash, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { formatNaira } from "@/utils/invoice";
+import { useState } from "react";
 
 interface TransactionListProps {
   onEditTransaction: (id: string) => void;
@@ -21,11 +22,20 @@ interface TransactionListProps {
 
 const TransactionList = ({ onEditTransaction }: TransactionListProps) => {
   const { transactions, deleteTransaction } = useLedger();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleDeleteTransaction = (id: string) => {
+  const handleDeleteTransaction = async (id: string) => {
     if (confirm("Are you sure you want to delete this transaction?")) {
-      deleteTransaction(id);
-      toast.success("Transaction deleted successfully");
+      try {
+        setDeletingId(id);
+        await deleteTransaction(id);
+        toast.success("Transaction deleted successfully");
+      } catch (error) {
+        console.error("Error deleting transaction:", error);
+        toast.error("Failed to delete transaction");
+      } finally {
+        setDeletingId(null);
+      }
     }
   };
 
@@ -78,8 +88,13 @@ const TransactionList = ({ onEditTransaction }: TransactionListProps) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteTransaction(transaction.id)}
+                      disabled={deletingId === transaction.id}
                     >
-                      <Trash className="h-4 w-4" />
+                      {deletingId === transaction.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </TableCell>

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { useLedger } from "@/contexts/LedgerContext";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface EditTransactionDialogProps {
   open: boolean;
@@ -27,6 +28,7 @@ export const EditTransactionDialog = ({
   transactionId,
 }: EditTransactionDialogProps) => {
   const { transactions, updateTransaction } = useLedger();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [date, setDate] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -61,45 +63,53 @@ export const EditTransactionDialog = ({
     }
   }, [open, transactionId, transactions]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    if (!date) {
-      toast.error("Please select a date");
-      return;
+    try {
+      if (!date) {
+        toast.error("Please select a date");
+        return;
+      }
+
+      if (!description.trim()) {
+        toast.error("Please enter a description");
+        return;
+      }
+
+      if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+        toast.error("Please enter a valid amount");
+        return;
+      }
+
+      if (!category) {
+        toast.error("Please select a category");
+        return;
+      }
+
+      if (!transactionId) {
+        toast.error("Transaction ID is missing");
+        return;
+      }
+
+      await updateTransaction(transactionId, {
+        date: new Date(date),
+        description: description.trim(),
+        amount: parseFloat(amount),
+        category,
+        type,
+      });
+
+      toast.success("Transaction updated successfully");
+      resetForm();
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Failed to update transaction:", error);
+      toast.error("Failed to update transaction");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    if (!description.trim()) {
-      toast.error("Please enter a description");
-      return;
-    }
-
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-      toast.error("Please enter a valid amount");
-      return;
-    }
-
-    if (!category) {
-      toast.error("Please select a category");
-      return;
-    }
-
-    if (!transactionId) {
-      toast.error("Transaction ID is missing");
-      return;
-    }
-
-    updateTransaction(transactionId, {
-      date: new Date(date),
-      description: description.trim(),
-      amount: parseFloat(amount),
-      category,
-      type,
-    });
-
-    toast.success("Transaction updated successfully");
-    resetForm();
-    onOpenChange(false);
   };
 
   const resetForm = () => {
@@ -125,6 +135,7 @@ export const EditTransactionDialog = ({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              disabled={isSubmitting}
             />
           </div>
 
@@ -136,6 +147,7 @@ export const EditTransactionDialog = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter transaction description"
               className="resize-none min-h-[80px]"
+              disabled={isSubmitting}
             />
           </div>
 
@@ -149,13 +161,14 @@ export const EditTransactionDialog = ({
               placeholder="Enter amount"
               min="0.01"
               step="0.01"
+              disabled={isSubmitting}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Select value={category} onValueChange={setCategory}>
+              <Select value={category} onValueChange={setCategory} disabled={isSubmitting}>
                 <SelectTrigger id="category">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -174,6 +187,7 @@ export const EditTransactionDialog = ({
               <Select
                 value={type}
                 onValueChange={(value) => setType(value as "credit" | "debit")}
+                disabled={isSubmitting}
               >
                 <SelectTrigger id="type">
                   <SelectValue placeholder="Select type" />
@@ -194,14 +208,23 @@ export const EditTransactionDialog = ({
                 resetForm();
                 onOpenChange(false);
               }}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               type="submit"
               className="bg-green-500 hover:bg-green-600 text-white"
+              disabled={isSubmitting}
             >
-              Update Transaction
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Transaction"
+              )}
             </Button>
           </div>
         </form>

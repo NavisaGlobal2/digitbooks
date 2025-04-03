@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useLedger } from "@/contexts/LedgerContext";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { BookOpen, ArrowLeft } from "lucide-react";
+import { BookOpen, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { AddTransactionDialog } from "@/components/ledger/AddTransactionDialog";
@@ -11,7 +11,7 @@ import { EditTransactionDialog } from "./EditTransactionDialog";
 import MobileSidebar from "../dashboard/layout/MobileSidebar";
 
 const Ledger = () => {
-  const { transactions } = useLedger();
+  const { transactions, isLoading } = useLedger();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editTransactionId, setEditTransactionId] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -66,7 +66,12 @@ const Ledger = () => {
         </header>
 
         <main className="flex-1 overflow-auto p-3 sm:p-6">
-          {transactions.length === 0 ? (
+          {isLoading ? (
+            <div className="h-full flex flex-col items-center justify-center">
+              <Loader2 className="h-12 w-12 text-green-500 animate-spin mb-4" />
+              <p className="text-muted-foreground">Loading transaction data...</p>
+            </div>
+          ) : transactions.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center max-w-md mx-auto text-center px-4">
               <div className="w-32 h-32 sm:w-48 sm:h-48 mb-6 sm:mb-8 flex items-center justify-center bg-green-50 rounded-full">
                 <BookOpen className="w-16 h-16 sm:w-24 sm:h-24 text-green-500" strokeWidth={1.5} />
