@@ -2,6 +2,16 @@
 import { Expense } from '@/types/expense';
 import { toast } from 'sonner';
 
+// Track toast displayed status to avoid duplicates
+let storageWarningShown = false;
+
+// Reset the warning flag after some time
+const resetWarningFlag = () => {
+  setTimeout(() => {
+    storageWarningShown = false;
+  }, 5000); // Reset after 5 seconds
+};
+
 export const safelyStoreExpenses = (expenses: Expense[]): boolean => {
   try {
     const storableExpenses = expenses.map(expense => {
@@ -38,15 +48,36 @@ export const safelyStoreExpenses = (expenses: Expense[]): boolean => {
         }));
         
         localStorage.setItem('expenses', JSON.stringify(limitedExpenses));
-        toast.warning("Some expense data couldn't be stored locally due to size limits");
+        
+        // Only show toast if we haven't shown it recently
+        if (!storageWarningShown) {
+          toast.warning("Some expense data couldn't be stored locally due to size limits");
+          storageWarningShown = true;
+          resetWarningFlag();
+        }
+        
         return true;
       } catch (fallbackError) {
         console.error("Failed to store limited expenses:", fallbackError);
-        toast.error("Failed to save your expenses. Please export them if needed.");
+        
+        // Only show toast if we haven't shown it recently
+        if (!storageWarningShown) {
+          toast.error("Failed to save your expenses. Please export them if needed.");
+          storageWarningShown = true;
+          resetWarningFlag();
+        }
+        
         return false;
       }
     }
-    toast.error("Failed to save your expenses. Please export them if needed.");
+    
+    // Only show toast if we haven't shown it recently
+    if (!storageWarningShown) {
+      toast.error("Failed to save your expenses. Please export them if needed.");
+      storageWarningShown = true;
+      resetWarningFlag();
+    }
+    
     return false;
   }
 };
@@ -69,7 +100,14 @@ export const loadExpensesFromLocalStorage = () => {
     return null;
   } catch (localError) {
     console.error("Failed to parse stored expenses:", localError);
-    toast.error("Failed to load your saved expenses");
+    
+    // Only show toast if we haven't shown it recently
+    if (!storageWarningShown) {
+      toast.error("Failed to load your saved expenses");
+      storageWarningShown = true;
+      resetWarningFlag();
+    }
+    
     return null;
   }
 };
