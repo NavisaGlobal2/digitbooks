@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,6 +17,7 @@ interface LedgerContextValue {
   updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   isLoading: boolean;
+  refreshTransactions: () => Promise<void>;
 }
 
 const LedgerContext = createContext<LedgerContextValue | undefined>(undefined);
@@ -35,10 +35,21 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       
-      // Using the generic "from" method to avoid TypeScript errors
+      // Get current user session to filter by user_id
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      
+      if (!userId) {
+        console.error("User not authenticated");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Using the generic "from" method with user_id filter
       const { data, error } = await supabase
         .from("ledger_transactions")
         .select("*")
+        .eq("user_id", userId) // Add filter by user_id
         .order("date", { ascending: false }) as { data: any[], error: any };
 
       if (error) {
@@ -62,6 +73,11 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Add function to manually refresh transactions
+  const refreshTransactions = async () => {
+    await fetchTransactions();
   };
 
   const addTransaction = async (transaction: Omit<Transaction, "id">) => {
@@ -175,7 +191,7 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <LedgerContext.Provider
-      value={{ transactions, addTransaction, updateTransaction, deleteTransaction, isLoading }}
+      value={{ transactions, addTransaction, updateTransaction, deleteTransaction, isLoading, refreshTransactions }}
     >
       {children}
     </LedgerContext.Provider>

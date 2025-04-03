@@ -1,33 +1,60 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLedger } from "@/contexts/LedgerContext";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { BookOpen, ArrowLeft, Loader2 } from "lucide-react";
+import { BookOpen, ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { AddTransactionDialog } from "@/components/ledger/AddTransactionDialog";
 import TransactionList from "./TransactionList";
 import { EditTransactionDialog } from "./EditTransactionDialog";
 import MobileSidebar from "../dashboard/layout/MobileSidebar";
+import { toast } from "sonner";
 
 const Ledger = () => {
-  const { transactions, isLoading } = useLedger();
+  const { transactions, isLoading, refreshTransactions } = useLedger();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editTransactionId, setEditTransactionId] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    const refreshData = async () => {
+      try {
+        setIsRefreshing(true);
+        await refreshTransactions();
+      } catch (error) {
+        console.error("Error refreshing transactions:", error);
+      } finally {
+        setIsRefreshing(false);
+      }
+    };
+    
+    refreshData();
+  }, [refreshTransactions]);
 
   const handleEditTransaction = (id: string) => {
     setEditTransactionId(id);
   };
 
+  const handleManualRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      await refreshTransactions();
+      toast.success("Transactions refreshed");
+    } catch (error) {
+      console.error("Error refreshing transactions:", error);
+      toast.error("Failed to refresh transactions");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden md:block">
         <Sidebar />
       </div>
 
-      {/* Mobile Sidebar */}
       <MobileSidebar
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
@@ -62,7 +89,20 @@ const Ledger = () => {
             <h1 className="text-lg sm:text-xl font-semibold">General ledger</h1>
           </div>
           
-          {/* Removed duplicate "Add transaction" button from here */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="text-xs sm:text-sm flex items-center gap-1"
+          >
+            {isRefreshing ? (
+              <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
+            )}
+            <span className="hidden xs:inline">Refresh</span>
+          </Button>
         </header>
 
         <main className="flex-1 overflow-auto p-3 sm:p-6">

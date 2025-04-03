@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash, Loader2 } from "lucide-react";
+import { Edit, Trash, Loader2, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { formatNaira } from "@/utils/invoice";
@@ -21,8 +21,9 @@ interface TransactionListProps {
 }
 
 const TransactionList = ({ onEditTransaction }: TransactionListProps) => {
-  const { transactions, deleteTransaction } = useLedger();
+  const { transactions, deleteTransaction, refreshTransactions, isLoading } = useLedger();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleDeleteTransaction = async (id: string) => {
     if (confirm("Are you sure you want to delete this transaction?")) {
@@ -39,8 +40,37 @@ const TransactionList = ({ onEditTransaction }: TransactionListProps) => {
     }
   };
 
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      await refreshTransactions();
+      toast.success("Transactions refreshed");
+    } catch (error) {
+      console.error("Error refreshing transactions:", error);
+      toast.error("Failed to refresh transactions");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <div className="rounded-md border">
+      <div className="flex justify-end p-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleRefresh} 
+          disabled={isRefreshing}
+          className="text-sm gap-2"
+        >
+          {isRefreshing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          Refresh
+        </Button>
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
@@ -56,7 +86,7 @@ const TransactionList = ({ onEditTransaction }: TransactionListProps) => {
           {transactions.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="h-24 text-center">
-                No transactions found
+                {isLoading ? "Loading transactions..." : "No transactions found"}
               </TableCell>
             </TableRow>
           ) : (
