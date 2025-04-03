@@ -71,6 +71,14 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
         ? transaction.date.toISOString().split('T')[0] 
         : transaction.date;
 
+      // Get current user
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
       // First insert the transaction into the database
       const { data, error } = await supabase
         .from("ledger_transactions")
@@ -79,7 +87,8 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
           description: transaction.description,
           amount: transaction.amount,
           type: transaction.type,
-          category: transaction.category
+          category: transaction.category,
+          user_id: userId
         })
         .select() as { data: any[], error: any };
 
