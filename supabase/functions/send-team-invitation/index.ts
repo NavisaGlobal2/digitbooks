@@ -29,6 +29,7 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
     const ADMIN_EMAIL = "onifade.john.o@gmail.com"; // The verified email address
+    const USE_VERIFIED_DOMAIN = Deno.env.get("USE_VERIFIED_DOMAIN") === "true" || false;
 
     if (!RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY is required");
@@ -50,6 +51,43 @@ serve(async (req) => {
     // Generate invitation URL with token
     const invitationUrl = `${req.headers.get("origin") || "https://your-app-url.com"}/accept-invitation?token=${token}`;
 
+    // HTML template for the invitation email
+    const invitationEmailHtml = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Team Invitation</h2>
+        <p>Hi ${name},</p>
+        <p>${inviterName} has invited you to join their team on DigiBooks as a <strong>${role}</strong>.</p>
+        <p>Click the button below to accept your invitation:</p>
+        <a href="${invitationUrl}" style="display: inline-block; background-color: #4f46e5; color: white; font-weight: bold; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 16px 0;">Accept Invitation</a>
+        <p>If you can't click the button, copy and paste this URL into your browser:</p>
+        <p>${invitationUrl}</p>
+        <p>This invitation link will expire in 7 days.</p>
+      </div>
+    `;
+
+    // Admin notification email HTML
+    const adminEmailHtml = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Team Invitation</h2>
+        <p>Hi Admin,</p>
+        <p>A new invitation has been created for ${name} (${email}) to join as a <strong>${role}</strong>.</p>
+        <p>The invitation was created by ${inviterName}.</p>
+        <p>Invitation link: ${invitationUrl}</p>
+        <p>Since you're using Resend's free tier without a verified domain, you'll need to manually forward this invitation to ${email}</p>
+        <hr>
+        <p>Message that would be sent to the user:</p>
+        ${invitationEmailHtml}
+      </div>
+    `;
+
+    // Determine if we can send directly to the recipient or need to use admin email
+    // This depends on whether you have verified your domain in Resend
+    const recipient = USE_VERIFIED_DOMAIN ? email : ADMIN_EMAIL;
+    const emailHtml = USE_VERIFIED_DOMAIN ? invitationEmailHtml : adminEmailHtml;
+    const emailSubject = USE_VERIFIED_DOMAIN 
+      ? `Team invitation to join as ${role}` 
+      : `Team invitation for ${email} to join as ${role}`;
+
     // Call Resend API to send email
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -59,27 +97,9 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "DigiBooks <onboarding@resend.dev>", // Using the default verified Resend domain
-        to: ADMIN_EMAIL, // Send to the admin's email (which is verified)
-        subject: `Team invitation for ${email} to join as ${role}`,
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Team Invitation</h2>
-            <p>Hi Admin,</p>
-            <p>A new invitation has been created for ${name} (${email}) to join as a <strong>${role}</strong>.</p>
-            <p>The invitation was created by ${inviterName}.</p>
-            <p>Invitation link: ${invitationUrl}</p>
-            <p>Since you're using Resend's free tier, you'll need to manually forward this invitation to ${email}</p>
-            <hr>
-            <p>Message that would be sent to the user:</p>
-            <p>Hi ${name},</p>
-            <p>${inviterName} has invited you to join their team on DigiBooks as a <strong>${role}</strong>.</p>
-            <p>Click the button below to accept your invitation:</p>
-            <a href="${invitationUrl}" style="display: inline-block; background-color: #4f46e5; color: white; font-weight: bold; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 16px 0;">Accept Invitation</a>
-            <p>If you can't click the button, copy and paste this URL into your browser:</p>
-            <p>${invitationUrl}</p>
-            <p>This invitation link will expire in 7 days.</p>
-          </div>
-        `,
+        to: recipient,
+        subject: emailSubject,
+        html: emailHtml,
       }),
     });
 
@@ -94,8 +114,12 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Invitation email sent to admin",
-        note: "Using Resend's free tier: email will be sent to admin, who must forward it to the actual recipient" 
+        message: USE_VERIFIED_DOMAIN 
+          ? "Invitation email sent directly to recipient" 
+          : "Invitation email sent to admin",
+        note: USE_VERIFIED_DOMAIN 
+          ? "Email sent directly to recipient using verified domain" 
+          : "Using Resend's free tier without verified domain: email sent to admin, who must forward it to the actual recipient" 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
