@@ -62,13 +62,7 @@ const Ledger = () => {
             <h1 className="text-lg sm:text-xl font-semibold">General ledger</h1>
           </div>
           
-          <Button 
-            className="bg-green-500 hover:bg-green-600 text-white text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2"
-            onClick={() => setShowAddDialog(true)}
-          >
-            <span className="hidden xs:inline">Add transaction</span>
-            <span className="xs:hidden">Add</span>
-          </Button>
+          {/* Removed duplicate "Add transaction" button from here */}
         </header>
 
         <main className="flex-1 overflow-auto p-3 sm:p-6">
