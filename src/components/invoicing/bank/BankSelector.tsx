@@ -1,8 +1,10 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Check } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Check, Search } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Bank {
   name: string;
@@ -26,6 +28,21 @@ const BankSelector = ({
   isVerified,
   isLoading = false
 }: BankSelectorProps) => {
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredBanks, setFilteredBanks] = useState<Bank[]>(banks);
+  
+  // Update filtered banks when search query or banks list changes
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredBanks(banks);
+    } else {
+      const query = searchQuery.toLowerCase();
+      setFilteredBanks(
+        banks.filter(bank => bank.name.toLowerCase().includes(query))
+      );
+    }
+  }, [searchQuery, banks]);
   
   useEffect(() => {
     // When bank name changes, find the corresponding code
@@ -46,13 +63,20 @@ const BankSelector = ({
     if (selectedBank) {
       setSelectedBankCode(selectedBank.code);
     }
+    setSearchQuery("");
   };
 
   return (
     <div className="space-y-1.5">
       <Label htmlFor="bank-name">Bank name</Label>
       <div className="relative">
-        <Select onValueChange={handleBankSelection} value={bankName} disabled={isLoading || isVerified}>
+        <Select 
+          onValueChange={handleBankSelection} 
+          value={bankName} 
+          disabled={isLoading || isVerified}
+          open={open}
+          onOpenChange={setOpen}
+        >
           <SelectTrigger 
             id="bank-name" 
             className={`${isVerified ? "border-green-500 pr-10" : ""}`}
@@ -66,19 +90,34 @@ const BankSelector = ({
               <SelectValue placeholder="Select a bank" />
             )}
           </SelectTrigger>
-          <SelectContent className="max-h-[300px]">
-            {banks.length === 0 && !isLoading ? (
-              <div className="p-2 text-center text-gray-500">No banks available</div>
-            ) : (
-              banks.map((bank) => (
-                <SelectItem 
-                  key={bank.code} 
-                  value={bank.name}
-                >
-                  {bank.name}
-                </SelectItem>
-              ))
-            )}
+          <SelectContent className="p-0">
+            <div className="sticky top-0 bg-white z-10 p-2 border-b">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search banks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 h-9"
+                />
+              </div>
+            </div>
+            <ScrollArea className="max-h-[300px]">
+              {filteredBanks.length === 0 && !isLoading ? (
+                <div className="p-2 text-center text-muted-foreground">
+                  {searchQuery ? "No banks match your search" : "No banks available"}
+                </div>
+              ) : (
+                filteredBanks.map((bank) => (
+                  <SelectItem 
+                    key={bank.code} 
+                    value={bank.name}
+                  >
+                    {bank.name}
+                  </SelectItem>
+                ))
+              )}
+            </ScrollArea>
           </SelectContent>
         </Select>
         {isVerified && (
