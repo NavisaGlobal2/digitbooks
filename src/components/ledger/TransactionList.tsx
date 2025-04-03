@@ -10,18 +10,19 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash, Loader2, RefreshCw } from "lucide-react";
+import { Edit, Trash, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { formatNaira } from "@/utils/invoice";
 import { useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface TransactionListProps {
   onEditTransaction: (id: string) => void;
 }
 
 const TransactionList = ({ onEditTransaction }: TransactionListProps) => {
-  const { transactions, deleteTransaction, refreshTransactions, isLoading } = useLedger();
+  const { transactions, deleteTransaction, refreshTransactions, isLoading, error } = useLedger();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -44,7 +45,6 @@ const TransactionList = ({ onEditTransaction }: TransactionListProps) => {
     try {
       setIsRefreshing(true);
       await refreshTransactions();
-      toast.success("Transactions refreshed");
     } catch (error) {
       console.error("Error refreshing transactions:", error);
       toast.error("Failed to refresh transactions");
@@ -53,6 +53,31 @@ const TransactionList = ({ onEditTransaction }: TransactionListProps) => {
     }
   };
 
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertTriangle className="h-4 w-4 mr-2" />
+        <AlertDescription>
+          There was a problem loading your transactions. Please try again later.
+        </AlertDescription>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleRefresh} 
+          disabled={isRefreshing}
+          className="ml-auto text-sm gap-2"
+        >
+          {isRefreshing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          Try Again
+        </Button>
+      </Alert>
+    );
+  }
+
   return (
     <div className="rounded-md border">
       <div className="flex justify-end p-2">
@@ -60,10 +85,10 @@ const TransactionList = ({ onEditTransaction }: TransactionListProps) => {
           variant="outline" 
           size="sm" 
           onClick={handleRefresh} 
-          disabled={isRefreshing}
+          disabled={isRefreshing || isLoading}
           className="text-sm gap-2"
         >
-          {isRefreshing ? (
+          {isRefreshing || isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <RefreshCw className="h-4 w-4" />

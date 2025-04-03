@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { useLedger } from "@/contexts/LedgerContext";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { BookOpen, ArrowLeft, Loader2, RefreshCw } from "lucide-react";
+import { BookOpen, ArrowLeft, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { AddTransactionDialog } from "@/components/ledger/AddTransactionDialog";
@@ -9,28 +10,40 @@ import TransactionList from "./TransactionList";
 import { EditTransactionDialog } from "./EditTransactionDialog";
 import MobileSidebar from "../dashboard/layout/MobileSidebar";
 import { toast } from "sonner";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const Ledger = () => {
-  const { transactions, isLoading, refreshTransactions } = useLedger();
+  const { transactions, isLoading, refreshTransactions, error } = useLedger();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editTransactionId, setEditTransactionId] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshAttempts, setRefreshAttempts] = useState(0);
+  const MAX_AUTO_REFRESH_ATTEMPTS = 1;
+
+  const refreshData = useCallback(async () => {
+    if (refreshAttempts >= MAX_AUTO_REFRESH_ATTEMPTS) {
+      console.log("Max auto-refresh attempts reached");
+      return;
+    }
+
+    try {
+      setIsRefreshing(true);
+      setRefreshAttempts(prev => prev + 1);
+      await refreshTransactions();
+    } catch (error) {
+      console.error("Error refreshing transactions:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshTransactions, refreshAttempts]);
 
   useEffect(() => {
-    const refreshData = async () => {
-      try {
-        setIsRefreshing(true);
-        await refreshTransactions();
-      } catch (error) {
-        console.error("Error refreshing transactions:", error);
-      } finally {
-        setIsRefreshing(false);
-      }
-    };
-    
-    refreshData();
-  }, [refreshTransactions]);
+    // Only try to auto-refresh when loading completes
+    if (!isLoading && refreshAttempts === 0) {
+      refreshData();
+    }
+  }, [isLoading, refreshData, refreshAttempts]);
 
   const handleEditTransaction = (id: string) => {
     setEditTransactionId(id);
@@ -39,8 +52,8 @@ const Ledger = () => {
   const handleManualRefresh = async () => {
     try {
       setIsRefreshing(true);
+      setRefreshAttempts(0); // Reset attempts counter for manual refresh
       await refreshTransactions();
-      toast.success("Transactions refreshed");
     } catch (error) {
       console.error("Error refreshing transactions:", error);
       toast.error("Failed to refresh transactions");
@@ -106,6 +119,17 @@ const Ledger = () => {
         </header>
 
         <main className="flex-1 overflow-auto p-3 sm:p-6">
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Error loading transactions</AlertTitle>
+              <AlertDescription>
+                There was a problem loading your transactions. Please check your 
+                connection or try again later.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {isLoading ? (
             <div className="h-full flex flex-col items-center justify-center">
               <Loader2 className="h-12 w-12 text-green-500 animate-spin mb-4" />

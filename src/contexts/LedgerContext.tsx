@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ interface LedgerContextValue {
   deleteTransaction: (id: string) => Promise<void>;
   isLoading: boolean;
   refreshTransactions: () => Promise<void>;
+  error: Error | null;
 }
 
 const LedgerContext = createContext<LedgerContextValue | undefined>(undefined);
@@ -25,6 +27,9 @@ const LedgerContext = createContext<LedgerContextValue | undefined>(undefined);
 export const LedgerProvider = ({ children }: { children: ReactNode }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [lastRefreshTime, setLastRefreshTime] = useState(0);
+  const MIN_REFRESH_INTERVAL = 5000; // 5 seconds
 
   // Fetch transactions from the database on component mount
   useEffect(() => {
@@ -34,6 +39,7 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
   const fetchTransactions = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       
       // Get current user session to filter by user_id
       const { data: { session } } = await supabase.auth.getSession();
@@ -42,6 +48,7 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
       if (!userId) {
         console.error("User not authenticated");
         setIsLoading(false);
+        setError(new Error("User not authenticated"));
         return;
       }
       
@@ -69,15 +76,31 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
       setTransactions(formattedTransactions);
     } catch (error: any) {
       console.error("Error fetching transactions:", error.message);
-      toast.error("Failed to load transaction data");
+      setError(error);
+      // Don't show toast on every load error to prevent spamming
     } finally {
       setIsLoading(false);
+      setLastRefreshTime(Date.now());
     }
   };
 
   // Add function to manually refresh transactions
   const refreshTransactions = async () => {
-    await fetchTransactions();
+    try {
+      // Prevent excessive refreshing
+      const now = Date.now();
+      if (now - lastRefreshTime < MIN_REFRESH_INTERVAL) {
+        console.log("Refresh rate limited, try again later");
+        return;
+      }
+      
+      await fetchTransactions();
+      // Only show success toast for manual refreshes
+      toast.success("Transactions refreshed");
+    } catch (error: any) {
+      console.error("Error refreshing transactions:", error.message);
+      toast.error("Failed to refresh transactions");
+    }
   };
 
   const addTransaction = async (transaction: Omit<Transaction, "id">) => {
@@ -191,7 +214,7 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <LedgerContext.Provider
-      value={{ transactions, addTransaction, updateTransaction, deleteTransaction, isLoading, refreshTransactions }}
+      value={{ transactions, addTransaction, updateTransaction, deleteTransaction, isLoading, refreshTransactions, error }}
     >
       {children}
     </LedgerContext.Provider>
