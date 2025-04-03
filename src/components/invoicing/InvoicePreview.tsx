@@ -94,7 +94,7 @@ const InvoicePreview = ({
   const styles = getTemplateStyles();
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} invoice-preview`}>
       {/* Invoice Header */}
       <div className={`flex justify-between items-start ${styles.header}`}>
         <div>
@@ -110,16 +110,16 @@ const InvoicePreview = ({
           </p>
         </div>
         
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 w-28 h-16">
           {logoPreview ? (
-            <div className="h-16 w-auto">
+            <div className="w-full h-full flex items-center justify-end">
               <img 
                 src={logoPreview} 
                 alt="Company Logo" 
-                className="h-16 w-auto object-contain" 
+                className="max-h-16 max-w-28 object-contain" 
                 crossOrigin="anonymous"
                 onError={(e) => {
-                  console.error("Error loading logo in preview:", e);
+                  console.error("Error loading logo in preview");
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
                   
@@ -127,7 +127,7 @@ const InvoicePreview = ({
                   const parent = target.parentNode as HTMLElement;
                   if (parent) {
                     const fallback = document.createElement('div');
-                    fallback.className = 'bg-green-500 text-white h-16 w-32 flex items-center justify-center font-bold rounded';
+                    fallback.className = 'bg-green-500 text-white h-16 w-28 flex items-center justify-center font-bold rounded';
                     fallback.textContent = 'DigiBooks';
                     parent.appendChild(fallback);
                   }
@@ -135,8 +135,10 @@ const InvoicePreview = ({
               />
             </div>
           ) : (
-            <div className="h-16 w-16">
-              <Logo className="w-full h-full" />
+            <div className="w-full h-full flex items-center justify-end">
+              <div className="bg-green-500 text-white h-16 w-28 flex items-center justify-center font-bold rounded">
+                DigiBooks
+              </div>
             </div>
           )}
         </div>

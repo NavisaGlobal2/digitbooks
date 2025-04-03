@@ -26,27 +26,39 @@ export const downloadInvoice = async (invoiceDetails: InvoiceDetails) => {
         
         // Wait for the image to load before proceeding with a timeout
         await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error("Logo load timeout")), 3000);
+          const timeout = setTimeout(() => {
+            console.log("Logo load timeout, using fallback");
+            processedLogo = null;
+            resolve(null);
+          }, 3000);
+          
           img.onload = () => {
             clearTimeout(timeout);
             resolve(null);
           };
+          
           img.onerror = () => {
             clearTimeout(timeout);
-            reject(new Error("Failed to load logo"));
+            console.log("Failed to load logo, using fallback");
+            processedLogo = null;
+            resolve(null);
           };
+          
           img.src = invoiceDetails.logoPreview;
         });
         
-        // Update the invoice details with the properly loaded image
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          // Replace the logo with a clean base64 version
-          processedLogo = canvas.toDataURL("image/png");
+        // Only process the image if it loaded successfully
+        if (processedLogo) {
+          // Update the invoice details with the properly loaded image
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            // Replace the logo with a clean base64 version
+            processedLogo = canvas.toDataURL("image/png");
+          }
         }
       } catch (error) {
         console.error("Error preprocessing logo:", error);
