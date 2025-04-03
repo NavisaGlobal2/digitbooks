@@ -28,8 +28,7 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
-    const ADMIN_EMAIL = "onifade.john.o@gmail.com"; // The verified email address
-    const USE_VERIFIED_DOMAIN = Deno.env.get("USE_VERIFIED_DOMAIN") === "true" || false;
+    const VERIFIED_EMAIL = Deno.env.get("VERIFIED_EMAIL") || "your-verified-email@yourdomain.com";
 
     if (!RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY is required");
@@ -65,29 +64,6 @@ serve(async (req) => {
       </div>
     `;
 
-    // Admin notification email HTML
-    const adminEmailHtml = `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Team Invitation</h2>
-        <p>Hi Admin,</p>
-        <p>A new invitation has been created for ${name} (${email}) to join as a <strong>${role}</strong>.</p>
-        <p>The invitation was created by ${inviterName}.</p>
-        <p>Invitation link: ${invitationUrl}</p>
-        <p>Since you're using Resend's free tier without a verified domain, you'll need to manually forward this invitation to ${email}</p>
-        <hr>
-        <p>Message that would be sent to the user:</p>
-        ${invitationEmailHtml}
-      </div>
-    `;
-
-    // Determine if we can send directly to the recipient or need to use admin email
-    // This depends on whether you have verified your domain in Resend
-    const recipient = USE_VERIFIED_DOMAIN ? email : ADMIN_EMAIL;
-    const emailHtml = USE_VERIFIED_DOMAIN ? invitationEmailHtml : adminEmailHtml;
-    const emailSubject = USE_VERIFIED_DOMAIN 
-      ? `Team invitation to join as ${role}` 
-      : `Team invitation for ${email} to join as ${role}`;
-
     // Call Resend API to send email
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -96,10 +72,10 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "DigiBooks <onboarding@resend.dev>", // Using the default verified Resend domain
-        to: recipient,
-        subject: emailSubject,
-        html: emailHtml,
+        from: VERIFIED_EMAIL, // Use your verified domain email
+        to: email, // Send directly to recipient
+        subject: `Team invitation to join as ${role}`,
+        html: invitationEmailHtml,
       }),
     });
 
@@ -114,12 +90,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: USE_VERIFIED_DOMAIN 
-          ? "Invitation email sent directly to recipient" 
-          : "Invitation email sent to admin",
-        note: USE_VERIFIED_DOMAIN 
-          ? "Email sent directly to recipient using verified domain" 
-          : "Using Resend's free tier without verified domain: email sent to admin, who must forward it to the actual recipient" 
+        message: "Invitation email sent directly to recipient",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
