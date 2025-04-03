@@ -25,9 +25,7 @@ export const validateBusinessInfo = (businessInfo: BusinessInfo): ValidationResu
 export const validateLegalInfo = (legalInfo: LegalInfo): ValidationResult => {
   const errors: Record<string, string> = {};
   
-  if (!legalInfo.rcNumber.trim()) {
-    errors.rcNumber = "RC Number is required";
-  }
+  // RC Number is now optional, so we remove this validation
   
   return {
     isValid: Object.keys(errors).length === 0,

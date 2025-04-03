@@ -130,7 +130,7 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
         business_name: businessInfo.name,
         industry: businessInfo.industry,
         tax_number: legalInfo.taxId || null,
-        rc_number: legalInfo.rcNumber,
+        rc_number: legalInfo.rcNumber || null,  // Allow null for RC number
         business_type: businessInfo.type,
         vat_number: legalInfo.vatNumber || null,
         phone: businessInfo.phone,
@@ -145,7 +145,7 @@ export const useOnboardingData = (): UseOnboardingDataReturn => {
           business_name: businessInfo.name,
           industry: businessInfo.industry,
           tax_number: legalInfo.taxId || null,
-          rc_number: legalInfo.rcNumber,
+          rc_number: legalInfo.rcNumber || null,  // Allow null for RC number
           business_type: businessInfo.type,
           vat_number: legalInfo.vatNumber || null,
           phone: businessInfo.phone,

@@ -29,10 +29,7 @@ export const LegalInfoStep: React.FC<LegalInfoStepProps> = ({
   handleBack 
 }) => {
   const onNext = async () => {
-    if (!legalInfo.rcNumber) {
-      toast.error("Please provide your RC Number");
-      return;
-    }
+    // RC Number is now optional, so we just proceed to the next step
     await handleNext();
   };
 
@@ -40,13 +37,13 @@ export const LegalInfoStep: React.FC<LegalInfoStepProps> = ({
     <div className="space-y-6">
       <div className="transition-all">
         <label htmlFor="rc-number" className="block text-white mb-2">
-          Business registration number
+          Business registration number (Optional)
         </label>
         <Input
           id="rc-number"
           value={legalInfo.rcNumber}
           onChange={(e) => setLegalInfo({ ...legalInfo, rcNumber: e.target.value })}
-          placeholder="RC123456"
+          placeholder="RC123456 (Optional)"
           className="bg-white text-black border-transparent focus:ring-0 focus:border-transparent px-4 py-2 h-12 rounded-md"
           autoFocus
         />

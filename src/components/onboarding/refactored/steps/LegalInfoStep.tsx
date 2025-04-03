@@ -25,12 +25,7 @@ const LegalInfoStep: React.FC<LegalInfoStepProps> = ({
   const [errors, setErrors] = useState<Record<string, boolean>>({});
 
   const handleNext = () => {
-    if (!legalInfo.rcNumber) {
-      setErrors({ rcNumber: true });
-      toast.error("Please provide your RC Number");
-      return;
-    }
-
+    // RC Number is now optional, so we don't need to validate it
     onNext();
   };
 
@@ -38,15 +33,14 @@ const LegalInfoStep: React.FC<LegalInfoStepProps> = ({
     <div className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="rc-number" className={errors.rcNumber ? "text-destructive" : ""}>
-          RC Number *
+          RC Number (Optional)
         </Label>
         <Input
           id="rc-number"
           value={legalInfo.rcNumber}
           onChange={(e) => onLegalInfoChange({ ...legalInfo, rcNumber: e.target.value })}
-          placeholder="Enter RC Number"
+          placeholder="Enter RC Number (Optional)"
           className={errors.rcNumber ? "border-destructive" : ""}
-          required
         />
         <p className="text-sm text-muted-foreground">
           Your Corporate Affairs Commission (CAC) registration number

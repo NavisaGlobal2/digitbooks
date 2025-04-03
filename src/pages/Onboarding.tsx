@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -56,16 +55,8 @@ const Onboarding = () => {
       }
     }
 
-    if (currentStep === 2) {
-      if (!legalInfo.rcNumber) {
-        return false;
-      }
-    }
-
-    // If this is the final step
     if (currentStep === 3) {
       try {
-        // Save business profile to Supabase
         const { error } = await supabase
           .from('profiles')
           .upsert({
@@ -73,7 +64,7 @@ const Onboarding = () => {
             business_name: businessInfo.name,
             industry: businessInfo.industry,
             tax_number: legalInfo.taxId || null,
-            rc_number: legalInfo.rcNumber,
+            rc_number: legalInfo.rcNumber || null,
             business_type: businessInfo.type,
             registration_date: legalInfo.registrationDate || null,
             vat_number: legalInfo.vatNumber || null,
