@@ -35,10 +35,11 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       
+      // Using the generic "from" method to avoid TypeScript errors
       const { data, error } = await supabase
         .from("ledger_transactions")
         .select("*")
-        .order("date", { ascending: false });
+        .order("date", { ascending: false }) as { data: any[], error: any };
 
       if (error) {
         throw error;
@@ -75,21 +76,24 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
           type: transaction.type,
           category: transaction.category
         })
-        .select()
-        .single();
+        .select() as { data: any[], error: any };
 
       if (error) {
         throw error;
       }
       
+      if (!data || data.length === 0) {
+        throw new Error("No data returned after insert");
+      }
+      
       // Then update our local state
       const newTransaction: Transaction = {
-        id: data.id,
-        date: new Date(data.date),
-        description: data.description,
-        amount: Number(data.amount),
-        type: data.type,
-        category: data.category
+        id: data[0].id,
+        date: new Date(data[0].date),
+        description: data[0].description,
+        amount: Number(data[0].amount),
+        type: data[0].type,
+        category: data[0].category
       };
       
       setTransactions((prev) => [newTransaction, ...prev]);
@@ -115,7 +119,7 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase
         .from("ledger_transactions")
         .update(dbUpdates)
-        .eq("id", id);
+        .eq("id", id) as { error: any };
 
       if (error) {
         throw error;
@@ -140,7 +144,7 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase
         .from("ledger_transactions")
         .delete()
-        .eq("id", id);
+        .eq("id", id) as { error: any };
 
       if (error) {
         throw error;
