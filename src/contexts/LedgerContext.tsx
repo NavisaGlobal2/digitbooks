@@ -66,11 +66,16 @@ export const LedgerProvider = ({ children }: { children: ReactNode }) => {
 
   const addTransaction = async (transaction: Omit<Transaction, "id">) => {
     try {
+      // Format the date for Supabase - convert Date object to ISO string and extract the date part
+      const formattedDate = transaction.date instanceof Date 
+        ? transaction.date.toISOString().split('T')[0] 
+        : transaction.date;
+
       // First insert the transaction into the database
       const { data, error } = await supabase
         .from("ledger_transactions")
         .insert({
-          date: transaction.date,
+          date: formattedDate,
           description: transaction.description,
           amount: transaction.amount,
           type: transaction.type,
