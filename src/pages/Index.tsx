@@ -1,6 +1,7 @@
 
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
-import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { WaitlistForm } from "@/components/WaitlistForm";
@@ -28,13 +29,13 @@ const Index = () => {
               Save 10+ hours every week with automated bookkeeping. Perfect for small businesses, freelancers, and startups.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in [animation-delay:400ms]">
-              <a 
-                href="https://digitbookwise.lovable.app/auth"
+              <Link 
+                to="/auth"
                 className="group px-8 py-4 bg-primary text-white rounded-full hover:bg-primary/90 transition-all duration-300 transform hover:-translate-y-1"
               >
                 Try Free for 14 Days
                 <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </a>
+              </Link>
               {!showWaitlistForm ? (
                 <button 
                   onClick={() => setShowWaitlistForm(true)}
