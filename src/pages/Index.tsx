@@ -171,13 +171,13 @@ const Index = () => {
             <p className="text-white/80 mb-10 sm:mb-12 max-w-2xl mx-auto text-lg sm:text-xl animate-fade-in [animation-delay:200ms]">
               Join thousands of businesses saving 10+ hours every week with automated bookkeeping.
             </p>
-            <a 
-              href="https://digitbookwise.lovable.app/auth"
+            <Link 
+              to="/auth"
               className="inline-block group px-8 py-4 bg-accent text-primary rounded-full font-semibold hover:bg-accent/90 transition-all duration-300 transform hover:-translate-y-1 animate-fade-in [animation-delay:400ms]"
             >
               Start Your Free Trial
               <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </a>
+            </Link>
           </div>
         </section>
       </main>

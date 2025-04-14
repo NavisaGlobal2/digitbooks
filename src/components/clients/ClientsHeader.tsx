@@ -1,5 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Bell, ChevronLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -10,13 +11,13 @@ const ClientsHeader = () => {
     <header className="border-b border-border bg-white">
       <div className="px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button 
-            onClick={() => navigate("/invoicing")}
+          <Link 
+            to="/invoicing"
             className="flex items-center text-sm font-medium hover:text-primary"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to Invoicing
-          </button>
+          </Link>
         </div>
         
         <div className="flex items-center gap-3">
