@@ -1,7 +1,7 @@
 
-import { 
-  LayoutDashboard, 
-  FileText, 
+import {
+  LayoutDashboard,
+  FileText,
   Settings,
   ChevronRight,
   LogOut,
@@ -9,7 +9,8 @@ import {
   Wallet,
   Calculator,
   BookOpen,
-  Bot
+  Bot,
+  Stamp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation, Link } from "react-router-dom";
@@ -120,11 +121,22 @@ const Sidebar = () => {
               General ledger
             </Button>
           </Link>
+          <Link to="/visa-docs">
+            <Button
+              variant="ghost"
+              className={`w-full justify-start gap-3 ${path === '/visa-docs'
+                ? 'text-primary font-medium bg-accent/10 border-r-4 border-primary'
+                : 'text-secondary'}`}
+            >
+              <Stamp className="h-5 w-5" />
+              Visa Docs
+            </Button>
+          </Link>
           <Link to="/settings">
-            <Button 
-              variant="ghost" 
-              className={`w-full justify-start gap-3 ${path === '/settings' 
-                ? 'text-primary font-medium bg-accent/10 border-r-4 border-primary' 
+            <Button
+              variant="ghost"
+              className={`w-full justify-start gap-3 ${path === '/settings'
+                ? 'text-primary font-medium bg-accent/10 border-r-4 border-primary'
                 : 'text-secondary'}`}
             >
               <Settings className="h-5 w-5" />

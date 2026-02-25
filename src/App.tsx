@@ -31,7 +31,9 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Onboarding from "./Onboarding";
 import Agent from "./pages/Agent";
+import VisaDocs from "./pages/VisaDocs";
 import { RequireAuth } from "./components/auth/RequireAuth";
+import { VisaDocsProvider } from "@/contexts/VisaDocsContext";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -53,6 +55,7 @@ function App() {
                   <RevenueProvider>
                     <BudgetProvider>
                       <LedgerProvider>
+                        <VisaDocsProvider>
                         <BrowserRouter>
                           <Routes>
                             {/* Public routes */}
@@ -124,6 +127,11 @@ function App() {
                                 <Agent />
                               </RequireAuth>
                             } />
+                            <Route path="/visa-docs" element={
+                              <RequireAuth>
+                                <VisaDocs />
+                              </RequireAuth>
+                            } />
                             <Route path="/settings" element={
                               <RequireAuth>
                                 <Settings />
@@ -143,6 +151,7 @@ function App() {
                             <Route path="*" element={<NotFound />} />
                           </Routes>
                         </BrowserRouter>
+                        </VisaDocsProvider>
                       </LedgerProvider>
                     </BudgetProvider>
                   </RevenueProvider>

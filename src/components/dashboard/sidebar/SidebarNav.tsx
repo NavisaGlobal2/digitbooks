@@ -1,14 +1,15 @@
 
 import { useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  FileText, 
+import {
+  LayoutDashboard,
+  FileText,
   Settings,
   Receipt,
   Wallet,
   Calculator,
   BookOpen,
   History,
+  Stamp,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 
@@ -28,6 +29,7 @@ const SidebarNav = ({ isCollapsed }: SidebarNavProps) => {
     { to: "/reports", icon: LayoutDashboard, label: "Reports" },
     { to: "/budget", icon: Calculator, label: "Budgeting" },
     { to: "/ledger", icon: BookOpen, label: "Ledger" },
+    { to: "/visa-docs", icon: Stamp, label: "Visa Docs" },
     { to: "/settings", icon: Settings, label: "Settings" },
   ];
 
